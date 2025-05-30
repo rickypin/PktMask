@@ -13,10 +13,11 @@ from typing import Optional
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QProgressBar, QTextEdit, QFileDialog,
-    QMessageBox, QScrollArea, QSplitter, QTableWidget, QTableWidgetItem
+    QMessageBox, QScrollArea, QSplitter, QTableWidget, QTableWidgetItem,
+    QTabWidget, QFrame
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QFont, QIcon
+from PyQt6.QtGui import QFont, QIcon, QTextCursor
 
 from ..core.ip_processor import (
     prescan_addresses, generate_new_ipv4_address_hierarchical,
@@ -34,6 +35,15 @@ class ProcessThread(QThread):
         super().__init__()
         self.base_dir = base_dir
         self.is_running = True
+        # 添加统计信息
+        self.total_subdirs = 0
+        self.processed_subdirs = 0
+        self.skipped_subdirs = 0
+        self.total_files = 0
+        self.processed_files = 0
+        self.skipped_files = 0
+        self.failed_files = 0
+        self.total_unique_ips = 0
 
     def run(self):
         try:
@@ -49,14 +59,14 @@ class ProcessThread(QThread):
 
         # 获取所有子目录
         subdirs = [d for d in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, d))]
-        total_subdirs = len(subdirs)
+        self.total_subdirs = len(subdirs)
 
         for i, subdir in enumerate(subdirs, 1):
             if not self.is_running:
                 break
 
             subdir_path = os.path.join(base_dir, subdir)
-            self.progress.emit(f"正在处理子目录 {i}/{total_subdirs}: {subdir}")
+            self.progress.emit(f"正在处理子目录 {i}/{self.total_subdirs}: {subdir}")
 
             # 获取需要处理的文件
             files_to_process = []
@@ -66,28 +76,47 @@ class ProcessThread(QThread):
 
             if not files_to_process:
                 self.progress.emit(f"子目录 {subdir} 中没有需要处理的文件，跳过")
+                self.skipped_subdirs += 1
                 continue
 
-            # 预扫描
+            # 子目录统计信息
+            subdir_stats = {
+                'total_files': len(files_to_process),
+                'processed_files': 0,
+                'skipped_files': 0,
+                'failed_files': 0,
+                'unique_ips': 0
+            }
+
+            # 预扫描所有文件，收集所有唯一IP和频率
             error_log = []
             freq_data = prescan_addresses(files_to_process, subdir_path, error_log)
             if error_log:
                 self.progress.emit("\n".join(error_log))
 
-            # 生成 IP 映射
+            # 生成全局唯一IP映射表
             ip_mapping = {}
-            for ip in freq_data[-1]:  # unique_ips
+            ipv4_first_map, ipv4_second_map, ipv4_third_map = {}, {}, {}
+            ipv6_first_map, ipv6_second_map, ipv6_third_map = {}, {}, {}
+            ipv6_fourth_map, ipv6_fifth_map, ipv6_sixth_map, ipv6_seventh_map = {}, {}, {}, {}
+            unique_ips = freq_data[-1]
+            for ip in sorted(unique_ips):
                 if '.' in ip:  # IPv4
                     new_ip = generate_new_ipv4_address_hierarchical(
-                        ip, *freq_data[:3], {}, {}, {}
+                        ip, *freq_data[:3], ipv4_first_map, ipv4_second_map, ipv4_third_map
                     )
                 else:  # IPv6
                     new_ip = generate_new_ipv6_address_hierarchical(
-                        ip, *freq_data[3:-1], {}, {}, {}, {}, {}, {}, {}
+                        ip, *freq_data[3:-1],
+                        ipv6_first_map, ipv6_second_map, ipv6_third_map,
+                        ipv6_fourth_map, ipv6_fifth_map, ipv6_sixth_map, ipv6_seventh_map
                     )
                 ip_mapping[ip] = new_ip
 
-            # 处理文件
+            subdir_stats['unique_ips'] = len(ip_mapping)
+            self.total_unique_ips += len(ip_mapping)
+
+            # 处理文件，所有文件都用同一个ip_mapping
             all_file_mapping = {}
             for f in files_to_process:
                 if not self.is_running:
@@ -97,24 +126,54 @@ class ProcessThread(QThread):
                 self.progress.emit(f"正在处理文件: {f}")
                 ok, file_mapping = process_file(file_path, ip_mapping, error_log)
                 if ok:
-                    self.progress.emit(f"文件 {f} 处理完成")
+                    if f.endswith('-Replaced.pcap') or f.endswith('-Replaced.pcapng'):
+                        self.progress.emit(f"文件 {f} 跳过")
+                        subdir_stats['skipped_files'] += 1
+                        self.skipped_files += 1
+                    else:
+                        self.progress.emit(f"文件 {f} 处理完成")
+                        subdir_stats['processed_files'] += 1
+                        self.processed_files += 1
                 else:
                     self.progress.emit(f"文件 {f} 处理失败")
+                    subdir_stats['failed_files'] += 1
+                    self.failed_files += 1
                 all_file_mapping.update(file_mapping)
 
-            # 写入 replacement.log
+            # 显示子目录处理摘要
+            self.progress.emit(f"\n子目录 {subdir} 处理摘要：")
+            self.progress.emit(f"  总文件数：{subdir_stats['total_files']}")
+            self.progress.emit(f"  处理完成：{subdir_stats['processed_files']}")
+            self.progress.emit(f"  跳过文件：{subdir_stats['skipped_files']}")
+            self.progress.emit(f"  处理失败：{subdir_stats['failed_files']}")
+            self.progress.emit(f"  唯一IP数：{subdir_stats['unique_ips']}\n")
+
+            # 写入 replacement.log（全局映射）
             try:
                 import json
                 log_path = os.path.join(subdir_path, "replacement.log")
                 with open(log_path, "w", encoding="utf-8") as f:
-                    json.dump(all_file_mapping, f, indent=2, ensure_ascii=False)
+                    json.dump(ip_mapping, f, indent=2, ensure_ascii=False)
                 self.progress.emit(f"IP 替换映射已写入 {log_path}")
-                self.ip_mapping_signal.emit(subdir, all_file_mapping)
+                self.ip_mapping_signal.emit(subdir, ip_mapping)
             except Exception as e:
                 self.progress.emit(f"写入 replacement.log 出错：{str(e)}")
 
             if error_log:
                 self.progress.emit("\n".join(error_log))
+
+            self.processed_subdirs += 1
+
+        # 显示总体处理摘要
+        self.progress.emit("\n处理完成，总体统计：")
+        self.progress.emit(f"总子目录数：{self.total_subdirs}")
+        self.progress.emit(f"处理子目录：{self.processed_subdirs}")
+        self.progress.emit(f"跳过子目录：{self.skipped_subdirs}")
+        self.progress.emit(f"总文件数：{self.processed_files + self.skipped_files + self.failed_files}")
+        self.progress.emit(f"处理完成：{self.processed_files}")
+        self.progress.emit(f"跳过文件：{self.skipped_files}")
+        self.progress.emit(f"处理失败：{self.failed_files}")
+        self.progress.emit(f"总唯一IP数：{self.total_unique_ips}\n")
 
     def stop(self):
         """停止处理"""
@@ -131,90 +190,116 @@ class MainWindow(QMainWindow):
     def init_ui(self):
         """初始化界面"""
         self.setWindowTitle("PktMask - IP 地址替换工具")
-        self.setMinimumSize(1000, 700)
+        self.setMinimumSize(1200, 800)
 
         # 创建中央部件
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
-        # 创建主布局
-        main_layout = QVBoxLayout(central_widget)
+        # 主水平布局
+        main_layout = QHBoxLayout(central_widget)
+        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(15, 15, 15, 15)
 
-        # 创建说明文本区域
-        summary_label = QLabel("IP 地址替换说明：")
-        summary_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
-        main_layout.addWidget(summary_label)
+        # 左侧：操作按钮+日志
+        left_widget = QWidget()
+        left_layout = QVBoxLayout(left_widget)
+        left_layout.setSpacing(15)
+        left_layout.setContentsMargins(0, 0, 0, 0)
 
-        summary_text = QTextEdit()
-        summary_text.setReadOnly(True)
-        summary_text.setMaximumHeight(120)
-        main_layout.addWidget(summary_text)
+        # 操作按钮区
+        op_widget = QWidget()
+        op_layout = QVBoxLayout(op_widget)
+        op_layout.setSpacing(10)
+        op_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        # 加载说明文档，兼容 PyInstaller
+        button_title = QLabel("操作控制：")
+        button_title.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+        op_layout.addWidget(button_title)
+
+        self.select_dir_btn = QPushButton("选择目录")
+        self.select_dir_btn.setMinimumHeight(40)
+        self.select_dir_btn.clicked.connect(self.select_directory)
+        op_layout.addWidget(self.select_dir_btn)
+
+        self.process_btn = QPushButton("开始处理")
+        self.process_btn.setMinimumHeight(40)
+        self.process_btn.clicked.connect(self.start_processing)
+        self.process_btn.setEnabled(False)
+        op_layout.addWidget(self.process_btn)
+
+        self.stop_btn = QPushButton("停止处理")
+        self.stop_btn.setMinimumHeight(40)
+        self.stop_btn.clicked.connect(self.stop_processing)
+        self.stop_btn.setEnabled(False)
+        op_layout.addWidget(self.stop_btn)
+
+        op_layout.addStretch()
+        left_layout.addWidget(op_widget, 0)
+
+        # 日志区
+        log_label = QLabel("处理日志：")
+        log_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+        left_layout.addWidget(log_label)
+
+        self.log_text = QTextEdit()
+        self.log_text.setReadOnly(True)
+        left_layout.addWidget(self.log_text, 1)
+
+        main_layout.addWidget(left_widget, 2)
+
+        # 右侧：Tab（IP映射关系/说明）
+        right_widget = QWidget()
+        right_layout = QVBoxLayout(right_widget)
+        right_layout.setSpacing(10)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.mapping_tab = QTabWidget()
+        self.mapping_tab.setTabPosition(QTabWidget.TabPosition.North)
+        self.mapping_tab.setMovable(False)
+        self.mapping_tab.setTabsClosable(False)
+
+        # IP映射关系Tab内容：QScrollArea + 垂直布局
+        self.mapping_scroll = QScrollArea()
+        self.mapping_scroll.setWidgetResizable(True)
+        self.mapping_scroll.setStyleSheet("background-color: #232323;")
+        self.mapping_container = QWidget()
+        self.mapping_container.setStyleSheet("background-color: #232323; color: #fff;")
+        self.mapping_vlayout = QVBoxLayout(self.mapping_container)
+        self.mapping_vlayout.setSpacing(20)
+        self.mapping_vlayout.setContentsMargins(10, 10, 10, 10)
+        self.mapping_scroll.setWidget(self.mapping_container)
+        self.mapping_tab.addTab(self.mapping_scroll, "IP 映射关系")
+
+        # 说明Tab
+        self.summary_text = QTextEdit()
+        self.summary_text.setReadOnly(True)
+        self.summary_text.setMinimumHeight(150)
         def resource_path(relative_path):
             if hasattr(sys, '_MEIPASS'):
-                return os.path.join(sys._MEIPASS, relative_path)
-            return os.path.join(os.path.dirname(__file__), '..', 'resources', relative_path)
-
+                base_path = sys._MEIPASS
+            else:
+                base_path = os.path.abspath(".")
+            return os.path.join(base_path, relative_path)
         try:
-            summary_path = resource_path('pktmask/resources/summary.md')
+            summary_path = resource_path('resources/summary.md')
             with open(summary_path, "r", encoding="utf-8") as f:
                 summary_content = f.read()
             summary_html = markdown.markdown(summary_content)
-            summary_text.setHtml(summary_html)
+            self.summary_text.setHtml(summary_html)
         except Exception as e:
-            summary_text.setText(f"无法加载说明文档：{str(e)}")
-
-        # 创建按钮区域
-        button_layout = QHBoxLayout()
-        self.select_dir_btn = QPushButton("选择目录")
-        self.select_dir_btn.clicked.connect(self.select_directory)
-        button_layout.addWidget(self.select_dir_btn)
-
-        self.process_btn = QPushButton("开始处理")
-        self.process_btn.clicked.connect(self.start_processing)
-        self.process_btn.setEnabled(False)
-        button_layout.addWidget(self.process_btn)
-
-        self.stop_btn = QPushButton("停止处理")
-        self.stop_btn.clicked.connect(self.stop_processing)
-        self.stop_btn.setEnabled(False)
-        button_layout.addWidget(self.stop_btn)
-
-        main_layout.addLayout(button_layout)
-
-        # 分割区（日志区和IP映射区）
-        splitter = QSplitter(Qt.Orientation.Vertical)
-        # 日志区
-        log_widget = QWidget()
-        log_layout = QVBoxLayout(log_widget)
-        log_label = QLabel("处理日志：")
-        log_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
-        log_layout.addWidget(log_label)
-        self.log_text = QTextEdit()
-        self.log_text.setReadOnly(True)
-        log_layout.addWidget(self.log_text)
-        splitter.addWidget(log_widget)
-        # IP映射区
-        ip_map_widget = QWidget()
-        ip_map_layout = QVBoxLayout(ip_map_widget)
-        ip_map_label = QLabel("IP 替换映射（每个子目录）：")
-        ip_map_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
-        ip_map_layout.addWidget(ip_map_label)
-        self.ip_map_area = QScrollArea()
-        self.ip_map_area.setWidgetResizable(True)
-        self.ip_map_content = QWidget()
-        self.ip_map_content_layout = QVBoxLayout(self.ip_map_content)
-        self.ip_map_area.setWidget(self.ip_map_content)
-        ip_map_layout.addWidget(self.ip_map_area)
-        ip_map_widget.setLayout(ip_map_layout)
-        splitter.addWidget(ip_map_widget)
-        splitter.setSizes([300, 400])
-        main_layout.addWidget(splitter)
+            self.summary_text.setText(f"无法加载说明文档：{str(e)}")
+        self.mapping_tab.addTab(self.summary_text, "IP 地址替换说明")
+        self.mapping_tab.setCurrentIndex(0)
+        right_layout.addWidget(self.mapping_tab)
+        right_widget.setLayout(right_layout)
+        main_layout.addWidget(right_widget, 3)
 
     def select_directory(self):
         """选择目录"""
-        dir_path = QFileDialog.getExistingDirectory(self, "选择要处理的目录")
+        # 获取用户桌面路径
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        dir_path = QFileDialog.getExistingDirectory(self, "选择要处理的目录", desktop_path)
         if dir_path:
             self.base_dir = dir_path
             self.process_btn.setEnabled(True)
@@ -255,21 +340,33 @@ class MainWindow(QMainWindow):
         )
 
     def display_ip_mapping(self, subdir: str, ip_mapping: dict):
-        # 创建表格展示
-        table = QTableWidget()
-        table.setColumnCount(2)
-        table.setHorizontalHeaderLabels(["原始 IP", "替换后 IP"])
-        table.setRowCount(len(ip_mapping))
-        for row, (orig, new) in enumerate(sorted(ip_mapping.items(), key=lambda kv: kv[0])):
-            table.setItem(row, 0, QTableWidgetItem(orig))
-            table.setItem(row, 1, QTableWidgetItem(new))
-        table.resizeColumnsToContents()
-        table.setMinimumHeight(120)
-        label = QLabel(f"子目录：{subdir}")
-        label.setFont(QFont("Arial", 11, QFont.Weight.Bold))
-        self.ip_map_content_layout.addWidget(label)
-        self.ip_map_content_layout.addWidget(table)
-        self.ip_mapping_tables[subdir] = table
+        try:
+            # 改为文本输出
+            if not hasattr(self, 'ip_mapping_text'):  # 只创建一次
+                from PyQt6.QtWidgets import QTextEdit
+                self.ip_mapping_text = QTextEdit()
+                self.ip_mapping_text.setReadOnly(True)
+                self.ip_mapping_text.setFont(QFont("Consolas", 12))
+                self.ip_mapping_text.setStyleSheet("background-color: #232323; color: #fff; border: none;")
+                self.mapping_vlayout.addWidget(self.ip_mapping_text)
+            # 组装文本内容
+            text = self.ip_mapping_text.toPlainText()
+            if text:
+                text += "\n\n"
+            text += f"子目录：{subdir}\n"
+            text += "-" * 40 + "\n"
+            for orig, new in sorted(ip_mapping.items(), key=lambda kv: kv[0]):
+                text += f"{orig:<20} -> {new}\n"
+            self.ip_mapping_text.setPlainText(text)
+            self.ip_mapping_text.moveCursor(QTextCursor.MoveOperation.End)
+            self.mapping_tab.setCurrentIndex(0)
+        except Exception as e:
+            import traceback
+            err_msg = f"[IP映射关系显示异常] {e}\n{traceback.format_exc()}"
+            if hasattr(self, 'log_text'):
+                self.log_text.append(err_msg)
+            else:
+                print(err_msg)
 
     def processing_finished(self):
         """处理完成"""
