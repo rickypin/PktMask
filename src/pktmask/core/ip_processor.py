@@ -234,15 +234,21 @@ def process_packet(packet, mapping: Dict[str, str]):
                 del udp_layer.chksum
     return packet
 
-def process_file(file_path: str, mapping: Dict[str, str], error_log: List[str]) -> bool:
-    """处理单个文件"""
+def process_file(file_path: str, mapping: Dict[str, str], error_log: List[str]) -> (bool, Dict[str, str]):
+    """处理单个文件，返回是否成功及本文件涉及的IP映射"""
     try:
         ext = os.path.splitext(file_path)[1].lower()
         reader_class = PcapNgReader if ext == ".pcapng" else PcapReader
         with reader_class(file_path) as reader:
             packets = [process_packet(packet, mapping) for packet in reader]
-        wrpcap(file_path, packets)
-        return True
+        # 输出文件名加 -Replaced 后缀
+        base, ext = os.path.splitext(file_path)
+        new_file_path = f"{base}-Replaced{ext}"
+        wrpcap(new_file_path, packets)
+        # 统计本文件涉及的IP映射
+        file_ips = set(mapping.keys())
+        file_mapping = {ip: mapping[ip] for ip in file_ips if ip in mapping}
+        return True, file_mapping
     except Exception as e:
         error_log.append(f"{current_time()} - 处理文件 {file_path} 出错：{str(e)}")
-        return False 
+        return False, {} 

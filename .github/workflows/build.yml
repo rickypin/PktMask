@@ -59,4 +59,11 @@ jobs:
       if: matrix.os == 'macos-latest'
       run: |
         pip install pyinstaller
-        pyinstaller --name PktMask --windowed --onefile src/pktmask/main.py 
+        pyinstaller --name PktMask --windowed --onefile src/pktmask/main.py
+    
+    - name: Upload macOS Artifact
+      if: matrix.os == 'macos-latest'
+      uses: actions/upload-artifact@v3
+      with:
+        name: PktMask-macOS
+        path: dist/PktMask 

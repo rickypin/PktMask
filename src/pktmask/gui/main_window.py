@@ -13,7 +13,7 @@ from typing import Optional
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QProgressBar, QTextEdit, QFileDialog,
-    QMessageBox, QScrollArea
+    QMessageBox, QScrollArea, QSplitter, QTableWidget, QTableWidgetItem
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QFont, QIcon
@@ -28,6 +28,7 @@ class ProcessThread(QThread):
     progress = pyqtSignal(str)
     finished = pyqtSignal()
     error = pyqtSignal(str)
+    ip_mapping_signal = pyqtSignal(str, dict)  # 新增：子目录名, IP映射
 
     def __init__(self, base_dir: str):
         super().__init__()
@@ -87,16 +88,30 @@ class ProcessThread(QThread):
                 ip_mapping[ip] = new_ip
 
             # 处理文件
+            all_file_mapping = {}
             for f in files_to_process:
                 if not self.is_running:
                     break
 
                 file_path = os.path.join(subdir_path, f)
                 self.progress.emit(f"正在处理文件: {f}")
-                if process_file(file_path, ip_mapping, error_log):
+                ok, file_mapping = process_file(file_path, ip_mapping, error_log)
+                if ok:
                     self.progress.emit(f"文件 {f} 处理完成")
                 else:
                     self.progress.emit(f"文件 {f} 处理失败")
+                all_file_mapping.update(file_mapping)
+
+            # 写入 replacement.log
+            try:
+                import json
+                log_path = os.path.join(subdir_path, "replacement.log")
+                with open(log_path, "w", encoding="utf-8") as f:
+                    json.dump(all_file_mapping, f, indent=2, ensure_ascii=False)
+                self.progress.emit(f"IP 替换映射已写入 {log_path}")
+                self.ip_mapping_signal.emit(subdir, all_file_mapping)
+            except Exception as e:
+                self.progress.emit(f"写入 replacement.log 出错：{str(e)}")
 
             if error_log:
                 self.progress.emit("\n".join(error_log))
@@ -110,33 +125,39 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.process_thread: Optional[ProcessThread] = None
+        self.ip_mapping_tables = {}  # 子目录名 -> QTableWidget
         self.init_ui()
 
     def init_ui(self):
         """初始化界面"""
         self.setWindowTitle("PktMask - IP 地址替换工具")
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(1000, 700)
 
         # 创建中央部件
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
         # 创建主布局
-        layout = QVBoxLayout(central_widget)
+        main_layout = QVBoxLayout(central_widget)
 
         # 创建说明文本区域
         summary_label = QLabel("IP 地址替换说明：")
         summary_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
-        layout.addWidget(summary_label)
+        main_layout.addWidget(summary_label)
 
         summary_text = QTextEdit()
         summary_text.setReadOnly(True)
-        summary_text.setMaximumHeight(200)
-        layout.addWidget(summary_text)
+        summary_text.setMaximumHeight(120)
+        main_layout.addWidget(summary_text)
 
-        # 加载说明文档
+        # 加载说明文档，兼容 PyInstaller
+        def resource_path(relative_path):
+            if hasattr(sys, '_MEIPASS'):
+                return os.path.join(sys._MEIPASS, relative_path)
+            return os.path.join(os.path.dirname(__file__), '..', 'resources', relative_path)
+
         try:
-            summary_path = os.path.join(os.path.dirname(__file__), "..", "resources", "summary.md")
+            summary_path = resource_path('pktmask/resources/summary.md')
             with open(summary_path, "r", encoding="utf-8") as f:
                 summary_content = f.read()
             summary_html = markdown.markdown(summary_content)
@@ -160,21 +181,36 @@ class MainWindow(QMainWindow):
         self.stop_btn.setEnabled(False)
         button_layout.addWidget(self.stop_btn)
 
-        layout.addLayout(button_layout)
+        main_layout.addLayout(button_layout)
 
-        # 创建进度条
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setTextVisible(False)
-        layout.addWidget(self.progress_bar)
-
-        # 创建日志区域
+        # 分割区（日志区和IP映射区）
+        splitter = QSplitter(Qt.Orientation.Vertical)
+        # 日志区
+        log_widget = QWidget()
+        log_layout = QVBoxLayout(log_widget)
         log_label = QLabel("处理日志：")
         log_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
-        layout.addWidget(log_label)
-
+        log_layout.addWidget(log_label)
         self.log_text = QTextEdit()
         self.log_text.setReadOnly(True)
-        layout.addWidget(self.log_text)
+        log_layout.addWidget(self.log_text)
+        splitter.addWidget(log_widget)
+        # IP映射区
+        ip_map_widget = QWidget()
+        ip_map_layout = QVBoxLayout(ip_map_widget)
+        ip_map_label = QLabel("IP 替换映射（每个子目录）：")
+        ip_map_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+        ip_map_layout.addWidget(ip_map_label)
+        self.ip_map_area = QScrollArea()
+        self.ip_map_area.setWidgetResizable(True)
+        self.ip_map_content = QWidget()
+        self.ip_map_content_layout = QVBoxLayout(self.ip_map_content)
+        self.ip_map_area.setWidget(self.ip_map_content)
+        ip_map_layout.addWidget(self.ip_map_area)
+        ip_map_widget.setLayout(ip_map_layout)
+        splitter.addWidget(ip_map_widget)
+        splitter.setSizes([300, 400])
+        main_layout.addWidget(splitter)
 
     def select_directory(self):
         """选择目录"""
@@ -194,6 +230,7 @@ class MainWindow(QMainWindow):
         self.process_thread.progress.connect(self.update_progress)
         self.process_thread.finished.connect(self.processing_finished)
         self.process_thread.error.connect(self.processing_error)
+        self.process_thread.ip_mapping_signal.connect(self.display_ip_mapping)
 
         self.process_thread.start()
         self.process_btn.setEnabled(False)
@@ -216,6 +253,23 @@ class MainWindow(QMainWindow):
         self.log_text.verticalScrollBar().setValue(
             self.log_text.verticalScrollBar().maximum()
         )
+
+    def display_ip_mapping(self, subdir: str, ip_mapping: dict):
+        # 创建表格展示
+        table = QTableWidget()
+        table.setColumnCount(2)
+        table.setHorizontalHeaderLabels(["原始 IP", "替换后 IP"])
+        table.setRowCount(len(ip_mapping))
+        for row, (orig, new) in enumerate(sorted(ip_mapping.items(), key=lambda kv: kv[0])):
+            table.setItem(row, 0, QTableWidgetItem(orig))
+            table.setItem(row, 1, QTableWidgetItem(new))
+        table.resizeColumnsToContents()
+        table.setMinimumHeight(120)
+        label = QLabel(f"子目录：{subdir}")
+        label.setFont(QFont("Arial", 11, QFont.Weight.Bold))
+        self.ip_map_content_layout.addWidget(label)
+        self.ip_map_content_layout.addWidget(table)
+        self.ip_mapping_tables[subdir] = table
 
     def processing_finished(self):
         """处理完成"""
