@@ -44,12 +44,6 @@ jobs:
         pip install pyinstaller
         pyinstaller --name PktMask --windowed --onefile src/pktmask/main.py
     
-    - name: Build macOS App
-      if: matrix.os == 'macos-latest' && matrix.python-version == '3.11'
-      run: |
-        pip install pyinstaller
-        pyinstaller --name PktMask --windowed --onefile src/pktmask/main.py
-    
     - name: Upload Windows Installer
       if: matrix.os == 'windows-latest' && matrix.python-version == '3.11'
       uses: actions/upload-release-asset@v1
@@ -61,13 +55,8 @@ jobs:
         asset_name: PktMask-Windows.exe
         asset_content_type: application/octet-stream
     
-    - name: Upload macOS App
+    - name: Build macOS App
       if: matrix.os == 'macos-latest' && matrix.python-version == '3.11'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/PktMask
-        asset_name: PktMask-macOS
-        asset_content_type: application/octet-stream 
+      run: |
+        pip install pyinstaller
+        pyinstaller --name PktMask --windowed --onefile src/pktmask/main.py 
