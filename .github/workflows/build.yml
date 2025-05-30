@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, macos-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.11']
 
     steps:
     - uses: actions/checkout@v3
@@ -30,7 +30,7 @@ jobs:
       run: python -m build
     
     - name: Create Release
-      if: matrix.os == 'windows-latest' && matrix.python-version == '3.11'
+      if: matrix.os == 'windows-latest'
       id: create_release
       uses: softprops/action-gh-release@v1
       with:
@@ -39,13 +39,13 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Build Windows Installer
-      if: matrix.os == 'windows-latest' && matrix.python-version == '3.11'
+      if: matrix.os == 'windows-latest'
       run: |
         pip install pyinstaller
         pyinstaller --name PktMask --windowed --onefile src/pktmask/main.py
     
     - name: Upload Windows Installer
-      if: matrix.os == 'windows-latest' && matrix.python-version == '3.11'
+      if: matrix.os == 'windows-latest'
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -56,7 +56,7 @@ jobs:
         asset_content_type: application/octet-stream
     
     - name: Build macOS App
-      if: matrix.os == 'macos-latest' && matrix.python-version == '3.11'
+      if: matrix.os == 'macos-latest'
       run: |
         pip install pyinstaller
         pyinstaller --name PktMask --windowed --onefile src/pktmask/main.py 
