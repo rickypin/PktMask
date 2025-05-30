@@ -31,6 +31,7 @@ jobs:
     
     - name: Create Release
       if: matrix.os == 'windows-latest' && matrix.python-version == '3.11'
+      id: create_release
       uses: softprops/action-gh-release@v1
       with:
         files: dist/*
