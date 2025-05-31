@@ -21,7 +21,7 @@ from PyQt6.QtGui import QFont, QIcon, QTextCursor
 
 from ..core.ip_processor import (
     prescan_addresses, generate_new_ipv4_address_hierarchical,
-    generate_new_ipv6_address_hierarchical, process_file
+    generate_new_ipv6_address_hierarchical, process_file, stream_subdirectory_process
 )
 
 class ProcessThread(QThread):
@@ -68,101 +68,50 @@ class ProcessThread(QThread):
             subdir_path = os.path.join(base_dir, subdir)
             self.progress.emit(f"正在处理子目录 {i}/{self.total_subdirs}: {subdir}")
 
-            # 获取需要处理的文件
-            files_to_process = []
-            for f in os.listdir(subdir_path):
-                if f.lower().endswith(('.pcap', '.pcapng')):
-                    files_to_process.append(f)
-
-            if not files_to_process:
-                self.progress.emit(f"子目录 {subdir} 中没有需要处理的文件，跳过")
-                self.skipped_subdirs += 1
-                continue
-
-            # 子目录统计信息
-            subdir_stats = {
-                'total_files': len(files_to_process),
-                'processed_files': 0,
-                'skipped_files': 0,
-                'failed_files': 0,
-                'unique_ips': 0
-            }
-
-            # 预扫描所有文件，收集所有唯一IP和频率
-            error_log = []
-            freq_data = prescan_addresses(files_to_process, subdir_path, error_log)
-            if error_log:
-                self.progress.emit("\n".join(error_log))
-
-            # 生成全局唯一IP映射表
-            ip_mapping = {}
-            ipv4_first_map, ipv4_second_map, ipv4_third_map = {}, {}, {}
-            ipv6_first_map, ipv6_second_map, ipv6_third_map = {}, {}, {}
-            ipv6_fourth_map, ipv6_fifth_map, ipv6_sixth_map, ipv6_seventh_map = {}, {}, {}, {}
-            unique_ips = freq_data[-1]
-            for ip in sorted(unique_ips):
-                if '.' in ip:  # IPv4
-                    new_ip = generate_new_ipv4_address_hierarchical(
-                        ip, *freq_data[:3], ipv4_first_map, ipv4_second_map, ipv4_third_map
-                    )
-                else:  # IPv6
-                    new_ip = generate_new_ipv6_address_hierarchical(
-                        ip, *freq_data[3:-1],
-                        ipv6_first_map, ipv6_second_map, ipv6_third_map,
-                        ipv6_fourth_map, ipv6_fifth_map, ipv6_sixth_map, ipv6_seventh_map
-                    )
-                ip_mapping[ip] = new_ip
-
-            subdir_stats['unique_ips'] = len(ip_mapping)
-            self.total_unique_ips += len(ip_mapping)
-
-            # 处理文件，所有文件都用同一个ip_mapping
-            all_file_mapping = {}
-            for f in files_to_process:
+            # 使用stream_subdirectory_process处理子目录
+            for message in stream_subdirectory_process(subdir_path, base_dir):
                 if not self.is_running:
                     break
-
-                file_path = os.path.join(subdir_path, f)
-                self.progress.emit(f"正在处理文件: {f}")
-                ok, file_mapping = process_file(file_path, ip_mapping, error_log)
-                if ok:
-                    if f.endswith('-Replaced.pcap') or f.endswith('-Replaced.pcapng'):
-                        self.progress.emit(f"文件 {f} 跳过")
-                        subdir_stats['skipped_files'] += 1
-                        self.skipped_files += 1
-                    else:
-                        self.progress.emit(f"文件 {f} 处理完成")
-                        subdir_stats['processed_files'] += 1
-                        self.processed_files += 1
+                
+                if message.startswith("[SUBDIR_RESULT]"):
+                    result = message.split(" ")[1]
+                    if result == "SKIPPED":
+                        self.skipped_subdirs += 1
+                    elif result == "ERROR":
+                        self.failed_files += 1
+                    else:  # SUCCESS
+                        self.processed_subdirs += 1
                 else:
-                    self.progress.emit(f"文件 {f} 处理失败")
-                    subdir_stats['failed_files'] += 1
-                    self.failed_files += 1
-                all_file_mapping.update(file_mapping)
+                    self.progress.emit(message)
+                    
+                    # 尝试从日志中提取统计信息
+                    if "处理完成" in message and "成功处理" in message:
+                        try:
+                            parts = message.split("，")
+                            for part in parts:
+                                if "成功处理" in part:
+                                    self.processed_files += int(part.split(" ")[1])
+                                elif "总耗时" in part:
+                                    self.total_unique_ips += int(part.split(" ")[1])
+                        except:
+                            pass
 
-            # 显示子目录处理摘要
-            self.progress.emit(f"\n子目录 {subdir} 处理摘要：")
-            self.progress.emit(f"  总文件数：{subdir_stats['total_files']}")
-            self.progress.emit(f"  处理完成：{subdir_stats['processed_files']}")
-            self.progress.emit(f"  跳过文件：{subdir_stats['skipped_files']}")
-            self.progress.emit(f"  处理失败：{subdir_stats['failed_files']}")
-            self.progress.emit(f"  唯一IP数：{subdir_stats['unique_ips']}\n")
-
-            # 写入 replacement.log（全局映射）
+            # 读取生成的replacement.log
             try:
                 import json
                 log_path = os.path.join(subdir_path, "replacement.log")
-                with open(log_path, "w", encoding="utf-8") as f:
-                    json.dump(ip_mapping, f, indent=2, ensure_ascii=False)
-                self.progress.emit(f"IP 替换映射已写入 {log_path}")
-                self.ip_mapping_signal.emit(subdir, ip_mapping)
+                if os.path.exists(log_path):
+                    with open(log_path, "r", encoding="utf-8") as f:
+                        log_data = json.load(f)
+                        if "total_mapping" in log_data:
+                            self.ip_mapping_signal.emit(subdir, log_data["total_mapping"])
+                        # 自动累加总体统计
+                        stats = log_data.get("stats", {})
+                        self.processed_files += stats.get("processed_file_count", 0)
+                        self.total_unique_ips += stats.get("total_unique_ips", 0)
+                        # 如有需要可累加其他统计项
             except Exception as e:
-                self.progress.emit(f"写入 replacement.log 出错：{str(e)}")
-
-            if error_log:
-                self.progress.emit("\n".join(error_log))
-
-            self.processed_subdirs += 1
+                self.progress.emit(f"读取replacement.log出错：{str(e)}")
 
         # 显示总体处理摘要
         self.progress.emit("\n处理完成，总体统计：")
@@ -185,6 +134,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.process_thread: Optional[ProcessThread] = None
         self.ip_mapping_tables = {}  # 子目录名 -> QTableWidget
+        self.all_ip_mappings = {}    # 子目录名 -> replacement.log内容
         self.init_ui()
 
     def init_ui(self):
@@ -311,6 +261,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "警告", "请先选择要处理的目录")
             return
 
+        self.all_ip_mappings = {}  # 新处理前清空
         self.process_thread = ProcessThread(self.base_dir)
         self.process_thread.progress.connect(self.update_progress)
         self.process_thread.finished.connect(self.processing_finished)
@@ -339,34 +290,56 @@ class MainWindow(QMainWindow):
             self.log_text.verticalScrollBar().maximum()
         )
 
-    def display_ip_mapping(self, subdir: str, ip_mapping: dict):
-        try:
-            # 改为文本输出
-            if not hasattr(self, 'ip_mapping_text'):  # 只创建一次
-                from PyQt6.QtWidgets import QTextEdit
-                self.ip_mapping_text = QTextEdit()
-                self.ip_mapping_text.setReadOnly(True)
-                self.ip_mapping_text.setFont(QFont("Consolas", 12))
-                self.ip_mapping_text.setStyleSheet("background-color: #232323; color: #fff; border: none;")
-                self.mapping_vlayout.addWidget(self.ip_mapping_text)
-            # 组装文本内容
-            text = self.ip_mapping_text.toPlainText()
-            if text:
-                text += "\n\n"
-            text += f"子目录：{subdir}\n"
-            text += "-" * 40 + "\n"
-            for orig, new in sorted(ip_mapping.items(), key=lambda kv: kv[0]):
+    def display_ip_mapping(self, subdir: str, _):
+        import json
+        import os
+        from PyQt6.QtGui import QTextCursor
+        # 只用 replacement.log 作为数据源
+        log_path = os.path.join(self.base_dir, subdir, "replacement.log")
+        if not os.path.exists(log_path):
+            self.log_text.append(f"未找到 {log_path}")
+            return
+        with open(log_path, "r", encoding="utf-8") as f:
+            log_data = json.load(f)
+        # 缓存到全局映射
+        self.all_ip_mappings[subdir] = log_data
+
+        # 清空并重建右侧Tab内容
+        if not hasattr(self, 'ip_mapping_text'):
+            from PyQt6.QtWidgets import QTextEdit
+            self.ip_mapping_text = QTextEdit()
+            self.ip_mapping_text.setReadOnly(True)
+            self.ip_mapping_text.setFont(QFont("Consolas", 12))
+            self.ip_mapping_text.setStyleSheet("background-color: #232323; color: #fff; border: none;")
+            self.mapping_vlayout.addWidget(self.ip_mapping_text)
+        self.ip_mapping_text.clear()
+        text = ""
+        # 遍历所有子目录，依次输出
+        for subdir_name, log_data in self.all_ip_mappings.items():
+            stats = log_data.get("stats", {})
+            file_mappings = log_data.get("file_mappings", {})
+            total_mapping = log_data.get("total_mapping", {})
+            text += f"子目录：{subdir_name}\n"
+            text += "=" * 40 + "\n"
+            # 1. 基础统计
+            text += "【基础统计】\n"
+            for k, v in stats.items():
+                text += f"{k}: {v}\n"
+            text += "\n"
+            # 2. 每个文件的独立映射
+            for fname, mapping in file_mappings.items():
+                text += f"文件：{fname}\n"
+                for orig, new in mapping.items():
+                    text += f"  {orig:<20} -> {new}\n"
+                text += "\n"
+            # 3. 汇总映射
+            text += "【汇总映射】\n"
+            for orig, new in total_mapping.items():
                 text += f"{orig:<20} -> {new}\n"
-            self.ip_mapping_text.setPlainText(text)
-            self.ip_mapping_text.moveCursor(QTextCursor.MoveOperation.End)
-            self.mapping_tab.setCurrentIndex(0)
-        except Exception as e:
-            import traceback
-            err_msg = f"[IP映射关系显示异常] {e}\n{traceback.format_exc()}"
-            if hasattr(self, 'log_text'):
-                self.log_text.append(err_msg)
-            else:
-                print(err_msg)
+            text += "\n" + ("-"*40) + "\n\n"
+        self.ip_mapping_text.setPlainText(text)
+        self.ip_mapping_text.moveCursor(QTextCursor.MoveOperation.End)
+        self.mapping_tab.setCurrentIndex(0)
 
     def processing_finished(self):
         """处理完成"""

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP替换报告 - {{ subdir }}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .stats {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat-item {
+            background-color: white;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .mapping-section {
+            margin-top: 30px;
+        }
+        .mapping-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .mapping-table th, .mapping-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .mapping-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        .mapping-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        .file-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+        .file-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .file-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .file-stats {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .ip-pair {
+            font-family: monospace;
+            white-space: nowrap;
+        }
+        .original-ip {
+            color: #e74c3c;
+        }
+        .new-ip {
+            color: #27ae60;
+        }
+        .arrow {
+            color: #7f8c8d;
+            margin: 0 10px;
+        }
+        .timestamp {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>IP替换报告</h1>
+        <div class="timestamp">生成时间：{{ now }}</div>
+        <div class="subdir">目录：{{ subdir }}</div>
+
+        <!-- 基础统计 -->
+        <div class="stats">
+            <h2>基础统计</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">处理文件数</div>
+                    <div class="stat-value">{{ stats.processed_file_count }}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">总唯一IP数</div>
+                    <div class="stat-value">{{ stats.total_unique_ips }}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">总耗时</div>
+                    <div class="stat-value">{{ "%.2f"|format(stats.total_time_seconds) }}秒</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 文件统计 -->
+        <div class="stats">
+            <h2>文件统计</h2>
+            <table class="mapping-table">
+                <thead>
+                    <tr>
+                        <th>文件名</th>
+                        <th>唯一IP数量</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file, count in stats.file_ip_counts.items() %}
+                    <tr>
+                        <td>{{ file }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 每个文件的映射关系 -->
+        {% for file, mapping in file_mappings.items() %}
+        <div class="file-section">
+            <div class="file-header">
+                <div class="file-name">{{ file }}</div>
+                <div class="file-stats">唯一IP数量：{{ mapping|length }}</div>
+            </div>
+            <table class="mapping-table">
+                <thead>
+                    <tr>
+                        <th>原始IP</th>
+                        <th>新IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for old_ip, new_ip in mapping.items()|sort %}
+                    <tr>
+                        <td class="ip-pair">
+                            <span class="original-ip">{{ old_ip }}</span>
+                        </td>
+                        <td class="ip-pair">
+                            <span class="new-ip">{{ new_ip }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+
+        <!-- 汇总映射关系 -->
+        <div class="mapping-section">
+            <h2>汇总映射关系</h2>
+            <table class="mapping-table">
+                <thead>
+                    <tr>
+                        <th>原始IP</th>
+                        <th>新IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for old_ip, new_ip in total_mapping.items()|sort %}
+                    <tr>
+                        <td class="ip-pair">
+                            <span class="original-ip">{{ old_ip }}</span>
+                        </td>
+                        <td class="ip-pair">
+                            <span class="new-ip">{{ new_ip }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html> 
