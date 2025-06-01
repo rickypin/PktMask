@@ -43,17 +43,15 @@ jobs:
       run: |
         pip install pyinstaller
         pyinstaller --name PktMask --windowed --onefile src/pktmask/main.py
+        ls dist
     
     - name: Upload Windows Installer
       if: matrix.os == 'windows-latest'
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/PktMask.exe
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/PktMask.exe
-        asset_name: PktMask-Windows.exe
-        asset_content_type: application/octet-stream
     
     - name: Build macOS App
       if: matrix.os == 'macos-latest'
