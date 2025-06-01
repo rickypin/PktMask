@@ -63,19 +63,25 @@ def get_all_ips_in_file(file_path: str) -> Set[str]:
 def get_ip_mapping_from_files(original_file: str, replaced_file: str) -> Dict[str, str]:
     """从原始文件和替换文件中获取 IP 映射关系"""
     mapping = {}
+    log_path = os.path.join(os.path.dirname(original_file), "replacement.log")
+    if os.path.exists(log_path):
+        try:
+            with open(log_path, 'r', encoding='utf-8') as f:
+                log_data = json.load(f)
+                mapping = log_data.get('total_mapping', {})
+                return mapping
+        except Exception as e:
+            print(f"读取日志文件出错：{str(e)}")
     try:
         # 读取原始文件中的 IP
         orig_ips = get_all_ips_in_file(original_file)
-        
         # 读取替换文件中的 IP
         replaced_ips = get_all_ips_in_file(replaced_file)
-        
         # 如果两个文件中的 IP 数量相同，说明是一一对应的
         if len(orig_ips) == len(replaced_ips):
             # 将 IP 地址排序，确保对应关系正确
             orig_ips_list = sorted(list(orig_ips))
             replaced_ips_list = sorted(list(replaced_ips))
-            
             # 创建映射关系
             for orig_ip, replaced_ip in zip(orig_ips_list, replaced_ips_list):
                 mapping[orig_ip] = replaced_ip
@@ -83,30 +89,20 @@ def get_ip_mapping_from_files(original_file: str, replaced_file: str) -> Dict[st
             print(f"警告：文件 {os.path.basename(original_file)} 和 {os.path.basename(replaced_file)} 中的 IP 数量不一致")
             print(f"原始文件 IP 数量：{len(orig_ips)}")
             print(f"替换文件 IP 数量：{len(replaced_ips)}")
-            
-            # 尝试通过日志文件获取映射关系
-            log_path = os.path.join(os.path.dirname(original_file), "replacement.log")
-            if os.path.exists(log_path):
-                try:
-                    with open(log_path, 'r', encoding='utf-8') as f:
-                        log_mapping = json.load(f)
-                        # 只保留原始文件中存在的 IP 的映射
-                        for orig_ip in orig_ips:
-                            if orig_ip in log_mapping:
-                                mapping[orig_ip] = log_mapping[orig_ip]
-                except Exception as e:
-                    print(f"读取日志文件出错：{str(e)}")
-    
     except Exception as e:
         print(f"获取 IP 映射关系出错：{str(e)}")
-    
     return mapping
 
 def verify_replacement_log(log_path: str, original_ips: Set[str]) -> Tuple[bool, str]:
     """验证替换日志文件"""
     try:
         with open(log_path, 'r', encoding='utf-8') as f:
-            mapping = json.load(f)
+            log_data = json.load(f)
+        
+        # 从日志中获取 IP 映射
+        mapping = log_data.get('total_mapping', {})
+        if not mapping:
+            return False, "日志文件中未找到 IP 映射"
         
         # 标准化所有 IP 地址
         normalized_mapping = {normalize_ip(k): normalize_ip(v) for k, v in mapping.items()}
