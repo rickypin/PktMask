@@ -29,39 +29,39 @@ jobs:
     - name: Build package
       run: python -m build
     
-    - name: Create Release
-      if: matrix.os == 'windows-latest'
-      id: create_release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: dist/*
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
     - name: Build Windows Installer
       if: matrix.os == 'windows-latest'
       run: |
         pip install pyinstaller
         pyinstaller --name PktMask --windowed --onefile src/pktmask/main.py
         ls dist
-    
-    - name: Upload Windows Installer
+
+    - name: Upload Windows Artifact
       if: matrix.os == 'windows-latest'
-      uses: softprops/action-gh-release@v1
+      uses: actions/upload-artifact@v4
       with:
-        files: dist/PktMask.exe
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
+        name: PktMask-Windows
+        path: dist/PktMask.exe
+
     - name: Build macOS App
       if: matrix.os == 'macos-latest'
       run: |
         pip install pyinstaller
         pyinstaller --name PktMask --windowed --onefile src/pktmask/main.py
-    
+
     - name: Upload macOS Artifact
       if: matrix.os == 'macos-latest'
       uses: actions/upload-artifact@v4
       with:
         name: PktMask-macOS
-        path: dist/PktMask 
+        path: dist/PktMask
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/PktMask.exe
+          dist/PktMask
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
