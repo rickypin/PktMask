@@ -63,7 +63,7 @@ jobs:
     
     - name: Upload macOS Artifact
       if: matrix.os == 'macos-latest'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: PktMask-macOS
         path: dist/PktMask 
