@@ -17,12 +17,16 @@ import sys
 
 from scapy.all import PcapReader, PcapNgReader, wrpcap, IP, IPv6, TCP, UDP
 
+def resource_path(relative_path):
+    """获取资源文件的绝对路径"""
+    if hasattr(sys, '_MEIPASS'):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    return os.path.join(base_path, relative_path)
+
 # 自动加载HTML模板，兼容PyInstaller打包和开发环境
-if hasattr(sys, '_MEIPASS'):
-    base_path = sys._MEIPASS
-else:
-    base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-TEMPLATE_PATH = os.path.join(base_path, 'resources', 'log_template.html')
+TEMPLATE_PATH = resource_path('resources/log_template.html')
 with open(TEMPLATE_PATH, 'r', encoding='utf-8') as f:
     LOG_HTML = f.read()
 
@@ -332,12 +336,23 @@ def stream_subdirectory_process(subdir_path, base_path=None):
 
     # 检查是否所有文件都已替换
     original_files = []
-    all_replaced = True
     for f in os.listdir(subdir_path):
         if f.lower().endswith(('.pcap', '.pcapng')):
             if not f.endswith('-Replaced.pcap') and not f.endswith('-Replaced.pcapng'):
                 original_files.append(f)
-                all_replaced = False
+
+    if not original_files:
+        yield f"[{current_time()}] 子目录内未找到任何 pcap/pcapng 文件，跳过。"
+        yield "[SUBDIR_RESULT] SKIPPED"
+        return
+
+    all_replaced = True
+    for f in original_files:
+        name, ext = os.path.splitext(f)
+        replaced_path = os.path.join(subdir_path, f"{name}-Replaced{ext}")
+        if not os.path.exists(replaced_path):
+            all_replaced = False
+            break
 
     if all_replaced:
         yield f"[{current_time()}] 子目录内所有文件均已替换，跳过。"

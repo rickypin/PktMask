@@ -226,10 +226,11 @@ class MainWindow(QMainWindow):
         self.summary_text.setReadOnly(True)
         self.summary_text.setMinimumHeight(150)
         def resource_path(relative_path):
+            """获取资源文件的绝对路径"""
             if hasattr(sys, '_MEIPASS'):
                 base_path = sys._MEIPASS
             else:
-                base_path = os.path.abspath(".")
+                base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
             return os.path.join(base_path, relative_path)
         try:
             summary_path = resource_path('resources/summary.md')

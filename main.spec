@@ -5,12 +5,8 @@ a = Analysis(
     ['src/pktmask/main.py'],
     pathex=[],
     binaries=[],
-    datas=[
-        ('src/pktmask/resources', 'resources'),
-        ('src/pktmask/gui', 'gui'),
-        ('src/pktmask/core', 'core')
-    ],
-    hiddenimports=['jinja2'],
+    datas=[('src/pktmask/resources/log_template.html', 'pktmask/resources')],
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -23,32 +19,20 @@ pyz = PYZ(a.pure)
 exe = EXE(
     pyz,
     a.scripts,
+    a.binaries,
+    a.datas,
     [],
-    exclude_binaries=True,
-    name='PktMask',
+    name='main',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-)
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.datas,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    name='PktMask',
-)
-app = BUNDLE(
-    coll,
-    name='PktMask.app',
-    icon=None,
-    bundle_identifier=None,
 )

@@ -9,10 +9,16 @@ PktMask 测试程序
 import os
 import json
 import ipaddress
+import pytest
 from pathlib import Path
 from typing import Dict, Set, List, Tuple
 
 from scapy.all import PcapReader, PcapNgReader, IP, IPv6
+
+@pytest.fixture
+def subdir_path():
+    """提供测试目录路径的夹具"""
+    return os.path.expanduser("~/Desktop/TestCases")
 
 def get_test_dir() -> str:
     """获取测试目录路径"""
@@ -182,7 +188,7 @@ def verify_ip_consistency(replaced_files: List[str], subdir_path: str) -> List[s
 
     return errors
 
-def test_directory(subdir_path: str) -> List[str]:
+def test_directory(subdir_path: str) -> None:
     """测试单个目录"""
     print(f"\n测试子目录：{os.path.basename(subdir_path)}")
     errors = []
@@ -199,47 +205,22 @@ def test_directory(subdir_path: str) -> List[str]:
 
     # 收集所有原始文件中的 IP
     all_original_ips = set()
-    for f in original_files:
-        file_path = os.path.join(subdir_path, f)
-        print(f"\n检查文件：{f}")
+    for file in original_files:
+        file_path = os.path.join(subdir_path, file)
         ips = get_all_ips_in_file(file_path)
-        print(f"文件中的 IP 数量：{len(ips)}")
-        print("文件中的 IP 示例：")
-        for ip in sorted(ips)[:5]:  # 只显示前 5 个 IP
-            print(f"  - {ip}")
-            all_original_ips.add(ip)
+        all_original_ips.update(ips)
 
-        # 检查对应的替换文件
-        replaced_file = f.replace('.pcap', '-Replaced.pcap').replace('.pcapng', '-Replaced.pcapng')
-        if replaced_file in replaced_files:
-            replaced_path = os.path.join(subdir_path, replaced_file)
-            replaced_ips = get_all_ips_in_file(replaced_path)
-            print(f"\n替换文件：{replaced_file}")
-            print(f"替换文件中的 IP 数量：{len(replaced_ips)}")
-            print("替换文件中的 IP 示例：")
-            for ip in sorted(replaced_ips)[:5]:  # 只显示前 5 个 IP
-                print(f"  - {ip}")
-
-    print(f"\n目录中所有原始文件的 IP 数量：{len(all_original_ips)}")
-    print("所有原始文件中的 IP 示例：")
-    for ip in sorted(all_original_ips)[:5]:  # 只显示前 5 个 IP
-        print(f"  - {ip}")
-
-    # 验证日志文件
+    # 验证替换日志
     log_path = os.path.join(subdir_path, "replacement.log")
     if os.path.exists(log_path):
-        if verify_replacement_log(log_path, all_original_ips):
-            print("\n日志验证通过")
-        else:
-            errors.append("日志验证失败")
+        success, message = verify_replacement_log(log_path, all_original_ips)
+        assert success, message
     else:
-        errors.append("未找到 replacement.log 文件")
+        print("未找到 replacement.log 文件")
 
-    # 检查 IP 替换一致性
+    # 验证 IP 替换一致性
     consistency_errors = verify_ip_consistency(replaced_files, subdir_path)
-    errors.extend(consistency_errors)
-
-    return errors
+    assert not consistency_errors, "\n".join(consistency_errors)
 
 def main():
     """主函数"""
@@ -252,8 +233,7 @@ def main():
     for subdir in os.listdir(test_dir):
         subdir_path = os.path.join(test_dir, subdir)
         if os.path.isdir(subdir_path):
-            errors = test_directory(subdir_path)
-            all_errors.extend([f"{subdir}: {error}" for error in errors])
+            test_directory(subdir_path)
 
     print("\n测试总结：")
     if all_errors:
