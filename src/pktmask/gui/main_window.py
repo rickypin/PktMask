@@ -66,7 +66,7 @@ class ProcessThread(QThread):
                 break
 
             subdir_path = os.path.join(base_dir, subdir)
-            self.progress.emit(f"正在处理子目录 {i}/{self.total_subdirs}: {subdir}")
+            self.progress.emit(f"Processing subdirectory {i}/{self.total_subdirs}: {subdir}")
 
             # 使用stream_subdirectory_process处理子目录
             for message in stream_subdirectory_process(subdir_path, base_dir):
@@ -85,13 +85,13 @@ class ProcessThread(QThread):
                     self.progress.emit(message)
                     
                     # 尝试从日志中提取统计信息
-                    if "处理完成" in message and "成功处理" in message:
+                    if "Processing completed" in message and "Successfully processed" in message:
                         try:
-                            parts = message.split("，")
+                            parts = message.split(", ")
                             for part in parts:
-                                if "成功处理" in part:
-                                    self.processed_files += int(part.split(" ")[1])
-                                elif "总耗时" in part:
+                                if "Successfully processed" in part:
+                                    self.processed_files += int(part.split(" ")[2])
+                                elif "Total time" in part:
                                     self.total_unique_ips += int(part.split(" ")[1])
                         except:
                             pass
@@ -111,18 +111,18 @@ class ProcessThread(QThread):
                         self.total_unique_ips += stats.get("total_unique_ips", 0)
                         # 如有需要可累加其他统计项
             except Exception as e:
-                self.progress.emit(f"读取replacement.log出错：{str(e)}")
+                self.progress.emit(f"Error reading replacement.log: {str(e)}")
 
         # 显示总体处理摘要
-        self.progress.emit("\n处理完成，总体统计：")
-        self.progress.emit(f"总子目录数：{self.total_subdirs}")
-        self.progress.emit(f"处理子目录：{self.processed_subdirs}")
-        self.progress.emit(f"跳过子目录：{self.skipped_subdirs}")
-        self.progress.emit(f"总文件数：{self.processed_files + self.skipped_files + self.failed_files}")
-        self.progress.emit(f"处理完成：{self.processed_files}")
-        self.progress.emit(f"跳过文件：{self.skipped_files}")
-        self.progress.emit(f"处理失败：{self.failed_files}")
-        self.progress.emit(f"总唯一IP数：{self.total_unique_ips}\n")
+        self.progress.emit("\nProcessing completed. Summary:")
+        self.progress.emit(f"Total subdirectories: {self.total_subdirs}")
+        self.progress.emit(f"Processed subdirectories: {self.processed_subdirs}")
+        self.progress.emit(f"Skipped subdirectories: {self.skipped_subdirs}")
+        self.progress.emit(f"Total files: {self.processed_files + self.skipped_files + self.failed_files}")
+        self.progress.emit(f"Processed files: {self.processed_files}")
+        self.progress.emit(f"Skipped files: {self.skipped_files}")
+        self.progress.emit(f"Failed files: {self.failed_files}")
+        self.progress.emit(f"Total unique IPs: {self.total_unique_ips}\n")
 
     def stop(self):
         """停止处理"""
@@ -139,7 +139,7 @@ class MainWindow(QMainWindow):
 
     def init_ui(self):
         """初始化界面"""
-        self.setWindowTitle("PktMask - IP 地址替换工具")
+        self.setWindowTitle("PktMask - IP Address Replacement Tool")
         self.setMinimumSize(1200, 800)
 
         # 创建中央部件
@@ -163,22 +163,22 @@ class MainWindow(QMainWindow):
         op_layout.setSpacing(10)
         op_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        button_title = QLabel("操作控制：")
+        button_title = QLabel("Operations:")
         button_title.setFont(QFont("Arial", 12, QFont.Weight.Bold))
         op_layout.addWidget(button_title)
 
-        self.select_dir_btn = QPushButton("选择目录")
+        self.select_dir_btn = QPushButton("Select Directory")
         self.select_dir_btn.setMinimumHeight(40)
         self.select_dir_btn.clicked.connect(self.select_directory)
         op_layout.addWidget(self.select_dir_btn)
 
-        self.process_btn = QPushButton("开始处理")
+        self.process_btn = QPushButton("Start Processing")
         self.process_btn.setMinimumHeight(40)
         self.process_btn.clicked.connect(self.start_processing)
         self.process_btn.setEnabled(False)
         op_layout.addWidget(self.process_btn)
 
-        self.stop_btn = QPushButton("停止处理")
+        self.stop_btn = QPushButton("Stop Processing")
         self.stop_btn.setMinimumHeight(40)
         self.stop_btn.clicked.connect(self.stop_processing)
         self.stop_btn.setEnabled(False)
@@ -188,7 +188,7 @@ class MainWindow(QMainWindow):
         left_layout.addWidget(op_widget, 0)
 
         # 日志区
-        log_label = QLabel("处理日志：")
+        log_label = QLabel("Processing Log:")
         log_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
         left_layout.addWidget(log_label)
 
@@ -219,7 +219,7 @@ class MainWindow(QMainWindow):
         self.mapping_vlayout.setSpacing(20)
         self.mapping_vlayout.setContentsMargins(10, 10, 10, 10)
         self.mapping_scroll.setWidget(self.mapping_container)
-        self.mapping_tab.addTab(self.mapping_scroll, "IP 映射关系")
+        self.mapping_tab.addTab(self.mapping_scroll, "IP Mapping")
 
         # 说明Tab
         self.summary_text = QTextEdit()
@@ -240,7 +240,7 @@ class MainWindow(QMainWindow):
             self.summary_text.setHtml(summary_html)
         except Exception as e:
             self.summary_text.setText(f"无法加载说明文档：{str(e)}")
-        self.mapping_tab.addTab(self.summary_text, "IP 地址替换说明")
+        self.mapping_tab.addTab(self.summary_text, "IP Address Replacement Instructions")
         self.mapping_tab.setCurrentIndex(0)
         right_layout.addWidget(self.mapping_tab)
         right_widget.setLayout(right_layout)
@@ -254,12 +254,12 @@ class MainWindow(QMainWindow):
         if dir_path:
             self.base_dir = dir_path
             self.process_btn.setEnabled(True)
-            self.log_text.append(f"已选择目录：{dir_path}")
+            self.log_text.append(f"Selected directory: {dir_path}")
 
     def start_processing(self):
         """开始处理"""
         if not hasattr(self, 'base_dir'):
-            QMessageBox.warning(self, "警告", "请先选择要处理的目录")
+            QMessageBox.warning(self, "Warning", "Please select a directory to process.")
             return
 
         self.all_ip_mappings = {}  # 新处理前清空
@@ -279,7 +279,7 @@ class MainWindow(QMainWindow):
         if self.process_thread and self.process_thread.isRunning():
             self.process_thread.stop()
             self.process_thread.wait()
-            self.log_text.append("处理已停止")
+            self.log_text.append("Processing stopped.")
             self.process_btn.setEnabled(True)
             self.stop_btn.setEnabled(False)
             self.select_dir_btn.setEnabled(True)
@@ -298,7 +298,7 @@ class MainWindow(QMainWindow):
         # 只用 replacement.log 作为数据源
         log_path = os.path.join(self.base_dir, subdir, "replacement.log")
         if not os.path.exists(log_path):
-            self.log_text.append(f"未找到 {log_path}")
+            self.log_text.append(f"File not found: {log_path}")
             return
         with open(log_path, "r", encoding="utf-8") as f:
             log_data = json.load(f)
@@ -320,21 +320,21 @@ class MainWindow(QMainWindow):
             stats = log_data.get("stats", {})
             file_mappings = log_data.get("file_mappings", {})
             total_mapping = log_data.get("total_mapping", {})
-            text += f"子目录：{subdir_name}\n"
+            text += f"Subdirectory: {subdir_name}\n"
             text += "=" * 40 + "\n"
-            # 1. 基础统计
-            text += "【基础统计】\n"
+            # 1. Basic Stats
+            text += "[Basic Stats]\n"
             for k, v in stats.items():
                 text += f"{k}: {v}\n"
             text += "\n"
-            # 2. 每个文件的独立映射
+            # 2. File Mappings
             for fname, mapping in file_mappings.items():
-                text += f"文件：{fname}\n"
+                text += f"File: {fname}\n"
                 for orig, new in mapping.items():
                     text += f"  {orig:<20} -> {new}\n"
                 text += "\n"
-            # 3. 汇总映射
-            text += "【汇总映射】\n"
+            # 3. Total Mapping
+            text += "[Total Mapping]\n"
             for orig, new in total_mapping.items():
                 text += f"{orig:<20} -> {new}\n"
             text += "\n" + ("-"*40) + "\n\n"
@@ -344,14 +344,14 @@ class MainWindow(QMainWindow):
 
     def processing_finished(self):
         """处理完成"""
-        self.log_text.append("处理完成")
+        self.log_text.append("Processing completed.")
         self.process_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         self.select_dir_btn.setEnabled(True)
 
     def processing_error(self, error_message: str):
         """处理出错"""
-        QMessageBox.critical(self, "错误", f"处理过程中出现错误：{error_message}")
+        QMessageBox.critical(self, "Error", f"An error occurred during processing: {error_message}")
         self.process_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         self.select_dir_btn.setEnabled(True)

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IP替换报告 - {{ subdir }}</title>
+    <title>IP Replacement Report - {{ subdir }}</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -117,37 +117,37 @@
 </head>
 <body>
     <div class="container">
-        <h1>IP替换报告</h1>
-        <div class="timestamp">生成时间：{{ now }}</div>
-        <div class="subdir">目录：{{ subdir }}</div>
+        <h1>IP Replacement Report</h1>
+        <div class="timestamp">Generated at: {{ now }}</div>
+        <div class="subdir">Directory: {{ subdir }}</div>
 
-        <!-- 基础统计 -->
+        <!-- Basic Stats -->
         <div class="stats">
-            <h2>基础统计</h2>
+            <h2>Basic Stats</h2>
             <div class="stats-grid">
                 <div class="stat-item">
-                    <div class="stat-label">处理文件数</div>
+                    <div class="stat-label">Files Processed</div>
                     <div class="stat-value">{{ stats.processed_file_count }}</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-label">总唯一IP数</div>
+                    <div class="stat-label">Total Unique IPs</div>
                     <div class="stat-value">{{ stats.total_unique_ips }}</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-label">总耗时</div>
-                    <div class="stat-value">{{ "%.2f"|format(stats.total_time_seconds) }}秒</div>
+                    <div class="stat-label">Total Time</div>
+                    <div class="stat-value">{{ "%.2f"|format(stats.total_time_seconds) }}s</div>
                 </div>
             </div>
         </div>
 
-        <!-- 文件统计 -->
+        <!-- File Stats -->
         <div class="stats">
-            <h2>文件统计</h2>
+            <h2>File Stats</h2>
             <table class="mapping-table">
                 <thead>
                     <tr>
-                        <th>文件名</th>
-                        <th>唯一IP数量</th>
+                        <th>File Name</th>
+                        <th>Unique IPs</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -161,18 +161,18 @@
             </table>
         </div>
 
-        <!-- 每个文件的映射关系 -->
+        <!-- File Mappings -->
         {% for file, mapping in file_mappings.items() %}
         <div class="file-section">
             <div class="file-header">
                 <div class="file-name">{{ file }}</div>
-                <div class="file-stats">唯一IP数量：{{ mapping|length }}</div>
+                <div class="file-stats">Unique IPs: {{ mapping|length }}</div>
             </div>
             <table class="mapping-table">
                 <thead>
                     <tr>
-                        <th>原始IP</th>
-                        <th>新IP</th>
+                        <th>Original IP</th>
+                        <th>New IP</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -191,14 +191,14 @@
         </div>
         {% endfor %}
 
-        <!-- 汇总映射关系 -->
+        <!-- Total Mapping -->
         <div class="mapping-section">
-            <h2>汇总映射关系</h2>
+            <h2>Total Mapping</h2>
             <table class="mapping-table">
                 <thead>
                     <tr>
-                        <th>原始IP</th>
-                        <th>新IP</th>
+                        <th>Original IP</th>
+                        <th>New IP</th>
                     </tr>
                 </thead>
                 <tbody>

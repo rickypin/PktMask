@@ -243,7 +243,7 @@ def prescan_addresses(files_to_process: List[str], subdir_path: str, error_log: 
                         freq_ipv6_6[":".join(parts[:6])] = freq_ipv6_6.get(":".join(parts[:6]), 0) + 1
                         freq_ipv6_7[":".join(parts[:7])] = freq_ipv6_7.get(":".join(parts[:7]), 0) + 1
         except Exception as e:
-            error_log.append(f"{current_time()} - 预扫描文件 {file_path} 出错：{str(e)}")
+            error_log.append(f"{current_time()} - Error scanning file {file_path}: {str(e)}")
     
     return (freq_ipv4_1, freq_ipv4_2, freq_ipv4_3,
             freq_ipv6_1, freq_ipv6_2, freq_ipv6_3, freq_ipv6_4, freq_ipv6_5, freq_ipv6_6, freq_ipv6_7,
@@ -286,13 +286,13 @@ def process_packet(packet, mapping: Dict[str, str]):
     return packet
 
 def process_file(file_path: str, mapping: Dict[str, str], error_log: List[str]) -> (bool, Dict[str, str]):
-    """处理单个文件，返回是否成功及本文件涉及的IP映射"""
+    """Process a single file, return success status and IP mapping for this file"""
     try:
-        # 仅处理不带 '-Replaced' 后缀的文件
+        # Only process files without '-Replaced' suffix
         if file_path.endswith('-Replaced.pcap') or file_path.endswith('-Replaced.pcapng'):
-            return True, {}  # 改为返回 True，表示正常跳过
+            return True, {}  # Return True to indicate normal skip
 
-        # 用于统计本文件中实际使用的IP
+        # For counting IPs actually used in this file
         file_used_ips = set()
         
         ext = os.path.splitext(file_path)[1].lower()
@@ -300,7 +300,7 @@ def process_file(file_path: str, mapping: Dict[str, str], error_log: List[str]) 
         with reader_class(file_path) as reader:
             packets = []
             for packet in reader:
-                # 先保存原始IP
+                # Save original IPs first
                 if packet.haslayer(IP):
                     orig_src = packet.getlayer(IP).src
                     orig_dst = packet.getlayer(IP).dst
@@ -311,30 +311,30 @@ def process_file(file_path: str, mapping: Dict[str, str], error_log: List[str]) 
                     orig_dst = packet.getlayer(IPv6).dst
                     file_used_ips.add(orig_src)
                     file_used_ips.add(orig_dst)
-                # 再处理数据包
+                # Then process the packet
                 packets.append(process_packet(packet, mapping))
 
-        # 输出文件名加 -Replaced 后缀，直接覆盖
+        # Add -Replaced suffix to output filename, overwrite directly
         base, ext = os.path.splitext(file_path)
         new_file_path = f"{base}-Replaced{ext}"
         wrpcap(new_file_path, packets)
 
-        # 只返回本文件中实际使用的IP的映射
+        # Only return mapping for IPs actually used in this file
         file_mapping = {ip: mapping[ip] for ip in file_used_ips if ip in mapping}
         return True, file_mapping
     except Exception as e:
-        error_log.append(f"{current_time()} - 处理文件 {file_path} 出错：{str(e)}")
+        error_log.append(f"{current_time()} - Error processing file {file_path}: {str(e)}")
         return False, {}
 
 def stream_subdirectory_process(subdir_path, base_path=None):
-    """处理子目录，确保跨文件的 IP 替换一致性"""
+    """Process subdirectory, ensure IP replacement consistency across files"""
     if base_path is None:
         base_path = os.path.dirname(subdir_path)
     rel_subdir = os.path.relpath(subdir_path, base_path)
     start_time = datetime.now()
-    yield f"[{current_time()}] 开始处理子目录：{rel_subdir}"
+    yield f"[{current_time()}] Starting to process directory: {rel_subdir}"
 
-    # 检查是否所有文件都已替换
+    # Check if all files are already replaced
     original_files = []
     for f in os.listdir(subdir_path):
         if f.lower().endswith(('.pcap', '.pcapng')):
@@ -342,7 +342,7 @@ def stream_subdirectory_process(subdir_path, base_path=None):
                 original_files.append(f)
 
     if not original_files:
-        yield f"[{current_time()}] 子目录内未找到任何 pcap/pcapng 文件，跳过。"
+        yield f"[{current_time()}] Directory contains no pcap/pcapng files, skipped."
         yield "[SUBDIR_RESULT] SKIPPED"
         return
 
@@ -355,32 +355,32 @@ def stream_subdirectory_process(subdir_path, base_path=None):
             break
 
     if all_replaced:
-        yield f"[{current_time()}] 子目录内所有文件均已替换，跳过。"
+        yield f"[{current_time()}] All files in directory are replaced, skipped."
         yield "[SUBDIR_RESULT] SKIPPED"
     else:
         files_to_process = original_files
         error_log_entries = []
-        yield f"[{current_time()}] 【预扫描】开始..."
+        yield f"[{current_time()}] [Pre-scan] Starting..."
         
-        # 预扫描所有文件，收集所有 IP 地址和频率
+        # Pre-scan all files, collect all IP addresses and frequencies
         (freq_ipv4_1, freq_ipv4_2, freq_ipv4_3,
          freq_ipv6_1, freq_ipv6_2, freq_ipv6_3, freq_ipv6_4, freq_ipv6_5, freq_ipv6_6, freq_ipv6_7,
          all_ips) = prescan_addresses(files_to_process, subdir_path, error_log_entries)
         
-        yield f"[{current_time()}] 【预扫描】完成，唯一 IP 数量：{len(all_ips)}"
+        yield f"[{current_time()}] [Pre-scan] Completed, unique IPs: {len(all_ips)}"
         
-        # 生成全局 IP 映射
+        # Generate global IP mapping
         mapping = {}
         ipv4_first_map, ipv4_second_map, ipv4_third_map = {}, {}, {}
         ipv6_first_map, ipv6_second_map, ipv6_third_map = {}, {}, {}
         ipv6_fourth_map, ipv6_fifth_map, ipv6_sixth_map, ipv6_seventh_map = {}, {}, {}, {}
         
-        yield f"[{current_time()}] 【预计算映射】开始..."
+        yield f"[{current_time()}] [Pre-calculate mapping] Starting..."
         
-        # 先对所有IP进行排序，确保生成顺序一致
+        # Sort all IPs first to ensure consistent generation order
         sorted_ips = sorted(all_ips, key=ip_sort_key)
         
-        # 一次性生成所有IP的映射
+        # Generate mapping for all IPs at once
         for ip in sorted_ips:
             try:
                 ip_obj = ipaddress.ip_address(ip)
@@ -397,41 +397,41 @@ def stream_subdirectory_process(subdir_path, base_path=None):
                         ipv6_fourth_map, ipv6_fifth_map, ipv6_sixth_map, ipv6_seventh_map
                     )
             except Exception as e:
-                error_log_entries.append(f"{current_time()} - 预计算映射出错：{str(e)}")
+                error_log_entries.append(f"{current_time()} - Pre-calculate mapping error: {str(e)}")
         
-        yield f"[{current_time()}] 【预计算映射】完成."
+        yield f"[{current_time()}] [Pre-calculate mapping] Completed."
         
-        # 处理每个文件，使用同一个映射表
+        # Process each file using the same mapping table
         file_ip_counts = {}
         processed_file_count = 0
-        actual_used_ips = set()  # 用于记录实际使用的IP
-        file_mappings = {}  # 用于记录每个文件的映射关系
+        actual_used_ips = set()  # For recording actually used IPs
+        file_mappings = {}
         
         for f in files_to_process:
             file_path = os.path.join(subdir_path, f)
             rel_file_path = os.path.relpath(file_path, base_path)
-            yield f"[{current_time()}] 【文件处理】正在处理文件：{rel_file_path}"
+            yield f"[{current_time()}] [File Processing] Processing file: {rel_file_path}"
             
             success, file_mapping = process_file(file_path, mapping, error_log_entries)
             if not success:
-                yield f"[{current_time()}] 【文件处理】文件处理出错：{rel_file_path}，跳过。"
+                yield f"[{current_time()}] [File Processing] Error processing file: {rel_file_path}, skipped."
                 continue
             
             processed_file_count += 1
             file_ip_counts[f] = len(file_mapping)
-            actual_used_ips.update(file_mapping.keys())  # 更新实际使用的IP集合
-            file_mappings[f] = file_mapping  # 保存文件映射关系
+            actual_used_ips.update(file_mapping.keys())  # Update actual used IPs
+            file_mappings[f] = file_mapping  # Save file mapping
             rel_new_file_path = os.path.relpath(f"{os.path.splitext(file_path)[0]}-Replaced{os.path.splitext(f)[1]}", base_path)
-            yield f"[{current_time()}] 【文件处理】文件处理成功：{rel_new_file_path} （唯一 IP 数量：{len(file_mapping)}）"
+            yield f"[{current_time()}] [File Processing] File processed successfully: {rel_new_file_path} (Unique IPs: {len(file_mapping)})"
         
-        # 只保留实际使用的IP的映射
+        # Only keep actually used IPs in mapping
         final_mapping = {ip: mapping[ip] for ip in actual_used_ips}
         
-        # 生成处理报告
+        # Generate processing report
         end_time = datetime.now()
         elapsed_time = (end_time - start_time).total_seconds()
         
-        # 基础统计
+        # Basic stats
         stats = {
             "processed_file_count": processed_file_count,
             "total_unique_ips": len(final_mapping),
@@ -439,7 +439,7 @@ def stream_subdirectory_process(subdir_path, base_path=None):
             "file_ip_counts": file_ip_counts
         }
         
-        # 生成日志数据
+        # Generate log data
         log_data = {
             "stats": stats,
             "file_mappings": {f: dict(sorted(m.items(), key=lambda x: ip_sort_key(x[0]))) 
@@ -447,15 +447,15 @@ def stream_subdirectory_process(subdir_path, base_path=None):
             "total_mapping": dict(sorted(final_mapping.items(), key=lambda x: ip_sort_key(x[0])))
         }
         
-        # 保存处理报告
+        # Save processing report
         replace_log_path = os.path.join(subdir_path, "replacement.log")
         try:
             with open(replace_log_path, 'w', encoding='utf-8') as f:
                 json.dump(log_data, f, indent=2)
         except Exception as e:
-            error_log_entries.append(f"{current_time()} - 保存处理报告出错：{str(e)}")
+            error_log_entries.append(f"{current_time()} - Error saving processing report: {str(e)}")
         
-        # 生成 HTML 报告
+        # Generate HTML report
         try:
             html_path = os.path.join(subdir_path, "replacement.html")
             html_content = Template(LOG_HTML).render(
@@ -468,14 +468,14 @@ def stream_subdirectory_process(subdir_path, base_path=None):
             with open(html_path, 'w', encoding='utf-8') as f:
                 f.write(html_content)
         except Exception as e:
-            error_log_entries.append(f"{current_time()} - 生成 HTML 报告出错：{str(e)}")
+            error_log_entries.append(f"{current_time()} - Error generating HTML report: {str(e)}")
         
-        # 输出处理结果
+        # Output processing result
         if error_log_entries:
-            yield f"[{current_time()}] 【处理完成】处理过程中出现 {len(error_log_entries)} 个错误："
+            yield f"[{current_time()}] [Completed] {len(error_log_entries)} error(s) occurred during processing:"
             for error in error_log_entries:
                 yield f"[{current_time()}] {error}"
             yield "[SUBDIR_RESULT] ERROR"
         else:
-            yield f"[{current_time()}] 【处理完成】成功处理 {processed_file_count} 个文件，总耗时 {elapsed_time:.2f} 秒"
+            yield f"[{current_time()}] [Completed] Successfully processed {processed_file_count} file(s), total time: {elapsed_time:.2f} seconds"
             yield "[SUBDIR_RESULT] SUCCESS" 

@@ -8,9 +8,8 @@ a = Analysis(
     datas=[
         ('src/pktmask/resources', 'resources'),
         ('src/pktmask/gui', 'gui'),
-        ('src/pktmask/core', 'core')
     ],
-    hiddenimports=['jinja2'],
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
