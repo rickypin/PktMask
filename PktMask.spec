@@ -6,9 +6,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ('src/pktmask/resources', 'resources'),
-        ('src/pktmask/gui', 'gui'),
-        ('src/pktmask/resources/log_template.html', 'pktmask/resources'),
+        ('src/pktmask/resources', 'pktmask/resources'),
     ],
     hiddenimports=[
         'markdown',
