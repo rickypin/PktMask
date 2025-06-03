@@ -32,4 +32,6 @@ Thumbs.db
 
 # Project specific
 *.pcap
-*.pcapng 
+*.pcapng
+
+.venv/ 
