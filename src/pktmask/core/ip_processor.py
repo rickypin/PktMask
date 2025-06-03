@@ -18,44 +18,35 @@ import sys
 from scapy.all import PcapReader, PcapNgReader, wrpcap, IP, IPv6, TCP, UDP
 
 def resource_path(relative_path):
-    """获取资源文件的绝对路径，兼容 PyInstaller 打包和开发环境"""
+    """
+    获取资源文件的绝对路径，兼容 PyInstaller 打包和开发环境，适配 Windows/macOS 路径结构
+    """
+    # 1. PyInstaller打包后
     if hasattr(sys, '_MEIPASS'):
-        # PyInstaller 打包后
-        base_path = sys._MEIPASS
-        # 兼容 macOS .app 结构
-        app_resource_path = os.path.join(sys._MEIPASS, 'pktmask', 'resources', os.path.basename(relative_path))
-        if os.path.exists(app_resource_path):
-            return app_resource_path
-        # 兼容 Contents/Resources/pktmask/resources/
-        alt_path = os.path.join(os.path.dirname(sys.executable), 'Resources', 'pktmask', 'resources', os.path.basename(relative_path))
-        if os.path.exists(alt_path):
-            return alt_path
-    else:
-        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    return os.path.join(base_path, relative_path)
+        # 1.1 _MEIPASS/resources/xxx
+        path1 = os.path.join(sys._MEIPASS, relative_path)
+        if os.path.exists(path1):
+            return path1
+        # 1.2 _MEIPASS/pktmask/resources/xxx
+        path2 = os.path.join(sys._MEIPASS, 'pktmask', 'resources', os.path.basename(relative_path))
+        if os.path.exists(path2):
+            return path2
+        # 1.3 _MEIPASS/Resources/pktmask/resources/xxx（macOS .app）
+        path3 = os.path.join(os.path.dirname(sys.executable), 'Resources', 'pktmask', 'resources', os.path.basename(relative_path))
+        if os.path.exists(path3):
+            return path3
+    # 2. 开发环境
+    base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    path4 = os.path.join(base_path, relative_path)
+    if os.path.exists(path4):
+        return path4
+    # 3. 兜底
+    raise FileNotFoundError(f"Could not find {relative_path} in any of the expected locations")
 
 # 自动加载HTML模板，兼容PyInstaller打包和开发环境
-try:
-    TEMPLATE_PATH = resource_path('resources/log_template.html')
-    with open(TEMPLATE_PATH, 'r', encoding='utf-8') as f:
-        LOG_HTML = f.read()
-except FileNotFoundError:
-    # 如果找不到文件，尝试其他可能的路径
-    possible_paths = [
-        os.path.join(os.path.dirname(sys.executable), 'resources', 'log_template.html'),
-        os.path.join(os.path.dirname(sys.executable), '..', 'Resources', 'log_template.html'),
-        os.path.join(os.path.dirname(sys.executable), '..', 'Frameworks', 'resources', 'log_template.html'),
-        os.path.join(os.path.dirname(sys.executable), 'Resources', 'pktmask', 'resources', 'log_template.html'),
-    ]
-    for path in possible_paths:
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                LOG_HTML = f.read()
-                break
-        except FileNotFoundError:
-            continue
-    else:
-        raise FileNotFoundError(f"Could not find log_template.html in any of the expected locations")
+TEMPLATE_PATH = resource_path('resources/log_template.html')
+with open(TEMPLATE_PATH, 'r', encoding='utf-8') as f:
+    LOG_HTML = f.read()
 
 def current_time() -> str:
     """获取当前时间字符串"""
