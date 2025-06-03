@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP Replacement Report - TC-002-8-20210817</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .stats {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat-item {
+            background-color: white;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .mapping-section {
+            margin-top: 30px;
+        }
+        .mapping-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .mapping-table th, .mapping-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .mapping-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        .mapping-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        .file-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+        .file-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .file-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .file-stats {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .ip-pair {
+            font-family: monospace;
+            white-space: nowrap;
+        }
+        .original-ip {
+            color: #e74c3c;
+        }
+        .new-ip {
+            color: #27ae60;
+        }
+        .arrow {
+            color: #7f8c8d;
+            margin: 0 10px;
+        }
+        .timestamp {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>IP Replacement Report</h1>
+        <div class="timestamp">Generated at: 2025-06-03 00:58:24</div>
+        <div class="subdir">Directory: TC-002-8-20210817</div>
+
+        <!-- Basic Stats -->
+        <div class="stats">
+            <h2>Basic Stats</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">Files Processed</div>
+                    <div class="stat-value">1</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Total Unique IPs</div>
+                    <div class="stat-value">2</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Total Time</div>
+                    <div class="stat-value">0.07s</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Stats -->
+        <div class="stats">
+            <h2>File Stats</h2>
+            <table class="mapping-table">
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th>Unique IPs</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    <tr>
+                        <td>TC-002-8-20210817.pcapng</td>
+                        <td>2</td>
+                    </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+
+        <!-- File Mappings -->
+        
+        <div class="file-section">
+            <div class="file-header">
+                <div class="file-name">TC-002-8-20210817.pcapng</div>
+                <div class="file-stats">Unique IPs: 2</div>
+            </div>
+            <table class="mapping-table">
+                <thead>
+                    <tr>
+                        <th>Original IP</th>
+                        <th>New IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    <tr>
+                        <td class="ip-pair">
+                            <span class="original-ip">10.176.202.97</span>
+                        </td>
+                        <td class="ip-pair">
+                            <span class="new-ip">11.193.209.97</span>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <td class="ip-pair">
+                            <span class="original-ip">11.153.195.133</span>
+                        </td>
+                        <td class="ip-pair">
+                            <span class="new-ip">10.144.215.133</span>
+                        </td>
+                    </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+        
+
+        <!-- Total Mapping -->
+        <div class="mapping-section">
+            <h2>Total Mapping</h2>
+            <table class="mapping-table">
+                <thead>
+                    <tr>
+                        <th>Original IP</th>
+                        <th>New IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    <tr>
+                        <td class="ip-pair">
+                            <span class="original-ip">10.176.202.97</span>
+                        </td>
+                        <td class="ip-pair">
+                            <span class="new-ip">11.193.209.97</span>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <td class="ip-pair">
+                            <span class="original-ip">11.153.195.133</span>
+                        </td>
+                        <td class="ip-pair">
+                            <span class="new-ip">10.144.215.133</span>
+                        </td>
+                    </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html> 

@@ -6,23 +6,27 @@ PktMask 测试程序
 用于测试 IP 替换功能
 """
 
+import sys
 import os
+import shutil
+import pytest
 import json
 import ipaddress
-import pytest
 from pathlib import Path
 from typing import Dict, Set, List, Tuple
-
 from scapy.all import PcapReader, PcapNgReader, IP, IPv6
 
-@pytest.fixture
-def subdir_path():
-    """提供测试目录路径的夹具"""
-    return os.path.expanduser("~/Desktop/TestCases")
-
 def get_test_dir() -> str:
-    """获取测试目录路径"""
-    return os.path.expanduser("~/Desktop/TestCases")
+    """Get test directory path (now always from tests/data/)"""
+    return os.path.join(os.path.dirname(__file__), 'data')
+
+@pytest.fixture
+def test_data_dir(tmp_path):
+    """Copy tests/data/ to a temp dir for isolated testing"""
+    data_src = os.path.join(os.path.dirname(__file__), 'data')
+    data_dst = tmp_path / "data"
+    shutil.copytree(data_src, data_dst)
+    return data_dst
 
 def normalize_ip(ip_str: str) -> str:
     """标准化 IP 地址格式"""
@@ -57,7 +61,7 @@ def get_all_ips_in_file(file_path: str) -> Set[str]:
                     if dst_ip:
                         ips.add(dst_ip)
     except Exception as e:
-        print(f"读取文件 {file_path} 出错：{str(e)}")
+        print(f"Error reading file {file_path}: {str(e)}")
     return ips
 
 def get_ip_mapping_from_files(original_file: str, replaced_file: str) -> Dict[str, str]:
@@ -71,7 +75,7 @@ def get_ip_mapping_from_files(original_file: str, replaced_file: str) -> Dict[st
                 mapping = log_data.get('total_mapping', {})
                 return mapping
         except Exception as e:
-            print(f"读取日志文件出错：{str(e)}")
+            print(f"Error reading log file: {str(e)}")
     try:
         # 读取原始文件中的 IP
         orig_ips = get_all_ips_in_file(original_file)
@@ -86,11 +90,11 @@ def get_ip_mapping_from_files(original_file: str, replaced_file: str) -> Dict[st
             for orig_ip, replaced_ip in zip(orig_ips_list, replaced_ips_list):
                 mapping[orig_ip] = replaced_ip
         else:
-            print(f"警告：文件 {os.path.basename(original_file)} 和 {os.path.basename(replaced_file)} 中的 IP 数量不一致")
-            print(f"原始文件 IP 数量：{len(orig_ips)}")
-            print(f"替换文件 IP 数量：{len(replaced_ips)}")
+            print(f"Warning: Number of IPs in file {os.path.basename(original_file)} and {os.path.basename(replaced_file)} are different")
+            print(f"Original file IP count: {len(orig_ips)}")
+            print(f"Replaced file IP count: {len(replaced_ips)}")
     except Exception as e:
-        print(f"获取 IP 映射关系出错：{str(e)}")
+        print(f"Error getting IP mapping: {str(e)}")
     return mapping
 
 def verify_replacement_log(log_path: str, original_ips: Set[str]) -> Tuple[bool, str]:
@@ -102,7 +106,7 @@ def verify_replacement_log(log_path: str, original_ips: Set[str]) -> Tuple[bool,
         # 从日志中获取 IP 映射
         mapping = log_data.get('total_mapping', {})
         if not mapping:
-            return False, "日志文件中未找到 IP 映射"
+            return False, "IP mapping not found in log file"
         
         # 标准化所有 IP 地址
         normalized_mapping = {normalize_ip(k): normalize_ip(v) for k, v in mapping.items()}
@@ -111,12 +115,12 @@ def verify_replacement_log(log_path: str, original_ips: Set[str]) -> Tuple[bool,
         # 检查映射中的 IP 是否都在原始文件中
         for orig_ip in normalized_mapping.keys():
             if orig_ip not in normalized_original_ips:
-                return False, f"日志中包含未在原始文件中出现的 IP：{orig_ip}"
+                return False, f"Log contains IP not in original file: {orig_ip}"
         
         # 检查原始文件中的 IP 是否都有映射
         for orig_ip in normalized_original_ips:
             if orig_ip not in normalized_mapping:
-                return False, f"原始文件中的 IP 没有对应的映射：{orig_ip}"
+                return False, f"IP in original file not mapped: {orig_ip}"
         
         # 检查映射是否有效
         for orig_ip, new_ip in normalized_mapping.items():
@@ -128,23 +132,23 @@ def verify_replacement_log(log_path: str, original_ips: Set[str]) -> Tuple[bool,
                     ipaddress.IPv6Address(orig_ip)
                     ipaddress.IPv6Address(new_ip)
             except Exception as e:
-                return False, f"IP 映射无效：{orig_ip} -> {new_ip}，错误：{str(e)}"
+                return False, f"Invalid IP mapping: {orig_ip} -> {new_ip}, error: {str(e)}"
         
-        return True, "验证通过"
+        return True, "Verification passed"
     except Exception as e:
-        return False, f"验证过程出错：{str(e)}"
+        return False, f"Verification process error: {str(e)}"
 
 def verify_ip_consistency(replaced_files: List[str], subdir_path: str) -> List[str]:
     """验证 IP 替换的一致性"""
     if len(replaced_files) <= 1:
-        print("\n目录中只有一个替换文件，无需检查 IP 替换一致性")
+        print("\nOnly one replaced file in the directory, no need to check IP replacement consistency")
         return []
 
     errors = []
     # 使用第一个文件作为基准
     base_file = replaced_files[0]
-    print(f"\n检查 IP 替换一致性...")
-    print(f"基准文件：{base_file}")
+    print(f"\nChecking IP replacement consistency...")
+    print(f"Baseline file: {base_file}")
     
     # 获取基准文件的原始文件
     base_original = base_file.replace('-Replaced.pcap', '.pcap').replace('-Replaced.pcapng', '.pcapng')
@@ -154,20 +158,20 @@ def verify_ip_consistency(replaced_files: List[str], subdir_path: str) -> List[s
     # 获取基准文件的 IP 映射
     base_mapping = get_ip_mapping_from_files(base_original_path, base_replaced_path)
     if not base_mapping:
-        errors.append(f"无法从基准文件 {base_file} 获取 IP 映射")
+        errors.append(f"Failed to get IP mapping from baseline file {base_file}")
         return errors
 
     # 检查其他文件的映射是否一致
-    for file in replaced_files[1:]:
-        print(f"\n当前文件：{file}")
+    for filename in replaced_files[1:]:
+        print(f"\nCurrent file: {filename}")
         # 获取当前文件的原始文件
-        current_original = file.replace('-Replaced.pcap', '.pcap').replace('-Replaced.pcapng', '.pcapng')
+        current_original = filename.replace('-Replaced.pcap', '.pcap').replace('-Replaced.pcapng', '.pcapng')
         current_original_path = os.path.join(subdir_path, current_original)
-        current_replaced_path = os.path.join(subdir_path, file)
+        current_replaced_path = os.path.join(subdir_path, filename)
         
         current_mapping = get_ip_mapping_from_files(current_original_path, current_replaced_path)
         if not current_mapping:
-            errors.append(f"无法从文件 {file} 获取 IP 映射")
+            errors.append(f"Failed to get IP mapping from file {filename}")
             continue
 
         # 检查每个 IP 的映射是否一致
@@ -175,48 +179,72 @@ def verify_ip_consistency(replaced_files: List[str], subdir_path: str) -> List[s
             if ip in current_mapping:
                 if current_mapping[ip] != new_ip:
                     error_msg = (
-                        f"IP {ip} 的映射不一致：\n"
-                        f"  基准文件 {base_file} 映射为：{new_ip}\n"
-                        f"  当前文件 {file} 映射为：{current_mapping[ip]}"
+                        f"Inconsistent mapping for IP {ip}:\n"
+                        f"  Baseline file {base_file} maps to: {new_ip}\n"
+                        f"  Current file {filename} maps to: {current_mapping[ip]}"
                     )
                     errors.append(error_msg)
                     print(error_msg)
 
     return errors
 
-def test_directory(subdir_path: str) -> None:
-    """测试单个目录"""
-    print(f"\n测试子目录：{os.path.basename(subdir_path)}")
-    errors = []
-
-    # 获取所有原始文件和替换文件
+def _test_directory(subdir_path: str) -> None:
+    print(f"\n=== Testing subdirectory: {os.path.basename(subdir_path)} ===")
     original_files = []
     replaced_files = []
-    for f in os.listdir(subdir_path):
-        if f.lower().endswith(('.pcap', '.pcapng')):
-            if f.endswith('-Replaced.pcap') or f.endswith('-Replaced.pcapng'):
-                replaced_files.append(f)
+    for filename in os.listdir(subdir_path):
+        if filename.lower().endswith(('.pcap', '.pcapng')):
+            if filename.endswith('-Replaced.pcap') or filename.endswith('-Replaced.pcapng'):
+                replaced_files.append(filename)
             else:
-                original_files.append(f)
+                original_files.append(filename)
+    print(f"  Original files: {original_files}")
+    print(f"  Replaced files: {replaced_files}")
 
-    # 收集所有原始文件中的 IP
     all_original_ips = set()
-    for file in original_files:
-        file_path = os.path.join(subdir_path, file)
+    for filename in original_files:
+        file_path = os.path.join(subdir_path, filename)
         ips = get_all_ips_in_file(file_path)
+        print(f"    {filename}: {len(ips)} unique IPs")
         all_original_ips.update(ips)
 
-    # 验证替换日志
     log_path = os.path.join(subdir_path, "replacement.log")
     if os.path.exists(log_path):
+        print(f"  Checking replacement.log: {log_path}")
         success, message = verify_replacement_log(log_path, all_original_ips)
+        print(f"    Log verification: {'PASS' if success else 'FAIL'} - {message}")
         assert success, message
     else:
-        print("未找到 replacement.log 文件")
+        print("  replacement.log file not found")
 
-    # 验证 IP 替换一致性
     consistency_errors = verify_ip_consistency(replaced_files, subdir_path)
+    if consistency_errors:
+        print("  Consistency check: FAIL")
+        for err in consistency_errors:
+            print("    " + err)
+    else:
+        print("  Consistency check: PASS")
     assert not consistency_errors, "\n".join(consistency_errors)
+
+def test_all_subdirs(test_data_dir):
+    """Test all subdirectories in the isolated test data dir"""
+    all_errors = []
+    total = 0
+    for subdir in os.listdir(test_data_dir):
+        subdir_path = os.path.join(test_data_dir, subdir)
+        if os.path.isdir(subdir_path):
+            total += 1
+            try:
+                _test_directory(str(subdir_path))
+            except AssertionError as e:
+                all_errors.append(f"{subdir}: {e}")
+    print(f"\nTested {total} subdirectories.")
+    if all_errors:
+        print("Found the following issues:")
+        for error in all_errors:
+            print(f"- {error}")
+    else:
+        print("All tests passed, no issues found")
 
 def main():
     """主函数"""
@@ -225,19 +253,7 @@ def main():
         print(f"测试目录不存在：{test_dir}")
         return
 
-    all_errors = []
-    for subdir in os.listdir(test_dir):
-        subdir_path = os.path.join(test_dir, subdir)
-        if os.path.isdir(subdir_path):
-            test_directory(subdir_path)
-
-    print("\n测试总结：")
-    if all_errors:
-        print("发现以下问题：")
-        for error in all_errors:
-            print(f"- {error}")
-    else:
-        print("所有测试通过，未发现问题")
+    test_all_subdirs(test_dir)
 
 if __name__ == "__main__":
     main() 

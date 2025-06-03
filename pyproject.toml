@@ -37,4 +37,8 @@ Repository = "https://github.com/yourusername/pktmask.git"
 Issues = "https://github.com/yourusername/pktmask/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/pktmask"] 
+packages = ["src/pktmask"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=pktmask --cov-report=term-missing --cov-report=html --html=report.html --cov-fail-under=80"
+testpaths = ["tests"] 

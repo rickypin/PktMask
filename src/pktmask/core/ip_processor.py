@@ -52,8 +52,12 @@ def ip_sort_key(ip_str: str) -> tuple:
         return (99,)
 
 def randomize_ipv4_segment(original_seg: str) -> str:
-    """随机化 IPv4 地址段"""
+    """Randomize IPv4 address segment"""
+    if not original_seg.isdigit():
+        raise ValueError(f"Invalid IPv4 segment: {original_seg}")
     orig_int = int(original_seg)
+    if orig_int < 0 or orig_int > 255:
+        raise ValueError(f"IPv4 segment out of range: {original_seg}")
     n = len(original_seg)
     if n == 1:
         lower, upper, delta = 0, 9, 2
@@ -114,7 +118,9 @@ def generate_new_ipv4_address_hierarchical(
     ipv4_second_map: Dict[str, str],
     ipv4_third_map: Dict[str, str]
 ) -> str:
-    """生成新的 IPv4 地址（分层替换）"""
+    """Generate a new IPv4 address (hierarchical replacement)"""
+    if not isinstance(original_ip, str):
+        return original_ip
     parts = original_ip.split('.')
     if len(parts) != 4:
         return original_ip
@@ -361,12 +367,15 @@ def stream_subdirectory_process(subdir_path, base_path=None):
         files_to_process = original_files
         error_log_entries = []
         yield f"[{current_time()}] [Pre-scan] Starting..."
-        
-        # Pre-scan all files, collect all IP addresses and frequencies
-        (freq_ipv4_1, freq_ipv4_2, freq_ipv4_3,
-         freq_ipv6_1, freq_ipv6_2, freq_ipv6_3, freq_ipv6_4, freq_ipv6_5, freq_ipv6_6, freq_ipv6_7,
-         all_ips) = prescan_addresses(files_to_process, subdir_path, error_log_entries)
-        
+        try:
+            # Pre-scan all files, collect all IP addresses and frequencies
+            (freq_ipv4_1, freq_ipv4_2, freq_ipv4_3,
+             freq_ipv6_1, freq_ipv6_2, freq_ipv6_3, freq_ipv6_4, freq_ipv6_5, freq_ipv6_6, freq_ipv6_7,
+             all_ips) = prescan_addresses(files_to_process, subdir_path, error_log_entries)
+        except Exception as e:
+            yield f"[{current_time()}] [Pre-scan] Error: {str(e)}"
+            yield "[SUBDIR_RESULT] ERROR"
+            return
         yield f"[{current_time()}] [Pre-scan] Completed, unique IPs: {len(all_ips)}"
         
         # Generate global IP mapping
@@ -398,7 +407,6 @@ def stream_subdirectory_process(subdir_path, base_path=None):
                     )
             except Exception as e:
                 error_log_entries.append(f"{current_time()} - Pre-calculate mapping error: {str(e)}")
-        
         yield f"[{current_time()}] [Pre-calculate mapping] Completed."
         
         # Process each file using the same mapping table
@@ -411,12 +419,14 @@ def stream_subdirectory_process(subdir_path, base_path=None):
             file_path = os.path.join(subdir_path, f)
             rel_file_path = os.path.relpath(file_path, base_path)
             yield f"[{current_time()}] [File Processing] Processing file: {rel_file_path}"
-            
-            success, file_mapping = process_file(file_path, mapping, error_log_entries)
+            try:
+                success, file_mapping = process_file(file_path, mapping, error_log_entries)
+            except Exception as e:
+                yield f"[{current_time()}] [File Processing] Error processing file: {rel_file_path}, exception: {str(e)}"
+                continue
             if not success:
                 yield f"[{current_time()}] [File Processing] Error processing file: {rel_file_path}, skipped."
                 continue
-            
             processed_file_count += 1
             file_ip_counts[f] = len(file_mapping)
             actual_used_ips.update(file_mapping.keys())  # Update actual used IPs
