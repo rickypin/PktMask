@@ -226,21 +226,14 @@ class MainWindow(QMainWindow):
         self.summary_text.setReadOnly(True)
         self.summary_text.setMinimumHeight(150)
         # 统一资源路径查找
-        def resource_path(relative_path):
+        def resource_path(filename):
             import sys, os
             if hasattr(sys, '_MEIPASS'):
-                base_path = sys._MEIPASS
-                app_resource_path = os.path.join(sys._MEIPASS, 'pktmask', 'resources', os.path.basename(relative_path))
-                if os.path.exists(app_resource_path):
-                    return app_resource_path
-                alt_path = os.path.join(os.path.dirname(sys.executable), 'Resources', 'pktmask', 'resources', os.path.basename(relative_path))
-                if os.path.exists(alt_path):
-                    return alt_path
-            else:
-                base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-            return os.path.join(base_path, relative_path)
+                return os.path.join(sys._MEIPASS, 'resources', filename)
+            base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'resources'))
+            return os.path.join(base_path, filename)
         try:
-            summary_path = resource_path('resources/summary.md')
+            summary_path = resource_path('summary.md')
             with open(summary_path, "r", encoding="utf-8") as f:
                 summary_content = f.read()
             import markdown
