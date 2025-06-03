@@ -8,12 +8,25 @@ a = Analysis(
     datas=[
         ('src/pktmask/resources', 'resources'),
         ('src/pktmask/gui', 'gui'),
+        ('src/pktmask/resources/log_template.html', 'pktmask/resources'),
     ],
-    hiddenimports=[],
+    hiddenimports=[
+        'markdown',
+        'markdown.extensions',
+        'markdown.preprocessors',
+        'markdown.postprocessors',
+        'markdown.blockprocessors',
+        'markdown.inlinepatterns',
+        'markdown.treeprocessors',
+        'markdown.util'
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=None,
     noarchive=False,
     optimize=0,
 )
