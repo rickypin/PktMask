@@ -38,14 +38,14 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         pip install pyinstaller
-        pyinstaller --name PktMask --windowed --onefile src/pktmask/main.py
+        pyinstaller PktMask.spec
         ls dist
 
     - name: Build macOS App
       if: matrix.os == 'macos-latest'
       run: |
         pip install pyinstaller
-        pyinstaller --name PktMask --windowed --onefile src/pktmask/main.py
+        pyinstaller PktMask.spec
         ls dist
 
     - name: Upload Windows Artifact
