@@ -6,7 +6,6 @@ macholib==1.16.3
 Markdown==3.8
 MarkupSafe==3.0.2
 packaging==25.0
--e git+https://github.com/rickypin/PktMask.git@bd20be7aaee91208ac0d73edcfd7fed467d13e19#egg=pktmask
 pluggy==1.6.0
 pyinstaller==6.13.0
 pyinstaller-hooks-contrib==2025.4
