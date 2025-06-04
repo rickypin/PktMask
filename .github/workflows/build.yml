@@ -53,14 +53,14 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: PktMask-Windows
-        path: dist/PktMask.exe
+        path: dist/PktMask/**
 
     - name: Upload macOS Artifact
       if: matrix.os == 'macos-latest'
       uses: actions/upload-artifact@v4
       with:
         name: PktMask-macOS
-        path: dist/PktMask
+        path: dist/PktMask/**
 
   release:
     needs: build
