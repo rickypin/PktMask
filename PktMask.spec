@@ -3,7 +3,7 @@
 
 a = Analysis(
     ['src/pktmask/main.py'],
-    pathex=[],
+    pathex=['src'],
     binaries=[],
     datas=[
         ('src/pktmask/resources/log_template.html', 'resources'),
