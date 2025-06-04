@@ -37,6 +37,7 @@ exe = EXE(
     [],
     exclude_binaries=True,
     name='PktMask',
+    icon='assets/PktMask.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -57,7 +58,6 @@ coll = COLLECT(
     upx=True,
     upx_exclude=[],
     name='PktMask',
-    icon='assets/PktMask.ico',
 )
 app = BUNDLE(
     coll,
