@@ -24,12 +24,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     
+    - name: Install pip-tools
+      run: pip install pip-tools
+    - name: Generate requirements.txt from pyproject.toml
+      run: pip-compile pyproject.toml --output-file requirements.txt
     - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-        pip install markdown
-        pip install pyinstaller
-        pip install build
+      run: pip install -r requirements.txt
     
     - name: Build package
       run: python -m build
