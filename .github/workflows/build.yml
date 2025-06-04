@@ -48,31 +48,19 @@ jobs:
         pyinstaller PktMask.spec
         ls dist
 
-    - name: Zip Windows App
-      if: matrix.os == 'windows-latest'
-      run: |
-        cd dist
-        powershell Compress-Archive -Path PktMask\* -DestinationPath ../PktMask-Windows.zip
-
-    - name: Zip macOS App
-      if: matrix.os == 'macos-latest'
-      run: |
-        cd dist
-        zip -r ../PktMask-macOS.zip PktMask
-
     - name: Upload Windows Artifact
       if: matrix.os == 'windows-latest'
       uses: actions/upload-artifact@v4
       with:
         name: PktMask-Windows
-        path: PktMask-Windows.zip
+        path: dist/PktMask/**
 
     - name: Upload macOS Artifact
       if: matrix.os == 'macos-latest'
       uses: actions/upload-artifact@v4
       with:
         name: PktMask-macOS
-        path: PktMask-macOS.zip
+        path: dist/PktMask/**
 
   release:
     needs: build
@@ -85,15 +73,19 @@ jobs:
           path: ./artifacts
       - name: List artifacts
         run: ls -R ./artifacts
-      - name: Move Windows zip
-        run: mv ./artifacts/PktMask-Windows/PktMask-Windows.zip ./artifacts/PktMask-Windows.zip
-      - name: Move macOS zip
-        run: mv ./artifacts/PktMask-macOS/PktMask-macOS.zip ./artifacts/PktMask-macOS.zip
+      - name: Zip Windows App
+        run: |
+          cd ./artifacts/PktMask-Windows
+          zip -r ../../PktMask-Windows.zip .
+      - name: Zip macOS App
+        run: |
+          cd ./artifacts/PktMask-macOS
+          zip -r ../../PktMask-macOS.zip .
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ./artifacts/PktMask-Windows.zip
-            ./artifacts/PktMask-macOS.zip
+            ./PktMask-Windows.zip
+            ./PktMask-macOS.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
