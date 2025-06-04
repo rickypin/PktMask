@@ -108,11 +108,13 @@ def test_ip_sort_key_none_and_empty():
 
 def test_randomize_ipv4_segment_invalid():
     with pytest.raises(ValueError):
-        randomize_ipv4_segment('abc')  # 非数字字符串
+        randomize_ipv4_segment('abc')
+    with pytest.raises(ValueError):
+        randomize_ipv4_segment('999')
 
 def test_randomize_ipv6_segment_invalid():
     with pytest.raises(ValueError):
-        randomize_ipv6_segment('xyz')  # 非16进制字符串
+        randomize_ipv6_segment('zzzz')
 
 def test_generate_new_ipv4_address_hierarchical_empty_freq():
     ip = '1.2.3.4'
@@ -430,3 +432,30 @@ def test_main_py_importable():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     assert hasattr(module, "main") or True  # 只要能导入不报错即可 
+
+def test_process_file_open_error(tmp_path):
+    file_path = tmp_path / "test.pcap"
+    file_path.write_bytes(b"dummy")
+    with patch("builtins.open", side_effect=IOError("fail")):
+        error_log = []
+        ok, mapping = process_file(str(file_path), {}, error_log)
+        assert not ok
+        assert any("Error processing file" in e for e in error_log)
+
+def test_prescan_addresses_scapy_error(tmp_path):
+    file_path = tmp_path / "test.pcap"
+    file_path.write_bytes(b"dummy")
+    with patch("scapy.all.PcapReader", side_effect=IOError("fail")):
+        result = prescan_addresses([file_path.name], str(tmp_path), [])
+        assert isinstance(result, tuple)
+
+def test_stream_subdirectory_process_html_render_error(tmp_path):
+    f = tmp_path / "a.pcap"
+    f.write_bytes(b"dummy")
+    with patch("pktmask.core.ip_processor.Template.render", side_effect=Exception("fail render")):
+        with patch("pktmask.core.ip_processor.prescan_addresses", return_value=({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, set(["1.2.3.4"]))):
+            with patch("pktmask.core.ip_processor.process_file", return_value=(True, {"1.2.3.4": "5.6.7.8"})):
+                gen = stream_subdirectory_process(str(tmp_path))
+                out = list(gen)
+                print("DEBUG stream_subdirectory_process_html_render_error output:", out)
+                assert any("html report" in s.lower() and "error" in s.lower() for s in out) 

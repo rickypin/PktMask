@@ -23,6 +23,7 @@ from ..core.ip_processor import (
     prescan_addresses, generate_new_ipv4_address_hierarchical,
     generate_new_ipv6_address_hierarchical, process_file, stream_subdirectory_process
 )
+from pktmask.utils.path import resource_path
 
 class ProcessThread(QThread):
     """处理线程"""
@@ -135,6 +136,8 @@ class MainWindow(QMainWindow):
         self.process_thread: Optional[ProcessThread] = None
         self.ip_mapping_tables = {}  # 子目录名 -> QTableWidget
         self.all_ip_mappings = {}    # 子目录名 -> replacement.log内容
+        # Set allowed_root to user's home directory by default
+        self.allowed_root = os.path.expanduser("~")
         self.init_ui()
 
     def init_ui(self):
@@ -226,12 +229,6 @@ class MainWindow(QMainWindow):
         self.summary_text.setReadOnly(True)
         self.summary_text.setMinimumHeight(150)
         # 统一资源路径查找
-        def resource_path(filename):
-            import sys, os
-            if hasattr(sys, '_MEIPASS'):
-                return os.path.join(sys._MEIPASS, 'resources', filename)
-            base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'resources'))
-            return os.path.join(base_path, filename)
         try:
             summary_path = resource_path('summary.md')
             with open(summary_path, "r", encoding="utf-8") as f:
@@ -248,11 +245,27 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(right_widget, 3)
 
     def select_directory(self):
-        """选择目录"""
-        # 获取用户桌面路径
+        """选择目录（含路径穿越和权限校验）"""
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        dir_path = QFileDialog.getExistingDirectory(self, "选择要处理的目录", desktop_path)
+        dir_path = QFileDialog.getExistingDirectory(self, "Select directory to process", desktop_path)
         if dir_path:
+            # Path existence check
+            if not os.path.exists(dir_path):
+                QMessageBox.warning(self, "Warning", "The selected directory does not exist.")
+                return
+            # Path traversal check
+            base_dir = os.path.abspath(self.allowed_root)
+            user_dir = os.path.abspath(dir_path)
+            if os.path.commonpath([base_dir]) != os.path.commonpath([base_dir, user_dir]):
+                QMessageBox.warning(self, "Warning", "The selected directory is outside the allowed workspace!")
+                return
+            # Permission check
+            if not os.access(user_dir, os.R_OK):
+                QMessageBox.warning(self, "Warning", "No read permission for the selected directory.")
+                return
+            if not os.access(user_dir, os.W_OK):
+                QMessageBox.warning(self, "Warning", "No write permission for the selected directory.")
+                return
             self.base_dir = dir_path
             self.process_btn.setEnabled(True)
             self.log_text.append(f"Selected directory: {dir_path}")

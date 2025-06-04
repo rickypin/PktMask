@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import Qt
 from pktmask.gui.main_window import MainWindow
 from unittest.mock import patch, MagicMock
+import os
 
 @pytest.fixture
 def app(qtbot):
@@ -43,7 +44,8 @@ def test_log_text_visible(main_window):
     assert main_window.log_text.isVisible()
 
 def test_select_dir_btn_click(main_window, qtbot, tmp_path, monkeypatch):
-    # 模拟文件选择对话框返回路径
+    # Ensure allowed_root matches tmp_path for path check
+    main_window.allowed_root = str(tmp_path)
     monkeypatch.setattr("PyQt6.QtWidgets.QFileDialog.getExistingDirectory", lambda *a, **k: str(tmp_path))
     qtbot.mouseClick(main_window.select_dir_btn, Qt.MouseButton.LeftButton)
     assert main_window.process_btn.isEnabled()
@@ -57,14 +59,15 @@ def test_process_btn_no_dir(main_window, qtbot, monkeypatch):
         mock_warn.assert_called_once()
 
 def test_process_btn_and_stop_btn_state(main_window, qtbot, tmp_path, monkeypatch):
-    # 选择目录后，处理按钮可用，点击后状态切换
+    # Ensure allowed_root matches tmp_path for path check
+    main_window.allowed_root = str(tmp_path)
     monkeypatch.setattr("PyQt6.QtWidgets.QFileDialog.getExistingDirectory", lambda *a, **k: str(tmp_path))
     qtbot.mouseClick(main_window.select_dir_btn, Qt.MouseButton.LeftButton)
     qtbot.mouseClick(main_window.process_btn, Qt.MouseButton.LeftButton)
     assert not main_window.process_btn.isEnabled()
     assert main_window.stop_btn.isEnabled()
     assert not main_window.select_dir_btn.isEnabled()
-    # 停止后状态恢复
+    # Stop and check state recovery
     if main_window.process_thread:
         main_window.process_thread.is_running = False
     qtbot.mouseClick(main_window.stop_btn, Qt.MouseButton.LeftButton)
@@ -98,4 +101,38 @@ def test_processing_finished_state(main_window):
     main_window.processing_finished()
     assert main_window.process_btn.isEnabled()
     assert not main_window.stop_btn.isEnabled()
-    assert main_window.select_dir_btn.isEnabled() 
+    assert main_window.select_dir_btn.isEnabled()
+
+def test_select_directory_path_traversal(main_window, monkeypatch, tmp_path):
+    main_window.allowed_root = str(tmp_path)
+    parent_dir = tmp_path.parent
+    monkeypatch.setattr("PyQt6.QtWidgets.QFileDialog.getExistingDirectory", lambda *a, **k: str(parent_dir))
+    called = {}
+    def fake_warning(*args, **kwargs):
+        called['warned'] = True
+    monkeypatch.setattr("pktmask.gui.main_window.QMessageBox.warning", fake_warning)
+    main_window.select_directory()
+    assert called.get('warned'), "Should warn for path traversal"
+
+def test_select_directory_permission_checks(main_window, monkeypatch, tmp_path):
+    main_window.allowed_root = str(tmp_path)
+    monkeypatch.setattr("PyQt6.QtWidgets.QFileDialog.getExistingDirectory", lambda *a, **k: str(tmp_path))
+    monkeypatch.setattr(os, "access", lambda path, mode: mode == os.R_OK)
+    called = {}
+    def fake_warning(*args, **kwargs):
+        called['warned'] = True
+    monkeypatch.setattr("pktmask.gui.main_window.QMessageBox.warning", fake_warning)
+    main_window.select_directory()
+    assert called.get('warned'), "Should warn for no write permission"
+
+def test_select_directory_nonexistent(main_window, monkeypatch, tmp_path):
+    main_window.allowed_root = str(tmp_path)
+    fake_dir = tmp_path / "not_exist"
+    monkeypatch.setattr("PyQt6.QtWidgets.QFileDialog.getExistingDirectory", lambda *a, **k: str(fake_dir))
+    monkeypatch.setattr(os.path, "exists", lambda path: False)
+    called = {}
+    def fake_warning(*args, **kwargs):
+        called['warned'] = True
+    monkeypatch.setattr("pktmask.gui.main_window.QMessageBox.warning", fake_warning)
+    main_window.select_directory()
+    assert called.get('warned'), "Should warn for non-existent directory" 
