@@ -57,10 +57,11 @@ coll = COLLECT(
     upx=True,
     upx_exclude=[],
     name='PktMask',
+    icon='assets/PktMask.ico',
 )
-#app = BUNDLE(
-#    coll,
-#    name='PktMask.app',
-#    icon=None,
-#    bundle_identifier=None,
-#)
+app = BUNDLE(
+    coll,
+    name='PktMask.app',
+    icon='assets/PktMask.icns',
+    bundle_identifier=None,
+)
