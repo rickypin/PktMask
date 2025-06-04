@@ -85,11 +85,15 @@ jobs:
           path: ./artifacts
       - name: List artifacts
         run: ls -R ./artifacts
+      - name: Move Windows zip
+        run: mv ./artifacts/PktMask-Windows/PktMask-Windows.zip ./artifacts/PktMask-Windows.zip
+      - name: Move macOS zip
+        run: mv ./artifacts/PktMask-macOS/PktMask-macOS.zip ./artifacts/PktMask-macOS.zip
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ./artifacts/PktMask-Windows/PktMask-Windows.zip
-            ./artifacts/PktMask-macOS/PktMask-macOS.zip
+            ./artifacts/PktMask-Windows.zip
+            ./artifacts/PktMask-macOS.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
