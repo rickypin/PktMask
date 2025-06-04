@@ -28,6 +28,27 @@ dependencies = [
     "PyQt6>=6.4.0",
     "markdown>=3.4.0",
     "jinja2>=3.1.0",
+    "MarkupSafe>=3.0.2",
+    "packaging>=25.0",
+    "setuptools>=80.9.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pytest-html",
+    "pytest-metadata",
+    "pytest-qt",
+    "coverage",
+    "iniconfig",
+    "pluggy"
+]
+build = [
+    "pyinstaller",
+    "pyinstaller-hooks-contrib",
+    "altgraph",
+    "macholib"
 ]
 
 [project.urls]
