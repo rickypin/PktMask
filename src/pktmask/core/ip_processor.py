@@ -284,7 +284,7 @@ def process_packet(packet, mapping: Dict[str, str]):
                 del udp_layer.chksum
     return packet
 
-def process_file(file_path: str, mapping: Dict[str, str], error_log: List[str]) -> (bool, Dict[str, str]):
+def process_file(file_path: str, mapping: Dict[str, str], error_log: List[str]) -> Tuple[bool, Dict[str, str]]:
     """Process a single file, return success status and IP mapping for this file"""
     try:
         # Only process files without '-Replaced' suffix
