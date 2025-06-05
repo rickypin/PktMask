@@ -469,6 +469,22 @@ def stream_subdirectory_process(subdir_path, base_path=None):
     report_path = os.path.join(subdir_path, "replacement.log")
     with open(report_path, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
+
+    # 生成HTML报告，并捕获异常
+    try:
+        html_path = os.path.join(subdir_path, "replacement.html")
+        html_content = Template(LOG_HTML).render(
+            subdir=rel_subdir,
+            now=current_time(),
+            stats=stats,
+            file_mappings=file_mappings,
+            total_mapping=final_mapping
+        )
+        with open(html_path, "w", encoding="utf-8") as f:
+            f.write(html_content)
+    except Exception as e:
+        error_log_entries.append(f"{current_time()} - error generating html report: {str(e)}")
+        yield f"[{current_time()}] error generating html report: {str(e)}"
     
     yield f"[{current_time()}] Processing completed. Successfully processed {processed_file_count} files."
     yield "[SUBDIR_RESULT] SUCCESS" 

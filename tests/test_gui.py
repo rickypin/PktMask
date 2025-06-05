@@ -20,7 +20,7 @@ def main_window(app, qtbot):
 
 def test_main_window_title(main_window):
     """测试主窗口标题"""
-    assert main_window.windowTitle() == "PktMask - IP Address Replacement Tool"
+    assert main_window.windowTitle() == "PktMask - Protect Your Packet Data"
 
 def test_select_dir_btn_visible_and_enabled(main_window):
     """测试选择目录按钮可见且可用"""

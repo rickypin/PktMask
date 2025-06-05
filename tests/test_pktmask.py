@@ -274,10 +274,10 @@ def test_select_files_for_processing_chain_cases(tmp_path):
     make_files(tmp_path, deduped)
     files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
     assert files == []
-    assert 'already processed' in info
+    assert 'current processing type already exist' in info
     files, info = select_files_for_processing(str(tmp_path), suffixes, '-Replaced')
     assert set(files) == set(deduped)
-    assert 'previous step' in info
+    assert 'other processing steps' in info
     for f in deduped: os.remove(tmp_path / f)
     # 3. 原始+Deduped
     make_files(tmp_path, raw + deduped)
@@ -290,11 +290,11 @@ def test_select_files_for_processing_chain_cases(tmp_path):
     replaced = ['a-Replaced.pcap', 'b-Replaced.pcapng']
     make_files(tmp_path, deduped + replaced)
     files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
-    assert set(files) == set(replaced + deduped)
+    assert set(files) == set()
+    assert 'current processing type already exist' in info
     files, info = select_files_for_processing(str(tmp_path), suffixes, '-Replaced')
-    assert files == []
-    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped-Replaced')
-    assert set(files) == set(replaced)
+    assert set(files) == set()
+    assert 'current processing type already exist' in info
     for f in deduped + replaced: os.remove(tmp_path / f)
     # 5. 只有 Replaced
     make_files(tmp_path, replaced)
@@ -309,7 +309,8 @@ def test_select_files_for_processing_chain_cases(tmp_path):
     files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped-Replaced')
     assert files == []
     files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
-    assert set(files) == set(deduped_replaced)
+    assert set(files) == set()
+    assert 'current processing type already exist' in info
     for f in deduped_replaced: os.remove(tmp_path / f)
     # 7. 原始+Deduped+Replaced+Deduped-Replaced
     make_files(tmp_path, raw + deduped + replaced + deduped_replaced)

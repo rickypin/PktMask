@@ -234,7 +234,7 @@ class MainWindow(QMainWindow):
 
     def init_ui(self):
         """初始化界面"""
-        self.setWindowTitle("PktMask - Network Packet Processing Tool")
+        self.setWindowTitle("PktMask - Protect Your Packet Data")
         self.setMinimumSize(1200, 800)
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
