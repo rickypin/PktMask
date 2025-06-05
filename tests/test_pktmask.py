@@ -15,6 +15,7 @@ import ipaddress
 from pathlib import Path
 from typing import Dict, Set, List, Tuple
 from scapy.all import PcapReader, PcapNgReader, IP, IPv6
+from pktmask.utils.pcap_dedup import select_files_for_processing
 
 def get_test_dir() -> str:
     """Get test directory path (now always from tests/data/)"""
@@ -254,6 +255,71 @@ def main():
         return
 
     test_all_subdirs(test_dir)
+
+def make_files(tmpdir, filenames):
+    for name in filenames:
+        (tmpdir / name).write_text('dummy')
+
+def test_select_files_for_processing_chain_cases(tmp_path):
+    suffixes = ['-Deduped', '-Replaced', '-Deduped-Replaced']
+    # 1. 只有原始文件
+    raw = ['a.pcap', 'b.pcapng']
+    make_files(tmp_path, raw)
+    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
+    assert set(files) == set(raw)
+    assert 'raw' in info
+    for f in raw: os.remove(tmp_path / f)
+    # 2. 只有 Deduped 文件
+    deduped = ['a-Deduped.pcap', 'b-Deduped.pcapng']
+    make_files(tmp_path, deduped)
+    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
+    assert files == []
+    assert 'already processed' in info
+    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Replaced')
+    assert set(files) == set(deduped)
+    assert 'previous step' in info
+    for f in deduped: os.remove(tmp_path / f)
+    # 3. 原始+Deduped
+    make_files(tmp_path, raw + deduped)
+    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
+    assert files == []
+    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Replaced')
+    assert set(files) == set(deduped)
+    for f in raw + deduped: os.remove(tmp_path / f)
+    # 4. Deduped+Replaced
+    replaced = ['a-Replaced.pcap', 'b-Replaced.pcapng']
+    make_files(tmp_path, deduped + replaced)
+    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
+    assert set(files) == set(replaced + deduped)
+    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Replaced')
+    assert files == []
+    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped-Replaced')
+    assert set(files) == set(replaced)
+    for f in deduped + replaced: os.remove(tmp_path / f)
+    # 5. 只有 Replaced
+    make_files(tmp_path, replaced)
+    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Replaced')
+    assert files == []
+    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
+    assert set(files) == set(replaced)
+    for f in replaced: os.remove(tmp_path / f)
+    # 6. 只有 Deduped-Replaced
+    deduped_replaced = ['a-Deduped-Replaced.pcap', 'b-Deduped-Replaced.pcapng']
+    make_files(tmp_path, deduped_replaced)
+    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped-Replaced')
+    assert files == []
+    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
+    assert set(files) == set(deduped_replaced)
+    for f in deduped_replaced: os.remove(tmp_path / f)
+    # 7. 原始+Deduped+Replaced+Deduped-Replaced
+    make_files(tmp_path, raw + deduped + replaced + deduped_replaced)
+    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped-Replaced')
+    assert files == []
+    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Replaced')
+    assert set(files) == set(deduped_replaced)
+    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
+    assert set(files) == set(deduped_replaced)
+    for f in raw + deduped + replaced + deduped_replaced: os.remove(tmp_path / f)
 
 if __name__ == "__main__":
     main() 

@@ -10,19 +10,17 @@
 
 ### 2. Processing Example
 
-```
-TargetDirectory/
-├── SubDir1/ (processed)
-│   ├── file1.pcap
-│   └── file2.pcap
-├── SubDir2/ (processed)
-│   ├── file3.pcap
-│   └── file4.pcap
-└── SubDir3/ (processed)
-    ├── file5.pcap
-    └── NestedSubDir/ (not processed)
-        └── file6.pcap
-```
+TargetDirectory
+|-- SubDir1 (processed)
+|   |-- file1.pcap
+|   |-- file2.pcap
+|-- SubDir2 (processed)
+|   |-- file3.pcap
+|   |-- file4.pcap
+|-- SubDir3 (processed)
+    |-- file5.pcap
+    |-- NestedSubDir (not processed)
+        |-- file6.pcap
 
 ### 3. Generated Reports
 
@@ -46,22 +44,21 @@ TargetDirectory/
 
 ### 3. File Processing Example
 
-```
+
 Before Processing:
-Subdirectory/
-├── a.pcap
-├── b.pcap
-└── a-Replaced.pcap
+Subdirectory
+|-- a.pcap
+|-- b.pcap
+|-- a-Replaced.pcap
 
 After Processing:
-Subdirectory/
-├── a.pcap
-├── b.pcap
-├── a-Replaced.pcap (updated)
-├── b-Replaced.pcap (new)
-├── replacement.log
-└── replacement.html
-```
+Subdirectory
+|-- a.pcap
+|-- b.pcap
+|-- a-Replaced.pcap (updated)
+|-- b-Replaced.pcap (new)
+|-- replacement.log
+|-- replacement.html
 
 ## III. IP Address Replacement Logic
 

@@ -287,8 +287,8 @@ def process_packet(packet, mapping: Dict[str, str]):
 def process_file(file_path: str, mapping: Dict[str, str], error_log: List[str]) -> Tuple[bool, Dict[str, str]]:
     """Process a single file, return success status and IP mapping for this file"""
     try:
-        # Only process files without '-Replaced' suffix
-        if file_path.endswith('-Replaced.pcap') or file_path.endswith('-Replaced.pcapng'):
+        # 检查文件是否已经包含 -Replaced 后缀
+        if '-Replaced' in file_path:
             return True, {}  # Return True to indicate normal skip
 
         # For counting IPs actually used in this file
@@ -333,152 +333,142 @@ def stream_subdirectory_process(subdir_path, base_path=None):
     start_time = datetime.now()
     yield f"[{current_time()}] Starting to process directory: {rel_subdir}"
 
-    # Check if all files are already replaced
-    original_files = []
+    # 获取所有文件
+    all_files = []
     for f in os.listdir(subdir_path):
         if f.lower().endswith(('.pcap', '.pcapng')):
-            if not f.endswith('-Replaced.pcap') and not f.endswith('-Replaced.pcapng'):
-                original_files.append(f)
+            all_files.append(f)
 
-    if not original_files:
+    if not all_files:
         yield f"[{current_time()}] Directory contains no pcap/pcapng files, skipped."
         yield "[SUBDIR_RESULT] SKIPPED"
         return
 
-    all_replaced = True
-    for f in original_files:
-        name, ext = os.path.splitext(f)
-        replaced_path = os.path.join(subdir_path, f"{name}-Replaced{ext}")
-        if not os.path.exists(replaced_path):
-            all_replaced = False
+    # 检查是否存在已替换的文件
+    has_replaced = False
+    for f in all_files:
+        if '-Replaced' in f:
+            has_replaced = True
             break
 
-    if all_replaced:
-        yield f"[{current_time()}] All files in directory are replaced, skipped."
+    if has_replaced:
+        yield f"[{current_time()}] Files with -Replaced suffix already exist, skipped."
         yield "[SUBDIR_RESULT] SKIPPED"
+        return
+
+    # 找出所有其他处理类型的产物文件
+    other_product_files = []
+    for f in all_files:
+        if '-Deduped' in f:
+            other_product_files.append(f)
+
+    # 如果存在其他处理类型的产物文件，则只处理这些文件
+    if other_product_files:
+        files_to_process = other_product_files
     else:
-        files_to_process = original_files
-        error_log_entries = []
-        yield f"[{current_time()}] [Pre-scan] Starting..."
+        # 如果只有原始文件，则处理原始文件
+        files_to_process = [f for f in all_files if not any(suffix in f for suffix in ['-Replaced', '-Deduped'])]
+
+    if not files_to_process:
+        yield f"[{current_time()}] No files to process, skipped."
+        yield "[SUBDIR_RESULT] SKIPPED"
+        return
+
+    error_log_entries = []
+    yield f"[{current_time()}] [Pre-scan] Starting..."
+    try:
+        # Pre-scan all files, collect all IP addresses and frequencies
+        (freq_ipv4_1, freq_ipv4_2, freq_ipv4_3,
+         freq_ipv6_1, freq_ipv6_2, freq_ipv6_3, freq_ipv6_4, freq_ipv6_5, freq_ipv6_6, freq_ipv6_7,
+         all_ips) = prescan_addresses(files_to_process, subdir_path, error_log_entries)
+    except Exception as e:
+        yield f"[{current_time()}] [Pre-scan] Error: {str(e)}"
+        yield "[SUBDIR_RESULT] ERROR"
+        return
+    yield f"[{current_time()}] [Pre-scan] Completed, unique IPs: {len(all_ips)}"
+    
+    # Generate global IP mapping
+    mapping = {}
+    ipv4_first_map, ipv4_second_map, ipv4_third_map = {}, {}, {}
+    ipv6_first_map, ipv6_second_map, ipv6_third_map = {}, {}, {}
+    ipv6_fourth_map, ipv6_fifth_map, ipv6_sixth_map, ipv6_seventh_map = {}, {}, {}, {}
+    
+    yield f"[{current_time()}] [Pre-calculate mapping] Starting..."
+    
+    # Sort all IPs first to ensure consistent generation order
+    sorted_ips = sorted(all_ips, key=ip_sort_key)
+    
+    # Generate mapping for all IPs at once
+    for ip in sorted_ips:
         try:
-            # Pre-scan all files, collect all IP addresses and frequencies
-            (freq_ipv4_1, freq_ipv4_2, freq_ipv4_3,
-             freq_ipv6_1, freq_ipv6_2, freq_ipv6_3, freq_ipv6_4, freq_ipv6_5, freq_ipv6_6, freq_ipv6_7,
-             all_ips) = prescan_addresses(files_to_process, subdir_path, error_log_entries)
+            ip_obj = ipaddress.ip_address(ip)
+            if ip_obj.version == 4:
+                mapping[ip] = generate_new_ipv4_address_hierarchical(
+                    ip, freq_ipv4_1, freq_ipv4_2, freq_ipv4_3,
+                    ipv4_first_map, ipv4_second_map, ipv4_third_map
+                )
+            else:
+                mapping[ip] = generate_new_ipv6_address_hierarchical(
+                    ip, freq_ipv6_1, freq_ipv6_2, freq_ipv6_3,
+                    freq_ipv6_4, freq_ipv6_5, freq_ipv6_6, freq_ipv6_7,
+                    ipv6_first_map, ipv6_second_map, ipv6_third_map,
+                    ipv6_fourth_map, ipv6_fifth_map, ipv6_sixth_map, ipv6_seventh_map
+                )
         except Exception as e:
-            yield f"[{current_time()}] [Pre-scan] Error: {str(e)}"
-            yield "[SUBDIR_RESULT] ERROR"
-            return
-        yield f"[{current_time()}] [Pre-scan] Completed, unique IPs: {len(all_ips)}"
-        
-        # Generate global IP mapping
-        mapping = {}
-        ipv4_first_map, ipv4_second_map, ipv4_third_map = {}, {}, {}
-        ipv6_first_map, ipv6_second_map, ipv6_third_map = {}, {}, {}
-        ipv6_fourth_map, ipv6_fifth_map, ipv6_sixth_map, ipv6_seventh_map = {}, {}, {}, {}
-        
-        yield f"[{current_time()}] [Pre-calculate mapping] Starting..."
-        
-        # Sort all IPs first to ensure consistent generation order
-        sorted_ips = sorted(all_ips, key=ip_sort_key)
-        
-        # Generate mapping for all IPs at once
-        for ip in sorted_ips:
-            try:
-                ip_obj = ipaddress.ip_address(ip)
-                if ip_obj.version == 4:
-                    mapping[ip] = generate_new_ipv4_address_hierarchical(
-                        ip, freq_ipv4_1, freq_ipv4_2, freq_ipv4_3,
-                        ipv4_first_map, ipv4_second_map, ipv4_third_map
-                    )
-                else:
-                    mapping[ip] = generate_new_ipv6_address_hierarchical(
-                        ip, freq_ipv6_1, freq_ipv6_2, freq_ipv6_3,
-                        freq_ipv6_4, freq_ipv6_5, freq_ipv6_6, freq_ipv6_7,
-                        ipv6_first_map, ipv6_second_map, ipv6_third_map,
-                        ipv6_fourth_map, ipv6_fifth_map, ipv6_sixth_map, ipv6_seventh_map
-                    )
-            except Exception as e:
-                error_log_entries.append(f"{current_time()} - Pre-calculate mapping error: {str(e)}")
-        yield f"[{current_time()}] [Pre-calculate mapping] Completed."
-        
-        # Process each file using the same mapping table
-        file_ip_counts = {}
-        processed_file_count = 0
-        actual_used_ips = set()  # For recording actually used IPs
-        file_mappings = {}
-        
-        for f in files_to_process:
-            file_path = os.path.join(subdir_path, f)
-            rel_file_path = os.path.relpath(file_path, base_path)
-            yield f"[{current_time()}] [File Processing] Processing file: {rel_file_path}"
-            try:
-                success, file_mapping = process_file(file_path, mapping, error_log_entries)
-            except Exception as e:
-                yield f"[{current_time()}] [File Processing] Error processing file: {rel_file_path}, exception: {str(e)}"
-                continue
-            if not success:
-                yield f"[{current_time()}] [File Processing] Error processing file: {rel_file_path}, skipped."
-                continue
-            processed_file_count += 1
-            file_ip_counts[f] = len(file_mapping)
-            actual_used_ips.update(file_mapping.keys())  # Update actual used IPs
-            file_mappings[f] = file_mapping  # Save file mapping
-            rel_new_file_path = os.path.relpath(f"{os.path.splitext(file_path)[0]}-Replaced{os.path.splitext(f)[1]}", base_path)
-            yield f"[{current_time()}] [File Processing] File processed successfully: {rel_new_file_path} (Unique IPs: {len(file_mapping)})"
-        
-        # Only keep actually used IPs in mapping
-        final_mapping = {ip: mapping[ip] for ip in actual_used_ips}
-        
-        # Generate processing report
-        end_time = datetime.now()
-        elapsed_time = (end_time - start_time).total_seconds()
-        
-        # Basic stats
-        stats = {
-            "processed_file_count": processed_file_count,
-            "total_unique_ips": len(final_mapping),
-            "total_time_seconds": elapsed_time,
-            "file_ip_counts": file_ip_counts
-        }
-        
-        # Generate log data
-        log_data = {
-            "stats": stats,
-            "file_mappings": {f: dict(sorted(m.items(), key=lambda x: ip_sort_key(x[0]))) 
-                            for f, m in file_mappings.items()},
-            "total_mapping": dict(sorted(final_mapping.items(), key=lambda x: ip_sort_key(x[0])))
-        }
-        
-        # Save processing report
-        replace_log_path = os.path.join(subdir_path, "replacement.log")
+            error_log_entries.append(f"{current_time()} - Pre-calculate mapping error: {str(e)}")
+    yield f"[{current_time()}] [Pre-calculate mapping] Completed."
+    
+    # Process each file using the same mapping table
+    file_ip_counts = {}
+    processed_file_count = 0
+    actual_used_ips = set()  # For recording actually used IPs
+    file_mappings = {}
+    
+    for f in files_to_process:
+        file_path = os.path.join(subdir_path, f)
+        rel_file_path = os.path.relpath(file_path, base_path)
+        yield f"[{current_time()}] [File Processing] Processing file: {rel_file_path}"
         try:
-            with open(replace_log_path, 'w', encoding='utf-8') as f:
-                json.dump(log_data, f, indent=2)
+            success, file_mapping = process_file(file_path, mapping, error_log_entries)
         except Exception as e:
-            error_log_entries.append(f"{current_time()} - Error saving processing report: {str(e)}")
-        
-        # Generate HTML report
-        try:
-            html_path = os.path.join(subdir_path, "replacement.html")
-            html_content = Template(LOG_HTML).render(
-                subdir=rel_subdir,
-                now=current_time(),
-                stats=stats,
-                file_mappings=file_mappings,
-                total_mapping=final_mapping
-            )
-            with open(html_path, 'w', encoding='utf-8') as f:
-                f.write(html_content)
-        except Exception as e:
-            error_log_entries.append(f"{current_time()} - Error generating HTML report: {str(e)}")
-        
-        # Output processing result
-        if error_log_entries:
-            yield f"[{current_time()}] [Completed] {len(error_log_entries)} error(s) occurred during processing:"
-            for error in error_log_entries:
-                yield f"[{current_time()}] {error}"
-            yield "[SUBDIR_RESULT] ERROR"
-        else:
-            yield f"[{current_time()}] [Completed] Successfully processed {processed_file_count} file(s), total time: {elapsed_time:.2f} seconds"
-            yield "[SUBDIR_RESULT] SUCCESS" 
+            yield f"[{current_time()}] [File Processing] Error processing file: {rel_file_path}, exception: {str(e)}"
+            continue
+        if not success:
+            yield f"[{current_time()}] [File Processing] Error processing file: {rel_file_path}, skipped."
+            continue
+        processed_file_count += 1
+        file_ip_counts[f] = len(file_mapping)
+        actual_used_ips.update(file_mapping.keys())  # Update actual used IPs
+        file_mappings[f] = file_mapping  # Save file mapping
+        rel_new_file_path = os.path.relpath(f"{os.path.splitext(file_path)[0]}-Replaced{os.path.splitext(f)[1]}", base_path)
+        yield f"[{current_time()}] [File Processing] File processed successfully: {rel_new_file_path} (Unique IPs: {len(file_mapping)})"
+    
+    # Only keep actually used IPs in mapping
+    final_mapping = {ip: mapping[ip] for ip in actual_used_ips}
+    
+    # Generate processing report
+    end_time = datetime.now()
+    elapsed_time = (end_time - start_time).total_seconds()
+    
+    # Basic stats
+    stats = {
+        "processed_file_count": processed_file_count,
+        "total_unique_ips": len(final_mapping),
+        "total_time_seconds": elapsed_time,
+        "file_ip_counts": file_ip_counts
+    }
+    
+    # Save processing report
+    report = {
+        "stats": stats,
+        "file_mappings": file_mappings,
+        "total_mapping": final_mapping,
+        "error_log": error_log_entries
+    }
+    
+    report_path = os.path.join(subdir_path, "replacement.log")
+    with open(report_path, "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2)
+    
+    yield f"[{current_time()}] Processing completed. Successfully processed {processed_file_count} files."
+    yield "[SUBDIR_RESULT] SUCCESS" 

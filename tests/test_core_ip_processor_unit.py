@@ -426,13 +426,6 @@ def test_process_packet_various(has_ip, has_ipv6, has_tcp, has_udp):
         assert pkt.src in ("9.9.9.9", "1.1.1.1")
         assert pkt.dst in ("8.8.8.8", "2.2.2.2")
 
-def test_main_py_importable():
-    import importlib.util
-    spec = importlib.util.spec_from_file_location("pktmask_main", "src/pktmask/main.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    assert hasattr(module, "main") or True  # 只要能导入不报错即可 
-
 def test_process_file_open_error(tmp_path):
     file_path = tmp_path / "test.pcap"
     file_path.write_bytes(b"dummy")
