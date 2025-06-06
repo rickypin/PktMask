@@ -14,8 +14,8 @@ import json
 import ipaddress
 from pathlib import Path
 from typing import Dict, Set, List, Tuple
-from scapy.all import PcapReader, PcapNgReader, IP, IPv6
-from pktmask.utils.pcap_dedup import select_files_for_processing
+from scapy.all import PcapReader, PcapNgReader, IP, IPv6, wrpcap, Ether, TCP
+from pktmask.utils.file_selector import select_files
 
 def get_test_dir() -> str:
     """Get test directory path (now always from tests/data/)"""
@@ -247,80 +247,96 @@ def test_all_subdirs(test_data_dir):
     else:
         print("All tests passed, no issues found")
 
-def main():
-    """主函数"""
-    test_dir = get_test_dir()
-    if not os.path.exists(test_dir):
-        print(f"测试目录不存在：{test_dir}")
-        return
 
-    test_all_subdirs(test_dir)
-
-def make_files(tmpdir, filenames):
+def make_files(tmpdir: Path, filenames: List[str]):
+    """创建空的pcap文件用于测试"""
+    for f in tmpdir.glob('*.*'):
+        os.remove(f)
     for name in filenames:
-        (tmpdir / name).write_text('dummy')
+        wrpcap(str(tmpdir / name), [Ether()/IP(src="1.1.1.1",dst="2.2.2.2")/TCP()], append=False)
 
 def test_select_files_for_processing_chain_cases(tmp_path):
-    suffixes = ['-Deduped', '-Replaced', '-Deduped-Replaced']
-    # 1. 只有原始文件
-    raw = ['a.pcap', 'b.pcapng']
-    make_files(tmp_path, raw)
-    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
-    assert set(files) == set(raw)
-    assert 'raw' in info
-    for f in raw: os.remove(tmp_path / f)
-    # 2. 只有 Deduped 文件
-    deduped = ['a-Deduped.pcap', 'b-Deduped.pcapng']
-    make_files(tmp_path, deduped)
-    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
+    """测试文件选择逻辑，特别是链式处理场景"""
+    p = Path(tmp_path)
+    suffixes = ['-Deduped', '-Replaced']
+    
+    # 场景1：只有原始文件
+    make_files(p, ['a.pcap', 'b.pcapng'])
+    files, info = select_files(str(p), '-Deduped', suffixes)
+    assert sorted(files) == ['a.pcap', 'b.pcapng']
+    assert info == 'Processing raw files.'
+
+    # 场景2：已有Deduped文件，目标是Deduped -> 跳过
+    make_files(p, ['a-Deduped.pcap'])
+    files, info = select_files(str(p), '-Deduped', suffixes)
     assert files == []
-    assert 'current processing type already exist' in info
-    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Replaced')
-    assert set(files) == set(deduped)
-    assert 'other processing steps' in info
-    for f in deduped: os.remove(tmp_path / f)
-    # 3. 原始+Deduped
-    make_files(tmp_path, raw + deduped)
-    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
+    assert "already exist" in info
+    
+    # 场景3：已有Deduped文件，目标是Replaced -> 处理Deduped文件
+    files, info = select_files(str(p), '-Replaced', suffixes)
+    assert files == ['a-Deduped.pcap']
+    assert "from a previous step" in info
+
+    # 场景4：同时有raw和Deduped文件，目标是Deduped -> 跳过
+    make_files(p, ['a-Deduped.pcap', 'b.pcap'])
+    files, info = select_files(str(p), '-Deduped', suffixes)
     assert files == []
-    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Replaced')
-    assert set(files) == set(deduped)
-    for f in raw + deduped: os.remove(tmp_path / f)
-    # 4. Deduped+Replaced
-    replaced = ['a-Replaced.pcap', 'b-Replaced.pcapng']
-    make_files(tmp_path, deduped + replaced)
-    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
-    assert set(files) == set()
-    assert 'current processing type already exist' in info
-    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Replaced')
-    assert set(files) == set()
-    assert 'current processing type already exist' in info
-    for f in deduped + replaced: os.remove(tmp_path / f)
-    # 5. 只有 Replaced
-    make_files(tmp_path, replaced)
-    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Replaced')
+    # 目标是Replaced -> 处理Deduped文件
+    files, info = select_files(str(p), '-Replaced', suffixes)
+    assert files == ['a-Deduped.pcap']
+
+    # 场景5：同时有raw, Deduped, Replaced文件
+    make_files(p, ['a.pcap', 'b-Deduped.pcap', 'c-Replaced.pcapng'])
+    # 目标是Deduped -> 跳过
+    files, info = select_files(str(p), '-Deduped', suffixes)
     assert files == []
-    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
-    assert set(files) == set(replaced)
-    for f in replaced: os.remove(tmp_path / f)
-    # 6. 只有 Deduped-Replaced
-    deduped_replaced = ['a-Deduped-Replaced.pcap', 'b-Deduped-Replaced.pcapng']
-    make_files(tmp_path, deduped_replaced)
-    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped-Replaced')
+    # 目标是Replaced -> 跳过
+    files, info = select_files(str(p), '-Replaced', suffixes)
     assert files == []
-    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
-    assert set(files) == set()
-    assert 'current processing type already exist' in info
-    for f in deduped_replaced: os.remove(tmp_path / f)
-    # 7. 原始+Deduped+Replaced+Deduped-Replaced
-    make_files(tmp_path, raw + deduped + replaced + deduped_replaced)
-    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped-Replaced')
+
+    # 场景6：只有Replaced文件
+    make_files(p, ['a-Replaced.pcap'])
+    # 目标是Replaced -> 跳过
+    files, info = select_files(str(p), '-Replaced', suffixes)
     assert files == []
-    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Replaced')
-    assert set(files) == set(deduped_replaced)
-    files, info = select_files_for_processing(str(tmp_path), suffixes, '-Deduped')
-    assert set(files) == set(deduped_replaced)
-    for f in raw + deduped + replaced + deduped_replaced: os.remove(tmp_path / f)
+    # 目标是Deduped -> 处理Replaced文件（因为它是唯一的输入）
+    files, info = select_files(str(p), '-Deduped', suffixes)
+    assert files == ['a-Replaced.pcap']
+
+    # 场景7：什么文件都没有
+    make_files(p, [])
+    # 目标是Deduped
+    files, info = select_files(str(p), '-Deduped', suffixes)
+    assert files == []
+
+    # 场景8：有更复杂后缀的文件
+    make_files(p, ['a-Deduped-Replaced.pcapng'])
+    # 目标是Replaced -> 跳过
+    files, info = select_files(str(p), '-Replaced', suffixes)
+    assert files == []
+    # 目标是Deduped -> 跳过
+    files, info = select_files(str(p), '-Deduped', suffixes)
+    assert files == []
+
+
+def main():
+    """主函数"""
+    if len(sys.argv) > 1:
+        # 如果有命令行参数，则执行指定函数
+        func_name = sys.argv[1]
+        if func_name in globals() and callable(globals()[func_name]):
+            # 构造临时目录并执行测试
+            if 'test' in func_name:
+                # pytest fixture, create a temp dir manually
+                temp_dir = Path('./temp_test_dir')
+                temp_dir.mkdir(exist_ok=True)
+                globals()[func_name](temp_dir)
+                shutil.rmtree(temp_dir)
+            else:
+                globals()[func_name]()
+    else:
+        # 否则，显示帮助信息
+        print("Usage: python test_main.py [function_name]")
 
 if __name__ == "__main__":
     main() 
