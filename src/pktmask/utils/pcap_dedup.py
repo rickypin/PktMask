@@ -1,5 +1,13 @@
 import os
-from scapy.all import PcapReader, PcapNgReader
+from datetime import datetime
+from scapy.all import PcapReader, PcapNgReader, wrpcap
+
+from pktmask.core.pipeline import ProcessingStep
+from pktmask.utils.file_selector import select_files
+
+def current_time() -> str:
+    """获取当前时间字符串"""
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 def process_file_dedup(file_path, error_log):
     """
@@ -34,36 +42,84 @@ def process_file_dedup(file_path, error_log):
         error_log.append(f"处理文件 {file_path} 出错：{str(e)}")
         return None, total_count, 0
 
-def select_files_for_processing(subdir_path, all_known_suffixes, current_suffix):
+class DeduplicationStep(ProcessingStep):
     """
-    选择要处理的文件：
-    1. 如果目录下没有该处理类型的产物文件：
-       - 如果目录下仅有原始文件，则处理原始文件
-       - 如果目录下已有其它处理类型的产物文件，则仅处理这些产物文件
-    2. 如果目录下已有产物文件带有该处理类型的后缀标记，则跳过处理
+    去重处理步骤
     """
-    all_files = [f for f in os.listdir(subdir_path) if f.endswith('.pcap') or f.endswith('.pcapng')]
-    
-    # 1. 检查是否存在当前处理类型的产物文件（包括复合标记）
-    has_current_product = False
-    for f in all_files:
-        if current_suffix in f:  # 检查文件名中是否包含当前处理类型的后缀
-            has_current_product = True
-            break
-    
-    if has_current_product:
-        return [], 'Skipped: files with current processing type already exist.'
-    
-    # 2. 找出所有其他处理类型的产物文件
-    other_product_files = []
-    for suffix in all_known_suffixes:
-        if suffix != current_suffix:
-            other_product_files.extend([f for f in all_files if f.endswith(f'{suffix}.pcap') or f.endswith(f'{suffix}.pcapng')])
-    
-    # 3. 如果存在其他处理类型的产物文件，则只处理这些文件
-    if other_product_files:
-        return other_product_files, 'Processing files from other processing steps.'
-    
-    # 4. 如果只有原始文件，则处理原始文件
-    raw_files = [f for f in all_files if not any(f.endswith(f'{s}.pcap') or f.endswith(f'{s}.pcapng') for s in all_known_suffixes if s)]
-    return raw_files, 'Processing raw files.' 
+    @property
+    def suffix(self) -> str:
+        return "-Deduped"
+
+    def process_directory(self, subdir_path: str, base_path: str = None, progress_callback=None):
+        def log(level, message):
+            if progress_callback:
+                progress_callback('log', {'level': level, 'message': message})
+
+        if base_path is None:
+            base_path = os.path.dirname(subdir_path)
+        
+        rel_subdir = os.path.relpath(subdir_path, base_path)
+        
+        files_to_process, reason = select_files(subdir_path, self.suffix)
+        
+        if not files_to_process:
+            log('info', f"[Dedup] In '{rel_subdir}': {reason}")
+            return
+
+        log('info', f"[Dedup] In '{rel_subdir}': Found {len(files_to_process)} files to process. Reason: {reason}")
+        
+        error_log = []
+        total_packets_subdir = 0
+        total_unique_packets_subdir = 0
+        processed_files_count = 0
+
+        for f in files_to_process:
+            file_path = os.path.join(subdir_path, f)
+            rel_file_path = os.path.relpath(file_path, base_path)
+
+            log('info', f"[Dedup] Processing: {rel_file_path}")
+            
+            packets, total, deduped = process_file_dedup(file_path, error_log)
+
+            if packets is None:
+                log('error', f"[Dedup] Error processing {rel_file_path}, skipped.")
+                continue
+
+            base, ext = os.path.splitext(file_path)
+            if not base.endswith(self.suffix):
+                new_file_path = f"{base}{self.suffix}{ext}"
+            else:
+                new_file_path = file_path
+
+            wrpcap(new_file_path, packets)
+            
+            processed_files_count += 1
+            total_packets_subdir += total
+            total_unique_packets_subdir += deduped
+
+            rel_new_path = os.path.relpath(new_file_path, base_path)
+            log_msg = f"[Dedup] Finished: {rel_new_path}. Original: {total} packets, After dedup: {deduped} packets."
+            log('info', log_msg)
+            if progress_callback:
+                progress_callback('file_result', {
+                    'type': 'dedup',
+                    'filename': f,
+                    'new_filename': os.path.basename(new_file_path),
+                    'original_packets': total,
+                    'deduped_packets': deduped
+                })
+
+        for error in error_log:
+            log('error', f"[Dedup] ERROR: {error}")
+        
+        if progress_callback:
+            progress_callback('step_summary', {
+                'type': 'dedup',
+                'processed_files': processed_files_count,
+                'total_packets': total_packets_subdir,
+                'total_unique_packets': total_unique_packets_subdir
+            })
+
+# The original function is kept for backward compatibility or direct use
+# but the main logic is now in the class.
+# We remove select_files_for_processing as it's now in file_selector.py 
