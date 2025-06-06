@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
     QMessageBox, QScrollArea, QSplitter, QTableWidget, QTableWidgetItem,
     QTabWidget, QFrame, QDialog, QCheckBox, QGridLayout, QGroupBox
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QObject, QEvent
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QObject, QEvent, QTimer, QTime
 from PyQt6.QtGui import QFont, QIcon, QTextCursor, QFontMetrics, QColor, QAction
 
 # Refactored imports
@@ -87,15 +87,18 @@ class MainWindow(QMainWindow):
         
         # KPI counters
         self.files_processed_count = 0
-        self.ips_masked_count = 0
-        self.dupes_removed_count = 0
+        self.packets_processed_count = 0
+        self.timer: Optional[QTimer] = None
+        self.start_time: Optional[QTime] = None
+        self.subdirs_files_counted = set()
+        self.subdirs_packets_counted = set()
 
         self.init_ui()
         self._apply_stylesheet() # 应用初始样式
 
     def init_ui(self):
         """初始化界面"""
-        self.setWindowTitle("PktMask - Protect Your Packet Data")
+        self.setWindowTitle("PktMask")
         self.setGeometry(100, 100, 1200, 800)
         self.setWindowIcon(QIcon(resource_path('icon.png')))
 
@@ -105,70 +108,50 @@ class MainWindow(QMainWindow):
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
         
-        # Main layout is now vertical
-        main_layout = QVBoxLayout(main_widget)
+        main_layout = QGridLayout(main_widget)
         main_layout.setSpacing(15)
         main_layout.setContentsMargins(15, 15, 15, 15)
 
-        # --- Top Controls Area (Steps 1, 2, 3) ---
-        top_controls_widget = QWidget()
-        top_controls_layout = QHBoxLayout(top_controls_widget)
-        top_controls_layout.setSpacing(15)
-        top_controls_layout.setContentsMargins(0, 0, 0, 0)
+        # --- Create all GroupBox widgets first ---
 
         # Step 1: Input
-        input_group = QGroupBox("Step 1: Input")
+        input_group = QGroupBox("Step 1: Select Target")
         input_layout = QHBoxLayout(input_group)
         self.dir_prefix_label = QLabel("Input Folder:")
         self.dir_path_label = QLabel("No folder selected.")
-        self.dir_path_label.setObjectName("DirPathLabel") # 为样式表设置ID
+        self.dir_path_label.setObjectName("DirPathLabel")
         self.select_dir_btn = QPushButton("Choose Folder")
         self.reset_btn = QPushButton("Reset")
-        self.reset_btn.setObjectName("ResetButton") # 为样式表设置ID
+        self.reset_btn.setObjectName("ResetButton")
         input_layout.addWidget(self.dir_prefix_label)
-        input_layout.addWidget(self.dir_path_label, 1) # Add stretch factor
+        input_layout.addWidget(self.dir_path_label, 1)
         input_layout.addWidget(self.select_dir_btn)
         input_layout.addWidget(self.reset_btn)
 
         # Step 2: Configure Pipeline
-        pipeline_group = QGroupBox("Step 2: Configure Pipeline")
+        pipeline_group = QGroupBox("Step 2: Set Options")
         pipeline_layout = QVBoxLayout(pipeline_group)
-        self.mask_ip_cb = QCheckBox("Mask IP")
+        self.mask_ip_cb = QCheckBox("Mask IPs")
         self.dedup_packet_cb = QCheckBox("Remove Dupes")
-        self.trim_packet_cb = QCheckBox("Trim TLS Application Data")
-        self.trim_packet_cb.setToolTip("Intelligently trims non-signaling TLS records (Application Data).")
+        self.trim_packet_cb = QCheckBox("Cut Payloads")
+        self.trim_packet_cb.setToolTip("Cuts payload of packets to reduce size.")
         self.mask_ip_cb.setChecked(True)
         self.dedup_packet_cb.setChecked(True)
-        self.trim_packet_cb.setChecked(True) # 默认也勾选上
+        self.trim_packet_cb.setChecked(True)
         pipeline_layout.addWidget(self.mask_ip_cb)
         pipeline_layout.addWidget(self.dedup_packet_cb)
         pipeline_layout.addWidget(self.trim_packet_cb)
         pipeline_layout.addStretch()
 
         # Step 3: Execute
-        execute_group = QGroupBox("Step 3: Execute")
+        execute_group = QGroupBox("Step 3: Run Processing")
         execute_layout = QVBoxLayout(execute_group)
-        self.start_proc_btn = QPushButton("Start Processing")
+        self.start_proc_btn = QPushButton("Start")
         self.start_proc_btn.setMinimumHeight(40)
+        execute_layout.addStretch()
         execute_layout.addWidget(self.start_proc_btn)
         execute_layout.addStretch()
         
-        top_controls_layout.addWidget(input_group, 2)
-        top_controls_layout.addWidget(pipeline_group, 1)
-        top_controls_layout.addWidget(execute_group, 1)
-        
-        # --- Bottom Area (Dashboard, Log, Summary) ---
-        bottom_area_widget = QWidget()
-        bottom_area_layout = QHBoxLayout(bottom_area_widget)
-        bottom_area_layout.setSpacing(15)
-        bottom_area_layout.setContentsMargins(0, 0, 0, 0)
-        
-        # --- Left Column (Dashboard & Log) ---
-        left_column_widget = QWidget()
-        left_column_layout = QVBoxLayout(left_column_widget)
-        left_column_layout.setSpacing(15)
-        left_column_layout.setContentsMargins(0, 0, 0, 0)
-
         # Live Dashboard
         dashboard_group = QGroupBox("Live Dashboard")
         dashboard_layout = QVBoxLayout(dashboard_group)
@@ -177,18 +160,17 @@ class MainWindow(QMainWindow):
         kpi_layout = QGridLayout()
         self.files_processed_label = QLabel("0")
         self.files_processed_label.setObjectName("FilesProcessedLabel")
-        self.ips_masked_label = QLabel("0")
-        self.ips_masked_label.setObjectName("IpsMaskedLabel")
-        self.dupes_removed_label = QLabel("0")
-        self.dupes_removed_label.setObjectName("DupesRemovedLabel")
+        self.packets_processed_label = QLabel("0")
+        self.packets_processed_label.setObjectName("IpsMaskedLabel") # Re-use for same style
+        self.time_elapsed_label = QLabel("00:00")
+        self.time_elapsed_label.setObjectName("DupesRemovedLabel") # Re-use for same style
 
-        # 添加描述性标签
         kpi_layout.addWidget(self.files_processed_label, 0, 0, Qt.AlignmentFlag.AlignCenter)
         kpi_layout.addWidget(QLabel("Files Processed"), 1, 0, Qt.AlignmentFlag.AlignCenter)
-        kpi_layout.addWidget(self.ips_masked_label, 0, 1, Qt.AlignmentFlag.AlignCenter)
-        kpi_layout.addWidget(QLabel("IPs Masked"), 1, 1, Qt.AlignmentFlag.AlignCenter)
-        kpi_layout.addWidget(self.dupes_removed_label, 0, 2, Qt.AlignmentFlag.AlignCenter)
-        kpi_layout.addWidget(QLabel("Dupes Removed"), 1, 2, Qt.AlignmentFlag.AlignCenter)
+        kpi_layout.addWidget(self.packets_processed_label, 0, 1, Qt.AlignmentFlag.AlignCenter)
+        kpi_layout.addWidget(QLabel("Packets Processed"), 1, 1, Qt.AlignmentFlag.AlignCenter)
+        kpi_layout.addWidget(self.time_elapsed_label, 0, 2, Qt.AlignmentFlag.AlignCenter)
+        kpi_layout.addWidget(QLabel("Time Elapsed"), 1, 2, Qt.AlignmentFlag.AlignCenter)
         
         dashboard_layout.addLayout(kpi_layout)
         
@@ -199,24 +181,35 @@ class MainWindow(QMainWindow):
         self.log_text.setReadOnly(True)
         log_layout.addWidget(self.log_text)
 
-        left_column_layout.addWidget(dashboard_group)
-        left_column_layout.addWidget(log_group)
-        left_column_layout.setStretchFactor(log_group, 1) # Make log group expand
-
-        # --- Right Column (Summary) ---
+        # Summary Report
         summary_group = QGroupBox("Summary Report")
         summary_layout = QVBoxLayout(summary_group)
         self.summary_text = QTextEdit()
         self.summary_text.setReadOnly(True)
         summary_layout.addWidget(self.summary_text)
 
-        # Add columns to bottom layout
-        bottom_area_layout.addWidget(left_column_widget, 1)
-        bottom_area_layout.addWidget(summary_group, 1)
+        # --- Add widgets to the grid layout ---
         
-        # Add top and bottom areas to main layout
-        main_layout.addWidget(top_controls_widget)
-        main_layout.addWidget(bottom_area_widget, 1)
+        # Row 0: Top controls
+        main_layout.addWidget(input_group, 0, 0)
+        main_layout.addWidget(pipeline_group, 0, 1)
+        main_layout.addWidget(execute_group, 0, 2)
+        
+        # Left column contents
+        main_layout.addWidget(dashboard_group, 1, 0)
+        main_layout.addWidget(log_group, 2, 0)
+        
+        # Right column contents
+        main_layout.addWidget(summary_group, 1, 1, 2, 2) # row, col, rowspan, colspan
+
+        # --- Define stretch factors for the grid ---
+        main_layout.setColumnStretch(0, 2)
+        main_layout.setColumnStretch(1, 1)
+        main_layout.setColumnStretch(2, 1)
+        
+        main_layout.setRowStretch(0, 0)  # Top controls row - no stretch
+        main_layout.setRowStretch(1, 0)  # Dashboard row - no stretch
+        main_layout.setRowStretch(2, 1)  # Log row - takes available space
 
         # Connect signals
         self.select_dir_btn.clicked.connect(self.choose_folder)
@@ -311,11 +304,14 @@ class MainWindow(QMainWindow):
         self.summary_text.clear()
         self.all_ip_reports.clear()
         self.files_processed_count = 0
-        self.ips_masked_count = 0
-        self.dupes_removed_count = 0
+        self.packets_processed_count = 0
+        self.subdirs_files_counted.clear()
+        self.subdirs_packets_counted.clear()
         self.files_processed_label.setText("0")
-        self.ips_masked_label.setText("0")
-        self.dupes_removed_label.setText("0")
+        self.packets_processed_label.setText("0")
+        self.time_elapsed_label.setText("00:00")
+        if self.timer and self.timer.isActive():
+            self.timer.stop()
         self.progress_bar.setValue(0)
         self.start_proc_btn.setEnabled(False)
         self.show_initial_guides()
@@ -330,12 +326,20 @@ class MainWindow(QMainWindow):
         self.summary_text.clear()
         self.all_ip_reports.clear()
         self.files_processed_count = 0
-        self.ips_masked_count = 0
-        self.dupes_removed_count = 0
+        self.packets_processed_count = 0
+        self.subdirs_files_counted.clear()
+        self.subdirs_packets_counted.clear()
         self.files_processed_label.setText("0")
-        self.ips_masked_label.setText("0")
-        self.dupes_removed_label.setText("0")
+        self.packets_processed_label.setText("0")
+        self.time_elapsed_label.setText("00:00")
         self.progress_bar.setValue(0)
+
+        # Start timer
+        self.start_time = QTime.currentTime()
+        if not self.timer:
+            self.timer = QTimer(self)
+            self.timer.timeout.connect(self.update_time_elapsed)
+        self.timer.start(1000) # update every second
 
         # Build pipeline from checkboxes
         steps_to_run: List[str] = []
@@ -388,26 +392,44 @@ class MainWindow(QMainWindow):
             self.update_log(data['message'])
 
         elif event_type == PipelineEvents.STEP_SUMMARY:
+            subdir_path = None
+            if data['type'] == 'mask_ip':
+                subdir_path = data.get('report', {}).get('path')
+            elif data['type'] == 'dedup_packet':
+                subdir_path = data.get('subdir')
+            elif data['type'] == 'intelligent_trim':
+                subdir_path = data.get('report', {}).get('subdir')
+
             if data['type'] == 'mask_ip':
                 report = data['report']
-                self.ips_masked_count += report.get('stats', {}).get('total_unique_ips', 0)
-                self.files_processed_count += report.get('stats', {}).get('processed_file_count', 0)
+                if subdir_path and subdir_path not in self.subdirs_files_counted:
+                    self.files_processed_count += report.get('stats', {}).get('processed_file_count', 0)
+                    self.subdirs_files_counted.add(subdir_path)
                 self.update_ip_report(report)
+            
             elif data['type'] == 'dedup_packet':
-                report = data.get('report', {})
-                total = report.get('total_packets', 0)
-                unique = report.get('total_unique_packets', 0)
-                self.dupes_removed_count += (total - unique)
-                self.files_processed_count += report.get('processed_files', 0)
+                report = data
+                if subdir_path and subdir_path not in self.subdirs_files_counted:
+                    self.files_processed_count += report.get('processed_files', 0)
+                    self.subdirs_files_counted.add(subdir_path)
+                if subdir_path and subdir_path not in self.subdirs_packets_counted:
+                    self.packets_processed_count += report.get('total_packets', 0)
+                    self.subdirs_packets_counted.add(subdir_path)
                 self.update_dedup_report(data)
+
             elif data['type'] == 'intelligent_trim':
-                self.files_processed_count += data.get('report', {}).get('processed_files', 0)
+                report = data.get('report', {})
+                if subdir_path and subdir_path not in self.subdirs_files_counted:
+                    self.files_processed_count += report.get('processed_files', 0)
+                    self.subdirs_files_counted.add(subdir_path)
+                if subdir_path and subdir_path not in self.subdirs_packets_counted:
+                    self.packets_processed_count += report.get('total_packets', 0)
+                    self.subdirs_packets_counted.add(subdir_path)
                 self.update_trim_report(data)
             
             # Update KPI labels
             self.files_processed_label.setText(f"{self.files_processed_count}")
-            self.ips_masked_label.setText(f"{self.ips_masked_count}")
-            self.dupes_removed_label.setText(f"{self.dupes_removed_count}")
+            self.packets_processed_label.setText(f"{self.packets_processed_count}")
 
         elif event_type == PipelineEvents.PIPELINE_END:
             self.progress_bar.setValue(self.progress_bar.maximum()) # Ensure it reaches 100%
@@ -466,6 +488,10 @@ class MainWindow(QMainWindow):
         self.log_text.append(f"\n--- Pipeline Finished ---")
         self.summary_text.append(f"\n--- Pipeline Finished ---")
         
+        if self.timer:
+            self.timer.stop()
+        self.update_time_elapsed()
+
         # Re-enable controls
         self.select_dir_btn.setEnabled(True)
         self.reset_btn.setEnabled(True)
@@ -496,6 +522,17 @@ class MainWindow(QMainWindow):
             "<p>Version: 1.0</p>"
             "<p>A tool for masking sensitive data in packet captures.</p>"
             "<p>For more information, visit our <a href='https://github.com/your-repo'>GitHub page</a>.</p>")
+
+    def update_time_elapsed(self):
+        if not self.start_time:
+            return
+        elapsed_seconds = self.start_time.secsTo(QTime.currentTime())
+        hours, remainder = divmod(elapsed_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        if hours > 0:
+            self.time_elapsed_label.setText(f"{hours}:{minutes:02d}:{seconds:02d}")
+        else:
+            self.time_elapsed_label.setText(f"{minutes:02d}:{seconds:02d}")
 
 def main():
     """主函数"""
