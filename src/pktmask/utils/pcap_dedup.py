@@ -1,10 +1,12 @@
 import os
 from datetime import datetime
 from scapy.all import PcapReader, PcapNgReader, wrpcap
+from typing import Optional, Dict
 
 from pktmask.core.pipeline import ProcessingStep
 from pktmask.core.events import PipelineEvents
 from pktmask.utils.file_selector import select_files
+from pktmask.core.base_step import ProcessingStep as BaseProcessingStep
 
 def current_time() -> str:
     """获取当前时间字符串"""
@@ -47,9 +49,51 @@ class DeduplicationStep(ProcessingStep):
     """
     去重处理步骤
     """
+    suffix: str = "-Deduped"
+
     @property
-    def suffix(self) -> str:
-        return "-Deduped"
+    def name(self) -> str:
+        return "Remove Dupes"
+        
+    def process_file(self, input_path: str, output_path: str) -> Optional[Dict]:
+        """
+        处理单个 pcap/pcapng 文件，去除完全重复的报文。
+        """
+        error_log = []
+        
+        try:
+            packets = []
+            total_count = 0
+            
+            ext = os.path.splitext(input_path)[1].lower()
+            reader_cls = PcapNgReader if ext == ".pcapng" else PcapReader
+
+            seen_packets = set()
+            with reader_cls(input_path) as reader:
+                for pkt in reader:
+                    total_count += 1
+                    # 使用数据包的原始字节作为唯一标识符
+                    raw_bytes = bytes(pkt)
+                    if raw_bytes not in seen_packets:
+                        seen_packets.add(raw_bytes)
+                        packets.append(pkt)
+            
+            wrpcap(output_path, packets, append=False)
+            
+            unique_count = len(packets)
+            
+            summary = {
+                'subdir': os.path.basename(os.path.dirname(input_path)),
+                'processed_files': 1,
+                'total_packets': total_count,
+                'total_unique_packets': unique_count,
+                'error_log': error_log
+            }
+            return {'report': summary}
+
+        except Exception as e:
+            error_log.append(f"Error processing file {input_path} for deduplication: {e}")
+            return {'error_log': error_log}
 
     def process_directory(self, subdir_path: str, base_path: str = None, progress_callback=None, all_suffixes=None):
         def log(level, message):

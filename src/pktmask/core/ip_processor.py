@@ -8,11 +8,11 @@ IP 地址处理核心模块
 
 import os
 from datetime import datetime
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Optional
 
 from scapy.all import PcapReader, PcapNgReader, wrpcap, IP, IPv6, TCP, UDP
 
-from pktmask.core.pipeline import ProcessingStep
+from pktmask.core.base_step import ProcessingStep
 from pktmask.core.events import PipelineEvents
 from pktmask.core.strategy import AnonymizationStrategy
 from pktmask.utils.file_selector import select_files
@@ -27,6 +27,8 @@ class IpAnonymizationStep(ProcessingStep):
     IP匿名化处理步骤。
     该步骤使用一个可配置的策略来替换pcap文件中的IP地址。
     """
+    suffix: str = "-Replaced"
+
     def __init__(self, strategy: AnonymizationStrategy, reporter: Reporter):
         if not isinstance(strategy, AnonymizationStrategy):
             raise TypeError("strategy must be an instance of AnonymizationStrategy")
@@ -34,45 +36,61 @@ class IpAnonymizationStep(ProcessingStep):
             raise TypeError("reporter must be an instance of Reporter")
         self._strategy = strategy
         self._reporter = reporter
+        self._rel_subdir: Optional[str] = None
+        self._current_subdir_mapping: Dict[str, str] = {}
 
     @property
-    def suffix(self) -> str:
-        return "-Replaced"
+    def name(self) -> str:
+        return "Mask IP"
+
+    def set_reporter_path(self, subdir_path: str, rel_subdir: str):
+        """由Pipeline调用，以设置报告的相对路径"""
+        self._reporter.set_output_directory(subdir_path)
+        self._rel_subdir = rel_subdir
+
+    def prepare_for_directory(self, subdir_path: str, all_files: List[str]):
+        """在处理目录前，预扫描所有文件以创建一致的IP映射。"""
+        error_log = []
+        try:
+            self._current_subdir_mapping = self._strategy.create_mapping(all_files, subdir_path, error_log)
+        except Exception as e:
+            # 在这里我们可以决定如何处理错误，例如记录并使用空映射继续
+            print(f"Error creating IP mapping for {subdir_path}: {e}")
+            self._current_subdir_mapping = {}
 
     def _process_packet(self, packet, mapping: Dict[str, str]):
-        """处理单个数据包"""
+        """处理单个数据包，替换IP地址并清除校验和"""
         if packet.haslayer(IP):
             ip_layer = packet.getlayer(IP)
-            orig_src = ip_layer.src
-            ip_layer.src = mapping.get(orig_src, orig_src)
-            orig_dst = ip_layer.dst
-            ip_layer.dst = mapping.get(orig_dst, orig_dst)
+            ip_layer.src = mapping.get(ip_layer.src, ip_layer.src)
+            ip_layer.dst = mapping.get(ip_layer.dst, ip_layer.dst)
             if hasattr(ip_layer, "chksum"): del ip_layer.chksum
-            if packet.haslayer(TCP) and hasattr(packet.getlayer(TCP), "chksum"): del packet.getlayer(TCP).chksum
-            elif packet.haslayer(UDP) and hasattr(packet.getlayer(UDP), "chksum"): del packet.getlayer(UDP).chksum
+            if packet.haslayer(TCP): del packet[TCP].chksum
+            elif packet.haslayer(UDP): del packet[UDP].chksum
         
         if packet.haslayer(IPv6):
             ipv6_layer = packet.getlayer(IPv6)
-            orig_src = ipv6_layer.src
-            ipv6_layer.src = mapping.get(orig_src, orig_src)
-            orig_dst = ipv6_layer.dst
-            ipv6_layer.dst = mapping.get(orig_dst, orig_dst)
-            if hasattr(ipv6_layer, "chksum"): del ipv6_layer.chksum
-            if packet.haslayer(TCP) and hasattr(packet.getlayer(TCP), "chksum"): del packet.getlayer(TCP).chksum
-            elif packet.haslayer(UDP) and hasattr(packet.getlayer(UDP), "chksum"): del packet.getlayer(UDP).chksum
+            ipv6_layer.src = mapping.get(ipv6_layer.src, ipv6_layer.src)
+            ipv6_layer.dst = mapping.get(ipv6_layer.dst, ipv6_layer.dst)
 
         return packet
 
-    def _process_file(self, file_path: str, mapping: Dict[str, str], error_log: List[str]) -> Tuple[bool, Dict[str, str]]:
-        """处理单个文件，返回成功状态和该文件的IP映射"""
+    def process_file(self, input_path: str, output_path: str) -> Optional[Dict]:
+        """使用预先计算好的映射处理单个pcap文件。"""
+        error_log = []
+        
+        # 1. 直接使用缓存的映射，不再为单个文件创建
+        mapping = self._current_subdir_mapping
+
+        # 2. 读取、处理和写入数据包
+        packets = []
+        file_used_ips = set()
+        
+        ext = os.path.splitext(input_path)[1].lower()
+        reader_class = PcapNgReader if ext == ".pcapng" else PcapReader
+
         try:
-            file_used_ips = set()
-            
-            ext = os.path.splitext(file_path)[1].lower()
-            reader_class = PcapNgReader if ext == ".pcapng" else PcapReader
-            
-            packets = []
-            with reader_class(file_path) as reader:
+            with reader_class(input_path) as reader:
                 for packet in reader:
                     if packet.haslayer(IP):
                         file_used_ips.add(packet.getlayer(IP).src)
@@ -81,16 +99,32 @@ class IpAnonymizationStep(ProcessingStep):
                         file_used_ips.add(packet.getlayer(IPv6).src)
                         file_used_ips.add(packet.getlayer(IPv6).dst)
                     packets.append(self._process_packet(packet, mapping))
-
-            base, ext = os.path.splitext(file_path)
-            new_file_path = f"{base}{self.suffix}{ext}"
-            wrpcap(new_file_path, packets)
-
-            file_mapping = {ip: mapping[ip] for ip in file_used_ips if ip in mapping}
-            return True, file_mapping
+            
+            wrpcap(output_path, packets, append=False)
         except Exception as e:
-            error_log.append(f"{current_time()} - Error processing file {file_path}: {str(e)}")
-            return False, {}
+            error_log.append(f"Error processing packets in {os.path.basename(input_path)}: {e}")
+            return {'error_log': error_log}
+        
+        # 3. 生成摘要和报告
+        file_mapping = {ip: mapping[ip] for ip in file_used_ips if ip in mapping}
+        
+        stats = {
+            "processed_file_count": 1,
+            "total_unique_ips": len(file_mapping),
+            "total_mapped_ips": len(file_mapping),
+        }
+        
+        report_data = {
+            "path": self._rel_subdir,
+            "file": os.path.basename(input_path),
+            "stats": stats,
+            "data": { "total_mapping": file_mapping },
+            "error_log": error_log
+        }
+        
+        self._reporter.generate(f"mask_ip_{os.path.splitext(os.path.basename(input_path))[0]}", report_data)
+        
+        return {'report': report_data}
 
     def process_directory(self, subdir_path: str, base_path: str = None, progress_callback=None, all_suffixes=None):
         def log(level, message):

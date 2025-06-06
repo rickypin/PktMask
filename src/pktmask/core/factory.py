@@ -1,15 +1,17 @@
+from functools import partial
 from pktmask.core.ip_processor import IpAnonymizationStep
 from pktmask.core.strategy import HierarchicalAnonymizationStrategy
 from pktmask.utils.pcap_dedup import DeduplicationStep
 from pktmask.utils.reporting import FileReporter
+from pktmask.utils.pcap_intelligent_trimmer import IntelligentTrimmingStep
 
-# 使用 lambda 来处理需要复杂初始化的步骤
+# 使用 functools.partial 来处理需要复杂初始化的步骤，这比 lambda 更易于 introspect
 STEP_REGISTRY = {
     "remove_dupes": DeduplicationStep,
-    "mask_ip": lambda: IpAnonymizationStep(
-        strategy=HierarchicalAnonymizationStrategy(),
-        reporter=FileReporter()
-    )
+    "trim_packet": IntelligentTrimmingStep,
+    "mask_ip": partial(IpAnonymizationStep,
+                       strategy=HierarchicalAnonymizationStrategy(),
+                       reporter=FileReporter())
 }
 
 def create_step(name: str):
