@@ -8,19 +8,17 @@ IP 地址处理核心模块
 
 import os
 from datetime import datetime
-from typing import Dict, Tuple, List, Optional
+from typing import Dict, List, Optional
 
 from scapy.all import PcapReader, PcapNgReader, wrpcap, IP, IPv6, TCP, UDP
 
-from pktmask.core.base_step import ProcessingStep
-from pktmask.core.events import PipelineEvents
-from pktmask.core.strategy import AnonymizationStrategy
-from pktmask.utils.file_selector import select_files
-from pktmask.utils.reporting import Reporter
+from ..core.base_step import ProcessingStep
+from ..core.events import PipelineEvents
+from ..core.strategy import AnonymizationStrategy
+from ..utils.file_selector import select_files
+from ..utils.reporting import Reporter
+from ..utils.time import current_time
 
-def current_time() -> str:
-    """获取当前时间字符串"""
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 class IpAnonymizationStep(ProcessingStep):
     """

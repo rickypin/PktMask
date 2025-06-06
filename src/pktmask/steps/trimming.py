@@ -11,7 +11,7 @@ from typing import List, Tuple, Dict, Optional
 
 from scapy.all import PcapReader, PcapNgReader, wrpcap, TCP, IP, IPv6
 
-from pktmask.core.base_step import ProcessingStep
+from ..core.base_step import ProcessingStep
 
 # --- 从原始脚本移植的核心算法函数 ---
 

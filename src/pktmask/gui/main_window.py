@@ -23,13 +23,13 @@ from PyQt6.QtGui import QFont, QIcon, QTextCursor, QFontMetrics, QColor, QAction
 # Refactored imports
 from pktmask.core.pipeline import Pipeline
 from pktmask.core.events import PipelineEvents
-from pktmask.core.factory import create_step
+from pktmask.core.factory import get_step_instance
 from pktmask.utils.path import resource_path
 from .stylesheet import generate_stylesheet
 
 PROCESS_DISPLAY_NAMES = {
     "mask_ip": "Mask IP",
-    "remove_dupes": "Remove Dupes",
+    "dedup_packet": "Remove Dupes",
     "trim_packet": "Trim Packet"
 }
 
@@ -132,14 +132,14 @@ class MainWindow(QMainWindow):
         pipeline_group = QGroupBox("Step 2: Configure Pipeline")
         pipeline_layout = QVBoxLayout(pipeline_group)
         self.mask_ip_cb = QCheckBox("Mask IP")
-        self.remove_dupes_cb = QCheckBox("Remove Dupes")
+        self.dedup_packet_cb = QCheckBox("Remove Dupes")
         self.trim_packet_cb = QCheckBox("Trim TLS Application Data")
         self.trim_packet_cb.setToolTip("Intelligently trims non-signaling TLS records (Application Data).")
         self.mask_ip_cb.setChecked(True)
-        self.remove_dupes_cb.setChecked(True)
+        self.dedup_packet_cb.setChecked(True)
         self.trim_packet_cb.setChecked(True) # 默认也勾选上
         pipeline_layout.addWidget(self.mask_ip_cb)
-        pipeline_layout.addWidget(self.remove_dupes_cb)
+        pipeline_layout.addWidget(self.dedup_packet_cb)
         pipeline_layout.addWidget(self.trim_packet_cb)
 
         # Step 3: Execute
@@ -334,8 +334,8 @@ class MainWindow(QMainWindow):
         # 推荐的处理顺序：Mask IP -> Remove Dupes -> Trim Packet
         if self.mask_ip_cb.isChecked():
             steps_to_run.append("mask_ip")
-        if self.remove_dupes_cb.isChecked():
-            steps_to_run.append("remove_dupes")
+        if self.dedup_packet_cb.isChecked():
+            steps_to_run.append("dedup_packet")
         if self.trim_packet_cb.isChecked():
             steps_to_run.append("trim_packet")
 
@@ -344,7 +344,7 @@ class MainWindow(QMainWindow):
             return
 
         try:
-            pipeline_steps = [create_step(name) for name in steps_to_run]
+            pipeline_steps = [get_step_instance(name) for name in steps_to_run]
             pipeline = Pipeline(steps=pipeline_steps)
             self.start_processing(pipeline)
         except ValueError as e:
@@ -363,7 +363,7 @@ class MainWindow(QMainWindow):
         # Disable all controls during processing
         self.select_dir_btn.setEnabled(False)
         self.reset_btn.setEnabled(False)
-        for cb in [self.mask_ip_cb, self.remove_dupes_cb, self.trim_packet_cb]:
+        for cb in [self.mask_ip_cb, self.dedup_packet_cb, self.trim_packet_cb]:
             if cb.text() != "Trim Packet (Coming Soon)":
                 cb.setEnabled(False)
         self.start_proc_btn.setEnabled(False)
@@ -385,7 +385,7 @@ class MainWindow(QMainWindow):
                 self.ips_masked_count += report.get('stats', {}).get('total_unique_ips', 0)
                 self.files_processed_count += report.get('stats', {}).get('processed_file_count', 0)
                 self.update_ip_report(report)
-            elif data['type'] == 'remove_dupes':
+            elif data['type'] == 'dedup_packet':
                 report = data.get('report', {})
                 total = report.get('total_packets', 0)
                 unique = report.get('total_unique_packets', 0)
@@ -461,7 +461,7 @@ class MainWindow(QMainWindow):
         # Re-enable controls
         self.select_dir_btn.setEnabled(True)
         self.reset_btn.setEnabled(True)
-        for cb in [self.mask_ip_cb, self.remove_dupes_cb, self.trim_packet_cb]:
+        for cb in [self.mask_ip_cb, self.dedup_packet_cb, self.trim_packet_cb]:
             cb.setEnabled(True)
         self.start_proc_btn.setEnabled(True)
 

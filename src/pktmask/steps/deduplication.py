@@ -1,16 +1,12 @@
 import os
-from datetime import datetime
 from scapy.all import PcapReader, PcapNgReader, wrpcap
 from typing import Optional, Dict
 
-from pktmask.core.pipeline import ProcessingStep
-from pktmask.core.events import PipelineEvents
-from pktmask.utils.file_selector import select_files
-from pktmask.core.base_step import ProcessingStep as BaseProcessingStep
+from ..core.base_step import ProcessingStep
+from ..core.events import PipelineEvents
+from ..utils.file_selector import select_files
+from ..utils.time import current_time
 
-def current_time() -> str:
-    """获取当前时间字符串"""
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 def process_file_dedup(file_path, error_log):
     """
@@ -163,8 +159,4 @@ class DeduplicationStep(ProcessingStep):
                 'processed_files': processed_files_count,
                 'total_packets': total_packets_subdir,
                 'total_unique_packets': total_unique_packets_subdir
-            })
-
-# The original function is kept for backward compatibility or direct use
-# but the main logic is now in the class.
-# We remove select_files_for_processing as it's now in file_selector.py 
+            }) 

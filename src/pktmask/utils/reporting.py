@@ -6,6 +6,7 @@ from jinja2 import Template
 from abc import ABC, abstractmethod
 
 from pktmask.utils.path import resource_path
+from pktmask.utils.time import current_time
 
 class Reporter(ABC):
     """报告生成器的抽象基类。"""
@@ -27,10 +28,6 @@ try:
 except Exception as e:
     HTML_TEMPLATE = None
     print(f"Warning: Could not load HTML template. HTML reports will be disabled. Error: {e}")
-
-def current_time() -> str:
-    """获取当前时间字符串"""
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 class FileReporter(Reporter):
     """将报告写入JSON和HTML文件的具体实现。"""
