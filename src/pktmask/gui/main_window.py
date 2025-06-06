@@ -104,15 +104,17 @@ class MainWindow(QMainWindow):
 
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
-        main_layout = QVBoxLayout(main_widget)
-        main_layout.setSpacing(15) # 增加主布局的间距
+        
+        # Main layout: Two columns
+        main_layout = QHBoxLayout(main_widget)
+        main_layout.setSpacing(15)
         main_layout.setContentsMargins(15, 15, 15, 15)
 
-        # --- Top Control Panel ---
-        top_control_panel = QWidget()
-        top_control_layout = QHBoxLayout(top_control_panel)
-        top_control_layout.setContentsMargins(0, 0, 0, 0)
-        top_control_layout.setSpacing(15) # 增加顶部面板的间距
+        # --- Left Column ---
+        left_column_widget = QWidget()
+        left_column_layout = QVBoxLayout(left_column_widget)
+        left_column_layout.setSpacing(15)
+        left_column_layout.setContentsMargins(0, 0, 0, 0)
 
         # Step 1: Input
         input_group = QGroupBox("Step 1: Input")
@@ -128,41 +130,7 @@ class MainWindow(QMainWindow):
         input_layout.addWidget(self.select_dir_btn)
         input_layout.addWidget(self.reset_btn)
         
-        # Step 2: Configure Pipeline
-        pipeline_group = QGroupBox("Step 2: Configure Pipeline")
-        pipeline_layout = QVBoxLayout(pipeline_group)
-        self.mask_ip_cb = QCheckBox("Mask IP")
-        self.dedup_packet_cb = QCheckBox("Remove Dupes")
-        self.trim_packet_cb = QCheckBox("Trim TLS Application Data")
-        self.trim_packet_cb.setToolTip("Intelligently trims non-signaling TLS records (Application Data).")
-        self.mask_ip_cb.setChecked(True)
-        self.dedup_packet_cb.setChecked(True)
-        self.trim_packet_cb.setChecked(True) # 默认也勾选上
-        pipeline_layout.addWidget(self.mask_ip_cb)
-        pipeline_layout.addWidget(self.dedup_packet_cb)
-        pipeline_layout.addWidget(self.trim_packet_cb)
-
-        # Step 3: Execute
-        execute_group = QGroupBox("Step 3: Execute")
-        execute_layout = QVBoxLayout(execute_group)
-        self.start_proc_btn = QPushButton("Start Processing")
-        self.start_proc_btn.setMinimumHeight(40)
-        execute_layout.addWidget(self.start_proc_btn)
-
-        top_control_layout.addWidget(input_group, 2)
-        top_control_layout.addWidget(pipeline_group, 1)
-        top_control_layout.addWidget(execute_group, 1)
-        
-        main_layout.addWidget(top_control_panel)
-
-        # --- Main Body (Splitter) ---
-        self.splitter = QSplitter(Qt.Orientation.Horizontal)
-        
-        # Left Panel: Dashboard and Logs
-        left_panel = QWidget()
-        left_layout = QVBoxLayout(left_panel)
-        left_layout.setSpacing(15) # 增加左侧面板的间距
-        
+        # Live Dashboard
         dashboard_group = QGroupBox("Live Dashboard")
         dashboard_layout = QVBoxLayout(dashboard_group)
         self.progress_bar = QProgressBar()
@@ -185,30 +153,68 @@ class MainWindow(QMainWindow):
         
         dashboard_layout.addLayout(kpi_layout)
         
+        # Log
         log_group = QGroupBox("Log")
         log_layout = QVBoxLayout(log_group)
         self.log_text = QTextEdit()
         self.log_text.setReadOnly(True)
         log_layout.addWidget(self.log_text)
 
-        left_layout.addWidget(dashboard_group)
-        left_layout.addWidget(log_group)
+        left_column_layout.addWidget(input_group)
+        left_column_layout.addWidget(dashboard_group)
+        left_column_layout.addWidget(log_group)
+        left_column_layout.setStretchFactor(log_group, 1) # Make log group expand
+
+        # --- Right Column ---
+        right_column_widget = QWidget()
+        right_column_layout = QVBoxLayout(right_column_widget)
+        right_column_layout.setSpacing(15)
+        right_column_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Right Panel: Summary Report
-        right_panel = QWidget()
-        right_layout = QVBoxLayout(right_panel)
+        # Top-right controls (Step 2 & 3)
+        top_right_widget = QWidget()
+        top_right_layout = QHBoxLayout(top_right_widget)
+        top_right_layout.setSpacing(15)
+        top_right_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Step 2: Configure Pipeline
+        pipeline_group = QGroupBox("Step 2: Configure Pipeline")
+        pipeline_layout = QVBoxLayout(pipeline_group)
+        self.mask_ip_cb = QCheckBox("Mask IP")
+        self.dedup_packet_cb = QCheckBox("Remove Dupes")
+        self.trim_packet_cb = QCheckBox("Trim TLS Application Data")
+        self.trim_packet_cb.setToolTip("Intelligently trims non-signaling TLS records (Application Data).")
+        self.mask_ip_cb.setChecked(True)
+        self.dedup_packet_cb.setChecked(True)
+        self.trim_packet_cb.setChecked(True) # 默认也勾选上
+        pipeline_layout.addWidget(self.mask_ip_cb)
+        pipeline_layout.addWidget(self.dedup_packet_cb)
+        pipeline_layout.addWidget(self.trim_packet_cb)
+
+        # Step 3: Execute
+        execute_group = QGroupBox("Step 3: Execute")
+        execute_layout = QVBoxLayout(execute_group)
+        self.start_proc_btn = QPushButton("Start Processing")
+        self.start_proc_btn.setMinimumHeight(40)
+        execute_layout.addWidget(self.start_proc_btn)
+        
+        top_right_layout.addWidget(pipeline_group, 1)
+        top_right_layout.addWidget(execute_group, 1)
+        
+        # Summary Report
         summary_group = QGroupBox("Summary Report")
         summary_layout = QVBoxLayout(summary_group)
         self.summary_text = QTextEdit()
         self.summary_text.setReadOnly(True)
         summary_layout.addWidget(self.summary_text)
-        right_layout.addWidget(summary_group)
         
-        self.splitter.addWidget(left_panel)
-        self.splitter.addWidget(right_panel)
-        self.splitter.setSizes([600, 600])
+        right_column_layout.addWidget(top_right_widget)
+        right_column_layout.addWidget(summary_group)
+        right_column_layout.setStretchFactor(summary_group, 1) # Make summary group expand
 
-        main_layout.addWidget(self.splitter, 1)
+        # Add columns to main layout
+        main_layout.addWidget(left_column_widget, 1)
+        main_layout.addWidget(right_column_widget, 1)
 
         # Connect signals
         self.select_dir_btn.clicked.connect(self.choose_folder)
