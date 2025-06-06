@@ -1,6 +1,8 @@
 import os
 from abc import ABC, abstractmethod
-from typing import Callable, Optional
+from typing import Callable, Optional, List
+
+from .events import PipelineEvents
 
 class ProcessingStep(ABC):
     """处理步骤的抽象基类"""
@@ -12,7 +14,7 @@ class ProcessingStep(ABC):
         pass
 
     @abstractmethod
-    def process_directory(self, subdir_path: str, base_path: str, progress_callback: Optional[Callable] = None):
+    def process_directory(self, subdir_path: str, base_path: str, progress_callback: Optional[Callable] = None, all_suffixes: Optional[List[str]] = None):
         """
         处理整个目录的接口方法
         
@@ -20,9 +22,7 @@ class ProcessingStep(ABC):
             subdir_path (str): 待处理的子目录路径.
             base_path (str): 项目的根目录路径.
             progress_callback (Optional[Callable]): 用于报告进度的回调函数.
-                回调函数应接受两个参数:
-                - event_type (str): 事件类型 (e.g., 'log', 'file_processed', 'step_finished').
-                - data (dict): 与事件相关的数据.
+            all_suffixes (Optional[List[str]]): 流水线中所有步骤的后缀列表.
         """
         pass
 
@@ -37,26 +37,27 @@ class Pipeline:
         """在指定路径上运行所有处理步骤"""
         subdirs = [os.path.join(root_path, d) for d in os.listdir(root_path) if os.path.isdir(os.path.join(root_path, d))]
         total_subdirs = len(subdirs)
+        all_suffixes = [step.suffix for step in self._steps]
 
         if progress_callback:
-            progress_callback('pipeline_start', {'total_subdirs': total_subdirs})
+            progress_callback(PipelineEvents.PIPELINE_START, {'total_subdirs': total_subdirs})
 
         for i, subdir in enumerate(subdirs):
             rel_subdir = os.path.relpath(subdir, root_path)
             if progress_callback:
-                progress_callback('subdir_start', {'name': rel_subdir, 'current': i + 1, 'total': total_subdirs})
+                progress_callback(PipelineEvents.SUBDIR_START, {'name': rel_subdir, 'current': i + 1, 'total': total_subdirs})
             
             for step in self._steps:
                 if progress_callback:
-                    progress_callback('step_start', {'name': step.__class__.__name__})
+                    progress_callback(PipelineEvents.STEP_START, {'name': step.__class__.__name__})
                 
-                step.process_directory(subdir, base_path=root_path, progress_callback=progress_callback)
+                step.process_directory(subdir, base_path=root_path, progress_callback=progress_callback, all_suffixes=all_suffixes)
                 
                 if progress_callback:
-                    progress_callback('step_end', {'name': step.__class__.__name__})
+                    progress_callback(PipelineEvents.STEP_END, {'name': step.__class__.__name__})
             
             if progress_callback:
-                progress_callback('subdir_end', {'name': rel_subdir})
+                progress_callback(PipelineEvents.SUBDIR_END, {'name': rel_subdir})
 
         if progress_callback:
-            progress_callback('pipeline_end', {}) 
+            progress_callback(PipelineEvents.PIPELINE_END, {}) 

@@ -22,10 +22,15 @@ from PyQt6.QtGui import QFont, QIcon, QTextCursor, QFontMetrics, QColor
 
 # Refactored imports
 from pktmask.core.pipeline import Pipeline
-from pktmask.core.ip_processor import IpAnonymizationStep
-from pktmask.core.strategy import HierarchicalAnonymizationStrategy
-from pktmask.utils.pcap_dedup import DeduplicationStep
+from pktmask.core.events import PipelineEvents
+from pktmask.core.factory import create_step
 from pktmask.utils.path import resource_path
+
+PROCESS_DISPLAY_NAMES = {
+    "mask_ip": "Mask IP",
+    "remove_dupes": "Remove Dupes",
+    "trim_packet": "Trim Packet"
+}
 
 class GuideDialog(QDialog):
     """处理指南对话框"""
@@ -47,7 +52,7 @@ class PipelineThread(QThread):
     一个统一的线程来运行处理流水线。
     它通过信号将结构化的进度数据发送到主线程。
     """
-    progress_signal = pyqtSignal(str, dict)
+    progress_signal = pyqtSignal(PipelineEvents, dict)
 
     def __init__(self, pipeline: Pipeline, base_dir: str):
         super().__init__()
@@ -59,9 +64,9 @@ class PipelineThread(QThread):
         try:
             self._pipeline.run(self._base_dir, progress_callback=self.handle_progress)
         except Exception as e:
-            self.progress_signal.emit('error', {'message': str(e)})
+            self.progress_signal.emit(PipelineEvents.ERROR, {'message': str(e)})
 
-    def handle_progress(self, event_type: str, data: dict):
+    def handle_progress(self, event_type: PipelineEvents, data: dict):
         if not self.is_running:
             # Should ideally stop the pipeline gracefully
             return
@@ -78,7 +83,7 @@ class MainWindow(QMainWindow):
         self.all_ip_reports = {}  # subdir -> report_data
         self.base_dir: Optional[str] = None
         self.allowed_root = os.path.expanduser("~")
-        self.current_process_type = "ip_replacement"
+        self.current_process_type = "mask_ip"
         self.init_ui()
 
     def init_ui(self):
@@ -98,12 +103,12 @@ class MainWindow(QMainWindow):
         grid.setHorizontalSpacing(0)
         grid.setVerticalSpacing(8)
         # Target Directory（前缀+内容分开，左对齐）
-        self.dir_prefix_label = QLabel("Target Directory: ")
+        self.dir_prefix_label = QLabel("Input Folder: ")
         self.dir_prefix_label.setStyleSheet("font-size: 13pt; font-weight: bold; color: #174ea6; margin-bottom: 2px;")
         self.dir_prefix_label.setMinimumHeight(32)
         self.dir_prefix_label.setMaximumHeight(36)
         self.dir_prefix_label.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft)
-        self.dir_content_label = QLabel("Select a directory")
+        self.dir_content_label = QLabel("Choose a folder")
         self.dir_content_label.setStyleSheet("font-size: 13pt; font-weight: bold; color: #aaa; margin-bottom: 2px;")
         self.dir_content_label.setMinimumHeight(32)
         self.dir_content_label.setMaximumHeight(36)
@@ -129,24 +134,24 @@ class MainWindow(QMainWindow):
         btns_hbox = QHBoxLayout()
         btns_hbox.setContentsMargins(0, 0, 0, 0)
         btns_hbox.setSpacing(14)
-        self.select_dir_btn = QPushButton("Select Directory")
+        self.select_dir_btn = QPushButton("Choose Folder")
         self.select_dir_btn.setMinimumHeight(32)
-        self.select_dir_btn.clicked.connect(self.select_directory)
-        self.clear_dir_btn = QPushButton("Clear")
+        self.select_dir_btn.clicked.connect(self.choose_folder)
+        self.clear_dir_btn = QPushButton("Reset")
         self.clear_dir_btn.setMinimumHeight(32)
-        self.clear_dir_btn.clicked.connect(self.clear_directory)
+        self.clear_dir_btn.clicked.connect(self.reset_folder)
         self.clear_dir_btn.setEnabled(False)
-        self.ip_replacement_btn = QPushButton("IP Replacement")
+        self.ip_replacement_btn = QPushButton("Mask IP")
         self.ip_replacement_btn.setMinimumHeight(32)
-        self.ip_replacement_btn.clicked.connect(lambda: self.select_process("ip_replacement"))
+        self.ip_replacement_btn.clicked.connect(lambda: self.select_process("mask_ip"))
         self.ip_replacement_btn.setEnabled(False)
-        self.deduplicate_btn = QPushButton("Deduplicate")
+        self.deduplicate_btn = QPushButton("Remove Dupes")
         self.deduplicate_btn.setMinimumHeight(32)
-        self.deduplicate_btn.clicked.connect(lambda: self.select_process("deduplicate"))
+        self.deduplicate_btn.clicked.connect(lambda: self.select_process("remove_dupes"))
         self.deduplicate_btn.setEnabled(False)
-        self.slicing_btn = QPushButton("Slicing")
+        self.slicing_btn = QPushButton("Trim Packet")
         self.slicing_btn.setMinimumHeight(32)
-        self.slicing_btn.clicked.connect(lambda: self.select_process("slicing"))
+        self.slicing_btn.clicked.connect(lambda: self.select_process("trim_packet"))
         self.slicing_btn.setEnabled(False)
         btns_hbox.addWidget(self.select_dir_btn)
         btns_hbox.addWidget(self.clear_dir_btn)
@@ -175,7 +180,7 @@ class MainWindow(QMainWindow):
         log_layout.setSpacing(8)
         log_layout.setContentsMargins(0, 0, 0, 0)
         log_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        log_label = QLabel("Processing Log:")
+        log_label = QLabel("Log:")
         log_label.setFont(QFont("Arial", 13, QFont.Weight.Bold))
         log_label.setStyleSheet("color: #222; margin-bottom: 4px;")
         log_layout.addWidget(log_label, alignment=Qt.AlignmentFlag.AlignTop)
@@ -189,7 +194,7 @@ class MainWindow(QMainWindow):
         report_layout.setSpacing(8)
         report_layout.setContentsMargins(0, 0, 0, 0)
         report_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        report_label = QLabel("Processing Report:")
+        report_label = QLabel("Summary:")
         report_label.setFont(QFont("Arial", 13, QFont.Weight.Bold))
         report_label.setStyleSheet("color: #222; margin-bottom: 4px;")
         report_layout.addWidget(report_label, alignment=Qt.AlignmentFlag.AlignTop)
@@ -262,11 +267,11 @@ class MainWindow(QMainWindow):
 
     def show_initial_guides(self):
         """启动时在log和report区域显示指引和User Guide"""
-        self.dir_prefix_label.setText("Target Directory: ")
-        self.dir_content_label.setText("Select a directory")
+        self.dir_prefix_label.setText("Input Folder: ")
+        self.dir_content_label.setText("Choose a folder")
         self.dir_content_label.setStyleSheet("font-size: 13pt; font-weight: bold; color: #aaa; margin-bottom: 2px;")
         self.log_text.setPlainText(
-            "Welcome to PktMask!\n\nInstructions:\n1. Click 'Select Directory' to choose a folder to process.\n2. Choose a processing method (IP Replacement, Deduplicate, Slicing).\n3. Processing results and logs will be shown below.\n\nFor detailed instructions, click the 'User Guide' link in the top right corner."
+            "Welcome to PktMask!\n\nInstructions:\n1. Click 'Choose Folder' to choose a folder to process.\n2. Choose a processing method (Mask IP, Remove Dupes, Trim Packet).\n3. Processing results and logs will be shown below.\n\nFor detailed instructions, click the 'User Guide' link in the top right corner."
         )
         # 加载 User Guide 内容
         try:
@@ -277,11 +282,11 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.report_text.setPlainText(f"Error loading guide: {str(e)}")
 
-    def select_directory(self):
+    def choose_folder(self):
         """选择目录"""
         import glob
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        dir_path = QFileDialog.getExistingDirectory(self, "Select directory to process", desktop_path)
+        dir_path = QFileDialog.getExistingDirectory(self, "Choose folder to process", desktop_path)
         if dir_path:
             if not os.path.exists(dir_path):
                 QMessageBox.warning(self, "Warning", "The selected directory does not exist.")
@@ -299,7 +304,7 @@ class MainWindow(QMainWindow):
                 return
             self.base_dir = dir_path
             # 只显示路径，深蓝色
-            self.dir_prefix_label.setText("Target Directory: ")
+            self.dir_prefix_label.setText("Input Folder: ")
             self.dir_content_label.setText(dir_path)
             self.dir_content_label.setStyleSheet("font-size: 13pt; font-weight: bold; color: #174ea6; margin-bottom: 2px;")
             self.clear_dir_btn.setEnabled(True)
@@ -307,15 +312,15 @@ class MainWindow(QMainWindow):
             self.deduplicate_btn.setEnabled(True)
             self.slicing_btn.setEnabled(True)
         else:
-            self.dir_prefix_label.setText("Target Directory: ")
-            self.dir_content_label.setText("Select a directory")
+            self.dir_prefix_label.setText("Input Folder: ")
+            self.dir_content_label.setText("Choose a folder")
             self.dir_content_label.setStyleSheet("font-size: 13pt; font-weight: bold; color: #aaa; margin-bottom: 2px;")
 
-    def clear_directory(self):
+    def reset_folder(self):
         """清除目录选择"""
         self.base_dir = None
-        self.dir_prefix_label.setText("Target Directory: ")
-        self.dir_content_label.setText("Select a directory")
+        self.dir_prefix_label.setText("Input Folder: ")
+        self.dir_content_label.setText("Choose a folder")
         self.dir_content_label.setStyleSheet("font-size: 13pt; font-weight: bold; color: #aaa; margin-bottom: 2px;")
         self.clear_dir_btn.setEnabled(False)
         self.ip_replacement_btn.setEnabled(False)
@@ -325,7 +330,7 @@ class MainWindow(QMainWindow):
 
     def select_process(self, process_type: str):
         if not self.base_dir:
-            QMessageBox.warning(self, "Warning", "Please select a directory to process.")
+            QMessageBox.warning(self, "Warning", "Please choose a folder to process.")
             return
 
         self.current_process_type = process_type
@@ -333,27 +338,25 @@ class MainWindow(QMainWindow):
         self.report_text.clear()
         self.all_ip_reports.clear()
 
-        # Build the pipeline based on selection
-        steps = []
-        if self.current_process_type == "ip_replacement":
-            steps.append(IpAnonymizationStep(strategy=HierarchicalAnonymizationStrategy()))
-        elif self.current_process_type == "deduplicate":
-            steps.append(DeduplicationStep())
-        elif self.current_process_type == "slicing":
-            self.log_text.append("Slicing feature is coming soon!")
-            return
-        else:
-            self.log_text.append(f"Unknown process type: {self.current_process_type}")
-            return
+        # 使用工厂模式创建处理步骤
+        try:
+            if self.current_process_type == "trim_packet":
+                self.log_text.append("Trim Packet feature is coming soon!")
+                return
+            
+            step = create_step(self.current_process_type)
+            pipeline = Pipeline(steps=[step])
+            self.start_processing(pipeline)
 
-        if not steps:
+        except ValueError as e:
+            self.log_text.append(f"Error: {e}")
             return
-
-        pipeline = Pipeline(steps)
-        self.start_processing(pipeline)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"An unexpected error occurred while preparing the process: {e}")
+            return
 
     def start_processing(self, pipeline: Pipeline):
-        process_type_str = self.current_process_type.replace('_', ' ').title()
+        process_type_str = PROCESS_DISPLAY_NAMES.get(self.current_process_type, self.current_process_type.replace('_', ' ').title())
         self.log_text.append(f"--- Processing Type: {process_type_str} | Status: START ---\n")
         self.report_text.append(f"--- Processing Type: {process_type_str} | Status: START ---\n")
 
@@ -367,17 +370,17 @@ class MainWindow(QMainWindow):
         self.deduplicate_btn.setEnabled(False)
         self.slicing_btn.setEnabled(False)
 
-    def handle_thread_progress(self, event_type: str, data: dict):
+    def handle_thread_progress(self, event_type: PipelineEvents, data: dict):
         """主槽函数，根据事件类型分发UI更新任务"""
-        if event_type == 'log':
+        if event_type == PipelineEvents.LOG:
             self.update_log(data['message'])
-        elif event_type == 'step_summary' and data['type'] == 'ip_replacement':
+        elif event_type == PipelineEvents.STEP_SUMMARY and data['type'] == 'mask_ip':
             self.update_ip_report(data['report'])
-        elif event_type == 'step_summary' and data['type'] == 'dedup':
+        elif event_type == PipelineEvents.STEP_SUMMARY and data['type'] == 'remove_dupes':
             self.update_dedup_report(data)
-        elif event_type == 'pipeline_end':
+        elif event_type == PipelineEvents.PIPELINE_END:
             self.processing_finished()
-        elif event_type == 'error':
+        elif event_type == PipelineEvents.ERROR:
             self.processing_error(data['message'])
         # Other events like 'subdir_start' can be used for finer-grained progress bars in the future
 
@@ -415,7 +418,7 @@ class MainWindow(QMainWindow):
         self.set_report_text(text)
     
     def update_dedup_report(self, summary_data: dict):
-        text = f"Deduplication Summary:\n"
+        text = f"Remove Dupes Summary:\n"
         text += "=" * 40 + "\n"
         text += f"Processed Files: {summary_data.get('processed_files', 0)}\n"
         text += f"Total Original Packets: {summary_data.get('total_packets', 0)}\n"
@@ -424,12 +427,13 @@ class MainWindow(QMainWindow):
 
     def set_report_text(self, text: str):
         """Helper to set report text while preserving the header."""
-        head_str = f"--- Processing Type: {self.current_process_type.replace('_', ' ').title()} | Status: START ---\n\n"
+        process_type_str = PROCESS_DISPLAY_NAMES.get(self.current_process_type, self.current_process_type.replace('_', ' ').title())
+        head_str = f"--- Processing Type: {process_type_str} | Status: START ---\n\n"
         self.report_text.setPlainText(head_str + text)
         self.report_text.moveCursor(QTextCursor.MoveOperation.End)
 
     def processing_finished(self):
-        process_type_str = self.current_process_type.replace('_', ' ').title()
+        process_type_str = PROCESS_DISPLAY_NAMES.get(self.current_process_type, self.current_process_type.replace('_', ' ').title())
         self.log_text.append(f"\n--- Processing Type: {process_type_str} | Status: END ---")
         self.report_text.append(f"\n--- Processing Type: {process_type_str} | Status: END ---")
         self.select_dir_btn.setEnabled(True)
@@ -444,15 +448,16 @@ class MainWindow(QMainWindow):
 
     def show_guide_dialog(self):
         """弹窗显示用户指南"""
-        if self.current_process_type == "ip_replacement":
+        display_name = PROCESS_DISPLAY_NAMES.get(self.current_process_type, self.current_process_type)
+        if self.current_process_type == "mask_ip":
             try:
                 with open(resource_path('summary.md'), 'r', encoding='utf-8') as f:
                     content = f.read()
             except Exception as e:
                 content = f"Error loading guide: {str(e)}"
         else:
-            content = f"# {self.current_process_type.replace('_', ' ').title()}\n\nComing Soon!"
-        dialog = GuideDialog(self.current_process_type.replace('_', ' ').title(), content, self)
+            content = f"# {display_name}\n\nComing Soon!"
+        dialog = GuideDialog(display_name, content, self)
         dialog.exec()
 
 def main():

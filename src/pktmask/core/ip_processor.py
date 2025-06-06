@@ -13,9 +13,10 @@ from typing import Dict, Tuple, List
 from scapy.all import PcapReader, PcapNgReader, wrpcap, IP, IPv6, TCP, UDP
 
 from pktmask.core.pipeline import ProcessingStep
+from pktmask.core.events import PipelineEvents
 from pktmask.core.strategy import AnonymizationStrategy
 from pktmask.utils.file_selector import select_files
-from pktmask.utils.reporting import generate_report
+from pktmask.utils.reporting import Reporter
 
 def current_time() -> str:
     """获取当前时间字符串"""
@@ -26,10 +27,13 @@ class IpAnonymizationStep(ProcessingStep):
     IP匿名化处理步骤。
     该步骤使用一个可配置的策略来替换pcap文件中的IP地址。
     """
-    def __init__(self, strategy: AnonymizationStrategy):
+    def __init__(self, strategy: AnonymizationStrategy, reporter: Reporter):
         if not isinstance(strategy, AnonymizationStrategy):
             raise TypeError("strategy must be an instance of AnonymizationStrategy")
+        if not isinstance(reporter, Reporter):
+            raise TypeError("reporter must be an instance of Reporter")
         self._strategy = strategy
+        self._reporter = reporter
 
     @property
     def suffix(self) -> str:
@@ -88,10 +92,10 @@ class IpAnonymizationStep(ProcessingStep):
             error_log.append(f"{current_time()} - Error processing file {file_path}: {str(e)}")
             return False, {}
 
-    def process_directory(self, subdir_path: str, base_path: str = None, progress_callback=None):
+    def process_directory(self, subdir_path: str, base_path: str = None, progress_callback=None, all_suffixes=None):
         def log(level, message):
             if progress_callback:
-                progress_callback('log', {'level': level, 'message': message})
+                progress_callback(PipelineEvents.LOG, {'level': level, 'message': message})
 
         if base_path is None:
             base_path = os.path.dirname(subdir_path)
@@ -99,25 +103,25 @@ class IpAnonymizationStep(ProcessingStep):
         rel_subdir = os.path.relpath(subdir_path, base_path)
         start_time = datetime.now()
         
-        files_to_process, reason = select_files(subdir_path, self.suffix)
+        files_to_process, reason = select_files(subdir_path, self.suffix, all_suffixes or [])
 
         if not files_to_process:
-            log('info', f"[IP Anonymize] In '{rel_subdir}': {reason}")
+            log('info', f"[Mask IP] In '{rel_subdir}': {reason}")
             return
             
-        log('info', f"[IP Anonymize] In '{rel_subdir}': Found {len(files_to_process)} files to process. Reason: {reason}")
+        log('info', f"[Mask IP] In '{rel_subdir}': Found {len(files_to_process)} files to process. Reason: {reason}")
         
         error_log = []
         
         # 1. 使用策略创建IP映射
-        log('info', f"[IP Anonymize] Pre-calculating IP mapping using {self._strategy.__class__.__name__}...")
+        log('info', f"[Mask IP] Pre-calculating IP mapping using {self._strategy.__class__.__name__}...")
         try:
             global_mapping = self._strategy.create_mapping(files_to_process, subdir_path, error_log)
         except Exception as e:
-            log('critical', f"[IP Anonymize] Fatal error during IP mapping creation: {e}")
+            log('critical', f"[Mask IP] Fatal error during IP mapping creation: {e}")
             error_log.append(f"{current_time()} - Fatal error during IP mapping creation: {e}")
             return
-        log('info', f"[IP Anonymize] Pre-calculation completed. Total unique IPs found: {len(global_mapping)}")
+        log('info', f"[Mask IP] Pre-calculation completed. Total unique IPs found: {len(global_mapping)}")
 
         # 2. 处理每个文件
         processed_file_count = 0
@@ -128,11 +132,11 @@ class IpAnonymizationStep(ProcessingStep):
         for f in files_to_process:
             file_path = os.path.join(subdir_path, f)
             rel_file_path = os.path.relpath(file_path, base_path)
-            log('info', f"[IP Anonymize] Processing file: {rel_file_path}")
+            log('info', f"[Mask IP] Processing file: {rel_file_path}")
             
             success, file_mapping = self._process_file(file_path, global_mapping, error_log)
             if not success:
-                log('error', f"[IP Anonymize] Error processing file, skipped.")
+                log('error', f"[Mask IP] Error processing file, skipped.")
                 continue
             
             processed_file_count += 1
@@ -142,10 +146,10 @@ class IpAnonymizationStep(ProcessingStep):
             
             new_filename = f"{os.path.splitext(f)[0]}{self.suffix}{os.path.splitext(f)[1]}"
             rel_new_path = os.path.relpath(os.path.join(subdir_path, new_filename), base_path)
-            log('info', f"[IP Anonymize] File processed successfully: {rel_new_path} (Unique IPs: {len(file_mapping)})")
+            log('info', f"[Mask IP] File processed successfully: {rel_new_path} (Unique IPs: {len(file_mapping)})")
             if progress_callback:
-                progress_callback('file_result', {
-                    'type': 'ip_replacement',
+                progress_callback(PipelineEvents.FILE_RESULT, {
+                    'type': 'mask_ip',
                     'filename': f,
                     'new_filename': new_filename,
                     'unique_ips': len(file_mapping)
@@ -163,6 +167,7 @@ class IpAnonymizationStep(ProcessingStep):
         }
         
         report_data = {
+            "rel_subdir": rel_subdir,
             "stats": stats,
             "file_mappings": file_mappings,
             "total_mapping": final_mapping,
@@ -170,21 +175,11 @@ class IpAnonymizationStep(ProcessingStep):
         }
         
         # 保存报告文件并发送回调
-        generate_report(
-            subdir_path=subdir_path,
-            rel_subdir=rel_subdir,
-            processed_file_count=stats["processed_file_count"],
-            final_mapping=final_mapping,
-            elapsed_time=stats["total_time_seconds"],
-            file_ip_counts=stats["file_ip_counts"],
-            file_mappings=file_mappings,
-            error_log=error_log
-        ) # Keep generating file for external use
+        self._reporter.generate(subdir_path, report_data)
         
         if progress_callback:
-            report_data['rel_subdir'] = rel_subdir
-            progress_callback('step_summary', {'type': 'ip_replacement', 'report': report_data})
+            progress_callback(PipelineEvents.STEP_SUMMARY, {'type': 'mask_ip', 'report': report_data})
 
-        log('info', f"[IP Anonymize] In '{rel_subdir}': Processing completed. Successfully processed {processed_file_count} files.")
+        log('info', f"[Mask IP] In '{rel_subdir}': Processing completed. Successfully processed {processed_file_count} files.")
         for error in error_log:
-            log('error', f"[IP Anonymize] ERROR: {error}") 
+            log('error', f"[Mask IP] ERROR: {error}") 

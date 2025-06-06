@@ -3,6 +3,7 @@ from datetime import datetime
 from scapy.all import PcapReader, PcapNgReader, wrpcap
 
 from pktmask.core.pipeline import ProcessingStep
+from pktmask.core.events import PipelineEvents
 from pktmask.utils.file_selector import select_files
 
 def current_time() -> str:
@@ -50,17 +51,17 @@ class DeduplicationStep(ProcessingStep):
     def suffix(self) -> str:
         return "-Deduped"
 
-    def process_directory(self, subdir_path: str, base_path: str = None, progress_callback=None):
+    def process_directory(self, subdir_path: str, base_path: str = None, progress_callback=None, all_suffixes=None):
         def log(level, message):
             if progress_callback:
-                progress_callback('log', {'level': level, 'message': message})
+                progress_callback(PipelineEvents.LOG, {'level': level, 'message': message})
 
         if base_path is None:
             base_path = os.path.dirname(subdir_path)
         
         rel_subdir = os.path.relpath(subdir_path, base_path)
         
-        files_to_process, reason = select_files(subdir_path, self.suffix)
+        files_to_process, reason = select_files(subdir_path, self.suffix, all_suffixes or [])
         
         if not files_to_process:
             log('info', f"[Dedup] In '{rel_subdir}': {reason}")
@@ -101,7 +102,7 @@ class DeduplicationStep(ProcessingStep):
             log_msg = f"[Dedup] Finished: {rel_new_path}. Original: {total} packets, After dedup: {deduped} packets."
             log('info', log_msg)
             if progress_callback:
-                progress_callback('file_result', {
+                progress_callback(PipelineEvents.FILE_RESULT, {
                     'type': 'dedup',
                     'filename': f,
                     'new_filename': os.path.basename(new_file_path),
@@ -113,7 +114,7 @@ class DeduplicationStep(ProcessingStep):
             log('error', f"[Dedup] ERROR: {error}")
         
         if progress_callback:
-            progress_callback('step_summary', {
+            progress_callback(PipelineEvents.STEP_SUMMARY, {
                 'type': 'dedup',
                 'processed_files': processed_files_count,
                 'total_packets': total_packets_subdir,
