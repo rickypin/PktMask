@@ -10,7 +10,7 @@ import os
 import sys
 import json
 import markdown
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QProgressBar, QTextEdit, QFileDialog,
@@ -105,6 +105,7 @@ class MainWindow(QMainWindow):
         self.current_processing_file = None  # 当前正在处理的原始文件
         self.global_ip_mappings = {}  # 全局IP映射汇总
         self.processed_files_count = 0  # 已处理文件计数
+        self.user_stopped = False  # 用户停止标志
 
         self.init_ui()
         self._apply_stylesheet() # 应用初始样式
@@ -128,15 +129,13 @@ class MainWindow(QMainWindow):
         # --- Create all GroupBox widgets first ---
 
         # Step 1: Input
-        input_group = QGroupBox("Step 1: Select Target")
+        input_group = QGroupBox("Step 1: Select Working Directory")
         input_layout = QHBoxLayout(input_group)
-        self.dir_prefix_label = QLabel("Input Folder:")
-        self.dir_path_label = QLabel("No folder selected.")
+        self.dir_path_label = QLabel("No directory selected.")
         self.dir_path_label.setObjectName("DirPathLabel")
-        self.select_dir_btn = QPushButton("Choose Folder")
-        self.reset_btn = QPushButton("Reset")
+        self.select_dir_btn = QPushButton("Browse...")
+        self.reset_btn = QPushButton("Clear")
         self.reset_btn.setObjectName("ResetButton")
-        input_layout.addWidget(self.dir_prefix_label)
         input_layout.addWidget(self.dir_path_label, 1)
         input_layout.addWidget(self.select_dir_btn)
         input_layout.addWidget(self.reset_btn)
@@ -311,7 +310,7 @@ class MainWindow(QMainWindow):
     def reset_state(self):
         """重置所有状态和UI"""
         self.base_dir = None
-        self.dir_path_label.setText("No folder selected.")
+        self.dir_path_label.setText("No directory selected.")
         self.log_text.clear()
         self.summary_text.clear()
         self.all_ip_reports.clear()
@@ -324,6 +323,7 @@ class MainWindow(QMainWindow):
         self.current_processing_file = None   # 重置当前处理文件
         self.global_ip_mappings.clear()      # 清空全局IP映射
         self.processed_files_count = 0       # 重置文件计数
+        self.user_stopped = False            # 重置停止标志
         if hasattr(self, '_current_file_ips'):
             self._current_file_ips.clear()    # 清空文件IP映射
         self.files_processed_label.setText("0")
@@ -343,7 +343,198 @@ class MainWindow(QMainWindow):
         else:
             self.start_pipeline_processing()
 
+    def generate_partial_summary_on_stop(self):
+        """生成用户停止时的部分汇总统计"""
+        separator_length = 70
+        
+        # 计算当前的时间
+        if self.timer:
+            self.timer.stop()
+        self.update_time_elapsed()
+        
+        partial_time = self.time_elapsed_label.text()
+        partial_files = self.files_processed_count
+        partial_packets = self.packets_processed_count
+        
+        # 生成停止汇总报告
+        stop_report = f"\n{'='*separator_length}\n⏹️ PROCESSING STOPPED BY USER\n{'='*separator_length}\n"
+        stop_report += f"📊 Partial Statistics (Completed Portion):\n"
+        stop_report += f"   • Files Processed: {partial_files}\n"
+        stop_report += f"   • Packets Processed: {partial_packets:,}\n"
+        stop_report += f"   • Processing Time: {partial_time}\n"
+        
+        # 计算部分处理速度
+        try:
+            time_parts = partial_time.split(':')
+            if len(time_parts) >= 2:
+                minutes = int(time_parts[-2])
+                seconds_with_ms = time_parts[-1].split('.')
+                seconds = int(seconds_with_ms[0])
+                total_seconds = minutes * 60 + seconds
+                if total_seconds > 0 and partial_packets > 0:
+                    speed = partial_packets / total_seconds
+                    stop_report += f"   • Average Speed: {speed:,.0f} packets/second\n\n"
+                else:
+                    stop_report += f"   • Average Speed: N/A\n\n"
+            else:
+                stop_report += f"   • Average Speed: N/A\n\n"
+        except:
+            stop_report += f"   • Average Speed: N/A\n\n"
+        
+        # 显示已启用的处理步骤
+        enabled_steps = []
+        if self.mask_ip_cb.isChecked():
+            enabled_steps.append("IP Masking")
+        if self.dedup_packet_cb.isChecked():
+            enabled_steps.append("Deduplication")
+        if self.trim_packet_cb.isChecked():
+            enabled_steps.append("Payload Trimming")
+        
+        stop_report += f"🔧 Configured Processing Steps: {', '.join(enabled_steps)}\n"
+        stop_report += f"📁 Working Directory: {os.path.basename(self.base_dir) if self.base_dir else 'N/A'}\n"
+        stop_report += f"⚠️ Processing was interrupted. All intermediate files have been cleaned up.\n"
+        stop_report += f"❌ No completed output files were generated due to interruption.\n"
+        stop_report += f"{'='*separator_length}\n"
+        
+        self.summary_text.append(stop_report)
+        
+        # 检查并显示文件处理状态
+        if self.file_processing_results:
+            files_status_report = f"\n{'='*separator_length}\n📋 FILES PROCESSING STATUS (At Stop)\n{'='*separator_length}\n"
+            
+            completed_files = 0
+            partial_files = 0
+            
+            for filename, file_result in self.file_processing_results.items():
+                steps_data = file_result['steps']
+                if not steps_data:
+                    continue
+                
+                # 检查文件是否完整处理完成（所有配置的步骤都完成）
+                expected_steps = set()
+                if self.mask_ip_cb.isChecked():
+                    expected_steps.add("IP Masking")
+                if self.dedup_packet_cb.isChecked():
+                    expected_steps.add("Deduplication")
+                if self.trim_packet_cb.isChecked():
+                    expected_steps.add("Payload Trimming")
+                
+                completed_steps = set(steps_data.keys())
+                is_fully_completed = expected_steps.issubset(completed_steps)
+                
+                if is_fully_completed:
+                    completed_files += 1
+                    files_status_report += f"\n✅ {filename}\n"
+                    files_status_report += f"   Status: FULLY COMPLETED\n"
+                    
+                    # 获取最终输出文件名
+                    step_order = ['IP Masking', 'Deduplication', 'Payload Trimming']
+                    final_output = None
+                    for step_name in reversed(step_order):
+                        if step_name in steps_data:
+                            output_file = steps_data[step_name]['data'].get('output_filename')
+                            if output_file and not output_file.startswith('tmp'):
+                                final_output = output_file
+                                break
+                    
+                    if final_output:
+                        files_status_report += f"   Output File: {final_output}\n"
+                    
+                    # 显示详细结果
+                    original_packets = 0
+                    file_ip_mappings = {}
+                    
+                    for step_name in step_order:
+                        if step_name in steps_data:
+                            data = steps_data[step_name]['data']
+                            if data.get('total_packets'):
+                                original_packets = data.get('total_packets', 0)
+                            
+                            if step_name == 'IP Masking':
+                                original_ips = data.get('original_ips', 0)
+                                masked_ips = data.get('anonymized_ips', 0)
+                                rate = (masked_ips / original_ips * 100) if original_ips > 0 else 0
+                                files_status_report += f"   🛡️  IP Masking: {original_ips} → {masked_ips} IPs ({rate:.1f}%)\n"
+                                file_ip_mappings = data.get('file_ip_mappings', {})
+                                
+                            elif step_name == 'Deduplication':
+                                unique = data.get('unique_packets', 0)
+                                removed = data.get('removed_count', 0)
+                                rate = (removed / original_packets * 100) if original_packets > 0 else 0
+                                files_status_report += f"   🔄 Deduplication: {removed} removed ({rate:.1f}%)\n"
+                            
+                            elif step_name == 'Payload Trimming':
+                                trimmed = data.get('trimmed_packets', 0)
+                                rate = (trimmed / original_packets * 100) if original_packets > 0 else 0
+                                files_status_report += f"   ✂️  Payload Trimming: {trimmed} trimmed ({rate:.1f}%)\n"
+                    
+                    # 显示IP映射（如果有）
+                    if file_ip_mappings:
+                        files_status_report += f"   🔗 IP Mappings ({len(file_ip_mappings)}):\n"
+                        for i, (orig_ip, new_ip) in enumerate(sorted(file_ip_mappings.items()), 1):
+                            if i <= 5:  # 只显示前5个
+                                files_status_report += f"      {i}. {orig_ip} → {new_ip}\n"
+                            elif i == 6:
+                                files_status_report += f"      ... and {len(file_ip_mappings) - 5} more\n"
+                                break
+                else:
+                    partial_files += 1
+                    files_status_report += f"\n🔄 {filename}\n"
+                    files_status_report += f"   Status: PARTIALLY PROCESSED (Interrupted)\n"
+                    files_status_report += f"   Completed Steps: {', '.join(completed_steps)}\n"
+                    files_status_report += f"   Missing Steps: {', '.join(expected_steps - completed_steps)}\n"
+                    files_status_report += f"   ❌ No final output file generated\n"
+                    files_status_report += f"   🗑️ Temporary files cleaned up automatically\n"
+            
+            if completed_files == 0 and partial_files > 0:
+                files_status_report += f"\n⚠️ All files were only partially processed.\n"
+                files_status_report += f"   No final output files were created.\n"
+            elif completed_files > 0:
+                files_status_report += f"\n📈 Summary: {completed_files} completed, {partial_files} partial\n"
+            
+            files_status_report += f"{'='*separator_length}\n"
+            self.summary_text.append(files_status_report)
+        
+        # 显示全局IP映射汇总（仅当有完全完成的文件时）
+        if self.processed_files_count >= 1 and self.global_ip_mappings:
+            # 检查是否有完全完成的文件
+            has_completed_files = False
+            for filename, file_result in self.file_processing_results.items():
+                expected_steps = set()
+                if self.mask_ip_cb.isChecked():
+                    expected_steps.add("IP Masking")
+                if self.dedup_packet_cb.isChecked():
+                    expected_steps.add("Deduplication")
+                if self.trim_packet_cb.isChecked():
+                    expected_steps.add("Payload Trimming")
+                
+                completed_steps = set(file_result['steps'].keys())
+                if expected_steps.issubset(completed_steps):
+                    has_completed_files = True
+                    break
+            
+            if has_completed_files:
+                global_partial_report = f"\n{'='*separator_length}\n🌐 IP MAPPINGS FROM COMPLETED FILES\n{'='*separator_length}\n"
+                global_partial_report += f"📝 IP Mapping Table - From Successfully Completed Files Only:\n"
+                global_partial_report += f"   • Total Unique IPs Mapped: {len(self.global_ip_mappings)}\n\n"
+                
+                sorted_global_mappings = sorted(self.global_ip_mappings.items())
+                for i, (orig_ip, new_ip) in enumerate(sorted_global_mappings, 1):
+                    global_partial_report += f"   {i:2d}. {orig_ip:<16} → {new_ip}\n"
+                
+                global_partial_report += f"{'='*separator_length}\n"
+                self.summary_text.append(global_partial_report)
+        
+        # 修正的重启提示
+        restart_hint = f"\n💡 RESTART INFORMATION:\n"
+        restart_hint += f"   • Clicking 'Start' will restart processing from the beginning\n"
+        restart_hint += f"   • All files will be reprocessed (no partial resume capability)\n"
+        restart_hint += f"   • Any existing output files will be skipped to avoid overwriting\n"
+        restart_hint += f"   • Processing will be performed completely for each file\n"
+        self.summary_text.append(restart_hint)
+
     def stop_pipeline_processing(self):
+        self.user_stopped = True  # 设置停止标志
         self.log_text.append("\n--- Stopping pipeline... ---")
         if self.pipeline_thread:
             self.pipeline_thread.stop()
@@ -352,11 +543,33 @@ class MainWindow(QMainWindow):
                 self.log_text.append("Warning: Pipeline did not stop gracefully, forcing termination.")
                 self.pipeline_thread.terminate()
                 self.pipeline_thread.wait()
-        # UI 状态恢复将通过 PIPELINE_END 事件或 finished 信号触发
+        
+        # 生成停止时的部分汇总统计
+        self.generate_partial_summary_on_stop()
+        
+        # 重新启用控件
+        self.select_dir_btn.setEnabled(True)
+        self.reset_btn.setEnabled(True)
+        for cb in [self.mask_ip_cb, self.dedup_packet_cb, self.trim_packet_cb]:
+            cb.setEnabled(True)
+        self.start_proc_btn.setEnabled(True)
+        self.start_proc_btn.setText("Start")
 
     def start_pipeline_processing(self):
         if not self.base_dir:
             QMessageBox.warning(self, "Warning", "Please choose a folder to process.")
+            return
+
+        # 检查是否所有文件都已经被处理过
+        all_processed, original_files, processed_files = self.check_already_processed_files()
+        
+        if all_processed and original_files:
+            # 如果所有文件都已处理，显示已处理摘要并加载历史日志
+            self.log_text.clear()
+            self.summary_text.clear()
+            self.update_log("--- Checking Working Directory ---")
+            self.update_log(f"Found {len(original_files)} original files, all already processed.")
+            self.show_already_processed_summary(original_files, processed_files)
             return
 
         # Reset UI and counters for new run
@@ -372,6 +585,7 @@ class MainWindow(QMainWindow):
         self.current_processing_file = None   # 重置当前处理文件
         self.global_ip_mappings.clear()      # 清空全局IP映射
         self.processed_files_count = 0       # 重置文件计数
+        self.user_stopped = False            # 重置停止标志
         if hasattr(self, '_current_file_ips'):
             self._current_file_ips.clear()    # 清空文件IP映射
         self.files_processed_label.setText("0")
@@ -677,6 +891,10 @@ class MainWindow(QMainWindow):
         self.log_text.verticalScrollBar().setValue(self.log_text.verticalScrollBar().maximum())
 
     def processing_finished(self):
+        # 如果用户已经停止，不再显示完成信息
+        if self.user_stopped:
+            return
+            
         self.log_text.append(f"\n--- Pipeline Finished ---")
         
         # 添加处理完成的汇总信息
@@ -745,6 +963,9 @@ class MainWindow(QMainWindow):
             
             self.summary_text.append(global_mapping_report)
 
+        # 保存summary report到文件
+        self.save_summary_report_to_file()
+
         # Re-enable controls
         self.select_dir_btn.setEnabled(True)
         self.reset_btn.setEnabled(True)
@@ -797,6 +1018,175 @@ class MainWindow(QMainWindow):
             self.time_elapsed_label.setText(f"{hours}:{minutes:02d}:{seconds:02d}.{msecs:02d}")
         else:
             self.time_elapsed_label.setText(f"{minutes:02d}:{seconds:02d}.{msecs:02d}")
+
+    def generate_summary_report_filename(self) -> str:
+        """生成带有处理选项标识的summary report文件名"""
+        from datetime import datetime
+        
+        # 生成处理选项标识
+        enabled_steps = []
+        if self.mask_ip_cb.isChecked():
+            enabled_steps.append("MaskIP")
+        if self.dedup_packet_cb.isChecked():
+            enabled_steps.append("Dedup")
+        if self.trim_packet_cb.isChecked():
+            enabled_steps.append("Trim")
+        
+        steps_suffix = "_".join(enabled_steps) if enabled_steps else "NoSteps"
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        return f"summary_report_{steps_suffix}_{timestamp}.txt"
+
+    def save_summary_report_to_file(self):
+        """将summary report保存到工作目录"""
+        if not self.base_dir:
+            return
+        
+        try:
+            filename = self.generate_summary_report_filename()
+            file_path = os.path.join(self.base_dir, filename)
+            
+            # 获取summary text的内容
+            summary_content = self.summary_text.toPlainText()
+            
+            with open(file_path, 'w', encoding='utf-8') as f:
+                from datetime import datetime
+                f.write("# PktMask Summary Report\n")
+                f.write(f"# Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"# Working Directory: {self.base_dir}\n")
+                f.write("#" + "="*68 + "\n\n")
+                f.write(summary_content)
+            
+            self.update_log(f"Summary report saved: {filename}")
+            
+        except Exception as e:
+            self.update_log(f"Error saving summary report: {str(e)}")
+
+    def find_existing_summary_reports(self) -> List[str]:
+        """查找工作目录中的现有summary report文件"""
+        if not self.base_dir or not os.path.exists(self.base_dir):
+            return []
+        
+        try:
+            files = os.listdir(self.base_dir)
+            summary_files = [f for f in files if f.startswith('summary_report_') and f.endswith('.txt')]
+            # 按修改时间倒序排列，最新的在前
+            summary_files.sort(key=lambda x: os.path.getmtime(os.path.join(self.base_dir, x)), reverse=True)
+            return summary_files
+        except Exception:
+            return []
+
+    def load_latest_summary_report(self) -> Optional[str]:
+        """加载最新的summary report内容"""
+        summary_files = self.find_existing_summary_reports()
+        if not summary_files:
+            return None
+        
+        try:
+            latest_file = summary_files[0]
+            file_path = os.path.join(self.base_dir, latest_file)
+            
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # 移除文件头部的注释行
+            lines = content.split('\n')
+            content_lines = []
+            skip_header = True
+            
+            for line in lines:
+                if skip_header and line.startswith('#'):
+                    continue
+                elif skip_header and line.strip() == '':
+                    continue
+                else:
+                    skip_header = False
+                    content_lines.append(line)
+            
+            return '\n'.join(content_lines)
+            
+        except Exception as e:
+            self.update_log(f"Error loading summary report: {str(e)}")
+            return None
+
+    def check_already_processed_files(self) -> Tuple[bool, List[str], List[str]]:
+        """检查目录中的文件是否已经被处理过
+        返回: (是否所有文件都已处理, 原始文件列表, 已处理文件列表)
+        """
+        if not self.base_dir or not os.path.exists(self.base_dir):
+            return False, [], []
+        
+        try:
+            # 获取当前启用的处理步骤
+            enabled_steps = []
+            if self.mask_ip_cb.isChecked():
+                enabled_steps.append("-Masked")
+            if self.dedup_packet_cb.isChecked():
+                enabled_steps.append("-Deduped")
+            if self.trim_packet_cb.isChecked():
+                enabled_steps.append("-Trimmed")
+            
+            expected_suffix = "".join(enabled_steps)
+            
+            # 扫描目录中的pcap文件
+            all_files = [f for f in os.listdir(self.base_dir) if f.endswith(('.pcap', '.pcapng'))]
+            
+            # 分离原始文件和已处理文件
+            original_files = []
+            processed_files = []
+            
+            for file in all_files:
+                if any(suffix in file for suffix in ["-Masked", "-Deduped", "-Trimmed"]):
+                    processed_files.append(file)
+                else:
+                    original_files.append(file)
+            
+            # 检查是否所有原始文件都有对应的已处理版本
+            all_processed = True
+            for orig_file in original_files:
+                base_name, ext = os.path.splitext(orig_file)
+                expected_processed = f"{base_name}{expected_suffix}{ext}"
+                if expected_processed not in all_files:
+                    all_processed = False
+                    break
+            
+            return all_processed, original_files, processed_files
+            
+        except Exception as e:
+            self.update_log(f"Error checking processed files: {str(e)}")
+            return False, [], []
+
+    def show_already_processed_summary(self, original_files: List[str], processed_files: List[str]):
+        """显示已处理文件的摘要并尝试加载历史日志"""
+        separator_length = 70
+        
+        # 显示已处理的提示
+        already_processed_msg = f"{'='*separator_length}\n📋 FILES ALREADY PROCESSED\n{'='*separator_length}\n"
+        already_processed_msg += f"📂 Working Directory: {os.path.basename(self.base_dir)}\n"
+        already_processed_msg += f"✅ All {len(original_files)} original files have been processed.\n\n"
+        
+        already_processed_msg += f"📄 Original Files ({len(original_files)}):\n"
+        for i, file in enumerate(sorted(original_files), 1):
+            already_processed_msg += f"   {i:2d}. {file}\n"
+        
+        already_processed_msg += f"\n📦 Processed Files ({len(processed_files)}):\n"
+        for i, file in enumerate(sorted(processed_files), 1):
+            already_processed_msg += f"   {i:2d}. {file}\n"
+        
+        already_processed_msg += f"\n💡 No new processing required. Loading previous summary report...\n"
+        already_processed_msg += f"{'='*separator_length}\n"
+        
+        self.summary_text.append(already_processed_msg)
+        
+        # 尝试加载历史summary report
+        historical_content = self.load_latest_summary_report()
+        if historical_content:
+            self.summary_text.append("\n📖 Previous Processing Summary:")
+            self.summary_text.append(historical_content)
+            self.update_log("Loaded previous summary report from working directory.")
+        else:
+            self.summary_text.append("\n⚠️ No previous summary report found in the working directory.")
+            self.update_log("No previous summary report found.")
 
 def main():
     """主函数"""
