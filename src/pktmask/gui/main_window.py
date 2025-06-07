@@ -83,6 +83,7 @@ class MainWindow(QMainWindow):
         self.pipeline_thread: Optional[PipelineThread] = None
         self.all_ip_reports = {}  # subdir -> report_data
         self.base_dir: Optional[str] = None
+        self.last_opened_dir = os.path.join(os.path.expanduser("~"), "Desktop")
         self.allowed_root = os.path.expanduser("~")
         
         # KPI counters
@@ -156,13 +157,14 @@ class MainWindow(QMainWindow):
         dashboard_group = QGroupBox("Live Dashboard")
         dashboard_layout = QVBoxLayout(dashboard_group)
         self.progress_bar = QProgressBar()
+        self.progress_bar.setTextVisible(False)
         dashboard_layout.addWidget(self.progress_bar)
         kpi_layout = QGridLayout()
         self.files_processed_label = QLabel("0")
         self.files_processed_label.setObjectName("FilesProcessedLabel")
         self.packets_processed_label = QLabel("0")
         self.packets_processed_label.setObjectName("IpsMaskedLabel") # Re-use for same style
-        self.time_elapsed_label = QLabel("00:00")
+        self.time_elapsed_label = QLabel("00:00.00")
         self.time_elapsed_label.setObjectName("DupesRemovedLabel") # Re-use for same style
 
         kpi_layout.addWidget(self.files_processed_label, 0, 0, Qt.AlignmentFlag.AlignCenter)
@@ -283,16 +285,14 @@ class MainWindow(QMainWindow):
 
     def choose_folder(self):
         """选择目录"""
-        # 默认路径设置为桌面
-        default_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        
         dir_path = QFileDialog.getExistingDirectory(
             self,
             "Select Folder",
-            default_path
+            self.last_opened_dir
         )
         if dir_path:
             self.base_dir = dir_path
+            self.last_opened_dir = dir_path # 记录当前选择的目录
             self.dir_path_label.setText(self.get_elided_text(self.dir_path_label, dir_path))
             self.start_proc_btn.setEnabled(True)
 
@@ -309,7 +309,7 @@ class MainWindow(QMainWindow):
         self.subdirs_packets_counted.clear()
         self.files_processed_label.setText("0")
         self.packets_processed_label.setText("0")
-        self.time_elapsed_label.setText("00:00")
+        self.time_elapsed_label.setText("00:00.00")
         if self.timer and self.timer.isActive():
             self.timer.stop()
         self.progress_bar.setValue(0)
@@ -331,7 +331,7 @@ class MainWindow(QMainWindow):
         self.subdirs_packets_counted.clear()
         self.files_processed_label.setText("0")
         self.packets_processed_label.setText("0")
-        self.time_elapsed_label.setText("00:00")
+        self.time_elapsed_label.setText("00:00.00")
         self.progress_bar.setValue(0)
 
         # Start timer
@@ -339,7 +339,7 @@ class MainWindow(QMainWindow):
         if not self.timer:
             self.timer = QTimer(self)
             self.timer.timeout.connect(self.update_time_elapsed)
-        self.timer.start(1000) # update every second
+        self.timer.start(50) # update every 50ms for smooth ms display
 
         # Build pipeline from checkboxes
         steps_to_run: List[str] = []
@@ -526,13 +526,19 @@ class MainWindow(QMainWindow):
     def update_time_elapsed(self):
         if not self.start_time:
             return
-        elapsed_seconds = self.start_time.secsTo(QTime.currentTime())
-        hours, remainder = divmod(elapsed_seconds, 3600)
+        
+        elapsed_msecs = self.start_time.msecsTo(QTime.currentTime())
+        
+        seconds = elapsed_msecs // 1000
+        msecs = (elapsed_msecs % 1000) // 10
+        
+        hours, remainder = divmod(seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
+        
         if hours > 0:
-            self.time_elapsed_label.setText(f"{hours}:{minutes:02d}:{seconds:02d}")
+            self.time_elapsed_label.setText(f"{hours}:{minutes:02d}:{seconds:02d}.{msecs:02d}")
         else:
-            self.time_elapsed_label.setText(f"{minutes:02d}:{seconds:02d}")
+            self.time_elapsed_label.setText(f"{minutes:02d}:{seconds:02d}.{msecs:02d}")
 
 def main():
     """主函数"""

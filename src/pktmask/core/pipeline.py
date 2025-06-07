@@ -42,7 +42,7 @@ class Pipeline:
         sorted_target_suffixes = sorted([step.suffix for step in self._steps])
         standard_suffix = "".join(sorted_target_suffixes)
 
-        subdirs = [d.path for d in os.scandir(root_path) if d.is_dir()]
+        subdirs = [root_path]
         total_subdirs = len(subdirs)
 
         if progress_callback:
