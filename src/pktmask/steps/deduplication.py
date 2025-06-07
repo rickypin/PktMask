@@ -55,41 +55,35 @@ class DeduplicationStep(ProcessingStep):
         """
         处理单个 pcap/pcapng 文件，去除完全重复的报文。
         """
-        error_log = []
+        packets = []
+        total_count = 0
         
-        try:
-            packets = []
-            total_count = 0
-            
-            ext = os.path.splitext(input_path)[1].lower()
-            reader_cls = PcapNgReader if ext == ".pcapng" else PcapReader
+        ext = os.path.splitext(input_path)[1].lower()
+        reader_cls = PcapNgReader if ext == ".pcapng" else PcapReader
 
-            seen_packets = set()
-            with reader_cls(input_path) as reader:
-                for pkt in reader:
-                    total_count += 1
-                    # 使用数据包的原始字节作为唯一标识符
-                    raw_bytes = bytes(pkt)
-                    if raw_bytes not in seen_packets:
-                        seen_packets.add(raw_bytes)
-                        packets.append(pkt)
-            
-            wrpcap(output_path, packets, append=False)
-            
-            unique_count = len(packets)
-            
-            summary = {
-                'subdir': os.path.basename(os.path.dirname(input_path)),
-                'processed_files': 1,
-                'total_packets': total_count,
-                'total_unique_packets': unique_count,
-                'error_log': error_log
-            }
-            return {'report': summary}
-
-        except Exception as e:
-            error_log.append(f"Error processing file {input_path} for deduplication: {e}")
-            return {'error_log': error_log}
+        seen_packets = set()
+        with reader_cls(input_path) as reader:
+            for pkt in reader:
+                total_count += 1
+                # 使用数据包的原始字节作为唯一标识符
+                raw_bytes = bytes(pkt)
+                if raw_bytes not in seen_packets:
+                    seen_packets.add(raw_bytes)
+                    packets.append(pkt)
+        
+        wrpcap(output_path, packets, append=False)
+        
+        unique_count = len(packets)
+        
+        summary = {
+            'subdir': os.path.basename(os.path.dirname(input_path)),
+            'input_filename': os.path.basename(input_path),
+            'output_filename': os.path.basename(output_path),
+            'total_packets': total_count,
+            'unique_packets': unique_count,
+            'removed_count': total_count - unique_count,
+        }
+        return summary
 
     def process_directory(self, subdir_path: str, base_path: str = None, progress_callback=None, all_suffixes=None):
         def log(level, message):

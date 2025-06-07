@@ -10,11 +10,12 @@ from ..utils.reporting import FileReporter
 
 # 使用 functools.partial 来处理需要复杂初始化的步骤，这比 lambda 更易于 introspect
 STEP_REGISTRY: Dict[str, Callable[[], 'ProcessingStep']] = {
-    "dedup_packet": partial(DeduplicationStep),
-    "trim_packet": partial(IntelligentTrimmingStep),
-    "mask_ip": partial(IpAnonymizationStep, 
-                       strategy=HierarchicalAnonymizationStrategy(), 
-                       reporter=FileReporter())
+    "dedup_packet": DeduplicationStep,
+    "trim_packet": IntelligentTrimmingStep,
+    "mask_ip": lambda: IpAnonymizationStep(
+        strategy=HierarchicalAnonymizationStrategy(), 
+        reporter=FileReporter()
+    )
 }
 
 def get_step_instance(step_name: str) -> 'ProcessingStep':

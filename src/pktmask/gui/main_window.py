@@ -75,6 +75,11 @@ class PipelineThread(QThread):
 
     def stop(self):
         self.is_running = False
+        if self._pipeline:
+            self._pipeline.stop()
+        # 发送停止日志和结束事件来触发 UI 恢复
+        self.progress_signal.emit(PipelineEvents.LOG, {'message': '--- Pipeline Stopped by User ---'})
+        self.progress_signal.emit(PipelineEvents.PIPELINE_END, {})
 
 class MainWindow(QMainWindow):
     """主窗口"""
@@ -93,6 +98,13 @@ class MainWindow(QMainWindow):
         self.start_time: Optional[QTime] = None
         self.subdirs_files_counted = set()
         self.subdirs_packets_counted = set()
+        self.printed_summary_headers = set()
+        
+        # 文件处理追踪 - 按原始文件分组报告
+        self.file_processing_results = {}  # original_file -> {steps: {step_name: result_data}}
+        self.current_processing_file = None  # 当前正在处理的原始文件
+        self.global_ip_mappings = {}  # 全局IP映射汇总
+        self.processed_files_count = 0  # 已处理文件计数
 
         self.init_ui()
         self._apply_stylesheet() # 应用初始样式
@@ -134,8 +146,8 @@ class MainWindow(QMainWindow):
         pipeline_layout = QVBoxLayout(pipeline_group)
         self.mask_ip_cb = QCheckBox("Mask IPs")
         self.dedup_packet_cb = QCheckBox("Remove Dupes")
-        self.trim_packet_cb = QCheckBox("Cut Payloads")
-        self.trim_packet_cb.setToolTip("Cuts payload of packets to reduce size.")
+        self.trim_packet_cb = QCheckBox("Trim Payloads (Preserve TLS Handshake)")
+        self.trim_packet_cb.setToolTip("Intelligently trims packet payloads while preserving TLS handshake data.")
         self.mask_ip_cb.setChecked(True)
         self.dedup_packet_cb.setChecked(True)
         self.trim_packet_cb.setChecked(True)
@@ -216,7 +228,7 @@ class MainWindow(QMainWindow):
         # Connect signals
         self.select_dir_btn.clicked.connect(self.choose_folder)
         self.reset_btn.clicked.connect(self.reset_state)
-        self.start_proc_btn.clicked.connect(self.start_pipeline_processing)
+        self.start_proc_btn.clicked.connect(self.toggle_pipeline_processing)
         
         self.show_initial_guides()
 
@@ -307,6 +319,13 @@ class MainWindow(QMainWindow):
         self.packets_processed_count = 0
         self.subdirs_files_counted.clear()
         self.subdirs_packets_counted.clear()
+        self.printed_summary_headers.clear()
+        self.file_processing_results.clear()  # 清空文件处理结果
+        self.current_processing_file = None   # 重置当前处理文件
+        self.global_ip_mappings.clear()      # 清空全局IP映射
+        self.processed_files_count = 0       # 重置文件计数
+        if hasattr(self, '_current_file_ips'):
+            self._current_file_ips.clear()    # 清空文件IP映射
         self.files_processed_label.setText("0")
         self.packets_processed_label.setText("0")
         self.time_elapsed_label.setText("00:00.00")
@@ -314,7 +333,26 @@ class MainWindow(QMainWindow):
             self.timer.stop()
         self.progress_bar.setValue(0)
         self.start_proc_btn.setEnabled(False)
+        self.start_proc_btn.setText("Start")
         self.show_initial_guides()
+
+    def toggle_pipeline_processing(self):
+        """根据当前状态切换处理开始/停止"""
+        if self.pipeline_thread and self.pipeline_thread.isRunning():
+            self.stop_pipeline_processing()
+        else:
+            self.start_pipeline_processing()
+
+    def stop_pipeline_processing(self):
+        self.log_text.append("\n--- Stopping pipeline... ---")
+        if self.pipeline_thread:
+            self.pipeline_thread.stop()
+            # 等待线程安全结束，最多等待 3 秒
+            if not self.pipeline_thread.wait(3000):
+                self.log_text.append("Warning: Pipeline did not stop gracefully, forcing termination.")
+                self.pipeline_thread.terminate()
+                self.pipeline_thread.wait()
+        # UI 状态恢复将通过 PIPELINE_END 事件或 finished 信号触发
 
     def start_pipeline_processing(self):
         if not self.base_dir:
@@ -329,6 +367,13 @@ class MainWindow(QMainWindow):
         self.packets_processed_count = 0
         self.subdirs_files_counted.clear()
         self.subdirs_packets_counted.clear()
+        self.printed_summary_headers.clear()
+        self.file_processing_results.clear()  # 清空文件处理结果
+        self.current_processing_file = None   # 重置当前处理文件
+        self.global_ip_mappings.clear()      # 清空全局IP映射
+        self.processed_files_count = 0       # 重置文件计数
+        if hasattr(self, '_current_file_ips'):
+            self._current_file_ips.clear()    # 清空文件IP映射
         self.files_processed_label.setText("0")
         self.packets_processed_label.setText("0")
         self.time_elapsed_label.setText("00:00.00")
@@ -366,19 +411,36 @@ class MainWindow(QMainWindow):
 
     def start_processing(self, pipeline: Pipeline):
         self.log_text.append(f"--- Pipeline Started ---\n")
-        self.summary_text.append(f"--- Pipeline Started ---\n")
+        
+        # 添加处理开始的信息
+        enabled_steps = []
+        if self.mask_ip_cb.isChecked():
+            enabled_steps.append("🛡️ IP Masking")
+        if self.dedup_packet_cb.isChecked():
+            enabled_steps.append("🔄 Deduplication")
+        if self.trim_packet_cb.isChecked():
+            enabled_steps.append("✂️ Payload Trimming")
+            
+        separator_length = 70
+        start_report = f"{'='*separator_length}\n🚀 STARTING PACKET PROCESSING PIPELINE\n{'='*separator_length}\n"
+        start_report += f"📂 Source Directory: {os.path.basename(self.base_dir)}\n"
+        start_report += f"🔧 Processing Steps: {', '.join(enabled_steps)}\n"
+        start_report += f"⏰ Started at: {QTime.currentTime().toString('hh:mm:ss')}\n"
+        start_report += f"{'='*separator_length}\n"
+        
+        self.summary_text.append(start_report)
 
         self.pipeline_thread = PipelineThread(pipeline, self.base_dir)
         self.pipeline_thread.progress_signal.connect(self.handle_thread_progress)
+        self.pipeline_thread.finished.connect(self.on_thread_finished)
         self.pipeline_thread.start()
 
         # Disable all controls during processing
         self.select_dir_btn.setEnabled(False)
         self.reset_btn.setEnabled(False)
         for cb in [self.mask_ip_cb, self.dedup_packet_cb, self.trim_packet_cb]:
-            if cb.text() != "Trim Packet (Coming Soon)":
-                cb.setEnabled(False)
-        self.start_proc_btn.setEnabled(False)
+            cb.setEnabled(False)
+        self.start_proc_btn.setText("Stop")
 
     def handle_thread_progress(self, event_type: PipelineEvents, data: dict):
         """主槽函数，根据事件类型分发UI更新任务"""
@@ -387,49 +449,51 @@ class MainWindow(QMainWindow):
         
         elif event_type == PipelineEvents.SUBDIR_START:
             self.progress_bar.setValue(data.get('current', 0))
+            self.update_log(f"Processing directory: {data.get('name', 'N/A')}")
+        
+        elif event_type == PipelineEvents.FILE_START:
+            self.files_processed_count += 1
+            self.files_processed_label.setText(str(self.files_processed_count))
+            file_path = data['path']
+            self.current_processing_file = os.path.basename(file_path)
+            self.update_log(f"\nProcessing file: {self.current_processing_file}")
+            
+            # 初始化当前文件的处理结果记录
+            if self.current_processing_file not in self.file_processing_results:
+                self.file_processing_results[self.current_processing_file] = {'steps': {}}
+
+        elif event_type == PipelineEvents.FILE_END:
+            if self.current_processing_file:
+                # 获取输出文件名信息
+                output_files = []
+                if self.current_processing_file in self.file_processing_results:
+                    steps_data = self.file_processing_results[self.current_processing_file]['steps']
+                    step_order = ['IP Masking', 'Deduplication', 'Payload Trimming']
+                    for step_name in reversed(step_order):
+                        if step_name in steps_data:
+                            output_file = steps_data[step_name]['data'].get('output_filename')
+                            if output_file:
+                                output_files.append(output_file)
+                                break
+                
+                finish_msg = f"Finished file: {self.current_processing_file}"
+                if output_files:
+                    finish_msg += f" → Output: {output_files[0]}"
+                self.update_log(finish_msg)
+                
+                # 生成当前文件的完整报告
+                self.generate_file_complete_report(self.current_processing_file)
+                self.current_processing_file = None
+
+        elif event_type == PipelineEvents.PACKETS_SCANNED:
+            self.packets_processed_count += data.get('count', 0)
+            self.packets_processed_label.setText(str(self.packets_processed_count))
 
         elif event_type == PipelineEvents.LOG:
             self.update_log(data['message'])
 
         elif event_type == PipelineEvents.STEP_SUMMARY:
-            subdir_path = None
-            if data['type'] == 'mask_ip':
-                subdir_path = data.get('report', {}).get('path')
-            elif data['type'] == 'dedup_packet':
-                subdir_path = data.get('subdir')
-            elif data['type'] == 'intelligent_trim':
-                subdir_path = data.get('report', {}).get('subdir')
-
-            if data['type'] == 'mask_ip':
-                report = data['report']
-                if subdir_path and subdir_path not in self.subdirs_files_counted:
-                    self.files_processed_count += report.get('stats', {}).get('processed_file_count', 0)
-                    self.subdirs_files_counted.add(subdir_path)
-                self.update_ip_report(report)
-            
-            elif data['type'] == 'dedup_packet':
-                report = data
-                if subdir_path and subdir_path not in self.subdirs_files_counted:
-                    self.files_processed_count += report.get('processed_files', 0)
-                    self.subdirs_files_counted.add(subdir_path)
-                if subdir_path and subdir_path not in self.subdirs_packets_counted:
-                    self.packets_processed_count += report.get('total_packets', 0)
-                    self.subdirs_packets_counted.add(subdir_path)
-                self.update_dedup_report(data)
-
-            elif data['type'] == 'intelligent_trim':
-                report = data.get('report', {})
-                if subdir_path and subdir_path not in self.subdirs_files_counted:
-                    self.files_processed_count += report.get('processed_files', 0)
-                    self.subdirs_files_counted.add(subdir_path)
-                if subdir_path and subdir_path not in self.subdirs_packets_counted:
-                    self.packets_processed_count += report.get('total_packets', 0)
-                    self.subdirs_packets_counted.add(subdir_path)
-                self.update_trim_report(data)
-            
-            # Update KPI labels
-            self.files_processed_label.setText(f"{self.files_processed_count}")
-            self.packets_processed_label.setText(f"{self.packets_processed_count}")
+            self.collect_step_result(data)
 
         elif event_type == PipelineEvents.PIPELINE_END:
             self.progress_bar.setValue(self.progress_bar.maximum()) # Ensure it reaches 100%
@@ -438,59 +502,248 @@ class MainWindow(QMainWindow):
         elif event_type == PipelineEvents.ERROR:
             self.processing_error(data['message'])
 
+    def collect_step_result(self, data: dict):
+        """收集每个步骤的处理结果，但不立即显示"""
+        if not self.current_processing_file:
+            return
+            
+        step_type = data.get('type')
+        if not step_type or step_type.endswith('_final'):
+            if step_type and step_type.endswith('_final'):
+                # 处理最终报告，提取IP映射信息
+                report_data = data.get('report')
+                if report_data and 'mask_ip' in step_type:
+                    self.set_final_summary_report(report_data)
+            return
+        
+        # 标准化步骤名称
+        step_display_names = {
+            'mask_ip': 'IP Masking',
+            'remove_dupes': 'Deduplication', 
+            'intelligent_trim': 'Payload Trimming'
+        }
+        
+        step_name = step_display_names.get(step_type, step_type)
+        
+        # 存储步骤结果
+        self.file_processing_results[self.current_processing_file]['steps'][step_name] = {
+            'type': step_type,
+            'data': data
+        }
+        
+        # 如果是IP匿名化步骤，提取文件级别的IP映射
+        if step_type == 'mask_ip' and 'file_ip_mappings' in data:
+            if not hasattr(self, '_current_file_ips'):
+                self._current_file_ips = {}
+            self._current_file_ips[self.current_processing_file] = data['file_ip_mappings']
+            # 将IP映射添加到全局映射中
+            self.global_ip_mappings.update(data['file_ip_mappings'])
+
+    def generate_file_complete_report(self, original_filename: str):
+        """为单个文件生成完整的处理报告"""
+        if original_filename not in self.file_processing_results:
+            return
+            
+        file_results = self.file_processing_results[original_filename]
+        steps_data = file_results['steps']
+        
+        if not steps_data:
+            return
+        
+        # 增加已处理文件计数
+        self.processed_files_count += 1
+        
+        separator_length = 70
+        filename_display = original_filename
+        
+        # 文件处理标题
+        header = f"\n{'='*separator_length}\n📄 FILE PROCESSING RESULTS: {filename_display}\n{'='*separator_length}"
+        self.summary_text.append(header)
+        
+        # 获取原始包数（从第一个处理步骤获取）
+        original_packets = 0
+        output_filename = None
+        if 'IP Masking' in steps_data:
+            original_packets = steps_data['IP Masking']['data'].get('total_packets', 0)
+            output_filename = steps_data['IP Masking']['data'].get('output_filename')
+        elif 'Deduplication' in steps_data:
+            original_packets = steps_data['Deduplication']['data'].get('total_packets', 0)
+            output_filename = steps_data['Deduplication']['data'].get('output_filename')
+        elif 'Payload Trimming' in steps_data:
+            original_packets = steps_data['Payload Trimming']['data'].get('total_packets', 0)
+            output_filename = steps_data['Payload Trimming']['data'].get('output_filename')
+        
+        # 从最后一个处理步骤获取最终输出文件名
+        step_order = ['IP Masking', 'Deduplication', 'Payload Trimming']
+        for step_name in reversed(step_order):
+            if step_name in steps_data:
+                final_output = steps_data[step_name]['data'].get('output_filename')
+                if final_output:
+                    output_filename = final_output
+                    break
+        
+        # 显示原始包数和输出文件名
+        self.summary_text.append(f"📦 Original Packets: {original_packets:,}")
+        if output_filename:
+            self.summary_text.append(f"📄 Output File: {output_filename}")
+        self.summary_text.append("")
+        
+        # 按处理顺序显示各步骤结果
+        file_ip_mappings = {}  # 存储当前文件的IP映射
+        
+        for step_name in step_order:
+            if step_name in steps_data:
+                step_result = steps_data[step_name]
+                step_type = step_result['type']
+                data = step_result['data']
+                
+                if step_type == 'mask_ip':
+                    # 使用新的IP统计数据
+                    original_ips = data.get('original_ips', 0)
+                    masked_ips = data.get('anonymized_ips', 0)
+                    rate = (masked_ips / original_ips * 100) if original_ips > 0 else 0
+                    line = f"  🛡️  {step_name:<18} | Original IPs: {original_ips:>3} | Masked IPs: {masked_ips:>3} | Rate: {rate:5.1f}%"
+                    
+                    # 获取文件级别的IP映射
+                    file_ip_mappings = data.get('file_ip_mappings', {})
+                    
+                elif step_type == 'remove_dupes':
+                    unique = data.get('unique_packets', 0)
+                    removed = data.get('removed_count', 0)
+                    total_before = data.get('total_packets', 0)
+                    rate = (removed / total_before * 100) if total_before > 0 else 0
+                    line = f"  🔄 {step_name:<18} | Unique Pkts: {unique:>4} | Removed Pkts: {removed:>4} | Rate: {rate:5.1f}%"
+                
+                elif step_type == 'intelligent_trim':
+                    total = data.get('total_packets', 0)
+                    trimmed = data.get('trimmed_packets', 0)
+                    full_pkts = total - trimmed
+                    rate = (trimmed / total * 100) if total > 0 else 0
+                    line = f"  ✂️  {step_name:<18} | Full Pkts: {full_pkts:>5} | Trimmed Pkts: {trimmed:>4} | Rate: {rate:5.1f}%"
+                else:
+                    continue
+                    
+                self.summary_text.append(line)
+        
+        # 如果有IP映射，显示文件级别的IP映射
+        if file_ip_mappings:
+            self.summary_text.append("")
+            self.summary_text.append("🔗 IP Mappings for this file:")
+            sorted_mappings = sorted(file_ip_mappings.items())
+            for i, (orig_ip, new_ip) in enumerate(sorted_mappings, 1):
+                self.summary_text.append(f"   {i:2d}. {orig_ip:<16} → {new_ip}")
+        
+        self.summary_text.append(f"{'='*separator_length}")
+
+    def update_summary_report(self, data: dict):
+        """这个方法现在主要用于处理最终报告，文件级报告由 generate_file_complete_report 处理"""
+        step_type = data.get('type')
+        if step_type and step_type.endswith('_final'):
+            report_data = data.get('report')
+            if report_data and 'mask_ip' in step_type:
+                self.set_final_summary_report(report_data)
+
+    def set_final_summary_report(self, report: dict):
+        """设置最终的汇总报告，包括详细的IP映射信息。"""
+        subdir = report.get('path', 'N/A')
+        stats = report.get('stats', {})
+        total_mapping = report.get('data', {}).get('total_mapping', {})
+        
+        separator_length = 70  # 保持一致的分隔线长度
+        
+        # 添加IP映射的汇总信息，包括详细映射表
+        text = f"\n{'='*separator_length}\n📋 DIRECTORY PROCESSING SUMMARY\n{'='*separator_length}\n"
+        text += f"📂 Directory: {subdir}\n\n"
+        text += f"🔒 IP Anonymization Summary:\n"
+        text += f"   • Total Unique IPs Discovered: {stats.get('total_unique_ips', 'N/A')}\n"
+        text += f"   • Total IPs Anonymized: {stats.get('total_mapped_ips', 'N/A')}\n\n"
+        
+        if total_mapping:
+            text += f"📝 Complete IP Mapping Table (All Files):\n"
+            # 按原始IP排序显示映射
+            sorted_mappings = sorted(total_mapping.items())
+            for i, (orig_ip, new_ip) in enumerate(sorted_mappings, 1):
+                text += f"   {i:2d}. {orig_ip:<16} → {new_ip}\n"
+            text += "\n"
+        
+        text += f"✅ All IP addresses have been successfully anonymized while\n"
+        text += f"   preserving network structure and subnet relationships.\n"
+        text += f"{'='*separator_length}\n"
+        
+        self.summary_text.append(text)
+
     def update_log(self, message: str):
         self.log_text.append(message)
         self.log_text.verticalScrollBar().setValue(self.log_text.verticalScrollBar().maximum())
 
-    def update_ip_report(self, report: dict):
-        """更新IP脱敏报告的文本视图"""
-        subdir = report.get('path', 'N/A')
-        stats = report.get('stats', {})
-        total_mapping = report.get('data', {}).get('total_mapping', {})
-
-        text = f"--- IP Masking Summary for: {subdir} ---\n"
-        text += f"Processed Files: {stats.get('processed_file_count', 'N/A')}\n"
-        text += f"Total Unique IPs Found: {stats.get('total_unique_ips', 'N/A')}\n"
-        text += f"Total Mapped IPs: {stats.get('total_mapped_ips', 'N/A')}\n"
-        text += "[Mapping Details]\n"
-        for orig, new in total_mapping.items():
-            text += f"  {orig:<40} -> {new}\n"
-        text += "\n"
-        
-        self.set_report_text(text)
-    
-    def update_dedup_report(self, summary_data: dict):
-        subdir = summary_data.get('subdir', 'N/A')
-        text = f"--- Remove Dupes Summary for: {subdir} ---\n"
-        text += f"Processed Files: {summary_data.get('processed_files', 0)}\n"
-        text += f"Total Original Packets: {summary_data.get('total_packets', 0)}\n"
-        text += f"Total Unique Packets: {summary_data.get('total_unique_packets', 0)}\n\n"
-        self.set_report_text(text)
-
-    def update_trim_report(self, summary_data: dict):
-        """更新智能裁切报告的文本视图"""
-        report = summary_data.get('report', {})
-        subdir = report.get('subdir', 'N/A')
-        total = report.get('total_packets', 0)
-        trimmed = report.get('trimmed_packets', 0)
-        
-        text = f"--- Intelligent Trim Summary for: {subdir} ---\n"
-        text += f"Total Packets Scanned: {total}\n"
-        text += f"Packets Trimmed: {trimmed}\n\n"
-        
-        self.set_report_text(text)
-
-    def set_report_text(self, text: str):
-        self.summary_text.append(text)
-        self.summary_text.moveCursor(QTextCursor.MoveOperation.End)
-
     def processing_finished(self):
         self.log_text.append(f"\n--- Pipeline Finished ---")
-        self.summary_text.append(f"\n--- Pipeline Finished ---")
         
+        # 添加处理完成的汇总信息
         if self.timer:
             self.timer.stop()
         self.update_time_elapsed()
+        
+        final_time = self.time_elapsed_label.text()
+        total_files = self.files_processed_count
+        total_packets = self.packets_processed_count
+        
+        separator_length = 70
+        completion_report = f"\n{'='*separator_length}\n✅ PROCESSING COMPLETED SUCCESSFULLY\n{'='*separator_length}\n"
+        completion_report += f"📊 Overall Statistics:\n"
+        completion_report += f"   • Total Files Processed: {total_files}\n"
+        completion_report += f"   • Total Packets Processed: {total_packets:,}\n"
+        completion_report += f"   • Processing Time: {final_time}\n"
+        
+        # 计算处理速度 (更安全的方式)
+        try:
+            time_parts = final_time.split(':')
+            if len(time_parts) >= 2:
+                minutes = int(time_parts[-2])
+                seconds_with_ms = time_parts[-1].split('.')
+                seconds = int(seconds_with_ms[0])
+                total_seconds = minutes * 60 + seconds
+                if total_seconds > 0:
+                    speed = total_packets / total_seconds
+                    completion_report += f"   • Average Speed: {speed:,.0f} packets/second\n\n"
+                else:
+                    completion_report += f"   • Average Speed: N/A (processing too fast)\n\n"
+            else:
+                completion_report += f"   • Average Speed: N/A\n\n"
+        except:
+            completion_report += f"   • Average Speed: N/A\n\n"
+        
+        enabled_steps = []
+        if self.mask_ip_cb.isChecked():
+            enabled_steps.append("IP Masking")
+        if self.dedup_packet_cb.isChecked():
+            enabled_steps.append("Deduplication")
+        if self.trim_packet_cb.isChecked():
+            enabled_steps.append("Payload Trimming")
+            
+        completion_report += f"🔧 Applied Processing Steps: {', '.join(enabled_steps)}\n"
+        completion_report += f"📁 Output Location: Same directory as input files\n"
+        completion_report += f"📝 All processed files have suffixes to distinguish from originals.\n"
+        completion_report += f"{'='*separator_length}\n"
+        
+        self.summary_text.append(completion_report)
+
+        # 如果处理了≥2个文件且有IP映射，显示全局IP映射
+        if self.processed_files_count >= 2 and self.global_ip_mappings:
+            global_mapping_report = f"\n{'='*separator_length}\n🌐 GLOBAL IP MAPPINGS (All Files Combined)\n{'='*separator_length}\n"
+            global_mapping_report += f"📝 Complete IP Mapping Table - Unique Entries Across All Files:\n"
+            global_mapping_report += f"   • Total Unique IPs Mapped: {len(self.global_ip_mappings)}\n\n"
+            
+            # 按原始IP排序显示映射
+            sorted_global_mappings = sorted(self.global_ip_mappings.items())
+            for i, (orig_ip, new_ip) in enumerate(sorted_global_mappings, 1):
+                global_mapping_report += f"   {i:2d}. {orig_ip:<16} → {new_ip}\n"
+            
+            global_mapping_report += f"\n✅ All unique IP addresses across {self.processed_files_count} files have been\n"
+            global_mapping_report += f"   successfully anonymized with consistent mappings.\n"
+            global_mapping_report += f"{'='*separator_length}\n"
+            
+            self.summary_text.append(global_mapping_report)
 
         # Re-enable controls
         self.select_dir_btn.setEnabled(True)
@@ -498,10 +751,15 @@ class MainWindow(QMainWindow):
         for cb in [self.mask_ip_cb, self.dedup_packet_cb, self.trim_packet_cb]:
             cb.setEnabled(True)
         self.start_proc_btn.setEnabled(True)
+        self.start_proc_btn.setText("Start")
 
     def processing_error(self, error_message: str):
         QMessageBox.critical(self, "Error", f"An error occurred during processing:\n{error_message}")
         self.processing_finished()
+
+    def on_thread_finished(self):
+        """线程完成时的回调函数，确保UI状态正确恢复"""
+        self.pipeline_thread = None
 
     def get_elided_text(self, label: QLabel, text: str) -> str:
         """如果文本太长，则省略文本"""

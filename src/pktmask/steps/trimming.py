@@ -9,8 +9,7 @@
 import os
 from typing import List, Tuple, Dict, Optional
 
-from scapy.all import PcapReader, PcapNgReader, wrpcap, TCP, IP, IPv6
-
+from scapy.all import TCP, IP, IPv6, PcapReader, PcapNgReader, wrpcap
 from ..core.base_step import ProcessingStep
 
 # --- 从原始脚本移植的核心算法函数 ---
@@ -139,27 +138,24 @@ class IntelligentTrimmingStep(ProcessingStep):
 
     def process_file(self, input_path: str, output_path: str) -> Optional[Dict]:
         """处理单个pcap文件，执行智能TLS裁切。"""
-        try:
-            ext = os.path.splitext(input_path)[1].lower()
-            reader_cls = PcapNgReader if ext == ".pcapng" else PcapReader
+        ext = os.path.splitext(input_path)[1].lower()
+        reader_cls = PcapNgReader if ext == ".pcapng" else PcapReader
+        
+        with reader_cls(input_path) as reader:
+            all_packets = reader.read_all()
             
-            with reader_cls(input_path) as reader:
-                all_packets = reader.read_all()
-                
-            processed_packets, total_count, trimmed_count, error_log = _process_pcap_data(all_packets)
-            
-            wrpcap(output_path, processed_packets, append=False)
-            
-            summary = {
-                'subdir': os.path.basename(os.path.dirname(input_path)),
-                'processed_files': 1,
-                'total_packets': total_count,
-                'trimmed_packets': trimmed_count,
-                'error_log': error_log
-            }
-            return {'report': summary}
-
-        except Exception as e:
-            return {
-                'error_log': [f"Fatal error processing {os.path.basename(input_path)}: {e}"]
-            } 
+        processed_packets, total_count, trimmed_count, error_log = _process_pcap_data(all_packets)
+        
+        wrpcap(output_path, processed_packets, append=False)
+        
+        trim_rate = (trimmed_count / total_count * 100) if total_count > 0 else 0
+        
+        summary = {
+            'subdir': os.path.basename(os.path.dirname(input_path)),
+            'input_filename': os.path.basename(input_path),
+            'output_filename': os.path.basename(output_path),
+            'total_packets': total_count,
+            'trimmed_packets': trimmed_count,
+            'trim_rate': trim_rate,
+        }
+        return summary 

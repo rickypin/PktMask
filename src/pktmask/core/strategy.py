@@ -4,7 +4,7 @@ import ipaddress
 import random
 import os
 
-from scapy.all import PcapReader, PcapNgReader, IP, IPv6
+from scapy.all import PcapReader, PcapNgReader, IP, IPv6, TCP, UDP
 
 class AnonymizationStrategy(ABC):
     """IP 匿名化策略的抽象基类。"""
@@ -22,6 +22,26 @@ class AnonymizationStrategy(ABC):
         Returns:
             一个字典，将每个原始IP映射到其新的匿名IP。
         """
+        pass
+
+    @abstractmethod
+    def reset(self):
+        """重置策略的内部状态，以便处理新的目录。"""
+        pass
+
+    @abstractmethod
+    def build_mapping_from_directory(self, all_pcap_files: List[str]):
+        """根据目录中的所有文件构建IP映射。"""
+        pass
+
+    @abstractmethod
+    def anonymize_packet(self, pkt) -> Tuple[object, bool]:
+        """匿名化单个数据包。"""
+        pass
+
+    @abstractmethod
+    def get_ip_map(self) -> Dict[str, str]:
+        """获取当前构建的IP映射。"""
         pass
 
 
@@ -149,6 +169,15 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
     基于网段频率的分层IP匿名化策略。
     该策略会预扫描文件以保留子网结构。
     """
+    def __init__(self):
+        self._ip_map: Dict[str, str] = {}
+
+    def reset(self):
+        self._ip_map = {}
+
+    def get_ip_map(self) -> Dict[str, str]:
+        return self._ip_map
+
     def _prescan_addresses(self, files_to_process: List[str], subdir_path: str, error_log: List[str]) -> Tuple:
         freq_ipv4_1, freq_ipv4_2, freq_ipv4_3 = {}, {}, {}
         freq_ipv6_1, freq_ipv6_2, freq_ipv6_3, freq_ipv6_4, freq_ipv6_5, freq_ipv6_6, freq_ipv6_7 = {}, {}, {}, {}, {}, {}, {}
@@ -217,4 +246,49 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
             except Exception as e:
                 error_log.append(f"Pre-calculate mapping error for IP {ip}: {str(e)}")
         
-        return mapping 
+        self._ip_map = mapping
+        return mapping
+
+    def build_mapping_from_directory(self, all_pcap_files: List[str]):
+        """扫描所有文件并构建完整的IP映射。"""
+        if not all_pcap_files:
+            return
+        
+        subdir_path = os.path.dirname(all_pcap_files[0])
+        filenames = [os.path.basename(p) for p in all_pcap_files]
+        error_log = []
+
+        self.create_mapping(filenames, subdir_path, error_log)
+
+    def anonymize_packet(self, pkt) -> Tuple[object, bool]:
+        """根据已构建的映射匿名化单个数据包。"""
+        is_anonymized = False
+        
+        # 处理IPv4
+        if pkt.haslayer(IP):
+            layer = pkt.getlayer(IP)
+            if layer.src in self._ip_map:
+                layer.src = self._ip_map[layer.src]
+                is_anonymized = True
+            if layer.dst in self._ip_map:
+                layer.dst = self._ip_map[layer.dst]
+                is_anonymized = True
+        
+        # 处理IPv6
+        if pkt.haslayer(IPv6):
+            layer = pkt.getlayer(IPv6)
+            if layer.src in self._ip_map:
+                layer.src = self._ip_map[layer.src]
+                is_anonymized = True
+            if layer.dst in self._ip_map:
+                layer.dst = self._ip_map[layer.dst]
+                is_anonymized = True
+                
+        # 删除校验和以强制重新计算
+        if is_anonymized:
+            if pkt.haslayer(IP): del pkt.getlayer(IP).chksum
+            if pkt.haslayer(IPv6): del pkt.getlayer(IPv6).len
+            if pkt.haslayer(TCP): del pkt.getlayer(TCP).chksum
+            if pkt.haslayer(UDP): del pkt.getlayer(UDP).chksum
+            
+        return pkt, is_anonymized 

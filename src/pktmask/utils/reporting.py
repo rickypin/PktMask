@@ -15,6 +15,11 @@ class Reporter(ABC):
         """生成报告的接口方法。"""
         pass
 
+    @abstractmethod
+    def finalize_report_for_directory(self, subdir_name: str, stats: Dict[str, Any], final_mapping: Dict[str, str]):
+        """在目录处理完成后生成最终报告。"""
+        pass
+
     def set_output_directory(self, path: str):
         """设置报告输出目录的可选方法。"""
         pass
@@ -41,39 +46,48 @@ class FileReporter(Reporter):
         self._output_dir = path
 
     def generate(self, report_name: str, report_data: Dict[str, Any]):
-        rel_subdir = report_data.get("path", "N/A")
-        stats = report_data.get("stats", {})
-        file_mappings = report_data.get("data", {}).get("total_mapping", {}) # 简化，直接用total
-        total_mapping = report_data.get("data", {}).get("total_mapping", {})
-        error_log = report_data.get("error_log", [])
-
-        # 准备用于渲染的数据
-        render_data = {
-            "subdir": rel_subdir,
-            "now": current_time(),
-            "stats": stats,
-            "file_mappings": {report_data.get("file", "N/A"): file_mappings}, # 包装成与模板兼容的格式
-            "total_mapping": total_mapping
-        }
-        
-        # 保存JSON报告
+        """为单个操作生成并保存JSON报告。"""
         report_path = os.path.join(self._output_dir, f"{report_name}.json")
         try:
             with open(report_path, "w", encoding="utf-8") as f:
                 json.dump(report_data, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            # 这里的错误不应使主程序崩溃，而是记录下来
-            print(f"[{current_time()}] Error saving JSON report: {str(e)}")
+            print(f"[{current_time()}] Error saving JSON report for {report_name}: {str(e)}")
+
+    def finalize_report_for_directory(self, subdir_name: str, stats: Dict[str, Any], final_mapping: Dict[str, str]):
+        """为整个目录生成并保存一个最终的JSON和HTML报告。"""
+        
+        report_name = f"final_report_for_{subdir_name.replace('/', '_')}"
+        
+        # 构造用于JSON和HTML的数据
+        report_data = {
+            "path": subdir_name,
+            "stats": stats,
+            "data": { "total_mapping": final_mapping },
+            "generated_at": current_time()
+        }
+
+        # 保存JSON报告
+        self.generate(report_name, report_data)
 
         # 生成HTML报告
         if HTML_TEMPLATE:
+            render_data = {
+                "subdir": subdir_name,
+                "now": current_time(),
+                "stats": stats,
+                "total_mapping": final_mapping,
+                "file_mappings": {} # 在总报告中不提供单文件映射
+            }
             try:
                 html_path = os.path.join(self._output_dir, f"{report_name}.html")
                 html_content = HTML_TEMPLATE.render(**render_data)
                 with open(html_path, "w", encoding="utf-8") as f:
                     f.write(html_content)
             except Exception as e:
-                print(f"[{current_time()}] Error generating HTML report: {str(e)}")
+                print(f"[{current_time()}] Error generating final HTML report for {subdir_name}: {e}")
+        
+        return report_data
 
 # 旧的 generate_report 函数已被废弃，其逻辑已移入 FileReporter 类。
 # 为了保持向后兼容性（以防万一），可以保留一个包装器，但最好是直接移除。
