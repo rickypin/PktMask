@@ -16,16 +16,6 @@ class Pipeline:
     def __init__(self, steps: List[ProcessingStep]):
         self._steps = steps
         self.is_running = False
-        
-        # 从已实例化的步骤中直接获取所有后缀，确保准确性
-        self._all_known_suffixes = {step.suffix for step in steps if hasattr(step, 'suffix')}
-
-    def _is_original_file(self, filename: str) -> bool:
-        """检查一个文件是否是原始文件（不包含任何处理后缀）。"""
-        for suffix in self._all_known_suffixes:
-            if suffix in filename:
-                return False
-        return True
 
     def _scan_packets_with_progress(self, filepath: str, progress_callback: Callable):
         """扫描文件，分块报告数据包计数以实现动态效果。"""
@@ -50,10 +40,10 @@ class Pipeline:
             # 在无法读取文件时忽略错误，后续步骤会处理
             pass
 
-    def run(self, root_path: str, progress_callback: Optional[Callable] = None):
+    def run(self, root_path: str, output_dir: str, progress_callback: Optional[Callable] = None):
         """
-        在指定路径上运行所有处理步骤。
-        此方法只处理原始文件，并直接生成最终产物，以避免重复处理。
+        在指定路径上运行所有处理步骤，并将结果输出到指定目录。
+        处理所有 pcap/pcapng 文件，不跳过任何文件。
         """
         self.is_running = True
         
@@ -71,8 +61,9 @@ class Pipeline:
             if not self.is_running: break
             
             rel_subdir = os.path.relpath(subdir_path, root_path)
+            # 处理所有 pcap/pcapng 文件，不过滤
             all_pcap_files_in_dir = [f.path for f in os.scandir(subdir_path) if f.name.endswith(('.pcap', '.pcapng'))]
-            source_files = [f for f in all_pcap_files_in_dir if self._is_original_file(os.path.basename(f))]
+            source_files = all_pcap_files_in_dir  # 不再过滤，处理所有文件
 
             if progress_callback:
                 progress_callback(PipelineEvents.SUBDIR_START, {
@@ -88,7 +79,7 @@ class Pipeline:
                 if not self.is_running: break
                 step.prepare_for_directory(subdir_path, all_pcap_files_in_dir)
                 if hasattr(step, 'set_reporter_path'):
-                    step.set_reporter_path(subdir_path, rel_subdir)
+                    step.set_reporter_path(output_dir, rel_subdir)  # 使用输出目录作为报告路径
             
             if not self.is_running: break
 
@@ -104,17 +95,12 @@ class Pipeline:
                     self._scan_packets_with_progress(input_path, progress_callback)
 
                 base_name, ext = os.path.splitext(os.path.basename(input_path))
-                final_output_path = os.path.join(subdir_path, f"{base_name}{standard_suffix}{ext}")
+                final_output_path = os.path.join(output_dir, f"{base_name}{standard_suffix}{ext}")
 
                 if progress_callback:
                     progress_callback(PipelineEvents.FILE_START, {'path': input_path})
 
-                if os.path.exists(final_output_path):
-                    if progress_callback:
-                        msg = f"  - Skipped: Target file '{os.path.basename(final_output_path)}' already exists."
-                        progress_callback(PipelineEvents.LOG, {'message': msg})
-                        progress_callback(PipelineEvents.FILE_END, {'path': input_path})
-                    continue
+                # 不检查输出文件是否存在，直接处理（输出目录是新创建的）
                 
                 temp_files = []
                 current_input_path = input_path

@@ -130,22 +130,61 @@ def generate_stylesheet(mode: str) -> str:
 
         QProgressBar {{
             border: 1px solid {palette['BORDER_COLOR']};
-            border-radius: 4px;
+            border-radius: 6px;
             text-align: center;
             background-color: {palette['PROGRESS_BAR_BG']};
             color: {palette['PRIMARY_TEXT']};
+            font-size: 10px;
+            font-weight: 500;
+            min-height: 18px;
+            max-height: 18px;
         }}
 
         QProgressBar::chunk {{
-            background-color: {palette['PRIMARY_BUTTON_BG']};
-            width: 10px;
-            margin: 0.5px;
+            background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,
+                stop: 0 {palette['PRIMARY_BUTTON_BG']},
+                stop: 0.5 {palette['PRIMARY_BUTTON_HOVER_BG']},
+                stop: 1 {palette['PRIMARY_BUTTON_BG']});
+            background-image: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 4px,
+                rgba(255,255,255,0.1) 4px,
+                rgba(255,255,255,0.1) 8px
+            );
+            border-radius: 5px;
+            margin: 1px;
         }}
 
         QCheckBox {{
             font-family: {FONTS['FONT_FAMILY']};
             font-size: {FONTS['BODY']};
             color: {palette['PRIMARY_TEXT']};
+            spacing: 6px;
+        }}
+
+        QCheckBox::indicator {{
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            border: 1px solid {palette['BORDER_COLOR']};
+            background-color: {palette['PANEL_BG']};
+        }}
+
+        QCheckBox::indicator:hover {{
+            border-color: {palette['PRIMARY_BUTTON_BG']};
+            background-color: rgba(0, 122, 255, 0.1);
+        }}
+
+        QCheckBox::indicator:checked {{
+            background-color: {palette['PRIMARY_BUTTON_BG']};
+            border-color: {palette['PRIMARY_BUTTON_BG']};
+            color: white;
+        }}
+
+        QCheckBox::indicator:checked:hover {{
+            background-color: {palette['PRIMARY_BUTTON_HOVER_BG']};
+            border-color: {palette['PRIMARY_BUTTON_HOVER_BG']};
         }}
 
         QSplitter::handle {{
