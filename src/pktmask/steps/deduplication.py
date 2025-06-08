@@ -78,6 +78,11 @@ class DeduplicationStep(ProcessingStep):
                     seen_packets.add(raw_bytes)
                     packets.append(pkt)
         
+        # 确保输出文件的目录存在
+        output_dir = os.path.dirname(output_path)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
+        
         wrpcap(output_path, packets, append=False)
         
         unique_count = len(packets)

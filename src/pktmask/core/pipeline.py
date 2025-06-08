@@ -54,6 +54,17 @@ class Pipeline:
         self.is_running = True
         self._logger.info(f"开始管道处理: {root_path} -> {output_dir}")
         
+        # 确保输出目录存在
+        try:
+            os.makedirs(output_dir, exist_ok=True)
+            self._logger.info(f"输出目录已准备: {output_dir}")
+        except Exception as e:
+            error_msg = f"无法创建输出目录 {output_dir}: {e}"
+            self._logger.error(error_msg)
+            if progress_callback:
+                progress_callback(PipelineEvents.ERROR, {'message': error_msg})
+            return
+        
         # 按字母顺序排序后缀以创建标准的输出文件名
         sorted_target_suffixes = sorted([step.suffix for step in self._steps])
         standard_suffix = "".join(sorted_target_suffixes)
@@ -122,17 +133,39 @@ class Pipeline:
                         if progress_callback:
                             progress_callback(PipelineEvents.LOG, {'message': f"  - Running step: {step.name}..."})
 
-                        summary = step.process_file(current_input_path, output_path)
+                        try:
+                            summary = step.process_file(current_input_path, output_path)
+                            
+                            if summary and progress_callback:
+                                # 确保从实例的 'name' 属性获取类型，并进行规范化
+                                summary['type'] = step.name.lower().replace(' ', '_').replace('-', '_')
+                                summary['step_name'] = step.name
+                                summary['filename'] = os.path.basename(input_path)
+                                progress_callback(PipelineEvents.STEP_SUMMARY, summary)
                         
-                        if summary and progress_callback:
-                            # 确保从实例的 'name' 属性获取类型，并进行规范化
-                            summary['type'] = step.name.lower().replace(' ', '_').replace('-', '_')
-                            progress_callback(PipelineEvents.STEP_SUMMARY, summary)
+                        except Exception as step_error:
+                            error_msg = f"处理步骤 '{step.name}' 失败: {step_error}"
+                            self._logger.error(f"文件 {input_path} - {error_msg}")
+                            if progress_callback:
+                                progress_callback(PipelineEvents.ERROR, {'message': error_msg})
+                            # 继续处理下一个文件而不是整个失败
+                            break
                         
                         current_input_path = output_path
+                        
+                except Exception as file_error:
+                    error_msg = f"处理文件 {input_path} 时发生错误: {file_error}"
+                    self._logger.error(error_msg)
+                    if progress_callback:
+                        progress_callback(PipelineEvents.ERROR, {'message': error_msg})
                 finally:
+                    # 清理临时文件
                     for temp_file in temp_files:
-                        if os.path.exists(temp_file): os.remove(temp_file)
+                        try:
+                            if os.path.exists(temp_file): 
+                                os.remove(temp_file)
+                        except Exception as cleanup_error:
+                            self._logger.warning(f"清理临时文件失败 {temp_file}: {cleanup_error}")
                 
                 if progress_callback:
                     progress_callback(PipelineEvents.FILE_END, {'path': input_path})

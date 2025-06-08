@@ -96,8 +96,7 @@ class MainWindow(QMainWindow):
         # 注册配置变更回调
         self.config_manager.register_change_callback(self._on_config_changed)
         
-        self.pipeline_thread: Optional[PipelineThread] = None
-        self.all_ip_reports = {}  # subdir -> report_data
+        # 基本属性
         self.base_dir: Optional[str] = None
         self.output_dir: Optional[str] = None  # 新增：输出目录
         self.current_output_dir: Optional[str] = None  # 新增：当前处理的输出目录
@@ -106,25 +105,86 @@ class MainWindow(QMainWindow):
         self.last_opened_dir = self.config.file.default_input_dir or os.path.join(os.path.expanduser("~"), "Desktop")
         self.allowed_root = os.path.expanduser("~")
         
-        # KPI counters
-        self.files_processed_count = 0
-        self.packets_processed_count = 0
+        # 时间相关属性（由PipelineManager管理，但需要在这里声明以保持兼容性）
+        self.time_elapsed = 0
         self.timer: Optional[QTimer] = None
-        self.start_time: Optional[QTime] = None
-        self.subdirs_files_counted = set()
-        self.subdirs_packets_counted = set()
-        self.printed_summary_headers = set()
         
-        # 文件处理追踪 - 按原始文件分组报告
-        self.file_processing_results = {}  # original_file -> {steps: {step_name: result_data}}
-        self.current_processing_file = None  # 当前正在处理的原始文件
-        self.global_ip_mappings = {}  # 全局IP映射汇总
-        self.processed_files_count = 0  # 已处理文件计数
+        # 基本属性（不依赖管理器）
+        self.start_time: Optional[QTime] = None
         self.user_stopped = False  # 用户停止标志
-
-        self.init_ui()
-        self._apply_stylesheet() # 应用初始样式
+        self.pipeline_thread: Optional[PipelineThread] = None
+        
+        # 先初始化管理器
+        self._init_managers()
+        
+        # 初始化遗留属性（现在可以安全使用属性访问器）
+        self._init_legacy_attributes()
+        
+        # 初始化UI
+        self.ui_manager.init_ui()
+        
         self._logger.info("PktMask主窗口初始化完成")
+    
+    def _init_managers(self):
+        """初始化所有管理器"""
+        # 导入管理器类
+        from .managers import UIManager, FileManager, PipelineManager, ReportManager, DialogManager, EventCoordinator
+        
+        # 首先创建事件协调器
+        self.event_coordinator = EventCoordinator(self)
+        
+        # 创建管理器实例
+        self.ui_manager = UIManager(self)
+        self.file_manager = FileManager(self)
+        self.pipeline_manager = PipelineManager(self)
+        self.report_manager = ReportManager(self)
+        self.dialog_manager = DialogManager(self)
+        
+        # 设置管理器间的事件订阅
+        self._setup_manager_subscriptions()
+        
+        self._logger.debug("所有管理器初始化完成")
+    
+    def _setup_manager_subscriptions(self):
+        """设置管理器间的事件订阅关系"""
+        # UI管理器订阅统计变化
+        self.event_coordinator.subscribe('statistics_changed', self._handle_statistics_update)
+        
+        # 连接Qt信号
+        self.event_coordinator.ui_update_requested.connect(self._handle_ui_update_request)
+        
+        self._logger.debug("管理器事件订阅设置完成")
+    
+    def _handle_statistics_update(self, data: dict):
+        """处理统计数据更新"""
+        action = data.get('action', 'update')
+        if action == 'reset':
+            # 重置UI显示
+            self.files_processed_label.setText("0")
+            self.packets_processed_label.setText("0")
+            self.time_elapsed_label.setText("00:00.00")
+            self.progress_bar.setValue(0)
+        else:
+            # 更新UI显示
+            stats = self.event_coordinator.get_statistics_data()
+            if stats:
+                self.files_processed_label.setText(str(stats.get('files_processed', 0)))
+                self.packets_processed_label.setText(str(stats.get('packets_processed', 0)))
+                self.time_elapsed_label.setText(stats.get('elapsed_time', '00:00.00'))
+    
+    def _handle_ui_update_request(self, action: str, data: dict):
+        """处理UI更新请求"""
+        if action == 'enable_controls':
+            controls = data.get('controls', [])
+            enabled = data.get('enabled', True)
+            for control_name in controls:
+                if hasattr(self, control_name):
+                    getattr(self, control_name).setEnabled(enabled)
+        elif action == 'update_button_text':
+            button_name = data.get('button', '')
+            text = data.get('text', '')
+            if hasattr(self, button_name):
+                getattr(self, button_name).setText(text)
     
     def _on_config_changed(self, new_config):
         """配置变更回调"""
@@ -174,412 +234,69 @@ class MainWindow(QMainWindow):
             self.stop_pipeline_processing()
             self.pipeline_thread.wait(3000)  # 等待最多3秒
         
+        # 关闭事件协调器
+        if hasattr(self, 'event_coordinator'):
+            self.event_coordinator.shutdown()
+        
         # 取消注册配置回调
         self.config_manager.unregister_change_callback(self._on_config_changed)
         
         event.accept()
 
     def init_ui(self):
-        """初始化界面"""
-        self.setWindowTitle("PktMask")
-        
-        # 使用配置中的窗口尺寸
-        window_width = self.config.ui.window_width
-        window_height = self.config.ui.window_height
-        self.setGeometry(100, 100, window_width, window_height)
-        
-        # 设置最小尺寸
-        self.setMinimumSize(self.config.ui.window_min_width, self.config.ui.window_min_height)
-        
-        self.setWindowIcon(QIcon(resource_path('icon.png')))
+        """初始化界面（委托给UIManager处理）"""
+        self.ui_manager.init_ui()
 
-        # Create Menu Bar
-        self.create_menu_bar()
 
-        main_widget = QWidget()
-        self.setCentralWidget(main_widget)
-        
-        main_layout = QGridLayout(main_widget)
-        main_layout.setSpacing(UIConstants.LAYOUT_SPACING)  # 增加整体间距，让各区域有足够的空白
-        main_layout.setContentsMargins(UIConstants.LAYOUT_MARGINS, UIConstants.LAYOUT_MARGINS, UIConstants.LAYOUT_MARGINS, UIConstants.LAYOUT_MARGINS)  # 增加外边距
-
-        # --- Create all GroupBox widgets first ---
-
-        # Step 1: Input and Output (左右分布) - 简化版
-        dirs_group = QGroupBox("Set Working Directories")
-        dirs_group.setMaximumHeight(UIConstants.DIRS_GROUP_HEIGHT)  # 减少高度，因为去掉了额外的标题行
-        dirs_layout = QHBoxLayout(dirs_group)
-        dirs_layout.setContentsMargins(*UIConstants.DIRS_LAYOUT_PADDING)  # 增加内边距
-        
-        # 左侧：Input Directory - 单行布局
-        input_layout = QVBoxLayout()
-        input_layout.setSpacing(5)  # 增加间距
-        input_label = QLabel("Input:")
-        input_label.setMaximumHeight(UIConstants.INPUT_LABEL_HEIGHT)
-        input_path_layout = QHBoxLayout()
-        input_path_layout.setSpacing(8)
-        self.dir_path_label = QPushButton("Click and pick your pcap directory")  # 改为可点击的按钮
-        self.dir_path_label.setObjectName("DirPathLabel")
-        self.dir_path_label.setMaximumHeight(UIConstants.BUTTON_MAX_HEIGHT)
-        self.dir_path_label.setCursor(Qt.CursorShape.PointingHandCursor)  # 设置手型光标
-        input_path_layout.addWidget(input_label)
-        input_path_layout.addWidget(self.dir_path_label, 1)
-        input_layout.addLayout(input_path_layout)
-        
-        # 右侧：Output Directory - 单行布局
-        output_layout = QVBoxLayout()
-        output_layout.setSpacing(5)  # 增加间距，与input保持一致
-        output_label = QLabel("Output:")
-        output_label.setMaximumHeight(20)
-        output_path_layout = QHBoxLayout()
-        output_path_layout.setSpacing(8)
-        self.output_path_label = QPushButton("Auto-create or click for custom")  # 改为可点击的按钮
-        self.output_path_label.setObjectName("DirPathLabel")
-        self.output_path_label.setMaximumHeight(30)
-        self.output_path_label.setCursor(Qt.CursorShape.PointingHandCursor)  # 设置手型光标
-        output_path_layout.addWidget(output_label)
-        output_path_layout.addWidget(self.output_path_label, 1)
-        output_layout.addLayout(output_path_layout)
-        
-        dirs_layout.addLayout(input_layout, 1)
-        dirs_layout.addLayout(output_layout, 1)
-
-        # Step 2 & 3: 第二行并排布局 - 适度压缩
-        row2_widget = QWidget()
-        row2_widget.setMaximumHeight(90)  # 适度增加高度
-        row2_layout = QHBoxLayout(row2_widget)
-        row2_layout.setContentsMargins(0, 0, 0, 0)  # 保持无外边距
-        row2_layout.setSpacing(12)  # 增加Step 2和Step 3之间的间距
-        
-        # Step 2: Configure Pipeline (3/4 宽度，横向布局)
-        pipeline_group = QGroupBox("Set Options")
-        pipeline_group.setMaximumHeight(85)  # 适度增加高度
-        pipeline_layout = QHBoxLayout(pipeline_group)  # 改为水平布局
-        pipeline_layout.setContentsMargins(15, 12, 15, 12)  # 增加内边距
-        pipeline_layout.setSpacing(20)  # 增加选项之间的间距
-        self.dedup_packet_cb = QCheckBox("Remove Dupes")
-        self.mask_ip_cb = QCheckBox("Mask IPs")
-        self.trim_packet_cb = QCheckBox("Trim Payloads (Preserve TLS Handshake)")
-        self.web_focused_cb = QCheckBox("Web-Focused Traffic Only (Coming Soon)")
-        self.trim_packet_cb.setToolTip("Intelligently trims packet payloads while preserving TLS handshake data.")
-        self.web_focused_cb.setToolTip("Filter and process only web-related traffic (HTTP/HTTPS). This feature is under development.")
-        # 为所有checkbox设置手型光标
-        self.dedup_packet_cb.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.mask_ip_cb.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.trim_packet_cb.setCursor(Qt.CursorShape.PointingHandCursor)
-        # 使用配置中的默认状态
-        self.dedup_packet_cb.setChecked(self.config.ui.default_dedup)
-        self.mask_ip_cb.setChecked(self.config.ui.default_mask_ip)
-        self.trim_packet_cb.setChecked(self.config.ui.default_trim)
-        self.web_focused_cb.setChecked(False)  # 此功能尚未实现，保持False
-        self.web_focused_cb.setEnabled(False)  # 禁用状态，因为功能还未完成
-        # 为即将推出的功能设置特殊样式
-        self._apply_coming_soon_style()
-        pipeline_layout.addWidget(self.dedup_packet_cb)
-        pipeline_layout.addWidget(self.mask_ip_cb)
-        pipeline_layout.addWidget(self.trim_packet_cb)
-        pipeline_layout.addWidget(self.web_focused_cb)
-        pipeline_layout.addStretch()
-
-        # Step 3: Execute (1/4 宽度) - 简化版
-        execute_group = QGroupBox("Run Processing")
-        execute_group.setMaximumHeight(85)
-        execute_layout = QVBoxLayout(execute_group)
-        execute_layout.setContentsMargins(15, 20, 15, 20)  # 增加内边距，上下更多空间
-        execute_layout.setSpacing(5)
-        self.start_proc_btn = QPushButton("Start")
-        self.start_proc_btn.setMinimumHeight(35)  # 稍微增加按钮高度，因为只有一个按钮
-        self.start_proc_btn.setMaximumHeight(35)
-        self.start_proc_btn.setEnabled(False)  # 初始状态为禁用
-        self.start_proc_btn.setCursor(Qt.CursorShape.PointingHandCursor)  # 设置手型光标
-        # 应用动态按钮样式
-        self._update_start_button_style()
-        execute_layout.addWidget(self.start_proc_btn)
-        
-        row2_layout.addWidget(pipeline_group, 3)  # 3/4 宽度
-        row2_layout.addWidget(execute_group, 1)   # 1/4 宽度
-
-        # Live Dashboard - 适度压缩但保持可读性
-        dashboard_group = QGroupBox("Live Dashboard")
-        dashboard_group.setMaximumHeight(140)  # 适度增加高度
-        dashboard_layout = QVBoxLayout(dashboard_group)
-        dashboard_layout.setContentsMargins(15, 20, 15, 12)  # 增加标题下方空间
-        dashboard_layout.setSpacing(10)  # 增加间距
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setTextVisible(False)
-        self.progress_bar.setFixedHeight(18)  # 与样式表保持一致
-        
-        # 初始化进度条动画
-        self.progress_animation = QPropertyAnimation(self.progress_bar, b"value")
-        self.progress_animation.setDuration(300)  # 300ms动画时长
-        self.progress_animation.setEasingCurve(QEasingCurve.Type.OutCubic)  # 平滑动画曲线
-        
-        dashboard_layout.addWidget(self.progress_bar)
-        kpi_layout = QGridLayout()
-        kpi_layout.setSpacing(10)  # 增加间距
-        self.files_processed_label = QLabel("0")
-        self.files_processed_label.setObjectName("FilesProcessedLabel")
-        self.packets_processed_label = QLabel("0")
-        self.packets_processed_label.setObjectName("IpsMaskedLabel") # Re-use for same style
-        self.time_elapsed_label = QLabel("00:00.00")
-        self.time_elapsed_label.setObjectName("DupesRemovedLabel") # Re-use for same style
-
-        kpi_layout.addWidget(self.files_processed_label, 0, 0, Qt.AlignmentFlag.AlignCenter)
-        kpi_layout.addWidget(QLabel("Files Processed"), 1, 0, Qt.AlignmentFlag.AlignCenter)
-        kpi_layout.addWidget(self.packets_processed_label, 0, 1, Qt.AlignmentFlag.AlignCenter)
-        kpi_layout.addWidget(QLabel("Packets Processed"), 1, 1, Qt.AlignmentFlag.AlignCenter)
-        kpi_layout.addWidget(self.time_elapsed_label, 0, 2, Qt.AlignmentFlag.AlignCenter)
-        kpi_layout.addWidget(QLabel("Time Elapsed"), 1, 2, Qt.AlignmentFlag.AlignCenter)
-        
-        dashboard_layout.addLayout(kpi_layout)
-        
-        # Log - 移除高度限制，让它能有效利用空间
-        log_group = QGroupBox("Log")
-        # 移除 setMaximumHeight 限制
-        log_layout = QVBoxLayout(log_group)
-        log_layout.setContentsMargins(12, 20, 12, 12)  # 增加标题下方空间
-        self.log_text = QTextEdit()
-        self.log_text.setReadOnly(True)
-        # 设置Log区域的字体大小
-        log_font = QFont()
-        log_font.setPointSize(12)  # 增加字体大小
-        self.log_text.setFont(log_font)
-        log_layout.addWidget(self.log_text)
-
-        # Summary Report
-        summary_group = QGroupBox("Summary Report")
-        summary_layout = QVBoxLayout(summary_group)
-        summary_layout.setContentsMargins(12, 20, 12, 12)  # 增加标题下方空间
-        self.summary_text = QTextEdit()
-        self.summary_text.setReadOnly(True)
-        # 设置Summary Report区域的字体大小
-        summary_font = QFont()
-        summary_font.setPointSize(12)  # 增加字体大小
-        self.summary_text.setFont(summary_font)
-        summary_layout.addWidget(self.summary_text)
-
-        # --- Add widgets to the grid layout ---
-        
-        # Row 0: Top controls
-        main_layout.addWidget(dirs_group, 0, 0, 1, 2)  # 第一行跨两列
-        main_layout.addWidget(row2_widget, 1, 0, 1, 2)  # 第二行跨两列
-        
-        # Left column contents
-        main_layout.addWidget(dashboard_group, 2, 0)
-        main_layout.addWidget(log_group, 3, 0)
-        
-        # Right column contents
-        main_layout.addWidget(summary_group, 2, 1, 2, 1) # row, col, rowspan, colspan
-
-        # --- Define stretch factors for the grid ---
-        main_layout.setColumnStretch(0, 2)  # 左列：Dashboard + Log
-        main_layout.setColumnStretch(1, 3)  # 右列：Summary Report，60%的空间
-        
-        main_layout.setRowStretch(0, 0)  # Step 1 row - no stretch
-        main_layout.setRowStretch(1, 0)  # Step 2&3 row - no stretch  
-        main_layout.setRowStretch(2, 0)  # Dashboard row - no stretch
-        main_layout.setRowStretch(3, 2)  # Log row - takes more available space
-
-        # Connect signals
-        self.dir_path_label.clicked.connect(self.choose_folder)  # 路径按钮直接选择输入目录
-        self.output_path_label.clicked.connect(self.handle_output_click)  # 路径按钮处理输出目录操作
-        self.start_proc_btn.clicked.connect(self.toggle_pipeline_processing)
-        
-        # 连接checkbox状态变化信号
-        self.mask_ip_cb.stateChanged.connect(self._update_start_button_state)
-        self.dedup_packet_cb.stateChanged.connect(self._update_start_button_state)
-        self.trim_packet_cb.stateChanged.connect(self._update_start_button_state)
-        
-        # 应用路径链接样式和按钮样式
-        self._update_path_link_styles()
-        self._update_start_button_style()
-        
-        self.show_initial_guides()
 
     def _get_current_theme(self) -> str:
         """检测当前系统是浅色还是深色模式。"""
-        # 一个简单的启发式方法：检查窗口背景色的亮度
-        bg_color = self.palette().color(self.backgroundRole())
-        # QColor.lightness() 返回 0 (暗) 到 255 (亮)
-        return 'dark' if bg_color.lightness() < 128 else 'light'
+        return self.ui_manager.get_current_theme()
 
     def _apply_stylesheet(self):
         """应用当前主题的样式表。"""
-        theme = self._get_current_theme()
-        self.setStyleSheet(generate_stylesheet(theme))
+        self.ui_manager.apply_stylesheet()
 
     def changeEvent(self, event: QEvent):
         """重写changeEvent来监听系统主题变化。"""
-        if event.type() == QEvent.Type.ApplicationPaletteChange:
-            self._apply_stylesheet()
-            self._update_path_link_styles()  # 同时更新路径链接样式
-            self._update_start_button_style()  # 同时更新按钮样式
-            self._apply_coming_soon_style()  # 同时更新Coming Soon样式
+        self.ui_manager.handle_theme_change(event)
         super().changeEvent(event)
 
     def create_menu_bar(self):
-        menu_bar = self.menuBar()
-        
-        # File menu
-        file_menu = menu_bar.addMenu("File")
-        
-        reset_action = QAction("Reset All", self)
-        reset_action.triggered.connect(self.reset_state)
-        reset_action.setShortcut("Ctrl+R")
-        file_menu.addAction(reset_action)
-        
-        file_menu.addSeparator()
-        
-        exit_action = QAction("Exit", self)
-        exit_action.triggered.connect(self.close)
-        exit_action.setShortcut("Ctrl+Q")
-        file_menu.addAction(exit_action)
-        
-        # Help menu
-        help_menu = menu_bar.addMenu("Help")
-        
-        user_guide_action = QAction("User Guide", self)
-        user_guide_action.triggered.connect(self.show_user_guide_dialog)
-        help_menu.addAction(user_guide_action)
-
-        about_action = QAction("About", self)
-        about_action.triggered.connect(self.show_about_dialog)
-        help_menu.addAction(about_action)
+        """创建菜单栏（由UIManager处理）"""
+        pass  # 已由UIManager在init_ui中处理
 
     def show_user_guide_dialog(self):
-        try:
-            with open(resource_path('summary.md'), 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            dialog = QDialog(self)
-            dialog.setWindowTitle("User Guide")
-            dialog.setGeometry(200, 200, 700, 500)
-            
-            layout = QVBoxLayout(dialog)
-            text_edit = QTextEdit()
-            text_edit.setReadOnly(True)
-            text_edit.setHtml(markdown.markdown(content))
-            
-            layout.addWidget(text_edit)
-            dialog.exec()
-
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Could not load User Guide: {str(e)}")
+        """显示用户指南对话框"""
+        self.dialog_manager.show_user_guide_dialog()
 
     def show_initial_guides(self):
-        """启动时在log和report区域显示指引"""
-        self.log_text.setPlaceholderText(
-            "🚀 Welcome to PktMask!\n\n"
-            "┌─ Quick Start Guide ──────────┐\n"
-            "│ 1. Select pcap directory     │\n"
-            "│ 2. Configure options         │\n"
-            "│ 3. Start processing          │\n"
-            "└──────────────────────────────┘\n\n"
-            "💡 Remove Dupes & Mask IPs enabled by default\n\n"
-            "Processing logs will appear here..."
-        )
-        self.summary_text.setPlaceholderText(
-             "📊 Processing results and statistics will be displayed here.\n\n"
-             "═══════════════════════════════════════════════════════════════════\n\n"
-             "📦 About PktMask - Network Packet Processing Tool\n\n"
-             "🔄 Remove Dupes\n"
-             "   • Eliminates duplicate packets to reduce file size\n"
-             "   • Reduces noise in network analysis and forensics\n"
-             "   • Optimizes storage and speeds up analysis\n\n"
-             "🛡️ Mask IPs - Advanced Anonymization\n"
-             "   • Preserves network topology and subnet relationships\n"
-             "   • Uses hierarchical anonymization for consistent mapping\n"
-             "   • Perfect for data sharing, compliance, and research\n\n"
-             "✂️ Trim Payloads - Intelligent Data Reduction\n"
-             "   • Removes sensitive payload data while preserving headers\n"
-             "   • Keeps TLS handshakes intact for protocol analysis\n"
-             "   • Reduces file size without losing network behavior insights\n\n"
-             "🌐 Web-Focused Traffic Only (Coming Soon)\n"
-             "   • Filter and analyze only web-related traffic\n"
-             "   • Focus on HTTP/HTTPS communications\n"
-             "   • Streamline web security analysis workflows\n\n"
-             "🎯 Use Cases: Security research, network troubleshooting,\n"
-             "   compliance reporting, and safe data sharing."
-        )
+        """启动时在log和report区域显示指引（由UIManager处理）"""
+        pass  # 已由UIManager在init_ui中处理
 
     def choose_folder(self):
         """选择目录"""
-        dir_path = QFileDialog.getExistingDirectory(
-            self,
-            "Select Input Folder",
-            self.last_opened_dir
-        )
-        if dir_path:
-            self.base_dir = dir_path
-            self.last_opened_dir = dir_path # 记录当前选择的目录
-            self.dir_path_label.setText(os.path.basename(dir_path))
-            
-            # 自动生成默认输出路径
-            self.generate_default_output_path()
-            self._update_start_button_state()  # 智能更新按钮状态
+        self.file_manager.choose_folder()
 
     def handle_output_click(self):
-        """处理输出路径按钮点击 - 在处理完成后打开目录，否则选择自定义输出目录"""
-        if self.current_output_dir and os.path.exists(self.current_output_dir):
-            # 如果已有输出目录且存在，则打开它
-            self.open_output_directory()
-        else:
-            # 否则让用户选择自定义输出目录
-            self.choose_output_folder()
+        """处理输出路径按钮点击"""
+        self.file_manager.handle_output_click()
 
     def choose_output_folder(self):
         """选择自定义输出目录"""
-        dir_path = QFileDialog.getExistingDirectory(
-            self,
-            "Select Output Folder",
-            self.last_opened_dir
-        )
-        if dir_path:
-            self.output_dir = dir_path
-            self.output_path_label.setText(os.path.basename(dir_path))
+        self.file_manager.choose_output_folder()
 
     def generate_default_output_path(self):
         """生成默认输出路径预览"""
-        if not self.base_dir:
-            return
-        
-        # 重置为默认模式
-        self.output_dir = None
-        self.output_path_label.setText("Auto-create or click for custom")
+        self.file_manager.generate_default_output_path()
 
     def generate_actual_output_path(self) -> str:
         """生成实际的输出目录路径"""
-        timestamp = current_timestamp()
-        
-        # 使用配置中的输出目录模式
-        output_pattern = self.config.file.output_dir_pattern
-        output_name = output_pattern.format(timestamp=timestamp)
-        
-        if self.output_dir:
-            # 自定义输出目录
-            return os.path.join(self.output_dir, output_name)
-        else:
-            # 默认输出目录
-            if self.config.file.default_output_dir:
-                return os.path.join(self.config.file.default_output_dir, output_name)
-            else:
-                # 使用输入目录的子目录
-                return os.path.join(self.base_dir, output_name)
+        return self.file_manager.generate_actual_output_path()
 
     def open_output_directory(self):
         """打开输出目录"""
-        if not self.current_output_dir or not os.path.exists(self.current_output_dir):
-            QMessageBox.warning(self, "Warning", "Output directory not found.")
-            return
-        
-        try:
-            success = open_directory_in_system(self.current_output_dir)
-            if success:
-                self.update_log(f"Opened output directory: {os.path.basename(self.current_output_dir)}")
-            else:
-                QMessageBox.warning(self, "Error", "Failed to open directory.")
-        except Exception as e:
-            QMessageBox.warning(self, "Error", f"Failed to open directory: {str(e)}")
+        self.file_manager.open_output_directory()
 
     def reset_state(self):
         """重置所有状态和UI"""
@@ -590,319 +307,48 @@ class MainWindow(QMainWindow):
         self.output_path_label.setText("Auto-create or click for custom")  # 重置输出路径显示
         self.log_text.clear()
         self.summary_text.clear()
-        self.all_ip_reports.clear()
-        self.files_processed_count = 0
-        self.packets_processed_count = 0
-        self.subdirs_files_counted.clear()
-        self.subdirs_packets_counted.clear()
-        self.printed_summary_headers.clear()
-        self.file_processing_results.clear()  # 清空文件处理结果
-        self.current_processing_file = None   # 重置当前处理文件
-        self.global_ip_mappings.clear()      # 清空全局IP映射
-        self.processed_files_count = 0       # 重置文件计数
+        
+        # 使用事件协调器统一重置所有数据
+        self.event_coordinator.reset_all_data()
+        
+        # 使用StatisticsManager统一重置所有统计数据
+        self.pipeline_manager.statistics.reset_all_statistics()
+        
+        # 重置其他状态
         self.user_stopped = False            # 重置停止标志
         if hasattr(self, '_current_file_ips'):
             self._current_file_ips.clear()    # 清空文件IP映射
-        self.files_processed_label.setText("0")
-        self.packets_processed_label.setText("0")
-        self.time_elapsed_label.setText("00:00.00")
+        
+        # 停止计时器
         if self.timer and self.timer.isActive():
             self.timer.stop()
-        self.progress_bar.setValue(0)
+        
+        # 重置按钮和显示状态
         self.start_proc_btn.setEnabled(False)  # 保持禁用状态，直到选择目录
         self.start_proc_btn.setText("Start")
         self.show_initial_guides()
 
     def toggle_pipeline_processing(self):
         """根据当前状态切换处理开始/停止"""
-        if self.pipeline_thread and self.pipeline_thread.isRunning():
-            self.stop_pipeline_processing()
-        else:
-            self.start_pipeline_processing()
+        self.pipeline_manager.toggle_pipeline_processing()
 
     def generate_partial_summary_on_stop(self):
-        """生成用户停止时的部分汇总统计"""
-        separator_length = 70
-        
-        # 计算当前的时间
-        if self.timer:
-            self.timer.stop()
-        self.update_time_elapsed()
-        
-        partial_time = self.time_elapsed_label.text()
-        partial_files = self.files_processed_count
-        partial_packets = self.packets_processed_count
-        
-        # 生成停止汇总报告
-        stop_report = f"\n{'='*separator_length}\n⏹️ PROCESSING STOPPED BY USER\n{'='*separator_length}\n"
-        stop_report += f"📊 Partial Statistics (Completed Portion):\n"
-        stop_report += f"   • Files Processed: {partial_files}\n"
-        stop_report += f"   • Packets Processed: {partial_packets:,}\n"
-        stop_report += f"   • Processing Time: {partial_time}\n"
-        
-        # 计算部分处理速度
-        try:
-            time_parts = partial_time.split(':')
-            if len(time_parts) >= 2:
-                minutes = int(time_parts[-2])
-                seconds_with_ms = time_parts[-1].split('.')
-                seconds = int(seconds_with_ms[0])
-                total_seconds = minutes * 60 + seconds
-                if total_seconds > 0 and partial_packets > 0:
-                    speed = partial_packets / total_seconds
-                    stop_report += f"   • Average Speed: {speed:,.0f} packets/second\n\n"
-                else:
-                    stop_report += f"   • Average Speed: N/A\n\n"
-            else:
-                stop_report += f"   • Average Speed: N/A\n\n"
-        except:
-            stop_report += f"   • Average Speed: N/A\n\n"
-        
-        # 显示已启用的处理步骤
-        enabled_steps = []
-        if self.mask_ip_cb.isChecked():
-            enabled_steps.append("IP Masking")
-        if self.dedup_packet_cb.isChecked():
-            enabled_steps.append("Deduplication")
-        if self.trim_packet_cb.isChecked():
-            enabled_steps.append("Payload Trimming")
-        
-        stop_report += f"🔧 Configured Processing Steps: {', '.join(enabled_steps)}\n"
-        stop_report += f"📁 Working Directory: {os.path.basename(self.base_dir) if self.base_dir else 'N/A'}\n"
-        stop_report += f"⚠️ Processing was interrupted. All intermediate files have been cleaned up.\n"
-        stop_report += f"❌ No completed output files were generated due to interruption.\n"
-        stop_report += f"{'='*separator_length}\n"
-        
-        self.summary_text.append(stop_report)
-        
-        # 检查并显示文件处理状态
-        if self.file_processing_results:
-            files_status_report = f"\n{'='*separator_length}\n📋 FILES PROCESSING STATUS (At Stop)\n{'='*separator_length}\n"
-            
-            completed_files = 0
-            partial_files = 0
-            
-            for filename, file_result in self.file_processing_results.items():
-                steps_data = file_result['steps']
-                if not steps_data:
-                    continue
-                
-                # 检查文件是否完整处理完成（所有配置的步骤都完成）
-                expected_steps = set()
-                if self.mask_ip_cb.isChecked():
-                    expected_steps.add("IP Masking")
-                if self.dedup_packet_cb.isChecked():
-                    expected_steps.add("Deduplication")
-                if self.trim_packet_cb.isChecked():
-                    expected_steps.add("Payload Trimming")
-                
-                completed_steps = set(steps_data.keys())
-                is_fully_completed = expected_steps.issubset(completed_steps)
-                
-                if is_fully_completed:
-                    completed_files += 1
-                    files_status_report += f"\n✅ {filename}\n"
-                    files_status_report += f"   Status: FULLY COMPLETED\n"
-                    
-                    # 获取最终输出文件名
-                    step_order = ['Deduplication', 'IP Masking', 'Payload Trimming']
-                    final_output = None
-                    for step_name in reversed(step_order):
-                        if step_name in steps_data:
-                            output_file = steps_data[step_name]['data'].get('output_filename')
-                            if output_file and not output_file.startswith('tmp'):
-                                final_output = output_file
-                                break
-                    
-                    if final_output:
-                        files_status_report += f"   Output File: {final_output}\n"
-                    
-                    # 显示详细结果
-                    original_packets = 0
-                    file_ip_mappings = {}
-                    
-                    for step_name in step_order:
-                        if step_name in steps_data:
-                            data = steps_data[step_name]['data']
-                            if data.get('total_packets'):
-                                original_packets = data.get('total_packets', 0)
-                            
-                            if step_name == 'IP Masking':
-                                original_ips = data.get('original_ips', 0)
-                                masked_ips = data.get('anonymized_ips', 0)
-                                rate = (masked_ips / original_ips * 100) if original_ips > 0 else 0
-                                files_status_report += f"   🛡️  IP Masking: {original_ips} → {masked_ips} IPs ({rate:.1f}%)\n"
-                                file_ip_mappings = data.get('file_ip_mappings', {})
-                                
-                            elif step_name == 'Deduplication':
-                                unique = data.get('unique_packets', 0)
-                                removed = data.get('removed_count', 0)
-                                rate = (removed / original_packets * 100) if original_packets > 0 else 0
-                                files_status_report += f"   🔄 Deduplication: {removed} removed ({rate:.1f}%)\n"
-                            
-                            elif step_name == 'Payload Trimming':
-                                trimmed = data.get('trimmed_packets', 0)
-                                rate = (trimmed / original_packets * 100) if original_packets > 0 else 0
-                                files_status_report += f"   ✂️  Payload Trimming: {trimmed} trimmed ({rate:.1f}%)\n"
-                    
-                    # 显示IP映射（如果有）
-                    if file_ip_mappings:
-                        files_status_report += f"   🔗 IP Mappings ({len(file_ip_mappings)}):\n"
-                        for i, (orig_ip, new_ip) in enumerate(sorted(file_ip_mappings.items()), 1):
-                            if i <= 5:  # 只显示前5个
-                                files_status_report += f"      {i}. {orig_ip} → {new_ip}\n"
-                            elif i == 6:
-                                files_status_report += f"      ... and {len(file_ip_mappings) - 5} more\n"
-                                break
-                else:
-                    partial_files += 1
-                    files_status_report += f"\n🔄 {filename}\n"
-                    files_status_report += f"   Status: PARTIALLY PROCESSED (Interrupted)\n"
-                    files_status_report += f"   Completed Steps: {', '.join(completed_steps)}\n"
-                    files_status_report += f"   Missing Steps: {', '.join(expected_steps - completed_steps)}\n"
-                    files_status_report += f"   ❌ No final output file generated\n"
-                    files_status_report += f"   🗑️ Temporary files cleaned up automatically\n"
-            
-            if completed_files == 0 and partial_files > 0:
-                files_status_report += f"\n⚠️ All files were only partially processed.\n"
-                files_status_report += f"   No final output files were created.\n"
-            elif completed_files > 0:
-                files_status_report += f"\n📈 Summary: {completed_files} completed, {partial_files} partial\n"
-            
-            files_status_report += f"{'='*separator_length}\n"
-            self.summary_text.append(files_status_report)
-        
-        # 显示全局IP映射汇总（仅当有完全完成的文件时）
-        if self.processed_files_count >= 1 and self.global_ip_mappings:
-            # 检查是否有完全完成的文件
-            has_completed_files = False
-            for filename, file_result in self.file_processing_results.items():
-                expected_steps = set()
-                if self.mask_ip_cb.isChecked():
-                    expected_steps.add("IP Masking")
-                if self.dedup_packet_cb.isChecked():
-                    expected_steps.add("Deduplication")
-                if self.trim_packet_cb.isChecked():
-                    expected_steps.add("Payload Trimming")
-                
-                completed_steps = set(file_result['steps'].keys())
-                if expected_steps.issubset(completed_steps):
-                    has_completed_files = True
-                    break
-            
-            if has_completed_files:
-                global_partial_report = f"\n{'='*separator_length}\n🌐 IP MAPPINGS FROM COMPLETED FILES\n{'='*separator_length}\n"
-                global_partial_report += f"📝 IP Mapping Table - From Successfully Completed Files Only:\n"
-                global_partial_report += f"   • Total Unique IPs Mapped: {len(self.global_ip_mappings)}\n\n"
-                
-                sorted_global_mappings = sorted(self.global_ip_mappings.items())
-                for i, (orig_ip, new_ip) in enumerate(sorted_global_mappings, 1):
-                    global_partial_report += f"   {i:2d}. {orig_ip:<16} → {new_ip}\n"
-                
-                global_partial_report += f"{'='*separator_length}\n"
-                self.summary_text.append(global_partial_report)
-        
-        # 修正的重启提示
-        restart_hint = f"\n💡 RESTART INFORMATION:\n"
-        restart_hint += f"   • Clicking 'Start' will restart processing from the beginning\n"
-        restart_hint += f"   • All files will be reprocessed (no partial resume capability)\n"
-        restart_hint += f"   • Any existing output files will be skipped to avoid overwriting\n"
-        restart_hint += f"   • Processing will be performed completely for each file\n"
-        self.summary_text.append(restart_hint)
+        """生成用户停止时的部分汇总统计（委托给ReportManager）"""
+        self.report_manager.generate_partial_summary_on_stop()
+
+
 
     def stop_pipeline_processing(self):
-        self.user_stopped = True  # 设置停止标志
-        self.log_text.append("\n--- Stopping pipeline... ---")
-        if self.pipeline_thread:
-            self.pipeline_thread.stop()
-            # 等待线程安全结束，最多等待 3 秒
-            if not self.pipeline_thread.wait(3000):
-                self.log_text.append("Warning: Pipeline did not stop gracefully, forcing termination.")
-                self.pipeline_thread.terminate()
-                self.pipeline_thread.wait()
-        
-        # 生成停止时的部分汇总统计
-        self.generate_partial_summary_on_stop()
-        
-        # 重新启用控件
-        self.dir_path_label.setEnabled(True)
-        self.output_path_label.setEnabled(True)
-        for cb in [self.mask_ip_cb, self.dedup_packet_cb, self.trim_packet_cb]:
-            cb.setEnabled(True)
-        # web_focused_cb 保持禁用状态，因为功能未完成
-        self.start_proc_btn.setEnabled(True)
-        self.start_proc_btn.setText("Start")
+        """停止管道处理（委托给PipelineManager）"""
+        self.pipeline_manager.stop_pipeline_processing()
+
+
 
     def start_pipeline_processing(self):
-        if not self.base_dir:
-            QMessageBox.warning(self, "Warning", "Please choose an input folder to process.")
-            return
+        """开始管道处理（委托给PipelineManager）"""
+        self.pipeline_manager.start_pipeline_processing()
 
-        # 生成实际输出目录路径
-        self.current_output_dir = self.generate_actual_output_path()
-        
-        # 创建输出目录
-        try:
-            os.makedirs(self.current_output_dir, exist_ok=True)
-            self.update_log(f"📁 Created output directory: {os.path.basename(self.current_output_dir)}")
-            
-            # 更新输出路径显示
-            self.output_path_label.setText(os.path.basename(self.current_output_dir))
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to create output directory: {str(e)}")
-            return
 
-        # Reset UI and counters for new run
-        self.log_text.clear()
-        self.summary_text.clear()
-        self.all_ip_reports.clear()
-        self.files_processed_count = 0
-        self.packets_processed_count = 0
-        self.subdirs_files_counted.clear()
-        self.subdirs_packets_counted.clear()
-        self.printed_summary_headers.clear()
-        self.file_processing_results.clear()  # 清空文件处理结果
-        self.current_processing_file = None   # 重置当前处理文件
-        self.global_ip_mappings.clear()      # 清空全局IP映射
-        self.processed_files_count = 0       # 重置文件计数
-        self.user_stopped = False            # 重置停止标志
-        if hasattr(self, '_current_file_ips'):
-            self._current_file_ips.clear()    # 清空文件IP映射
-        self.files_processed_label.setText("0")
-        self.packets_processed_label.setText("0")
-        self.time_elapsed_label.setText("00:00.00")
-        self.progress_bar.setValue(0)
-
-        # Start timer
-        self.start_time = QTime.currentTime()
-        if not self.timer:
-            self.timer = QTimer(self)
-            self.timer.timeout.connect(self.update_time_elapsed)
-        self.timer.start(50) # update every 50ms for smooth ms display
-
-        # Build pipeline from checkboxes
-        steps_to_run: List[str] = []
-        # 优化的处理顺序：Remove Dupes -> Mask IP -> Trim Packet
-        # 先去除重复包可以减少后续处理的负载
-        if self.dedup_packet_cb.isChecked():
-            steps_to_run.append("dedup_packet")
-        if self.mask_ip_cb.isChecked():
-            steps_to_run.append("mask_ip")
-        if self.trim_packet_cb.isChecked():
-            steps_to_run.append("trim_packet")
-
-        if not steps_to_run:
-            QMessageBox.warning(self, "Warning", "Please select at least one processing step.")
-            return
-
-        try:
-            pipeline_steps = [get_step_instance(name) for name in steps_to_run]
-            pipeline = Pipeline(steps=pipeline_steps)
-            self.start_processing(pipeline)
-        except ValueError as e:
-            self.log_text.append(f"Error creating pipeline: {e}")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"An unexpected error occurred: {e}")
 
     def start_processing(self, pipeline: Pipeline):
         self.log_text.append(f"--- Pipeline Started ---\n")
@@ -994,288 +440,48 @@ class MainWindow(QMainWindow):
 
         elif event_type == PipelineEvents.PIPELINE_END:
             self._animate_progress_to(self.progress_bar.maximum())  # 动画到100%
-            self.processing_finished()
+            # 注意：处理完成的逻辑由 PipelineManager 负责处理
             
         elif event_type == PipelineEvents.ERROR:
             self.processing_error(data['message'])
 
     def collect_step_result(self, data: dict):
-        """收集每个步骤的处理结果，但不立即显示"""
-        if not self.current_processing_file:
-            return
-            
-        step_type = data.get('type')
-        if not step_type or step_type.endswith('_final'):
-            if step_type and step_type.endswith('_final'):
-                # 处理最终报告，提取IP映射信息
-                report_data = data.get('report')
-                if report_data and 'mask_ip' in step_type:
-                    self.set_final_summary_report(report_data)
-            return
-        
-        # 标准化步骤名称
-        step_display_names = {
-            'mask_ip': 'IP Masking',
-            'remove_dupes': 'Deduplication', 
-            'intelligent_trim': 'Payload Trimming'
-        }
-        
-        step_name = step_display_names.get(step_type, step_type)
-        
-        # 存储步骤结果
-        self.file_processing_results[self.current_processing_file]['steps'][step_name] = {
-            'type': step_type,
-            'data': data
-        }
-        
-        # 如果是IP匿名化步骤，提取文件级别的IP映射
-        if step_type == 'mask_ip' and 'file_ip_mappings' in data:
-            if not hasattr(self, '_current_file_ips'):
-                self._current_file_ips = {}
-            self._current_file_ips[self.current_processing_file] = data['file_ip_mappings']
-            # 将IP映射添加到全局映射中
-            self.global_ip_mappings.update(data['file_ip_mappings'])
+        """收集每个步骤的处理结果（委托给ReportManager）"""
+        self.report_manager.collect_step_result(data)
+
+
 
     def generate_file_complete_report(self, original_filename: str):
-        """为单个文件生成完整的处理报告"""
-        if original_filename not in self.file_processing_results:
-            return
-            
-        file_results = self.file_processing_results[original_filename]
-        steps_data = file_results['steps']
-        
-        if not steps_data:
-            return
-        
-        # 增加已处理文件计数
-        self.processed_files_count += 1
-        
-        separator_length = 70
-        filename_display = original_filename
-        
-        # 文件处理标题
-        header = f"\n{'='*separator_length}\n📄 FILE PROCESSING RESULTS: {filename_display}\n{'='*separator_length}"
-        self.summary_text.append(header)
-        
-        # 获取原始包数（从第一个处理步骤获取）
-        original_packets = 0
-        output_filename = None
-        if 'IP Masking' in steps_data:
-            original_packets = steps_data['IP Masking']['data'].get('total_packets', 0)
-            output_filename = steps_data['IP Masking']['data'].get('output_filename')
-        elif 'Deduplication' in steps_data:
-            original_packets = steps_data['Deduplication']['data'].get('total_packets', 0)
-            output_filename = steps_data['Deduplication']['data'].get('output_filename')
-        elif 'Payload Trimming' in steps_data:
-            original_packets = steps_data['Payload Trimming']['data'].get('total_packets', 0)
-            output_filename = steps_data['Payload Trimming']['data'].get('output_filename')
-        
-        # 从最后一个处理步骤获取最终输出文件名
-        step_order = ['Deduplication', 'IP Masking', 'Payload Trimming']
-        for step_name in reversed(step_order):
-            if step_name in steps_data:
-                final_output = steps_data[step_name]['data'].get('output_filename')
-                if final_output:
-                    output_filename = final_output
-                    break
-        
-        # 显示原始包数和输出文件名
-        self.summary_text.append(f"📦 Original Packets: {original_packets:,}")
-        if output_filename:
-            self.summary_text.append(f"📄 Output File: {output_filename}")
-        self.summary_text.append("")
-        
-        # 按处理顺序显示各步骤结果
-        file_ip_mappings = {}  # 存储当前文件的IP映射
-        
-        for step_name in step_order:
-            if step_name in steps_data:
-                step_result = steps_data[step_name]
-                step_type = step_result['type']
-                data = step_result['data']
-                
-                if step_type == 'mask_ip':
-                    # 使用新的IP统计数据
-                    original_ips = data.get('original_ips', 0)
-                    masked_ips = data.get('anonymized_ips', 0)
-                    rate = (masked_ips / original_ips * 100) if original_ips > 0 else 0
-                    line = f"  🛡️  {step_name:<18} | Original IPs: {original_ips:>3} | Masked IPs: {masked_ips:>3} | Rate: {rate:5.1f}%"
-                    
-                    # 获取文件级别的IP映射
-                    file_ip_mappings = data.get('file_ip_mappings', {})
-                    
-                elif step_type == 'remove_dupes':
-                    unique = data.get('unique_packets', 0)
-                    removed = data.get('removed_count', 0)
-                    total_before = data.get('total_packets', 0)
-                    rate = (removed / total_before * 100) if total_before > 0 else 0
-                    line = f"  🔄 {step_name:<18} | Unique Pkts: {unique:>4} | Removed Pkts: {removed:>4} | Rate: {rate:5.1f}%"
-                
-                elif step_type == 'intelligent_trim':
-                    total = data.get('total_packets', 0)
-                    trimmed = data.get('trimmed_packets', 0)
-                    full_pkts = total - trimmed
-                    rate = (trimmed / total * 100) if total > 0 else 0
-                    line = f"  ✂️  {step_name:<18} | Full Pkts: {full_pkts:>5} | Trimmed Pkts: {trimmed:>4} | Rate: {rate:5.1f}%"
-                else:
-                    continue
-                    
-                self.summary_text.append(line)
-        
-        # 如果有IP映射，显示文件级别的IP映射
-        if file_ip_mappings:
-            self.summary_text.append("")
-            self.summary_text.append("🔗 IP Mappings for this file:")
-            sorted_mappings = sorted(file_ip_mappings.items())
-            for i, (orig_ip, new_ip) in enumerate(sorted_mappings, 1):
-                self.summary_text.append(f"   {i:2d}. {orig_ip:<16} → {new_ip}")
-        
-        self.summary_text.append(f"{'='*separator_length}")
+        """为单个文件生成完整的处理报告（委托给ReportManager）"""
+        self.report_manager.generate_file_complete_report(original_filename)
+
+
 
     def update_summary_report(self, data: dict):
-        """这个方法现在主要用于处理最终报告，文件级报告由 generate_file_complete_report 处理"""
-        step_type = data.get('type')
-        if step_type and step_type.endswith('_final'):
-            report_data = data.get('report')
-            if report_data and 'mask_ip' in step_type:
-                self.set_final_summary_report(report_data)
+        """更新摘要报告（委托给ReportManager）"""
+        self.report_manager.update_summary_report(data)
+
+
 
     def set_final_summary_report(self, report: dict):
-        """设置最终的汇总报告，包括详细的IP映射信息。"""
-        subdir = report.get('path', 'N/A')
-        stats = report.get('stats', {})
-        total_mapping = report.get('data', {}).get('total_mapping', {})
-        
-        separator_length = 70  # 保持一致的分隔线长度
-        
-        # 添加IP映射的汇总信息，包括详细映射表
-        text = f"\n{'='*separator_length}\n📋 DIRECTORY PROCESSING SUMMARY\n{'='*separator_length}\n"
-        text += f"📂 Directory: {subdir}\n\n"
-        text += f"🔒 IP Anonymization Summary:\n"
-        text += f"   • Total Unique IPs Discovered: {stats.get('total_unique_ips', 'N/A')}\n"
-        text += f"   • Total IPs Anonymized: {stats.get('total_mapped_ips', 'N/A')}\n\n"
-        
-        if total_mapping:
-            text += f"📝 Complete IP Mapping Table (All Files):\n"
-            # 按原始IP排序显示映射
-            sorted_mappings = sorted(total_mapping.items())
-            for i, (orig_ip, new_ip) in enumerate(sorted_mappings, 1):
-                text += f"   {i:2d}. {orig_ip:<16} → {new_ip}\n"
-            text += "\n"
-        
-        text += f"✅ All IP addresses have been successfully anonymized while\n"
-        text += f"   preserving network structure and subnet relationships.\n"
-        text += f"{'='*separator_length}\n"
-        
-        self.summary_text.append(text)
+        """设置最终汇总报告（委托给ReportManager）"""
+        self.report_manager.set_final_summary_report(report)
+
+
 
     def update_log(self, message: str):
-        self.log_text.append(message)
-        self.log_text.verticalScrollBar().setValue(self.log_text.verticalScrollBar().maximum())
+        """更新日志显示"""
+        self.report_manager.update_log(message)
 
     def processing_finished(self):
-        # 如果用户已经停止，不再显示完成信息
-        if self.user_stopped:
-            return
-            
-        self.log_text.append(f"\n--- Pipeline Finished ---")
-        
-        # 添加处理完成的汇总信息
-        if self.timer:
-            self.timer.stop()
-        self.update_time_elapsed()
-        
-        final_time = self.time_elapsed_label.text()
-        total_files = self.files_processed_count
-        total_packets = self.packets_processed_count
-        
-        separator_length = 70
-        completion_report = f"\n{'='*separator_length}\n✅ PROCESSING COMPLETED SUCCESSFULLY\n{'='*separator_length}\n"
-        completion_report += f"📊 Overall Statistics:\n"
-        completion_report += f"   • Total Files Processed: {total_files}\n"
-        completion_report += f"   • Total Packets Processed: {total_packets:,}\n"
-        completion_report += f"   • Processing Time: {final_time}\n"
-        
-        # 计算处理速度 (更安全的方式)
-        try:
-            time_parts = final_time.split(':')
-            if len(time_parts) >= 2:
-                minutes = int(time_parts[-2])
-                seconds_with_ms = time_parts[-1].split('.')
-                seconds = int(seconds_with_ms[0])
-                total_seconds = minutes * 60 + seconds
-                if total_seconds > 0:
-                    speed = total_packets / total_seconds
-                    completion_report += f"   • Average Speed: {speed:,.0f} packets/second\n\n"
-                else:
-                    completion_report += f"   • Average Speed: N/A (processing too fast)\n\n"
-            else:
-                completion_report += f"   • Average Speed: N/A\n\n"
-        except:
-            completion_report += f"   • Average Speed: N/A\n\n"
-        
-        enabled_steps = []
-        if self.mask_ip_cb.isChecked():
-            enabled_steps.append("IP Masking")
-        if self.dedup_packet_cb.isChecked():
-            enabled_steps.append("Deduplication")
-        if self.trim_packet_cb.isChecked():
-            enabled_steps.append("Payload Trimming")
-            
-        completion_report += f"🔧 Applied Processing Steps: {', '.join(enabled_steps)}\n"
-        completion_report += f"📁 Output Location: {os.path.basename(self.current_output_dir)}\n"
-        completion_report += f"📝 All processed files saved to output directory.\n"
-        completion_report += f"{'='*separator_length}\n"
-        
-        self.summary_text.append(completion_report)
+        """处理完成（委托给PipelineManager）"""
+        self.pipeline_manager.processing_finished()
 
-        # 如果处理了≥2个文件且有IP映射，显示全局IP映射
-        if self.processed_files_count >= 2 and self.global_ip_mappings:
-            global_mapping_report = f"\n{'='*separator_length}\n🌐 GLOBAL IP MAPPINGS (All Files Combined)\n{'='*separator_length}\n"
-            global_mapping_report += f"📝 Complete IP Mapping Table - Unique Entries Across All Files:\n"
-            global_mapping_report += f"   • Total Unique IPs Mapped: {len(self.global_ip_mappings)}\n\n"
-            
-            # 按原始IP排序显示映射
-            sorted_global_mappings = sorted(self.global_ip_mappings.items())
-            for i, (orig_ip, new_ip) in enumerate(sorted_global_mappings, 1):
-                global_mapping_report += f"   {i:2d}. {orig_ip:<16} → {new_ip}\n"
-            
-            global_mapping_report += f"\n✅ All unique IP addresses across {self.processed_files_count} files have been\n"
-            global_mapping_report += f"   successfully anonymized with consistent mappings.\n"
-            global_mapping_report += f"{'='*separator_length}\n"
-            
-            self.summary_text.append(global_mapping_report)
 
-        # 保存summary report到输出目录
-        self.save_summary_report_to_output_dir()
-
-        # 更新输出路径显示
-        if self.current_output_dir:
-            self.output_path_label.setText(os.path.basename(self.current_output_dir))
-        self.update_log(f"Output directory ready. Click output path to view results.")
-        
-        # 如果配置启用，自动打开输出目录
-        if self.config.ui.auto_open_output and self.current_output_dir:
-            try:
-                success = open_directory_in_system(self.current_output_dir)
-                if success:
-                    self.update_log(f"Auto-opened output directory: {os.path.basename(self.current_output_dir)}")
-                else:
-                    self._logger.warning("Failed to auto-open output directory")
-            except Exception as e:
-                self._logger.error(f"Error auto-opening output directory: {e}")
-
-        # Re-enable controls
-        self.dir_path_label.setEnabled(True)
-        self.output_path_label.setEnabled(True)
-        for cb in [self.mask_ip_cb, self.dedup_packet_cb, self.trim_packet_cb]:
-            cb.setEnabled(True)
-        # web_focused_cb 保持禁用状态，因为功能未完成
-        self.start_proc_btn.setEnabled(True)
-        self.start_proc_btn.setText("Start")
 
     def processing_error(self, error_message: str):
-        QMessageBox.critical(self, "Error", f"An error occurred during processing:\n{error_message}")
+        """处理错误"""
+        self.dialog_manager.show_processing_error(error_message)
         self.processing_finished()
 
     def on_thread_finished(self):
@@ -1296,11 +502,7 @@ class MainWindow(QMainWindow):
 
     def show_about_dialog(self):
         """显示关于对话框"""
-        QMessageBox.about(self, "About PktMask",
-            "<h3>PktMask</h3>"
-            "<p>Version: 1.0</p>"
-            "<p>A tool for masking sensitive data in packet captures.</p>"
-            "<p>For more information, visit our <a href='https://github.com/your-repo'>GitHub page</a>.</p>")
+        self.dialog_manager.show_about_dialog()
 
     def update_time_elapsed(self):
         if not self.start_time:
@@ -1399,57 +601,12 @@ class MainWindow(QMainWindow):
             return None
 
     def _get_path_link_style(self) -> str:
-        """根据当前主题生成路径链接样式"""
-        theme = self._get_current_theme()
-        
-        if theme == 'dark':
-            # Dark模式：更柔和的蓝色系
-            return """
-                QPushButton {
-                    background: none;
-                    border: none;
-                    padding: 8px 4px;
-                    text-align: left;
-                    color: #5AC8FA;
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-                    font-size: 13px;
-                    text-decoration: none;
-                }
-                QPushButton:hover {
-                    color: #64D2FF;
-                    text-decoration: underline;
-                }
-                QPushButton:pressed {
-                    color: #32ADF0;
-                }
-            """
-        else:
-            # Light模式：经典蓝色系
-            return """
-                QPushButton {
-                    background: none;
-                    border: none;
-                    padding: 8px 4px;
-                    text-align: left;
-                    color: #007AFF;
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-                    font-size: 13px;
-                    text-decoration: none;
-                }
-                QPushButton:hover {
-                    color: #0051D5;
-                    text-decoration: underline;
-                }
-                QPushButton:pressed {
-                    color: #003D9F;
-                }
-            """
+        """根据当前主题生成路径链接样式（由UIManager处理）"""
+        return self.ui_manager._get_path_link_style()
 
     def _update_path_link_styles(self):
         """更新路径链接的样式"""
-        style = self._get_path_link_style()
-        self.dir_path_label.setStyleSheet(style)
-        self.output_path_label.setStyleSheet(style)
+        self.ui_manager._update_path_link_styles()
 
     def _animate_progress_to(self, target_value: int):
         """平滑动画到目标进度值"""
@@ -1463,104 +620,138 @@ class MainWindow(QMainWindow):
 
     def _update_start_button_state(self):
         """根据输入目录和选项状态更新Start按钮"""
-        has_input_dir = self.base_dir is not None
-        has_any_option = (self.mask_ip_cb.isChecked() or 
-                         self.dedup_packet_cb.isChecked() or 
-                         self.trim_packet_cb.isChecked())
-        
-        # 检查是否正在处理中
-        is_processing = (self.pipeline_thread is not None and 
-                        self.pipeline_thread.isRunning())
-        
-        # 只有当有输入目录且至少选择一个选项时才启用按钮，或者正在处理中时保持启用
-        should_enable = (has_input_dir and has_any_option) or is_processing
-        self.start_proc_btn.setEnabled(should_enable)
+        self.ui_manager._update_start_button_state()
 
     def _get_start_button_style(self) -> str:
-        """根据当前主题生成Start按钮样式"""
-        theme = self._get_current_theme()
-        
-        if theme == 'dark':
-            return """
-                QPushButton {
-                    font-size: 14px;
-                    font-weight: 600;
-                    padding: 8px 20px;
-                    border-radius: 6px;
-                    border: none;
-                }
-                QPushButton:enabled:pressed {
-                    background-color: #0069D9;
-                }
-                QPushButton:disabled {
-                    background-color: #3A3A3C;
-                    color: #8D8D92;
-                    border: 1px solid #48484A;
-                }
-            """
-        else:
-            return """
-                QPushButton {
-                    font-size: 14px;
-                    font-weight: 600;
-                    padding: 8px 20px;
-                    border-radius: 6px;
-                    border: none;
-                }
-                QPushButton:enabled:pressed {
-                    background-color: #0051D5;
-                }
-                QPushButton:disabled {
-                    background-color: #E5E5E7;
-                    color: #8E8E93;
-                    border: 1px solid #D1D1D6;
-                }
-            """
+        """根据当前主题生成Start按钮样式（由UIManager处理）"""
+        return self.ui_manager._get_start_button_style()
 
     def _update_start_button_style(self):
         """更新Start按钮样式"""
-        self.start_proc_btn.setStyleSheet(self._get_start_button_style())
+        self.ui_manager._update_start_button_style()
 
     def _get_coming_soon_style(self) -> str:
-        """根据当前主题生成Coming Soon选项样式"""
-        theme = self._get_current_theme()
-        
-        if theme == 'dark':
-            return """
-                QCheckBox {
-                    color: #6E6E73;
-                    font-style: italic;
-                    spacing: 8px;
-                }
-                QCheckBox::indicator {
-                    border: 1px solid #6E6E73;
-                    background-color: #3A3A3C;
-                }
-                QCheckBox::indicator:disabled {
-                    border: 1px solid #48484A;
-                    background-color: #2C2C2E;
-                }
-            """
-        else:
-            return """
-                QCheckBox {
-                    color: #8E8E93;
-                    font-style: italic;
-                    spacing: 8px;
-                }
-                QCheckBox::indicator {
-                    border: 1px solid #8E8E93;
-                    background-color: #F2F2F7;
-                }
-                QCheckBox::indicator:disabled {
-                    border: 1px solid #D1D1D6;
-                    background-color: #F2F2F7;
-                }
-            """
+        """根据当前主题生成Coming Soon选项样式（由UIManager处理）"""
+        return self.ui_manager._get_coming_soon_style()
 
     def _apply_coming_soon_style(self):
         """应用Coming Soon样式到web_focused_cb"""
-        self.web_focused_cb.setStyleSheet(self._get_coming_soon_style())
+        self.ui_manager._apply_coming_soon_style()
+
+    # === 统计数据兼容性属性访问器 ===
+    @property
+    def files_processed_count(self):
+        """已处理文件数（兼容性访问器）"""
+        return self.pipeline_manager.statistics.files_processed
+    
+    @files_processed_count.setter
+    def files_processed_count(self, value):
+        """已处理文件数设置器（兼容性访问器）"""
+        self.pipeline_manager.statistics.update_file_count(value)
+    
+    @property
+    def packets_processed_count(self):
+        """已处理包数（兼容性访问器）"""
+        return self.pipeline_manager.statistics.packets_processed
+    
+    @packets_processed_count.setter
+    def packets_processed_count(self, value):
+        """已处理包数设置器（兼容性访问器）"""
+        self.pipeline_manager.statistics.update_packet_count(value)
+    
+    @property
+    def file_processing_results(self):
+        """文件处理结果（兼容性访问器）"""
+        return self.pipeline_manager.statistics.file_processing_results
+    
+    @file_processing_results.setter
+    def file_processing_results(self, value):
+        """文件处理结果设置器（兼容性访问器）"""
+        self.pipeline_manager.statistics.file_processing_results = value
+    
+    @property
+    def global_ip_mappings(self):
+        """全局IP映射（兼容性访问器）"""
+        return self.pipeline_manager.statistics.global_ip_mappings
+    
+    @global_ip_mappings.setter
+    def global_ip_mappings(self, value):
+        """全局IP映射设置器（兼容性访问器）"""
+        self.pipeline_manager.statistics.global_ip_mappings = value
+    
+    @property
+    def all_ip_reports(self):
+        """所有IP报告（兼容性访问器）"""
+        return self.pipeline_manager.statistics.all_ip_reports
+    
+    @all_ip_reports.setter
+    def all_ip_reports(self, value):
+        """所有IP报告设置器（兼容性访问器）"""
+        self.pipeline_manager.statistics.all_ip_reports = value
+    
+    @property
+    def processed_files_count(self):
+        """已处理文件计数（兼容性访问器）"""
+        return self.pipeline_manager.statistics.processed_files_count
+    
+    @processed_files_count.setter
+    def processed_files_count(self, value):
+        """已处理文件计数设置器（兼容性访问器）"""
+        self.pipeline_manager.statistics.processed_files_count = value
+    
+    @property
+    def current_processing_file(self):
+        """当前处理文件（兼容性访问器）"""
+        return self.pipeline_manager.statistics.current_processing_file
+    
+    @current_processing_file.setter
+    def current_processing_file(self, value):
+        """当前处理文件设置器（兼容性访问器）"""
+        self.pipeline_manager.statistics.set_current_processing_file(value)
+    
+    @property
+    def subdirs_files_counted(self):
+        """子目录文件计数（兼容性访问器）"""
+        return self.pipeline_manager.statistics.subdirs_files_counted
+    
+    @subdirs_files_counted.setter
+    def subdirs_files_counted(self, value):
+        """子目录文件计数设置器（兼容性访问器）"""
+        self.pipeline_manager.statistics.subdirs_files_counted = value
+    
+    @property
+    def subdirs_packets_counted(self):
+        """子目录包计数（兼容性访问器）"""
+        return self.pipeline_manager.statistics.subdirs_packets_counted
+    
+    @subdirs_packets_counted.setter
+    def subdirs_packets_counted(self, value):
+        """子目录包计数设置器（兼容性访问器）"""
+        self.pipeline_manager.statistics.subdirs_packets_counted = value
+    
+    @property
+    def printed_summary_headers(self):
+        """已打印摘要头（兼容性访问器）"""
+        return self.pipeline_manager.statistics.printed_summary_headers
+    
+    @printed_summary_headers.setter
+    def printed_summary_headers(self, value):
+        """已打印摘要头设置器（兼容性访问器）"""
+        self.pipeline_manager.statistics.printed_summary_headers = value
+
+    def _init_legacy_attributes(self):
+        """初始化遗留属性（使用StatisticsManager）"""
+        # 通过属性访问器初始化，确保数据存储在StatisticsManager中
+        self.all_ip_reports = {}
+        self.files_processed_count = 0
+        self.packets_processed_count = 0
+        self.subdirs_files_counted = set()
+        self.subdirs_packets_counted = set()
+        self.printed_summary_headers = set()
+        self.file_processing_results = {}
+        self.current_processing_file = None
+        self.global_ip_mappings = {}
+        self.processed_files_count = 0
 
 def main():
     """主函数"""

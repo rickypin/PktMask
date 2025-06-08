@@ -153,6 +153,11 @@ class IntelligentTrimmingStep(ProcessingStep):
             
         processed_packets, total_count, trimmed_count, error_log = _process_pcap_data(all_packets)
         
+        # 确保输出文件的目录存在
+        output_dir = os.path.dirname(output_path)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
+        
         wrpcap(output_path, processed_packets, append=False)
         
         trim_rate = (trimmed_count / total_count * ProcessingConstants.PERCENTAGE_MULTIPLIER) if total_count > 0 else 0

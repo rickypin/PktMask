@@ -1,0 +1,572 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+UI管理器 - 负责界面初始化和样式管理
+"""
+
+import os
+from typing import TYPE_CHECKING
+from PyQt6.QtWidgets import *
+from PyQt6.QtCore import *
+from PyQt6.QtGui import *
+
+if TYPE_CHECKING:
+    from ..main_window import MainWindow
+
+from ...utils.path import resource_path
+from ...common.constants import UIConstants
+from ..stylesheet import generate_stylesheet
+from ...infrastructure.logging import get_logger
+
+class UIManager:
+    """UI管理器 - 负责界面初始化和样式管理"""
+    
+    def __init__(self, main_window: 'MainWindow'):
+        self.main_window = main_window
+        self.config = main_window.config
+        self._logger = get_logger(__name__)
+    
+    def init_ui(self):
+        """初始化界面"""
+        self._setup_window_properties()
+        self._create_menu_bar()
+        self._setup_main_layout()
+        self._connect_signals()
+        self._apply_initial_styles()
+        self._show_initial_guides()
+    
+    def _setup_window_properties(self):
+        """设置窗口属性"""
+        self.main_window.setWindowTitle("PktMask")
+        
+        # 使用配置中的窗口尺寸
+        window_width = self.config.ui.window_width
+        window_height = self.config.ui.window_height
+        self.main_window.setGeometry(100, 100, window_width, window_height)
+        
+        # 设置最小尺寸
+        self.main_window.setMinimumSize(
+            self.config.ui.window_min_width, 
+            self.config.ui.window_min_height
+        )
+        
+        self.main_window.setWindowIcon(QIcon(resource_path('icon.png')))
+    
+    def _create_menu_bar(self):
+        """创建菜单栏"""
+        menu_bar = self.main_window.menuBar()
+        
+        # File menu
+        file_menu = menu_bar.addMenu("File")
+        
+        reset_action = QAction("Reset All", self.main_window)
+        reset_action.triggered.connect(self.main_window.reset_state)
+        reset_action.setShortcut("Ctrl+R")
+        file_menu.addAction(reset_action)
+        
+        file_menu.addSeparator()
+        
+        exit_action = QAction("Exit", self.main_window)
+        exit_action.triggered.connect(self.main_window.close)
+        exit_action.setShortcut("Ctrl+Q")
+        file_menu.addAction(exit_action)
+        
+        # Help menu
+        help_menu = menu_bar.addMenu("Help")
+        
+        user_guide_action = QAction("User Guide", self.main_window)
+        user_guide_action.triggered.connect(self.main_window.show_user_guide_dialog)
+        help_menu.addAction(user_guide_action)
+
+        about_action = QAction("About", self.main_window)
+        about_action.triggered.connect(self.main_window.show_about_dialog)
+        help_menu.addAction(about_action)
+    
+    def _setup_main_layout(self):
+        """设置主布局"""
+        main_widget = QWidget()
+        self.main_window.setCentralWidget(main_widget)
+        
+        main_layout = QGridLayout(main_widget)
+        main_layout.setSpacing(UIConstants.LAYOUT_SPACING)
+        main_layout.setContentsMargins(
+            UIConstants.LAYOUT_MARGINS, UIConstants.LAYOUT_MARGINS, 
+            UIConstants.LAYOUT_MARGINS, UIConstants.LAYOUT_MARGINS
+        )
+
+        # --- Create all GroupBox widgets ---
+        self._create_dirs_group()
+        self._create_row2_widget()
+        self._create_dashboard_group()
+        self._create_log_group()
+        self._create_summary_group()
+        
+        # --- Define layout structure ---
+        self._setup_grid_layout(main_layout)
+    
+    def _create_dirs_group(self):
+        """创建目录选择组"""
+        # Step 1: Input and Output (左右分布) - 简化版
+        dirs_group = QGroupBox("Set Working Directories")
+        dirs_group.setMaximumHeight(UIConstants.DIRS_GROUP_HEIGHT)
+        dirs_layout = QHBoxLayout(dirs_group)
+        dirs_layout.setContentsMargins(*UIConstants.DIRS_LAYOUT_PADDING)
+        
+        # 左侧：Input Directory - 单行布局
+        input_layout = QVBoxLayout()
+        input_layout.setSpacing(5)
+        input_label = QLabel("Input:")
+        input_label.setMaximumHeight(UIConstants.INPUT_LABEL_HEIGHT)
+        input_path_layout = QHBoxLayout()
+        input_path_layout.setSpacing(8)
+        self.main_window.dir_path_label = QPushButton("Click and pick your pcap directory")
+        self.main_window.dir_path_label.setObjectName("DirPathLabel")
+        self.main_window.dir_path_label.setMaximumHeight(UIConstants.BUTTON_MAX_HEIGHT)
+        self.main_window.dir_path_label.setCursor(Qt.CursorShape.PointingHandCursor)
+        input_path_layout.addWidget(input_label)
+        input_path_layout.addWidget(self.main_window.dir_path_label, 1)
+        input_layout.addLayout(input_path_layout)
+        
+        # 右侧：Output Directory - 单行布局
+        output_layout = QVBoxLayout()
+        output_layout.setSpacing(5)
+        output_label = QLabel("Output:")
+        output_label.setMaximumHeight(20)
+        output_path_layout = QHBoxLayout()
+        output_path_layout.setSpacing(8)
+        self.main_window.output_path_label = QPushButton("Auto-create or click for custom")
+        self.main_window.output_path_label.setObjectName("DirPathLabel")
+        self.main_window.output_path_label.setMaximumHeight(30)
+        self.main_window.output_path_label.setCursor(Qt.CursorShape.PointingHandCursor)
+        output_path_layout.addWidget(output_label)
+        output_path_layout.addWidget(self.main_window.output_path_label, 1)
+        output_layout.addLayout(output_path_layout)
+        
+        dirs_layout.addLayout(input_layout, 1)
+        dirs_layout.addLayout(output_layout, 1)
+        
+        # 保存引用
+        self.main_window.dirs_group = dirs_group
+    
+    def _create_row2_widget(self):
+        """创建第二行组件（选项和执行）"""
+        # Step 2 & 3: 第二行并排布局
+        row2_widget = QWidget()
+        row2_widget.setMaximumHeight(90)
+        row2_layout = QHBoxLayout(row2_widget)
+        row2_layout.setContentsMargins(0, 0, 0, 0)
+        row2_layout.setSpacing(12)
+        
+        # Step 2: Configure Pipeline
+        pipeline_group = QGroupBox("Set Options")
+        pipeline_group.setMaximumHeight(85)
+        pipeline_layout = QHBoxLayout(pipeline_group)
+        pipeline_layout.setContentsMargins(15, 12, 15, 12)
+        pipeline_layout.setSpacing(20)
+        
+        self.main_window.dedup_packet_cb = QCheckBox("Remove Dupes")
+        self.main_window.mask_ip_cb = QCheckBox("Mask IPs")
+        self.main_window.trim_packet_cb = QCheckBox("Trim Payloads (Preserve TLS Handshake)")
+        self.main_window.web_focused_cb = QCheckBox("Web-Focused Traffic Only (Coming Soon)")
+        
+        self.main_window.trim_packet_cb.setToolTip("Intelligently trims packet payloads while preserving TLS handshake data.")
+        self.main_window.web_focused_cb.setToolTip("Filter and process only web-related traffic (HTTP/HTTPS). This feature is under development.")
+        
+        # 设置手型光标
+        for cb in [self.main_window.dedup_packet_cb, self.main_window.mask_ip_cb, 
+                  self.main_window.trim_packet_cb, self.main_window.web_focused_cb]:
+            cb.setCursor(Qt.CursorShape.PointingHandCursor)
+        
+        # 使用配置中的默认状态
+        self.main_window.dedup_packet_cb.setChecked(self.config.ui.default_dedup)
+        self.main_window.mask_ip_cb.setChecked(self.config.ui.default_mask_ip)
+        self.main_window.trim_packet_cb.setChecked(self.config.ui.default_trim)
+        self.main_window.web_focused_cb.setChecked(False)
+        self.main_window.web_focused_cb.setEnabled(False)
+        
+        pipeline_layout.addWidget(self.main_window.dedup_packet_cb)
+        pipeline_layout.addWidget(self.main_window.mask_ip_cb)
+        pipeline_layout.addWidget(self.main_window.trim_packet_cb)
+        pipeline_layout.addWidget(self.main_window.web_focused_cb)
+        pipeline_layout.addStretch()
+
+        # Step 3: Execute
+        execute_group = QGroupBox("Run Processing")
+        execute_group.setMaximumHeight(85)
+        execute_layout = QVBoxLayout(execute_group)
+        execute_layout.setContentsMargins(15, 20, 15, 20)
+        execute_layout.setSpacing(5)
+        self.main_window.start_proc_btn = QPushButton("Start")
+        self.main_window.start_proc_btn.setMinimumHeight(35)
+        self.main_window.start_proc_btn.setMaximumHeight(35)
+        self.main_window.start_proc_btn.setEnabled(False)
+        self.main_window.start_proc_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        execute_layout.addWidget(self.main_window.start_proc_btn)
+        
+        row2_layout.addWidget(pipeline_group, 3)
+        row2_layout.addWidget(execute_group, 1)
+        
+        # 保存引用
+        self.main_window.row2_widget = row2_widget
+    
+    def _create_dashboard_group(self):
+        """创建仪表板组"""
+        dashboard_group = QGroupBox("Live Dashboard")
+        dashboard_group.setMaximumHeight(140)
+        dashboard_layout = QVBoxLayout(dashboard_group)
+        dashboard_layout.setContentsMargins(15, 20, 15, 12)
+        dashboard_layout.setSpacing(10)
+        
+        # 进度条
+        self.main_window.progress_bar = QProgressBar()
+        self.main_window.progress_bar.setTextVisible(False)
+        self.main_window.progress_bar.setFixedHeight(18)
+        
+        # 初始化进度条动画
+        self.main_window.progress_animation = QPropertyAnimation(
+            self.main_window.progress_bar, b"value"
+        )
+        self.main_window.progress_animation.setDuration(300)
+        self.main_window.progress_animation.setEasingCurve(QEasingCurve.Type.OutCubic)
+        
+        dashboard_layout.addWidget(self.main_window.progress_bar)
+        
+        # KPI布局
+        kpi_layout = QGridLayout()
+        kpi_layout.setSpacing(10)
+        self.main_window.files_processed_label = QLabel("0")
+        self.main_window.files_processed_label.setObjectName("FilesProcessedLabel")
+        self.main_window.packets_processed_label = QLabel("0")
+        self.main_window.packets_processed_label.setObjectName("IpsMaskedLabel")
+        self.main_window.time_elapsed_label = QLabel("00:00.00")
+        self.main_window.time_elapsed_label.setObjectName("DupesRemovedLabel")
+
+        kpi_layout.addWidget(self.main_window.files_processed_label, 0, 0, Qt.AlignmentFlag.AlignCenter)
+        kpi_layout.addWidget(QLabel("Files Processed"), 1, 0, Qt.AlignmentFlag.AlignCenter)
+        kpi_layout.addWidget(self.main_window.packets_processed_label, 0, 1, Qt.AlignmentFlag.AlignCenter)
+        kpi_layout.addWidget(QLabel("Packets Processed"), 1, 1, Qt.AlignmentFlag.AlignCenter)
+        kpi_layout.addWidget(self.main_window.time_elapsed_label, 0, 2, Qt.AlignmentFlag.AlignCenter)
+        kpi_layout.addWidget(QLabel("Time Elapsed"), 1, 2, Qt.AlignmentFlag.AlignCenter)
+        
+        dashboard_layout.addLayout(kpi_layout)
+        
+        # 保存引用
+        self.main_window.dashboard_group = dashboard_group
+    
+    def _create_log_group(self):
+        """创建日志组"""
+        log_group = QGroupBox("Log")
+        log_layout = QVBoxLayout(log_group)
+        log_layout.setContentsMargins(12, 20, 12, 12)
+        self.main_window.log_text = QTextEdit()
+        self.main_window.log_text.setReadOnly(True)
+        
+        # 设置Log区域的字体大小
+        log_font = QFont()
+        log_font.setPointSize(12)
+        self.main_window.log_text.setFont(log_font)
+        log_layout.addWidget(self.main_window.log_text)
+        
+        # 保存引用
+        self.main_window.log_group = log_group
+    
+    def _create_summary_group(self):
+        """创建摘要组"""
+        summary_group = QGroupBox("Summary Report")
+        summary_layout = QVBoxLayout(summary_group)
+        summary_layout.setContentsMargins(12, 20, 12, 12)
+        self.main_window.summary_text = QTextEdit()
+        self.main_window.summary_text.setReadOnly(True)
+        
+        # 设置Summary Report区域的字体大小
+        summary_font = QFont()
+        summary_font.setPointSize(12)
+        self.main_window.summary_text.setFont(summary_font)
+        summary_layout.addWidget(self.main_window.summary_text)
+        
+        # 保存引用
+        self.main_window.summary_group = summary_group
+    
+    def _setup_grid_layout(self, main_layout):
+        """设置网格布局"""
+        # 添加组件到网格布局
+        main_layout.addWidget(self.main_window.dirs_group, 0, 0, 1, 2)
+        main_layout.addWidget(self.main_window.row2_widget, 1, 0, 1, 2)
+        main_layout.addWidget(self.main_window.dashboard_group, 2, 0)
+        main_layout.addWidget(self.main_window.log_group, 3, 0)
+        main_layout.addWidget(self.main_window.summary_group, 2, 1, 2, 1)
+
+        # 设置拉伸因子
+        main_layout.setColumnStretch(0, 2)  # 左列
+        main_layout.setColumnStretch(1, 3)  # 右列
+        main_layout.setRowStretch(0, 0)  # Step 1 row
+        main_layout.setRowStretch(1, 0)  # Step 2&3 row  
+        main_layout.setRowStretch(2, 0)  # Dashboard row
+        main_layout.setRowStretch(3, 2)  # Log row
+    
+    def _connect_signals(self):
+        """连接信号"""
+        # 目录选择信号
+        self.main_window.dir_path_label.clicked.connect(self.main_window.file_manager.choose_folder)
+        self.main_window.output_path_label.clicked.connect(self.main_window.file_manager.handle_output_click)
+        
+        # 处理按钮信号
+        self.main_window.start_proc_btn.clicked.connect(self.main_window.pipeline_manager.toggle_pipeline_processing)
+        
+        # checkbox状态变化信号 - 正确调用UIManager的方法
+        self.main_window.mask_ip_cb.stateChanged.connect(self._update_start_button_state)
+        self.main_window.dedup_packet_cb.stateChanged.connect(self._update_start_button_state)
+        self.main_window.trim_packet_cb.stateChanged.connect(self._update_start_button_state)
+    
+    def _apply_initial_styles(self):
+        """应用初始样式"""
+        self.apply_stylesheet()
+        self._apply_coming_soon_style()
+        self._update_path_link_styles()
+        self._update_start_button_style()
+    
+    def _show_initial_guides(self):
+        """显示初始指南"""
+        self.main_window.log_text.setPlaceholderText(
+            "🚀 Welcome to PktMask!\n\n"
+            "┌─ Quick Start Guide ──────────┐\n"
+            "│ 1. Select pcap directory     │\n"
+            "│ 2. Configure options         │\n"
+            "│ 3. Start processing          │\n"
+            "└──────────────────────────────┘\n\n"
+            "💡 Remove Dupes & Mask IPs enabled by default\n\n"
+            "Processing logs will appear here..."
+        )
+        self.main_window.summary_text.setPlaceholderText(
+             "📊 Processing results and statistics will be displayed here.\n\n"
+             "═══════════════════════════════════════════════════════════════════\n\n"
+             "📦 About PktMask - Network Packet Processing Tool\n\n"
+             "🔄 Remove Dupes\n"
+             "   • Eliminates duplicate packets to reduce file size\n"
+             "   • Reduces noise in network analysis and forensics\n"
+             "   • Optimizes storage and speeds up analysis\n\n"
+             "🛡️ Mask IPs - Advanced Anonymization\n"
+             "   • Preserves network topology and subnet relationships\n"
+             "   • Uses hierarchical anonymization for consistent mapping\n"
+             "   • Perfect for data sharing, compliance, and research\n\n"
+             "✂️ Trim Payloads - Intelligent Data Reduction\n"
+             "   • Removes sensitive payload data while preserving headers\n"
+             "   • Keeps TLS handshakes intact for protocol analysis\n"
+             "   • Reduces file size without losing network behavior insights\n\n"
+             "🌐 Web-Focused Traffic Only (Coming Soon)\n"
+             "   • Filter and analyze only web-related traffic\n"
+             "   • Focus on HTTP/HTTPS communications\n"
+             "   • Streamline web security analysis workflows\n\n"
+             "🎯 Use Cases: Security research, network troubleshooting,\n"
+             "   compliance reporting, and safe data sharing."
+        )
+    
+    # 样式管理方法
+    def get_current_theme(self) -> str:
+        """检测当前系统是浅色还是深色模式"""
+        bg_color = self.main_window.palette().color(self.main_window.backgroundRole())
+        return 'dark' if bg_color.lightness() < 128 else 'light'
+
+    def apply_stylesheet(self):
+        """应用样式表"""
+        theme = self.get_current_theme()
+        self.main_window.setStyleSheet(generate_stylesheet(theme))
+
+    def handle_theme_change(self, event: QEvent):
+        """处理主题变化"""
+        if event.type() == QEvent.Type.ApplicationPaletteChange:
+            self.apply_stylesheet()
+            self._update_path_link_styles()
+            self._update_start_button_style()
+            self._apply_coming_soon_style()
+
+    def _get_path_link_style(self) -> str:
+        """获取路径链接样式"""
+        theme = self.get_current_theme()
+        if theme == 'dark':
+            return """
+                QPushButton#DirPathLabel {
+                    border: 1px solid #555;
+                    background-color: #3a3a3a;
+                    color: #87CEEB;
+                    padding: 5px;
+                    text-align: left;
+                    border-radius: 3px;
+                }
+                QPushButton#DirPathLabel:hover {
+                    background-color: #4a4a4a;
+                    color: #98DFEF;
+                }
+                QPushButton#DirPathLabel:pressed {
+                    background-color: #2a2a2a;
+                }
+            """
+        else:
+            return """
+                QPushButton#DirPathLabel {
+                    border: 1px solid #ccc;
+                    background-color: #f8f8f8;
+                    color: #0066cc;
+                    padding: 5px;
+                    text-align: left;
+                    border-radius: 3px;
+                }
+                QPushButton#DirPathLabel:hover {
+                    background-color: #e8e8e8;
+                    color: #004499;
+                }
+                QPushButton#DirPathLabel:pressed {
+                    background-color: #d8d8d8;
+                }
+            """
+
+    def _update_path_link_styles(self):
+        """更新路径链接样式"""
+        style = self._get_path_link_style()
+        self.main_window.setStyleSheet(self.main_window.styleSheet() + style)
+
+    def _get_start_button_style(self) -> str:
+        """获取开始按钮样式"""
+        theme = self.get_current_theme()
+        if self.main_window.start_proc_btn.isEnabled():
+            if theme == 'dark':
+                return """
+                    QPushButton {
+                        background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                  stop: 0 #4CAF50, stop: 1 #45a049);
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        font-weight: bold;
+                        font-size: 14px;
+                    }
+                    QPushButton:hover {
+                        background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                  stop: 0 #5CBF60, stop: 1 #55b059);
+                    }
+                    QPushButton:pressed {
+                        background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                  stop: 0 #3CAF40, stop: 1 #359039);
+                    }
+                """
+            else:
+                return """
+                    QPushButton {
+                        background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                  stop: 0 #4CAF50, stop: 1 #45a049);
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        font-weight: bold;
+                        font-size: 14px;
+                    }
+                    QPushButton:hover {
+                        background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                  stop: 0 #5CBF60, stop: 1 #55b059);
+                    }
+                    QPushButton:pressed {
+                        background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                  stop: 0 #3CAF40, stop: 1 #359039);
+                    }
+                """
+        else:
+            if theme == 'dark':
+                return """
+                    QPushButton {
+                        background-color: #555;
+                        color: #888;
+                        border: 1px solid #666;
+                        border-radius: 5px;
+                        font-weight: bold;
+                        font-size: 14px;
+                    }
+                """
+            else:
+                return """
+                    QPushButton {
+                        background-color: #e0e0e0;
+                        color: #888;
+                        border: 1px solid #ccc;
+                        border-radius: 5px;
+                        font-weight: bold;
+                        font-size: 14px;
+                    }
+                """
+
+    def _update_start_button_style(self):
+        """更新开始按钮样式"""
+        style = self._get_start_button_style()
+        # 移除旧的按钮样式并添加新的
+        self.main_window.start_proc_btn.setStyleSheet(style)
+
+    def _get_coming_soon_style(self) -> str:
+        """获取Coming Soon样式"""
+        theme = self.get_current_theme()
+        if theme == 'dark':
+            return """
+                QCheckBox {
+                    color: #888;
+                    font-style: italic;
+                }
+                QCheckBox::indicator {
+                    width: 18px;
+                    height: 18px;
+                    background-color: #333;
+                    border: 1px solid #555;
+                    border-radius: 3px;
+                }
+                QCheckBox::indicator:disabled {
+                    background-color: #222;
+                    border-color: #444;
+                }
+                QCheckBox::indicator:checked:disabled {
+                    background-color: #555;
+                    border-color: #666;
+                }
+            """
+        else:
+            return """
+                QCheckBox {
+                    color: #888;
+                    font-style: italic;
+                }
+                QCheckBox::indicator {
+                    width: 18px;
+                    height: 18px;
+                    background-color: #f0f0f0;
+                    border: 1px solid #ccc;
+                    border-radius: 3px;
+                }
+                QCheckBox::indicator:disabled {
+                    background-color: #e8e8e8;
+                    border-color: #ddd;
+                }
+                QCheckBox::indicator:checked:disabled {
+                    background-color: #ddd;
+                    border-color: #ccc;
+                }
+            """
+
+    def _apply_coming_soon_style(self):
+        """应用Coming Soon样式"""
+        style = self._get_coming_soon_style()
+        self.main_window.web_focused_cb.setStyleSheet(style)
+
+    def _update_start_button_state(self):
+        """根据输入目录和选项状态更新Start按钮"""
+        has_input_dir = self.main_window.base_dir is not None
+        has_any_option = (self.main_window.mask_ip_cb.isChecked() or 
+                         self.main_window.dedup_packet_cb.isChecked() or 
+                         self.main_window.trim_packet_cb.isChecked())
+        
+        # 检查是否正在处理中
+        is_processing = (self.main_window.pipeline_thread is not None and 
+                        self.main_window.pipeline_thread.isRunning())
+        
+        # 只有当有输入目录且至少选择一个选项时才启用按钮，或者正在处理中时保持启用
+        should_enable = (has_input_dir and has_any_option) or is_processing
+        self.main_window.start_proc_btn.setEnabled(should_enable)
+        
+        # 同时更新按钮样式
+        self._update_start_button_style() 

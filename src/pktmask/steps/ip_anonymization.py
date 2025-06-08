@@ -79,6 +79,11 @@ class IpAnonymizationStep(ProcessingStep):
                     anonymized_count += 1
                 new_packets.append(new_pkt)
         
+        # 确保输出文件的目录存在
+        output_dir = os.path.dirname(output_path)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
+        
         wrpcap(output_path, new_packets, append=False)
         self._logger.info(f"处理完成: {input_path} -> {output_path}, 匿名化包数: {anonymized_count}/{total_count}")
         
