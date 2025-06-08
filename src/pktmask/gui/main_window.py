@@ -145,7 +145,7 @@ class MainWindow(QMainWindow):
         input_label.setMaximumHeight(20)
         input_path_layout = QHBoxLayout()
         input_path_layout.setSpacing(8)
-        self.dir_path_label = QPushButton("No directory selected.")  # 改为可点击的按钮
+        self.dir_path_label = QPushButton("Click and pick your pcap directory")  # 改为可点击的按钮
         self.dir_path_label.setObjectName("DirPathLabel")
         self.dir_path_label.setMaximumHeight(30)
         self.dir_path_label.setCursor(Qt.CursorShape.PointingHandCursor)  # 设置手型光标
@@ -160,7 +160,7 @@ class MainWindow(QMainWindow):
         output_label.setMaximumHeight(20)
         output_path_layout = QHBoxLayout()
         output_path_layout.setSpacing(8)
-        self.output_path_label = QPushButton("Output will be generated")  # 改为可点击的按钮
+        self.output_path_label = QPushButton("Auto-create or click for custom")  # 改为可点击的按钮
         self.output_path_label.setObjectName("DirPathLabel")
         self.output_path_label.setMaximumHeight(30)
         self.output_path_label.setCursor(Qt.CursorShape.PointingHandCursor)  # 设置手型光标
@@ -184,20 +184,28 @@ class MainWindow(QMainWindow):
         pipeline_layout = QHBoxLayout(pipeline_group)  # 改为水平布局
         pipeline_layout.setContentsMargins(15, 12, 15, 12)  # 增加内边距
         pipeline_layout.setSpacing(20)  # 增加选项之间的间距
-        self.mask_ip_cb = QCheckBox("Mask IPs")
         self.dedup_packet_cb = QCheckBox("Remove Dupes")
+        self.mask_ip_cb = QCheckBox("Mask IPs")
         self.trim_packet_cb = QCheckBox("Trim Payloads (Preserve TLS Handshake)")
+        self.web_focused_cb = QCheckBox("Web-Focused Traffic Only (Coming Soon)")
         self.trim_packet_cb.setToolTip("Intelligently trims packet payloads while preserving TLS handshake data.")
+        self.web_focused_cb.setToolTip("Filter and process only web-related traffic (HTTP/HTTPS). This feature is under development.")
         # 为所有checkbox设置手型光标
-        self.mask_ip_cb.setCursor(Qt.CursorShape.PointingHandCursor)
         self.dedup_packet_cb.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.mask_ip_cb.setCursor(Qt.CursorShape.PointingHandCursor)
         self.trim_packet_cb.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.mask_ip_cb.setChecked(True)
+        # 设置默认状态
         self.dedup_packet_cb.setChecked(True)
-        self.trim_packet_cb.setChecked(True)
-        pipeline_layout.addWidget(self.mask_ip_cb)
+        self.mask_ip_cb.setChecked(True)
+        self.trim_packet_cb.setChecked(False)
+        self.web_focused_cb.setChecked(False)
+        self.web_focused_cb.setEnabled(False)  # 禁用状态，因为功能还未完成
+        # 为即将推出的功能设置特殊样式
+        self._apply_coming_soon_style()
         pipeline_layout.addWidget(self.dedup_packet_cb)
+        pipeline_layout.addWidget(self.mask_ip_cb)
         pipeline_layout.addWidget(self.trim_packet_cb)
+        pipeline_layout.addWidget(self.web_focused_cb)
         pipeline_layout.addStretch()
 
         # Step 3: Execute (1/4 宽度) - 简化版
@@ -259,6 +267,10 @@ class MainWindow(QMainWindow):
         log_layout.setContentsMargins(12, 20, 12, 12)  # 增加标题下方空间
         self.log_text = QTextEdit()
         self.log_text.setReadOnly(True)
+        # 设置Log区域的字体大小
+        log_font = QFont()
+        log_font.setPointSize(12)  # 增加字体大小
+        self.log_text.setFont(log_font)
         log_layout.addWidget(self.log_text)
 
         # Summary Report
@@ -267,6 +279,10 @@ class MainWindow(QMainWindow):
         summary_layout.setContentsMargins(12, 20, 12, 12)  # 增加标题下方空间
         self.summary_text = QTextEdit()
         self.summary_text.setReadOnly(True)
+        # 设置Summary Report区域的字体大小
+        summary_font = QFont()
+        summary_font.setPointSize(12)  # 增加字体大小
+        self.summary_text.setFont(summary_font)
         summary_layout.addWidget(self.summary_text)
 
         # --- Add widgets to the grid layout ---
@@ -325,6 +341,7 @@ class MainWindow(QMainWindow):
             self._apply_stylesheet()
             self._update_path_link_styles()  # 同时更新路径链接样式
             self._update_start_button_style()  # 同时更新按钮样式
+            self._apply_coming_soon_style()  # 同时更新Coming Soon样式
         super().changeEvent(event)
 
     def create_menu_bar(self):
@@ -379,14 +396,37 @@ class MainWindow(QMainWindow):
     def show_initial_guides(self):
         """启动时在log和report区域显示指引"""
         self.log_text.setPlaceholderText(
-            "Welcome to PktMask!\n\n"
-            "1. Click 'Choose Folder' to select the root directory containing pcap/pcapng files.\n"
-            "2. Select the processing steps you want to apply.\n"
-            "3. Click 'Start Processing' to run the pipeline.\n\n"
-            "Logs will appear here once processing starts."
+            "🚀 Welcome to PktMask!\n\n"
+            "┌─ Quick Start Guide ──────────┐\n"
+            "│ 1. Select pcap directory     │\n"
+            "│ 2. Configure options         │\n"
+            "│ 3. Start processing          │\n"
+            "└──────────────────────────────┘\n\n"
+            "💡 Remove Dupes & Mask IPs enabled by default\n\n"
+            "Processing logs will appear here..."
         )
         self.summary_text.setPlaceholderText(
-             "A summary of the processing results will be displayed here."
+             "📊 Processing results and statistics will be displayed here.\n\n"
+             "═══════════════════════════════════════════════════════════════════\n\n"
+             "📦 About PktMask - Network Packet Processing Tool\n\n"
+             "🔄 Remove Dupes\n"
+             "   • Eliminates duplicate packets to reduce file size\n"
+             "   • Reduces noise in network analysis and forensics\n"
+             "   • Optimizes storage and speeds up analysis\n\n"
+             "🛡️ Mask IPs - Advanced Anonymization\n"
+             "   • Preserves network topology and subnet relationships\n"
+             "   • Uses hierarchical anonymization for consistent mapping\n"
+             "   • Perfect for data sharing, compliance, and research\n\n"
+             "✂️ Trim Payloads - Intelligent Data Reduction\n"
+             "   • Removes sensitive payload data while preserving headers\n"
+             "   • Keeps TLS handshakes intact for protocol analysis\n"
+             "   • Reduces file size without losing network behavior insights\n\n"
+             "🌐 Web-Focused Traffic Only (Coming Soon)\n"
+             "   • Filter and analyze only web-related traffic\n"
+             "   • Focus on HTTP/HTTPS communications\n"
+             "   • Streamline web security analysis workflows\n\n"
+             "🎯 Use Cases: Security research, network troubleshooting,\n"
+             "   compliance reporting, and safe data sharing."
         )
 
     def choose_folder(self):
@@ -435,7 +475,7 @@ class MainWindow(QMainWindow):
         
         # 重置为默认模式
         self.output_dir = None
-        self.output_path_label.setText("Output will be generated")
+        self.output_path_label.setText("Auto-create or click for custom")
 
     def generate_actual_output_path(self) -> str:
         """生成实际的输出目录路径"""
@@ -475,8 +515,8 @@ class MainWindow(QMainWindow):
         self.base_dir = None
         self.output_dir = None  # 重置输出目录
         self.current_output_dir = None  # 重置当前输出目录
-        self.dir_path_label.setText("No directory selected.")
-        self.output_path_label.setText("Output will be generated")  # 重置输出路径显示
+        self.dir_path_label.setText("Click and pick your pcap directory")
+        self.output_path_label.setText("Auto-create or click for custom")  # 重置输出路径显示
         self.log_text.clear()
         self.summary_text.clear()
         self.all_ip_reports.clear()
@@ -594,7 +634,7 @@ class MainWindow(QMainWindow):
                     files_status_report += f"   Status: FULLY COMPLETED\n"
                     
                     # 获取最终输出文件名
-                    step_order = ['IP Masking', 'Deduplication', 'Payload Trimming']
+                    step_order = ['Deduplication', 'IP Masking', 'Payload Trimming']
                     final_output = None
                     for step_name in reversed(step_order):
                         if step_name in steps_data:
@@ -718,6 +758,7 @@ class MainWindow(QMainWindow):
         self.output_path_label.setEnabled(True)
         for cb in [self.mask_ip_cb, self.dedup_packet_cb, self.trim_packet_cb]:
             cb.setEnabled(True)
+        # web_focused_cb 保持禁用状态，因为功能未完成
         self.start_proc_btn.setEnabled(True)
         self.start_proc_btn.setText("Start")
 
@@ -770,11 +811,12 @@ class MainWindow(QMainWindow):
 
         # Build pipeline from checkboxes
         steps_to_run: List[str] = []
-        # 推荐的处理顺序：Mask IP -> Remove Dupes -> Trim Packet
-        if self.mask_ip_cb.isChecked():
-            steps_to_run.append("mask_ip")
+        # 优化的处理顺序：Remove Dupes -> Mask IP -> Trim Packet
+        # 先去除重复包可以减少后续处理的负载
         if self.dedup_packet_cb.isChecked():
             steps_to_run.append("dedup_packet")
+        if self.mask_ip_cb.isChecked():
+            steps_to_run.append("mask_ip")
         if self.trim_packet_cb.isChecked():
             steps_to_run.append("trim_packet")
 
@@ -796,10 +838,10 @@ class MainWindow(QMainWindow):
         
         # 添加处理开始的信息
         enabled_steps = []
-        if self.mask_ip_cb.isChecked():
-            enabled_steps.append("🛡️ IP Masking")
         if self.dedup_packet_cb.isChecked():
             enabled_steps.append("🔄 Deduplication")
+        if self.mask_ip_cb.isChecked():
+            enabled_steps.append("🛡️ IP Masking")
         if self.trim_packet_cb.isChecked():
             enabled_steps.append("✂️ Payload Trimming")
             
@@ -823,6 +865,7 @@ class MainWindow(QMainWindow):
         self.output_path_label.setEnabled(False)
         for cb in [self.mask_ip_cb, self.dedup_packet_cb, self.trim_packet_cb]:
             cb.setEnabled(False)
+        # web_focused_cb 保持禁用状态，因为功能未完成
         self.start_proc_btn.setText("Stop")
 
     def handle_thread_progress(self, event_type: PipelineEvents, data: dict):
@@ -851,7 +894,7 @@ class MainWindow(QMainWindow):
                 output_files = []
                 if self.current_processing_file in self.file_processing_results:
                     steps_data = self.file_processing_results[self.current_processing_file]['steps']
-                    step_order = ['IP Masking', 'Deduplication', 'Payload Trimming']
+                    step_order = ['Deduplication', 'IP Masking', 'Payload Trimming']
                     for step_name in reversed(step_order):
                         if step_name in steps_data:
                             output_file = steps_data[step_name]['data'].get('output_filename')
@@ -957,7 +1000,7 @@ class MainWindow(QMainWindow):
             output_filename = steps_data['Payload Trimming']['data'].get('output_filename')
         
         # 从最后一个处理步骤获取最终输出文件名
-        step_order = ['IP Masking', 'Deduplication', 'Payload Trimming']
+        step_order = ['Deduplication', 'IP Masking', 'Payload Trimming']
         for step_name in reversed(step_order):
             if step_name in steps_data:
                 final_output = steps_data[step_name]['data'].get('output_filename')
@@ -1145,6 +1188,7 @@ class MainWindow(QMainWindow):
         self.output_path_label.setEnabled(True)
         for cb in [self.mask_ip_cb, self.dedup_packet_cb, self.trim_packet_cb]:
             cb.setEnabled(True)
+        # web_focused_cb 保持禁用状态，因为功能未完成
         self.start_proc_btn.setEnabled(True)
         self.start_proc_btn.setText("Start")
 
@@ -1404,6 +1448,47 @@ class MainWindow(QMainWindow):
     def _update_start_button_style(self):
         """更新Start按钮样式"""
         self.start_proc_btn.setStyleSheet(self._get_start_button_style())
+
+    def _get_coming_soon_style(self) -> str:
+        """根据当前主题生成Coming Soon选项样式"""
+        theme = self._get_current_theme()
+        
+        if theme == 'dark':
+            return """
+                QCheckBox {
+                    color: #6E6E73;
+                    font-style: italic;
+                    spacing: 8px;
+                }
+                QCheckBox::indicator {
+                    border: 1px solid #6E6E73;
+                    background-color: #3A3A3C;
+                }
+                QCheckBox::indicator:disabled {
+                    border: 1px solid #48484A;
+                    background-color: #2C2C2E;
+                }
+            """
+        else:
+            return """
+                QCheckBox {
+                    color: #8E8E93;
+                    font-style: italic;
+                    spacing: 8px;
+                }
+                QCheckBox::indicator {
+                    border: 1px solid #8E8E93;
+                    background-color: #F2F2F7;
+                }
+                QCheckBox::indicator:disabled {
+                    border: 1px solid #D1D1D6;
+                    background-color: #F2F2F7;
+                }
+            """
+
+    def _apply_coming_soon_style(self):
+        """应用Coming Soon样式到web_focused_cb"""
+        self.web_focused_cb.setStyleSheet(self._get_coming_soon_style())
 
 def main():
     """主函数"""
