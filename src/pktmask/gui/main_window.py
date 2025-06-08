@@ -144,16 +144,34 @@ class MainWindow(QMainWindow):
         self._setup_manager_subscriptions()
         
         self._logger.debug("所有管理器初始化完成")
-    
     def _setup_manager_subscriptions(self):
-        """设置管理器间的事件订阅关系"""
-        # UI管理器订阅统计变化
+        """设置管理器间的订阅关系"""
+        # 订阅统计更新
         self.event_coordinator.subscribe('statistics_changed', self._handle_statistics_update)
         
-        # 连接Qt信号
-        self.event_coordinator.ui_update_requested.connect(self._handle_ui_update_request)
+        # 订阅UI更新请求
+        self.event_coordinator.subscribe('ui_state_changed', self._handle_ui_update_request)
         
-        self._logger.debug("管理器事件订阅设置完成")
+        # 新增：订阅结构化数据事件
+        self.event_coordinator.subscribe('pipeline_event', self._handle_pipeline_event_data)
+        self.event_coordinator.subscribe('statistics_data', self._handle_statistics_data)
+        
+        # 连接Qt信号
+        self.event_coordinator.statistics_updated.connect(self._handle_statistics_update)
+        self.event_coordinator.ui_update_requested.connect(lambda action, data: self._handle_ui_update_request(action, data))
+        
+        # 新增：连接结构化数据信号
+        self.event_coordinator.pipeline_event_data.connect(self._handle_pipeline_event_data)
+        self.event_coordinator.statistics_data_updated.connect(self._handle_statistics_data)
+
+#    def _setup_manager_subscriptions(self):
+#        """设置管理器间的事件订阅关系"""
+        # UI管理器订阅统计变化
+#        self.event_coordinator.subscribe('statistics_changed', self._handle_statistics_update)
+        
+#        # 连接Qt信号
+#        self.event_coordinator.ui_update_requested.connect(self._handle_ui_update_request)
+#        self._logger.debug("管理器事件订阅设置完成")
     
     def _handle_statistics_update(self, data: dict):
         """处理统计数据更新"""
@@ -172,8 +190,11 @@ class MainWindow(QMainWindow):
                 self.packets_processed_label.setText(str(stats.get('packets_processed', 0)))
                 self.time_elapsed_label.setText(stats.get('elapsed_time', '00:00.00'))
     
-    def _handle_ui_update_request(self, action: str, data: dict):
+    def _handle_ui_update_request(self, action: str, data: dict = None):
         """处理UI更新请求"""
+        if data is None:
+            data = {}
+        
         if action == 'enable_controls':
             controls = data.get('controls', [])
             enabled = data.get('enabled', True)
@@ -185,6 +206,64 @@ class MainWindow(QMainWindow):
             text = data.get('text', '')
             if hasattr(self, button_name):
                 getattr(self, button_name).setText(text)
+    
+    def _handle_pipeline_event_data(self, event_data):
+        """处理结构化管道事件数据"""
+        try:
+            from pktmask.domain.models.pipeline_event_data import PipelineEventData
+            from pktmask.core.events import PipelineEvents
+        except ImportError:
+            self._logger.warning("无法导入结构化数据模型，跳过结构化处理")
+            return
+        
+        if isinstance(event_data, PipelineEventData):
+            self._logger.debug(f"接收到结构化事件: {event_data.event_type} - {type(event_data.data).__name__}")
+            
+            # 可以在这里添加基于新数据模型的增强处理逻辑
+            # 例如：更详细的日志、更精确的UI更新、数据验证等
+            
+            if hasattr(event_data.data, 'message') and event_data.data.message:
+                self._logger.info(f"事件消息: {event_data.data.message}")
+            
+            # 可以根据事件类型执行特定的增强处理
+            if event_data.event_type == PipelineEvents.FILE_START:
+                if hasattr(event_data.data, 'size_bytes') and event_data.data.size_bytes:
+                    self._logger.info(f"开始处理文件，大小: {event_data.data.size_bytes} bytes")
+            
+            elif event_data.event_type == PipelineEvents.STEP_SUMMARY:
+                if hasattr(event_data.data, 'result'):
+                    self._logger.debug(f"步骤结果: {event_data.data.result}")
+        else:
+            self._logger.warning(f"接收到非结构化事件数据: {type(event_data)}")
+    
+    def _handle_statistics_data(self, stats_data):
+        """处理结构化统计数据"""
+        try:
+            from pktmask.domain.models.statistics_data import StatisticsData
+        except ImportError:
+            self._logger.warning("无法导入统计数据模型，跳过结构化处理")
+            return
+        
+        if isinstance(stats_data, StatisticsData):
+            self._logger.debug(f"接收到结构化统计数据: {stats_data.metrics.files_processed} files, {stats_data.metrics.packets_processed} packets")
+            
+            # 基于新数据模型的增强统计处理
+            # 可以实现更精确的性能监控、数据验证等
+            
+            # 获取性能指标
+            completion_rate = stats_data.metrics.get_completion_rate()
+            processing_speed = stats_data.timing.get_processing_speed(stats_data.metrics.packets_processed)
+            
+            if completion_rate > 0:
+                self._logger.info(f"处理进度: {completion_rate:.1f}%")
+            
+            if processing_speed > 0:
+                self._logger.info(f"处理速度: {processing_speed:.1f} packets/sec")
+            
+            # 可以在这里添加实时性能监控、异常检测等功能
+            
+        else:
+            self._logger.warning(f"接收到非结构化统计数据: {type(stats_data)}")
     
     def _on_config_changed(self, new_config):
         """配置变更回调"""
@@ -387,6 +466,11 @@ class MainWindow(QMainWindow):
 
     def handle_thread_progress(self, event_type: PipelineEvents, data: dict):
         """主槽函数，根据事件类型分发UI更新任务"""
+        # 使用EventCoordinator发布结构化事件数据
+        if hasattr(self, 'event_coordinator'):
+            self.event_coordinator.emit_pipeline_event(event_type, data)
+        
+        # 保持原有的UI更新逻辑
         if event_type == PipelineEvents.PIPELINE_START:
             self.progress_bar.setMaximum(data.get('total_subdirs', 100))
         

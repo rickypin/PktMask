@@ -14,10 +14,10 @@ from PyQt6.QtGui import *
 if TYPE_CHECKING:
     from ..main_window import MainWindow
 
-from ...utils.path import resource_path
-from ...common.constants import UIConstants
+from pktmask.utils.path import resource_path
+from pktmask.common.constants import UIConstants
 from ..stylesheet import generate_stylesheet
-from ...infrastructure.logging import get_logger
+from pktmask.infrastructure.logging import get_logger
 
 class UIManager:
     """UI管理器 - 负责界面初始化和样式管理"""

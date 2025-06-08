@@ -1,0 +1,244 @@
+"""
+步骤结果数据模型
+
+定义各种处理步骤的结果数据结构。
+"""
+
+from datetime import datetime
+from typing import Dict, Any, Optional, List
+from pydantic import BaseModel, Field, validator
+from enum import Enum
+
+
+class StepStatus(str, Enum):
+    """步骤状态"""
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    SKIPPED = "skipped"
+
+
+class BaseStepResult(BaseModel):
+    """基础步骤结果"""
+    step_name: str = Field(..., description="步骤名称")
+    step_type: str = Field(..., description="步骤类型")
+    status: StepStatus = Field(default=StepStatus.PENDING, description="步骤状态")
+    start_time: Optional[datetime] = Field(default=None, description="开始时间")
+    end_time: Optional[datetime] = Field(default=None, description="结束时间")
+    duration_ms: int = Field(default=0, ge=0, description="执行耗时(毫秒)")
+    input_filename: Optional[str] = Field(default=None, description="输入文件名")
+    output_filename: Optional[str] = Field(default=None, description="输出文件名")
+    error_message: Optional[str] = Field(default=None, description="错误信息")
+    
+    def get_duration_string(self) -> str:
+        """获取格式化的耗时字符串"""
+        if self.duration_ms == 0:
+            return "0ms"
+        
+        if self.duration_ms < 1000:
+            return f"{self.duration_ms}ms"
+        
+        seconds = self.duration_ms / 1000.0
+        if seconds < 60:
+            return f"{seconds:.2f}s"
+        
+        minutes = int(seconds // 60)
+        remaining_seconds = seconds % 60
+        return f"{minutes}m{remaining_seconds:.2f}s"
+    
+    def is_successful(self) -> bool:
+        """检查步骤是否成功完成"""
+        return self.status == StepStatus.COMPLETED and self.error_message is None
+
+
+class IPAnonymizationResult(BaseStepResult):
+    """IP匿名化步骤结果"""
+    original_ips_count: int = Field(default=0, ge=0, description="原始IP数量")
+    anonymized_ips_count: int = Field(default=0, ge=0, description="匿名化IP数量")
+    ip_mappings: Dict[str, str] = Field(default_factory=dict, description="IP映射表")
+    file_ip_mappings: Dict[str, str] = Field(default_factory=dict, description="文件级IP映射")
+    packets_modified: int = Field(default=0, ge=0, description="修改的包数量")
+    
+    def __init__(self, **data):
+        super().__init__(step_type="mask_ip", **data)
+    
+    def get_anonymization_rate(self) -> float:
+        """获取匿名化比率"""
+        if self.original_ips_count == 0:
+            return 0.0
+        return (self.anonymized_ips_count / self.original_ips_count) * 100.0
+
+
+class DeduplicationResult(BaseStepResult):
+    """去重步骤结果"""
+    original_packets: int = Field(default=0, ge=0, description="原始包数量")
+    unique_packets: int = Field(default=0, ge=0, description="去重后包数量")
+    duplicates_removed: int = Field(default=0, ge=0, description="移除的重复包数量")
+    deduplication_ratio: float = Field(default=0.0, ge=0.0, le=100.0, description="去重比例")
+    
+    def __init__(self, **data):
+        super().__init__(step_type="dedup_packet", **data)
+    
+    @validator('deduplication_ratio', pre=True)
+    def calculate_deduplication_ratio(cls, v, values):
+        """自动计算去重比例"""
+        if v is not None:
+            return v
+        
+        original = values.get('original_packets', 0)
+        duplicates = values.get('duplicates_removed', 0)
+        
+        if original == 0:
+            return 0.0
+        
+        return (duplicates / original) * 100.0
+
+
+class TrimmingResult(BaseStepResult):
+    """裁切步骤结果"""
+    original_packets: int = Field(default=0, ge=0, description="原始包数量")
+    trimmed_packets: int = Field(default=0, ge=0, description="裁切后包数量")
+    packets_modified: int = Field(default=0, ge=0, description="修改的包数量")
+    total_bytes_removed: int = Field(default=0, ge=0, description="移除的总字节数")
+    tls_packets_identified: int = Field(default=0, ge=0, description="识别的TLS包数量")
+    payload_size_before: int = Field(default=0, ge=0, description="裁切前载荷大小")
+    payload_size_after: int = Field(default=0, ge=0, description="裁切后载荷大小")
+    
+    def __init__(self, **data):
+        super().__init__(step_type="trim_packet", **data)
+    
+    def get_size_reduction_ratio(self) -> float:
+        """获取大小减少比例"""
+        if self.payload_size_before == 0:
+            return 0.0
+        return (self.total_bytes_removed / self.payload_size_before) * 100.0
+    
+    def get_modification_rate(self) -> float:
+        """获取修改率"""
+        if self.original_packets == 0:
+            return 0.0
+        return (self.packets_modified / self.original_packets) * 100.0
+
+
+class CustomStepResult(BaseStepResult):
+    """自定义步骤结果"""
+    custom_metrics: Dict[str, Any] = Field(default_factory=dict, description="自定义指标")
+    
+    def add_metric(self, key: str, value: Any):
+        """添加自定义指标"""
+        self.custom_metrics[key] = value
+    
+    def get_metric(self, key: str, default: Any = None) -> Any:
+        """获取自定义指标"""
+        return self.custom_metrics.get(key, default)
+
+
+# 步骤结果类型映射
+STEP_RESULT_MAPPING = {
+    'mask_ip': IPAnonymizationResult,
+    'dedup_packet': DeduplicationResult,
+    'trim_packet': TrimmingResult,
+    'intelligent_trim': TrimmingResult,  # 别名
+    'remove_dupes': DeduplicationResult,  # 别名
+}
+
+
+class FileStepResults(BaseModel):
+    """文件的所有步骤结果"""
+    filename: str = Field(..., description="文件名")
+    file_path: str = Field(..., description="文件路径")
+    start_time: Optional[datetime] = Field(default=None, description="文件处理开始时间")
+    end_time: Optional[datetime] = Field(default=None, description="文件处理结束时间")
+    steps: Dict[str, BaseStepResult] = Field(default_factory=dict, description="步骤结果")
+    overall_status: StepStatus = Field(default=StepStatus.PENDING, description="整体状态")
+    total_duration_ms: int = Field(default=0, ge=0, description="总耗时(毫秒)")
+    
+    def add_step_result(self, step_result: BaseStepResult):
+        """添加步骤结果"""
+        self.steps[step_result.step_name] = step_result
+        self._update_overall_status()
+    
+    def get_step_result(self, step_name: str) -> Optional[BaseStepResult]:
+        """获取指定步骤的结果"""
+        return self.steps.get(step_name)
+    
+    def _update_overall_status(self):
+        """更新整体状态"""
+        if not self.steps:
+            self.overall_status = StepStatus.PENDING
+            return
+        
+        statuses = [step.status for step in self.steps.values()]
+        
+        if any(status == StepStatus.FAILED for status in statuses):
+            self.overall_status = StepStatus.FAILED
+        elif any(status == StepStatus.RUNNING for status in statuses):
+            self.overall_status = StepStatus.RUNNING
+        elif all(status == StepStatus.COMPLETED for status in statuses):
+            self.overall_status = StepStatus.COMPLETED
+        elif all(status in [StepStatus.COMPLETED, StepStatus.SKIPPED] for status in statuses):
+            self.overall_status = StepStatus.COMPLETED
+        else:
+            self.overall_status = StepStatus.PENDING
+    
+    def get_success_rate(self) -> float:
+        """获取成功率"""
+        if not self.steps:
+            return 0.0
+        
+        successful_steps = sum(1 for step in self.steps.values() if step.is_successful())
+        return (successful_steps / len(self.steps)) * 100.0
+    
+    def get_total_packets_processed(self) -> int:
+        """获取处理的总包数"""
+        total = 0
+        for step in self.steps.values():
+            if hasattr(step, 'original_packets'):
+                total = max(total, step.original_packets)
+        return total
+
+
+class StepResultData(BaseModel):
+    """步骤结果数据的根模型"""
+    file_results: Dict[str, FileStepResults] = Field(default_factory=dict, description="文件结果")
+    global_statistics: Dict[str, Any] = Field(default_factory=dict, description="全局统计")
+    
+    def add_file_result(self, file_result: FileStepResults):
+        """添加文件结果"""
+        self.file_results[file_result.filename] = file_result
+    
+    def get_file_result(self, filename: str) -> Optional[FileStepResults]:
+        """获取文件结果"""
+        return self.file_results.get(filename)
+    
+    def get_overall_statistics(self) -> Dict[str, Any]:
+        """获取整体统计数据"""
+        total_files = len(self.file_results)
+        completed_files = sum(1 for result in self.file_results.values() 
+                            if result.overall_status == StepStatus.COMPLETED)
+        failed_files = sum(1 for result in self.file_results.values() 
+                         if result.overall_status == StepStatus.FAILED)
+        
+        total_packets = sum(result.get_total_packets_processed() 
+                          for result in self.file_results.values())
+        
+        avg_success_rate = 0.0
+        if self.file_results:
+            avg_success_rate = sum(result.get_success_rate() 
+                                 for result in self.file_results.values()) / len(self.file_results)
+        
+        return {
+            'total_files': total_files,
+            'completed_files': completed_files,
+            'failed_files': failed_files,
+            'success_rate': (completed_files / total_files * 100.0) if total_files > 0 else 0.0,
+            'total_packets_processed': total_packets,
+            'average_step_success_rate': avg_success_rate
+        }
+    
+    @classmethod
+    def create_step_result(cls, step_type: str, **data) -> BaseStepResult:
+        """创建指定类型的步骤结果"""
+        result_class = STEP_RESULT_MAPPING.get(step_type, CustomStepResult)
+        return result_class(**data) 

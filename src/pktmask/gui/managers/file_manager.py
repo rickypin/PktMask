@@ -12,9 +12,9 @@ from PyQt6.QtWidgets import QFileDialog, QMessageBox
 if TYPE_CHECKING:
     from ..main_window import MainWindow
 
-from ...utils.time import current_timestamp
-from ...utils.file_ops import open_directory_in_system
-from ...infrastructure.logging import get_logger
+from pktmask.utils.time import current_timestamp
+from pktmask.utils.file_ops import open_directory_in_system
+from pktmask.infrastructure.logging import get_logger
 
 class FileManager:
     """文件管理器 - 负责目录选择和文件操作"""

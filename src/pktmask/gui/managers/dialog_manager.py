@@ -14,8 +14,8 @@ from PyQt6.QtGui import QFont
 if TYPE_CHECKING:
     from ..main_window import MainWindow
 
-from ...utils.path import resource_path
-from ...infrastructure.logging import get_logger
+from pktmask.utils.path import resource_path
+from pktmask.infrastructure.logging import get_logger
 
 class DialogManager:
     """对话框管理器 - 负责各种对话框的显示"""

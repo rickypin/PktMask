@@ -12,7 +12,7 @@ from datetime import datetime
 if TYPE_CHECKING:
     from ..main_window import MainWindow
 
-from ...infrastructure.logging import get_logger
+from pktmask.infrastructure.logging import get_logger
 
 class ReportManager:
     """报告管理器 - 负责报告生成和显示"""

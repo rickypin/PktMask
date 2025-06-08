@@ -8,8 +8,8 @@
 from typing import Dict, Any, Optional
 from PyQt6.QtCore import QTime
 
-from ...infrastructure.logging import get_logger
-from ...utils.time import format_milliseconds_to_time
+from pktmask.infrastructure.logging import get_logger
+from pktmask.utils.time import format_milliseconds_to_time
 
 class StatisticsManager:
     """统计数据管理器 - 集中管理所有处理统计数据"""

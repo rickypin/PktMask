@@ -11,10 +11,10 @@ from PyQt6.QtCore import QTimer
 if TYPE_CHECKING:
     from ..main_window import MainWindow, PipelineThread
 
-from ...core.pipeline import Pipeline
-from ...core.factory import get_step_instance
-from ...core.events import PipelineEvents
-from ...infrastructure.logging import get_logger
+from pktmask.core.pipeline import Pipeline
+from pktmask.core.factory import get_step_instance
+from pktmask.core.events import PipelineEvents
+from pktmask.infrastructure.logging import get_logger
 from .statistics_manager import StatisticsManager
 
 class PipelineManager:
@@ -261,7 +261,7 @@ class PipelineManager:
         self.main_window.report_manager.generate_processing_finished_report()
         
         import os
-        from ...utils.file_ops import open_directory_in_system
+        from pktmask.utils.file_ops import open_directory_in_system
         
         # 更新输出路径显示
         if self.main_window.current_output_dir:
