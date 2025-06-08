@@ -5,6 +5,9 @@ import random
 import os
 
 from scapy.all import PcapReader, PcapNgReader, IP, IPv6, TCP, UDP
+from ..infrastructure.logging import get_logger, log_performance
+from ..common.exceptions import ProcessingError, NetworkError
+from ..common.constants import ProcessingConstants
 
 class AnonymizationStrategy(ABC):
     """IP 匿名化策略的抽象基类。"""
@@ -52,7 +55,7 @@ def ip_sort_key(ip_str: str) -> tuple:
     try:
         if '.' in ip_str:
             parts = ip_str.split('.')
-            return (4,) + tuple(int(x) for x in parts)
+            return (ProcessingConstants.IPV4_SORT_WEIGHT,) + tuple(int(x) for x in parts)
         else:
             try:
                 ip_obj = ipaddress.IPv6Address(ip_str)
@@ -60,9 +63,9 @@ def ip_sort_key(ip_str: str) -> tuple:
             except Exception:
                 pass
             parts = ip_str.split(':')
-            return (6,) + tuple(int(x, 16) for x in parts)
+            return (ProcessingConstants.IPV6_SORT_WEIGHT,) + tuple(int(x, ProcessingConstants.HEX_BASE) for x in parts)
     except Exception:
-        return (99,)
+        return (ProcessingConstants.UNKNOWN_IP_SORT_WEIGHT,)
 
 def _safe_hash(input_str: str) -> int:
     """
@@ -71,10 +74,10 @@ def _safe_hash(input_str: str) -> int:
     import hashlib
     # 使用SHA256确保更好的分布和确定性
     hash_obj = hashlib.sha256(input_str.encode('utf-8'))
-    return int(hash_obj.hexdigest()[:8], 16)
+    return int(hash_obj.hexdigest()[:ProcessingConstants.HASH_DIGEST_LENGTH], ProcessingConstants.HEX_BASE)
 
 def _generate_unique_segment(original_seg: str, seed_base: str, used_values: Set[str], 
-                           min_val: int = 1, max_val: int = 255, max_attempts: int = 100) -> str:
+                           min_val: int = ProcessingConstants.IPV4_MIN_SEGMENT, max_val: int = ProcessingConstants.IPV4_MAX_SEGMENT, max_attempts: int = 100) -> str:
     """
     生成唯一的IP段值，避免冲突
     
@@ -372,13 +375,15 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
             except Exception as e:
                 error_log.append(f"Error scanning file {file_path}: {str(e)}")
         
-        # 添加调试信息
-        print(f"频率统计完成:")
-        print(f"  唯一IP总数: {len(unique_ips)}")
+        # 记录频率统计信息
+        logger = get_logger('anonymization.strategy')
+        logger.info(f"频率统计完成: 唯一IP总数={len(unique_ips)}")
         if freq_ipv4_1:
-            print(f"  IPv4 A段频率统计: {dict(sorted(freq_ipv4_1.items(), key=lambda x: x[1], reverse=True)[:5])}")
+            top_ipv4_a = dict(sorted(freq_ipv4_1.items(), key=lambda x: x[1], reverse=True)[:5])
+            logger.debug(f"IPv4 A段频率统计(前5): {top_ipv4_a}")
         if freq_ipv4_2:
-            print(f"  IPv4 A.B段频率统计(前5): {dict(sorted(freq_ipv4_2.items(), key=lambda x: x[1], reverse=True)[:5])}")
+            top_ipv4_ab = dict(sorted(freq_ipv4_2.items(), key=lambda x: x[1], reverse=True)[:5])
+            logger.debug(f"IPv4 A.B段频率统计(前5): {top_ipv4_ab}")
         
         return (freq_ipv4_1, freq_ipv4_2, freq_ipv4_3), \
                (freq_ipv6_1, freq_ipv6_2, freq_ipv6_3, freq_ipv6_4, freq_ipv6_5, freq_ipv6_6, freq_ipv6_7), \
@@ -399,9 +404,10 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         
         sorted_ips = sorted(all_ips, key=ip_sort_key)
         
-        # 添加调试信息
+        # 记录映射生成开始信息
+        logger = get_logger('anonymization.strategy')
         ipv4_count = sum(1 for ip in sorted_ips if '.' in ip)
-        print(f"开始生成映射 - IPv4地址数: {ipv4_count}, 总IP数: {len(sorted_ips)}")
+        logger.info(f"开始生成映射 - IPv4地址数: {ipv4_count}, 总IP数: {len(sorted_ips)}")
         
         for ip in sorted_ips:
             try:
@@ -417,14 +423,9 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
             except Exception as e:
                 error_log.append(f"Pre-calculate mapping error for IP {ip}: {str(e)}")
         
-        # 显示分层映射统计和唯一性检查
-        print(f"分层映射生成完成:")
-        print(f"  A段映射数: {len(maps_ipv4[0])}")
-        print(f"  A.B段映射数: {len(maps_ipv4[1])}")
-        print(f"  A.B.C段映射数: {len(maps_ipv4[2])}")
-        print(f"  唯一A段数: {len(used_segments[0])}")
-        print(f"  唯一A.B段数: {len(used_segments[1])}")
-        print(f"  唯一A.B.C段数: {len(used_segments[2])}")
+        # 记录分层映射统计信息
+        logger.info(f"分层映射生成完成: A段映射数={len(maps_ipv4[0])}, A.B段映射数={len(maps_ipv4[1])}, A.B.C段映射数={len(maps_ipv4[2])}")
+        logger.debug(f"唯一段数统计: A段={len(used_segments[0])}, A.B段={len(used_segments[1])}, A.B.C段={len(used_segments[2])}")
         
         # 验证高频网段的一致性映射
         consistency_errors = []
@@ -464,23 +465,24 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         
         # 报告一致性验证结果
         if consistency_errors:
-            print(f"❌ 发现 {len(consistency_errors)} 个一致性错误:")
-            for error in consistency_errors[:5]:  # 只显示前5个
-                print(f"  {error}")
+            logger.warning(f"发现 {len(consistency_errors)} 个一致性错误")
+            for error in consistency_errors[:5]:  # 只记录前5个
+                logger.warning(f"一致性错误: {error}")
         else:
-            print("✅ 所有高频网段映射一致性验证通过")
+            logger.info("所有高频网段映射一致性验证通过")
         
         # 验证高频段映射的正确性
         high_freq_ab_segments = {k: v for k, v in freqs_ipv4[1].items() if v >= 2}
         if high_freq_ab_segments:
-            print(f"🔍 高频A.B段一致性验证:")
+            logger.debug("高频A.B段一致性验证:")
             for orig_ab, freq in sorted(high_freq_ab_segments.items(), key=lambda x: x[1], reverse=True)[:3]:
                 if orig_ab in ab_mapping_check:
                     mapped_ab = ab_mapping_check[orig_ab]
-                    print(f"  {orig_ab} (频率:{freq}) → {mapped_ab} ✓")
+                    logger.debug(f"高频段映射: {orig_ab} (频率:{freq}) → {mapped_ab}")
         
         if maps_ipv4[0]:
-            print(f"  A段映射示例: {dict(list(maps_ipv4[0].items())[:3])}")
+            sample_mappings = dict(list(maps_ipv4[0].items())[:3])
+            logger.debug(f"A段映射示例: {sample_mappings}")
         
         self._ip_map = mapping
         return mapping
@@ -494,7 +496,8 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         filenames = [os.path.basename(p) for p in all_pcap_files]
         error_log = []
 
-        print(f"开始构建目录级映射 - 文件数: {len(filenames)}")
+        logger = get_logger('anonymization.strategy')
+        logger.info(f"开始构建目录级映射 - 文件数: {len(filenames)}")
         self.create_mapping(filenames, subdir_path, error_log)
 
     def anonymize_packet(self, pkt) -> Tuple[object, bool]:

@@ -1,6 +1,7 @@
 import os
 import tempfile
 import shutil
+import time
 from functools import partial
 from typing import Callable, Optional, List, Dict, Set, Tuple
 from scapy.all import PcapReader, PcapNgReader
@@ -9,6 +10,9 @@ from .events import PipelineEvents
 from .strategy import AnonymizationStrategy
 from .base_step import ProcessingStep
 from .factory import STEP_REGISTRY
+from ..infrastructure.logging import get_logger, log_performance
+from ..common.exceptions import ProcessingError
+from ..common.constants import ProcessingConstants
 
 class Pipeline:
     """定义和执行处理步骤的流水线"""
@@ -16,10 +20,11 @@ class Pipeline:
     def __init__(self, steps: List[ProcessingStep]):
         self._steps = steps
         self.is_running = False
+        self._logger = get_logger('pipeline')
 
     def _scan_packets_with_progress(self, filepath: str, progress_callback: Callable):
         """扫描文件，分块报告数据包计数以实现动态效果。"""
-        chunk_size = 10  # 每次上报的数据包数量
+        chunk_size = ProcessingConstants.DEFAULT_CHUNK_SIZE  # 每次上报的数据包数量
         current_chunk_count = 0
         try:
             ext = os.path.splitext(filepath)[1].lower()
@@ -45,7 +50,9 @@ class Pipeline:
         在指定路径上运行所有处理步骤，并将结果输出到指定目录。
         处理所有 pcap/pcapng 文件，不跳过任何文件。
         """
+        start_time = time.time()
         self.is_running = True
+        self._logger.info(f"开始管道处理: {root_path} -> {output_dir}")
         
         # 按字母顺序排序后缀以创建标准的输出文件名
         sorted_target_suffixes = sorted([step.suffix for step in self._steps])
@@ -143,6 +150,9 @@ class Pipeline:
                 progress_callback(PipelineEvents.SUBDIR_END, {'name': rel_subdir})
 
         self.is_running = False
+        total_duration = time.time() - start_time
+        self._logger.info(f"管道处理完成，总耗时: {total_duration:.2f}秒")
+        log_performance("pipeline_execution", total_duration, files_processed=len(source_files) if 'source_files' in locals() else 0)
         if progress_callback:
             progress_callback(PipelineEvents.PIPELINE_END, {})
 

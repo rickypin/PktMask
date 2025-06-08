@@ -6,6 +6,8 @@ from ..core.base_step import ProcessingStep
 from ..core.events import PipelineEvents
 from ..utils.file_selector import select_files
 from ..utils.time import current_time
+from ..common.constants import ProcessingConstants
+from ..infrastructure.logging import get_logger
 
 
 def process_file_dedup(file_path, error_log):
@@ -21,7 +23,7 @@ def process_file_dedup(file_path, error_log):
     total_count = 0
     try:
         ext = os.path.splitext(file_path)[1].lower()
-        if ext == ".pcap":
+        if ext == FileExtension.PCAP.value:
             reader_cls = PcapReader
         elif ext == ".pcapng":
             reader_cls = PcapNgReader
@@ -45,7 +47,11 @@ class DeduplicationStep(ProcessingStep):
     """
     去重处理步骤
     """
-    suffix: str = "-Deduped"
+    suffix: str = ProcessingConstants.DEDUP_PACKET_SUFFIX
+
+    def __init__(self):
+        super().__init__()
+        self._logger = get_logger('deduplication')
 
     @property
     def name(self) -> str:
@@ -55,6 +61,7 @@ class DeduplicationStep(ProcessingStep):
         """
         处理单个 pcap/pcapng 文件，去除完全重复的报文。
         """
+        self._logger.debug(f"开始去重处理: {input_path}")
         packets = []
         total_count = 0
         
@@ -74,6 +81,8 @@ class DeduplicationStep(ProcessingStep):
         wrpcap(output_path, packets, append=False)
         
         unique_count = len(packets)
+        removed_count = total_count - unique_count
+        self._logger.info(f"去重完成: {input_path} -> {output_path}, 移除重复包: {removed_count}/{total_count}")
         
         summary = {
             'subdir': os.path.basename(os.path.dirname(input_path)),

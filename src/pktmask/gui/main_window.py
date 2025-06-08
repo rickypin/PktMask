@@ -26,20 +26,20 @@ from pktmask.core.pipeline import Pipeline
 from pktmask.core.events import PipelineEvents
 from pktmask.core.factory import get_step_instance
 from pktmask.utils.path import resource_path
+from pktmask.common.constants import UIConstants, FormatConstants, SystemConstants, PROCESS_DISPLAY_NAMES
+from pktmask.utils import current_timestamp, format_milliseconds_to_time, open_directory_in_system, current_time
+from pktmask.infrastructure.logging import get_logger
+from pktmask.config import get_config_manager
 from .stylesheet import generate_stylesheet
 
-PROCESS_DISPLAY_NAMES = {
-    "mask_ip": "Mask IP",
-    "dedup_packet": "Remove Dupes",
-    "trim_packet": "Trim Packet"
-}
+# PROCESS_DISPLAY_NAMES 已移至 common.constants
 
 class GuideDialog(QDialog):
     """处理指南对话框"""
     def __init__(self, title: str, content: str, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"{title} - Guide")
-        self.setMinimumSize(700, 500)
+        self.setMinimumSize(UIConstants.GUIDE_DIALOG_MIN_WIDTH, UIConstants.GUIDE_DIALOG_MIN_HEIGHT)
         layout = QVBoxLayout(self)
         content_text = QTextEdit()
         content_text.setReadOnly(True)
@@ -87,12 +87,23 @@ class MainWindow(QMainWindow):
     """主窗口"""
     def __init__(self):
         super().__init__()
+        self._logger = get_logger('main_window')
+        
+        # 初始化配置管理器
+        self.config_manager = get_config_manager()
+        self.config = self.config_manager.config
+        
+        # 注册配置变更回调
+        self.config_manager.register_change_callback(self._on_config_changed)
+        
         self.pipeline_thread: Optional[PipelineThread] = None
         self.all_ip_reports = {}  # subdir -> report_data
         self.base_dir: Optional[str] = None
         self.output_dir: Optional[str] = None  # 新增：输出目录
         self.current_output_dir: Optional[str] = None  # 新增：当前处理的输出目录
-        self.last_opened_dir = os.path.join(os.path.expanduser("~"), "Desktop")
+        
+        # 使用配置中的目录设置
+        self.last_opened_dir = self.config.file.default_input_dir or os.path.join(os.path.expanduser("~"), "Desktop")
         self.allowed_root = os.path.expanduser("~")
         
         # KPI counters
@@ -113,11 +124,73 @@ class MainWindow(QMainWindow):
 
         self.init_ui()
         self._apply_stylesheet() # 应用初始样式
+        self._logger.info("PktMask主窗口初始化完成")
+    
+    def _on_config_changed(self, new_config):
+        """配置变更回调"""
+        self.config = new_config
+        self._logger.info("配置已更新，重新应用设置")
+        
+        # 更新窗口尺寸（如果需要）
+        current_size = self.size()
+        if (current_size.width() != new_config.ui.window_width or 
+            current_size.height() != new_config.ui.window_height):
+            self.resize(new_config.ui.window_width, new_config.ui.window_height)
+        
+        # 重新应用样式表
+        self._apply_stylesheet()
+    
+    def save_window_state(self):
+        """保存窗口状态到配置"""
+        current_size = self.size()
+        self.config_manager.update_ui_config(
+            window_width=current_size.width(),
+            window_height=current_size.height()
+        )
+    
+    def save_user_preferences(self):
+        """保存用户偏好设置"""
+        # 保存处理选项的默认状态
+        self.config_manager.update_ui_config(
+            default_dedup=self.dedup_packet_cb.isChecked(),
+            default_mask_ip=self.mask_ip_cb.isChecked(),
+            default_trim=self.trim_packet_cb.isChecked()
+        )
+        
+        # 保存最后使用的目录
+        if self.base_dir and self.config.ui.remember_last_dir:
+            self.config_manager.update_file_config(
+                default_input_dir=self.base_dir
+            )
+    
+    def closeEvent(self, event):
+        """窗口关闭事件"""
+        # 保存窗口状态和用户偏好
+        self.save_window_state()
+        self.save_user_preferences()
+        
+        # 停止处理线程
+        if self.pipeline_thread and self.pipeline_thread.isRunning():
+            self.stop_pipeline_processing()
+            self.pipeline_thread.wait(3000)  # 等待最多3秒
+        
+        # 取消注册配置回调
+        self.config_manager.unregister_change_callback(self._on_config_changed)
+        
+        event.accept()
 
     def init_ui(self):
         """初始化界面"""
         self.setWindowTitle("PktMask")
-        self.setGeometry(100, 100, 1200, 800)
+        
+        # 使用配置中的窗口尺寸
+        window_width = self.config.ui.window_width
+        window_height = self.config.ui.window_height
+        self.setGeometry(100, 100, window_width, window_height)
+        
+        # 设置最小尺寸
+        self.setMinimumSize(self.config.ui.window_min_width, self.config.ui.window_min_height)
+        
         self.setWindowIcon(QIcon(resource_path('icon.png')))
 
         # Create Menu Bar
@@ -127,27 +200,27 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(main_widget)
         
         main_layout = QGridLayout(main_widget)
-        main_layout.setSpacing(18)  # 增加整体间距，让各区域有足够的空白
-        main_layout.setContentsMargins(15, 15, 15, 15)  # 增加外边距
+        main_layout.setSpacing(UIConstants.LAYOUT_SPACING)  # 增加整体间距，让各区域有足够的空白
+        main_layout.setContentsMargins(UIConstants.LAYOUT_MARGINS, UIConstants.LAYOUT_MARGINS, UIConstants.LAYOUT_MARGINS, UIConstants.LAYOUT_MARGINS)  # 增加外边距
 
         # --- Create all GroupBox widgets first ---
 
         # Step 1: Input and Output (左右分布) - 简化版
         dirs_group = QGroupBox("Set Working Directories")
-        dirs_group.setMaximumHeight(100)  # 减少高度，因为去掉了额外的标题行
+        dirs_group.setMaximumHeight(UIConstants.DIRS_GROUP_HEIGHT)  # 减少高度，因为去掉了额外的标题行
         dirs_layout = QHBoxLayout(dirs_group)
-        dirs_layout.setContentsMargins(15, 12, 15, 12)  # 增加内边距
+        dirs_layout.setContentsMargins(*UIConstants.DIRS_LAYOUT_PADDING)  # 增加内边距
         
         # 左侧：Input Directory - 单行布局
         input_layout = QVBoxLayout()
         input_layout.setSpacing(5)  # 增加间距
         input_label = QLabel("Input:")
-        input_label.setMaximumHeight(20)
+        input_label.setMaximumHeight(UIConstants.INPUT_LABEL_HEIGHT)
         input_path_layout = QHBoxLayout()
         input_path_layout.setSpacing(8)
         self.dir_path_label = QPushButton("Click and pick your pcap directory")  # 改为可点击的按钮
         self.dir_path_label.setObjectName("DirPathLabel")
-        self.dir_path_label.setMaximumHeight(30)
+        self.dir_path_label.setMaximumHeight(UIConstants.BUTTON_MAX_HEIGHT)
         self.dir_path_label.setCursor(Qt.CursorShape.PointingHandCursor)  # 设置手型光标
         input_path_layout.addWidget(input_label)
         input_path_layout.addWidget(self.dir_path_label, 1)
@@ -194,11 +267,11 @@ class MainWindow(QMainWindow):
         self.dedup_packet_cb.setCursor(Qt.CursorShape.PointingHandCursor)
         self.mask_ip_cb.setCursor(Qt.CursorShape.PointingHandCursor)
         self.trim_packet_cb.setCursor(Qt.CursorShape.PointingHandCursor)
-        # 设置默认状态
-        self.dedup_packet_cb.setChecked(True)
-        self.mask_ip_cb.setChecked(True)
-        self.trim_packet_cb.setChecked(False)
-        self.web_focused_cb.setChecked(False)
+        # 使用配置中的默认状态
+        self.dedup_packet_cb.setChecked(self.config.ui.default_dedup)
+        self.mask_ip_cb.setChecked(self.config.ui.default_mask_ip)
+        self.trim_packet_cb.setChecked(self.config.ui.default_trim)
+        self.web_focused_cb.setChecked(False)  # 此功能尚未实现，保持False
         self.web_focused_cb.setEnabled(False)  # 禁用状态，因为功能还未完成
         # 为即将推出的功能设置特殊样式
         self._apply_coming_soon_style()
@@ -470,23 +543,28 @@ class MainWindow(QMainWindow):
         if not self.base_dir:
             return
         
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        default_output = os.path.join(self.base_dir, f"pktmask_output_{timestamp}")
-        
         # 重置为默认模式
         self.output_dir = None
         self.output_path_label.setText("Auto-create or click for custom")
 
     def generate_actual_output_path(self) -> str:
         """生成实际的输出目录路径"""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = current_timestamp()
+        
+        # 使用配置中的输出目录模式
+        output_pattern = self.config.file.output_dir_pattern
+        output_name = output_pattern.format(timestamp=timestamp)
         
         if self.output_dir:
             # 自定义输出目录
-            return os.path.join(self.output_dir, f"pktmask_output_{timestamp}")
+            return os.path.join(self.output_dir, output_name)
         else:
-            # 默认输出目录（输入目录的子目录）
-            return os.path.join(self.base_dir, f"pktmask_output_{timestamp}")
+            # 默认输出目录
+            if self.config.file.default_output_dir:
+                return os.path.join(self.config.file.default_output_dir, output_name)
+            else:
+                # 使用输入目录的子目录
+                return os.path.join(self.base_dir, output_name)
 
     def open_output_directory(self):
         """打开输出目录"""
@@ -494,19 +572,12 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Warning", "Output directory not found.")
             return
         
-        import subprocess
-        import platform
-        
         try:
-            system = platform.system()
-            if system == "Darwin":  # macOS
-                subprocess.run(["open", self.current_output_dir])
-            elif system == "Windows":
-                subprocess.run(["explorer", self.current_output_dir])
-            else:  # Linux
-                subprocess.run(["xdg-open", self.current_output_dir])
-            
-            self.update_log(f"Opened output directory: {os.path.basename(self.current_output_dir)}")
+            success = open_directory_in_system(self.current_output_dir)
+            if success:
+                self.update_log(f"Opened output directory: {os.path.basename(self.current_output_dir)}")
+            else:
+                QMessageBox.warning(self, "Error", "Failed to open directory.")
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to open directory: {str(e)}")
 
@@ -1182,6 +1253,17 @@ class MainWindow(QMainWindow):
         if self.current_output_dir:
             self.output_path_label.setText(os.path.basename(self.current_output_dir))
         self.update_log(f"Output directory ready. Click output path to view results.")
+        
+        # 如果配置启用，自动打开输出目录
+        if self.config.ui.auto_open_output and self.current_output_dir:
+            try:
+                success = open_directory_in_system(self.current_output_dir)
+                if success:
+                    self.update_log(f"Auto-opened output directory: {os.path.basename(self.current_output_dir)}")
+                else:
+                    self._logger.warning("Failed to auto-open output directory")
+            except Exception as e:
+                self._logger.error(f"Error auto-opening output directory: {e}")
 
         # Re-enable controls
         self.dir_path_label.setEnabled(True)
@@ -1225,17 +1307,8 @@ class MainWindow(QMainWindow):
             return
         
         elapsed_msecs = self.start_time.msecsTo(QTime.currentTime())
-        
-        seconds = elapsed_msecs // 1000
-        msecs = (elapsed_msecs % 1000) // 10
-        
-        hours, remainder = divmod(seconds, 3600)
-        minutes, seconds = divmod(remainder, 60)
-        
-        if hours > 0:
-            self.time_elapsed_label.setText(f"{hours}:{minutes:02d}:{seconds:02d}.{msecs:02d}")
-        else:
-            self.time_elapsed_label.setText(f"{minutes:02d}:{seconds:02d}.{msecs:02d}")
+        time_str = format_milliseconds_to_time(elapsed_msecs)
+        self.time_elapsed_label.setText(time_str)
 
     def generate_summary_report_filename(self) -> str:
         """生成带有处理选项标识的summary report文件名"""
@@ -1250,7 +1323,7 @@ class MainWindow(QMainWindow):
             enabled_steps.append("Trim")
         
         steps_suffix = "_".join(enabled_steps) if enabled_steps else "NoSteps"
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = current_timestamp()
         
         return f"summary_report_{steps_suffix}_{timestamp}.txt"
 
@@ -1267,9 +1340,8 @@ class MainWindow(QMainWindow):
             summary_content = self.summary_text.toPlainText()
             
             with open(file_path, 'w', encoding='utf-8') as f:
-                from datetime import datetime
                 f.write("# PktMask Summary Report\n")
-                f.write(f"# Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"# Generated: {current_time()}\n")
                 f.write(f"# Working Directory: {self.current_output_dir}\n")
                 f.write("#" + "="*68 + "\n\n")
                 f.write(summary_content)

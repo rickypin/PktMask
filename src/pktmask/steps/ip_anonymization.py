@@ -18,6 +18,8 @@ from ..core.strategy import AnonymizationStrategy
 from ..utils.file_selector import select_files
 from ..utils.reporting import Reporter
 from ..utils.time import current_time
+from ..common.constants import ProcessingConstants
+from ..infrastructure.logging import get_logger
 
 
 class IpAnonymizationStep(ProcessingStep):
@@ -25,13 +27,14 @@ class IpAnonymizationStep(ProcessingStep):
     IP 匿名化处理步骤。
     该步骤协调一个策略（用于生成映射）和一个报告器（用于保存结果）。
     """
-    suffix: str = "-Masked"
+    suffix: str = ProcessingConstants.MASK_IP_SUFFIX
     
     def __init__(self, strategy: AnonymizationStrategy, reporter: Reporter):
         super().__init__()
         self._strategy = strategy
         self._reporter = reporter
         self._rel_subdir: Optional[str] = None
+        self._logger = get_logger('ip_anonymization')
 
     @property
     def name(self) -> str:
@@ -45,10 +48,13 @@ class IpAnonymizationStep(ProcessingStep):
 
     def prepare_for_directory(self, subdir_path: str, all_pcap_files: List[str]):
         """在处理目录前，预扫描所有文件以建立完整的IP映射。"""
+        self._logger.info(f"准备目录级IP映射: {subdir_path}, 文件数量: {len(all_pcap_files)}")
         self._strategy.build_mapping_from_directory(all_pcap_files)
+        self._logger.info("目录级IP映射构建完成")
 
     def process_file(self, input_path: str, output_path: str) -> Optional[Dict]:
         """处理单个pcap文件，使用预先生成的映射替换IP地址。"""
+        self._logger.debug(f"开始处理文件: {input_path}")
         new_packets = []
         anonymized_count = 0
         total_count = 0
@@ -74,6 +80,7 @@ class IpAnonymizationStep(ProcessingStep):
                 new_packets.append(new_pkt)
         
         wrpcap(output_path, new_packets, append=False)
+        self._logger.info(f"处理完成: {input_path} -> {output_path}, 匿名化包数: {anonymized_count}/{total_count}")
         
         # 计算当前文件中被映射的IP数量
         ip_map = self._strategy.get_ip_map()

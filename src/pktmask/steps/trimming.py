@@ -11,10 +11,12 @@ from typing import List, Tuple, Dict, Optional
 
 from scapy.all import TCP, IP, IPv6, PcapReader, PcapNgReader, wrpcap
 from ..core.base_step import ProcessingStep
+from ..common.constants import ProcessingConstants
+from ..infrastructure.logging import get_logger
 
 # --- 从原始脚本移植的核心算法函数 ---
 
-TLS_SIGNALING_TYPES = {20, 21, 22}
+# TLS_SIGNALING_TYPES 已移至 common.constants.ProcessingConstants
 
 def find_tls_signaling_ranges(payload: bytes) -> list:
     """在完整的重组流中查找 TLS 信令记录的范围。"""
@@ -25,7 +27,7 @@ def find_tls_signaling_ranges(payload: bytes) -> list:
         record_length = int.from_bytes(payload[i+3:i+5], byteorder='big')
         if i + 5 + record_length > len(payload):
             break
-        if record_type in TLS_SIGNALING_TYPES:
+        if record_type in ProcessingConstants.TLS_SIGNALING_TYPES:
             rec_end = i + 5 + record_length
             ranges.append((i, rec_end))
         i += 5 + record_length
@@ -130,7 +132,11 @@ class IntelligentTrimmingStep(ProcessingStep):
     """
     智能裁切处理步骤，用于从pcap文件中裁切TLS应用数据。
     """
-    suffix: str = "-Trimmed"
+    suffix: str = ProcessingConstants.TRIM_PACKET_SUFFIX
+    
+    def __init__(self):
+        super().__init__()
+        self._logger = get_logger('intelligent_trimming')
     
     @property
     def name(self) -> str:
@@ -138,6 +144,7 @@ class IntelligentTrimmingStep(ProcessingStep):
 
     def process_file(self, input_path: str, output_path: str) -> Optional[Dict]:
         """处理单个pcap文件，执行智能TLS裁切。"""
+        self._logger.debug(f"开始智能裁切: {input_path}")
         ext = os.path.splitext(input_path)[1].lower()
         reader_cls = PcapNgReader if ext == ".pcapng" else PcapReader
         
@@ -148,7 +155,8 @@ class IntelligentTrimmingStep(ProcessingStep):
         
         wrpcap(output_path, processed_packets, append=False)
         
-        trim_rate = (trimmed_count / total_count * 100) if total_count > 0 else 0
+        trim_rate = (trimmed_count / total_count * ProcessingConstants.PERCENTAGE_MULTIPLIER) if total_count > 0 else 0
+        self._logger.info(f"智能裁切完成: {input_path} -> {output_path}, 裁切包数: {trimmed_count}/{total_count} ({trim_rate:.1f}%)")
         
         summary = {
             'subdir': os.path.basename(os.path.dirname(input_path)),
