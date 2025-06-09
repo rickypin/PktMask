@@ -1,0 +1,80 @@
+{
+  "ip_anonymization": [
+    {
+      "algorithm_name": "IP_Anonymization",
+      "file_size_mb": 0.07229137420654297,
+      "processing_time_seconds": 0.019967079162597656,
+      "memory_usage_mb": 0.609375,
+      "packets_processed": 95,
+      "files_processed": 1,
+      "throughput_mbps": 3.6205282514209296,
+      "packets_per_second": 4757.83159000812,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "algorithm_name": "IP_Anonymization",
+      "file_size_mb": 0.07229137420654297,
+      "processing_time_seconds": 0.018420934677124023,
+      "memory_usage_mb": 0.3125,
+      "packets_processed": 95,
+      "files_processed": 1,
+      "throughput_mbps": 3.9244140144700568,
+      "packets_per_second": 5157.17587978722,
+      "success": true,
+      "error_message": null
+    }
+  ],
+  "packet_trimming": [
+    {
+      "algorithm_name": "Packet_Trimming",
+      "file_size_mb": 0.07229137420654297,
+      "processing_time_seconds": 0.02603912353515625,
+      "memory_usage_mb": 0.78125,
+      "packets_processed": 95,
+      "files_processed": 1,
+      "throughput_mbps": 2.776259888661002,
+      "packets_per_second": 3648.3562847934368,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "algorithm_name": "Packet_Trimming",
+      "file_size_mb": 0.07229137420654297,
+      "processing_time_seconds": 0.026248931884765625,
+      "memory_usage_mb": 0.375,
+      "packets_processed": 95,
+      "files_processed": 1,
+      "throughput_mbps": 2.754069175991862,
+      "packets_per_second": 3619.1948844644676,
+      "success": true,
+      "error_message": null
+    }
+  ],
+  "deduplication": [
+    {
+      "algorithm_name": "Deduplication",
+      "file_size_mb": 0.07229137420654297,
+      "processing_time_seconds": 0.016064167022705078,
+      "memory_usage_mb": 0.640625,
+      "packets_processed": 95,
+      "files_processed": 1,
+      "throughput_mbps": 4.500163258036748,
+      "packets_per_second": 5913.78313396064,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "algorithm_name": "Deduplication",
+      "file_size_mb": 0.07229137420654297,
+      "processing_time_seconds": 0.015351057052612305,
+      "memory_usage_mb": 0.203125,
+      "packets_processed": 95,
+      "files_processed": 1,
+      "throughput_mbps": 4.709211486790812,
+      "packets_per_second": 6188.49892058956,
+      "success": true,
+      "error_message": null
+    }
+  ]
+}

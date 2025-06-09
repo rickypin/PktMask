@@ -1,0 +1,72 @@
+{
+  "session_id": "20250609_104437",
+  "timestamp": 1749437077.57493,
+  "baseline_metrics": {
+    "packet_trimming": {
+      "throughput_mbps": {
+        "min": 2.0301565408358666,
+        "max": 2.5951710502666105,
+        "avg": 2.312663795551239,
+        "median": 2.312663795551239
+      },
+      "packets_per_second": {
+        "min": 2667.8822127294884,
+        "max": 3410.3826698734133,
+        "avg": 3039.132441301451,
+        "median": 3039.132441301451
+      },
+      "memory_usage_mb": {
+        "min": 0.578125,
+        "max": 1.0,
+        "avg": 0.7890625,
+        "median": 0.7890625
+      },
+      "processing_time_seconds": {
+        "min": 0.027856111526489258,
+        "max": 0.035608768463134766,
+        "avg": 0.03173243999481201,
+        "median": 0.03173243999481201
+      },
+      "test_count": 2,
+      "success_rate": 1.0
+    },
+    "deduplication": {
+      "throughput_mbps": {
+        "min": 4.205378566178,
+        "max": 4.341274841074394,
+        "avg": 4.273326703626197,
+        "median": 4.273326703626197
+      },
+      "packets_per_second": {
+        "min": 5526.398801680975,
+        "max": 5704.983677910773,
+        "avg": 5615.691239795874,
+        "median": 5615.691239795874
+      },
+      "memory_usage_mb": {
+        "min": 0.828125,
+        "max": 0.90625,
+        "avg": 0.8671875,
+        "median": 0.8671875
+      },
+      "processing_time_seconds": {
+        "min": 0.01665210723876953,
+        "max": 0.017190217971801758,
+        "avg": 0.016921162605285645,
+        "median": 0.016921162605285645
+      },
+      "test_count": 2,
+      "success_rate": 1.0
+    }
+  },
+  "system_info": {
+    "error": "指定时间范围内没有数据",
+    "snapshot_count": 0
+  },
+  "test_summary": {
+    "total_algorithms": 3,
+    "total_tests": 6,
+    "successful_tests": 4,
+    "failed_tests": 2
+  }
+}

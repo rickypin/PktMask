@@ -315,6 +315,11 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         """
         修正版本：正确统计所有IP地址（源和目标）的频率
         """
+        import time
+        from pktmask.infrastructure.logging import log_performance
+        
+        start_time = time.time()
+        
         freq_ipv4_1, freq_ipv4_2, freq_ipv4_3 = {}, {}, {}
         freq_ipv6_1, freq_ipv6_2, freq_ipv6_3, freq_ipv6_4, freq_ipv6_5, freq_ipv6_6, freq_ipv6_7 = {}, {}, {}, {}, {}, {}, {}
         unique_ips = set()
@@ -375,9 +380,14 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
             except Exception as e:
                 error_log.append(f"Error scanning file {file_path}: {str(e)}")
         
-        # 记录频率统计信息
+        # 记录频率统计信息和性能指标
+        end_time = time.time()
+        duration = end_time - start_time
+        log_performance('ip_prescan_addresses', duration, 'ip_anonymization.performance', 
+                       files_processed=len(files_to_process), unique_ips=len(unique_ips))
+        
         logger = get_logger('anonymization.strategy')
-        logger.info(f"频率统计完成: 唯一IP总数={len(unique_ips)}")
+        logger.info(f"频率统计完成: 唯一IP总数={len(unique_ips)}, 耗时={duration:.2f}秒")
         if freq_ipv4_1:
             top_ipv4_a = dict(sorted(freq_ipv4_1.items(), key=lambda x: x[1], reverse=True)[:5])
             logger.debug(f"IPv4 A段频率统计(前5): {top_ipv4_a}")
@@ -393,6 +403,11 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         """
         创建IP映射，确保无冲突
         """
+        import time
+        from pktmask.infrastructure.logging import log_performance
+        
+        start_time = time.time()
+        
         freqs_ipv4, freqs_ipv6, all_ips = self._prescan_addresses(files_to_process, subdir_path, error_log)
         
         mapping = {}
@@ -483,6 +498,14 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         if maps_ipv4[0]:
             sample_mappings = dict(list(maps_ipv4[0].items())[:3])
             logger.debug(f"A段映射示例: {sample_mappings}")
+        
+        # 记录性能指标
+        end_time = time.time()
+        duration = end_time - start_time
+        log_performance('ip_create_mapping', duration, 'ip_anonymization.performance',
+                       total_ips=len(mapping), files_processed=len(files_to_process))
+        
+        logger.info(f"IP映射创建完成: {len(mapping)}个映射, 耗时={duration:.2f}秒")
         
         self._ip_map = mapping
         return mapping

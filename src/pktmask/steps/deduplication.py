@@ -59,8 +59,13 @@ class DeduplicationStep(ProcessingStep):
         
     def process_file(self, input_path: str, output_path: str) -> Optional[Dict]:
         """
-        处理单个 pcap/pcapng 文件，去除完全重复的报文。
+        处理单个 pcap/pcap ng 文件，去除完全重复的报文。
         """
+        import time
+        from ..infrastructure.logging import log_performance
+        
+        start_time = time.time()
+        
         self._logger.debug(f"开始去重处理: {input_path}")
         packets = []
         total_count = 0
@@ -87,7 +92,15 @@ class DeduplicationStep(ProcessingStep):
         
         unique_count = len(packets)
         removed_count = total_count - unique_count
-        self._logger.info(f"去重完成: {input_path} -> {output_path}, 移除重复包: {removed_count}/{total_count}")
+        
+        # 记录性能指标
+        end_time = time.time()
+        duration = end_time - start_time
+        log_performance('deduplication_process_file', duration, 'deduplication.performance',
+                       total_packets=total_count, unique_packets=unique_count, 
+                       removed_packets=removed_count)
+        
+        self._logger.info(f"去重完成: {input_path} -> {output_path}, 移除重复包: {removed_count}/{total_count}, 耗时={duration:.2f}秒")
         
         summary = {
             'subdir': os.path.basename(os.path.dirname(input_path)),

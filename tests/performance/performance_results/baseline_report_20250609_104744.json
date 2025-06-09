@@ -1,0 +1,100 @@
+{
+  "session_id": "20250609_104744",
+  "timestamp": 1749437265.402956,
+  "baseline_metrics": {
+    "ip_anonymization": {
+      "throughput_mbps": {
+        "min": 3.6205282514209296,
+        "max": 3.9244140144700568,
+        "avg": 3.772471132945493,
+        "median": 3.772471132945493
+      },
+      "packets_per_second": {
+        "min": 4757.83159000812,
+        "max": 5157.17587978722,
+        "avg": 4957.503734897669,
+        "median": 4957.503734897669
+      },
+      "memory_usage_mb": {
+        "min": 0.3125,
+        "max": 0.609375,
+        "avg": 0.4609375,
+        "median": 0.4609375
+      },
+      "processing_time_seconds": {
+        "min": 0.018420934677124023,
+        "max": 0.019967079162597656,
+        "avg": 0.01919400691986084,
+        "median": 0.01919400691986084
+      },
+      "test_count": 2,
+      "success_rate": 1.0
+    },
+    "packet_trimming": {
+      "throughput_mbps": {
+        "min": 2.754069175991862,
+        "max": 2.776259888661002,
+        "avg": 2.7651645323264322,
+        "median": 2.7651645323264322
+      },
+      "packets_per_second": {
+        "min": 3619.1948844644676,
+        "max": 3648.3562847934368,
+        "avg": 3633.775584628952,
+        "median": 3633.775584628952
+      },
+      "memory_usage_mb": {
+        "min": 0.375,
+        "max": 0.78125,
+        "avg": 0.578125,
+        "median": 0.578125
+      },
+      "processing_time_seconds": {
+        "min": 0.02603912353515625,
+        "max": 0.026248931884765625,
+        "avg": 0.026144027709960938,
+        "median": 0.026144027709960938
+      },
+      "test_count": 2,
+      "success_rate": 1.0
+    },
+    "deduplication": {
+      "throughput_mbps": {
+        "min": 4.500163258036748,
+        "max": 4.709211486790812,
+        "avg": 4.60468737241378,
+        "median": 4.60468737241378
+      },
+      "packets_per_second": {
+        "min": 5913.78313396064,
+        "max": 6188.49892058956,
+        "avg": 6051.1410272751,
+        "median": 6051.1410272751
+      },
+      "memory_usage_mb": {
+        "min": 0.203125,
+        "max": 0.640625,
+        "avg": 0.421875,
+        "median": 0.421875
+      },
+      "processing_time_seconds": {
+        "min": 0.015351057052612305,
+        "max": 0.016064167022705078,
+        "avg": 0.01570761203765869,
+        "median": 0.01570761203765869
+      },
+      "test_count": 2,
+      "success_rate": 1.0
+    }
+  },
+  "system_info": {
+    "error": "指定时间范围内没有数据",
+    "snapshot_count": 0
+  },
+  "test_summary": {
+    "total_algorithms": 3,
+    "total_tests": 6,
+    "successful_tests": 6,
+    "failed_tests": 0
+  }
+}

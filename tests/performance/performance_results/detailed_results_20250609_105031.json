@@ -1,0 +1,106 @@
+{
+  "ip_anonymization_original": [
+    {
+      "algorithm_name": "IP_Anonymization_Original",
+      "file_size_mb": 0.07229137420654297,
+      "processing_time_seconds": 0.020830154418945312,
+      "memory_usage_mb": 0.71875,
+      "packets_processed": 95,
+      "files_processed": 1,
+      "throughput_mbps": 3.4705155205567255,
+      "packets_per_second": 4560.695906968226,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "algorithm_name": "IP_Anonymization_Original",
+      "file_size_mb": 0.07229137420654297,
+      "processing_time_seconds": 0.01955580711364746,
+      "memory_usage_mb": 0.1875,
+      "packets_processed": 95,
+      "files_processed": 1,
+      "throughput_mbps": 3.696670446094388,
+      "packets_per_second": 4857.892054667594,
+      "success": true,
+      "error_message": null
+    }
+  ],
+  "ip_anonymization_optimized": [
+    {
+      "algorithm_name": "IP_Anonymization_Optimized",
+      "file_size_mb": 0.07229137420654297,
+      "processing_time_seconds": 0.017579078674316406,
+      "memory_usage_mb": 0.03125,
+      "packets_processed": 95,
+      "files_processed": 1,
+      "throughput_mbps": 4.112352845440243,
+      "packets_per_second": 5404.1512504746925,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "algorithm_name": "IP_Anonymization_Optimized",
+      "file_size_mb": 0.07229137420654297,
+      "processing_time_seconds": 0.017160892486572266,
+      "memory_usage_mb": 0.203125,
+      "packets_processed": 95,
+      "files_processed": 1,
+      "throughput_mbps": 4.212564950401512,
+      "packets_per_second": 5535.842618577899,
+      "success": true,
+      "error_message": null
+    }
+  ],
+  "packet_trimming": [
+    {
+      "algorithm_name": "Packet_Trimming",
+      "file_size_mb": 0.07229137420654297,
+      "processing_time_seconds": 0.027718782424926758,
+      "memory_usage_mb": 0.421875,
+      "packets_processed": 95,
+      "files_processed": 1,
+      "throughput_mbps": 2.608028487626977,
+      "packets_per_second": 3427.278967151495,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "algorithm_name": "Packet_Trimming",
+      "file_size_mb": 0.07229137420654297,
+      "processing_time_seconds": 0.026133298873901367,
+      "memory_usage_mb": 0.328125,
+      "packets_processed": 95,
+      "files_processed": 1,
+      "throughput_mbps": 2.7662552116119734,
+      "packets_per_second": 3635.2088750216676,
+      "success": true,
+      "error_message": null
+    }
+  ],
+  "deduplication": [
+    {
+      "algorithm_name": "Deduplication",
+      "file_size_mb": 0.07229137420654297,
+      "processing_time_seconds": 0.015948057174682617,
+      "memory_usage_mb": 0.765625,
+      "packets_processed": 95,
+      "files_processed": 1,
+      "throughput_mbps": 4.532926701648951,
+      "packets_per_second": 5956.838438653929,
+      "success": true,
+      "error_message": null
+    },
+    {
+      "algorithm_name": "Deduplication",
+      "file_size_mb": 0.07229137420654297,
+      "processing_time_seconds": 0.016399860382080078,
+      "memory_usage_mb": 0.890625,
+      "packets_processed": 95,
+      "files_processed": 1,
+      "throughput_mbps": 4.408048149332713,
+      "packets_per_second": 5792.732242025993,
+      "success": true,
+      "error_message": null
+    }
+  ]
+}

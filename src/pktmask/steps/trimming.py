@@ -144,6 +144,11 @@ class IntelligentTrimmingStep(ProcessingStep):
 
     def process_file(self, input_path: str, output_path: str) -> Optional[Dict]:
         """处理单个pcap文件，执行智能TLS裁切。"""
+        import time
+        from ..infrastructure.logging import log_performance
+        
+        start_time = time.time()
+        
         self._logger.debug(f"开始智能裁切: {input_path}")
         ext = os.path.splitext(input_path)[1].lower()
         reader_cls = PcapNgReader if ext == ".pcapng" else PcapReader
@@ -161,7 +166,15 @@ class IntelligentTrimmingStep(ProcessingStep):
         wrpcap(output_path, processed_packets, append=False)
         
         trim_rate = (trimmed_count / total_count * ProcessingConstants.PERCENTAGE_MULTIPLIER) if total_count > 0 else 0
-        self._logger.info(f"智能裁切完成: {input_path} -> {output_path}, 裁切包数: {trimmed_count}/{total_count} ({trim_rate:.1f}%)")
+        
+        # 记录性能指标
+        end_time = time.time()
+        duration = end_time - start_time
+        log_performance('trimming_process_file', duration, 'trimming.performance',
+                       total_packets=total_count, trimmed_packets=trimmed_count,
+                       trim_rate=trim_rate)
+        
+        self._logger.info(f"智能裁切完成: {input_path} -> {output_path}, 裁切包数: {trimmed_count}/{total_count} ({trim_rate:.1f}%), 耗时={duration:.2f}秒")
         
         summary = {
             'subdir': os.path.basename(os.path.dirname(input_path)),

@@ -1,0 +1,44 @@
+{
+  "trimming_original": {
+    "throughput_mbps": 2.254582227278473,
+    "packets_per_second": 2962.805921761955,
+    "memory_used_mb": 1.125,
+    "duration": 0.032064199447631836,
+    "total_packets": 95
+  },
+  "trimming_optimized": {
+    "duration": 0.025945186614990234,
+    "throughput_mbps": 2.7863115914061494,
+    "packets_per_second": 3661.565492271783,
+    "memory_used_mb": 0.546875,
+    "total_packets": 95,
+    "cache_hits": 192
+  },
+  "deduplication_original": {
+    "throughput_mbps": 4.378386183792526,
+    "packets_per_second": 5753.752671402992,
+    "memory_used_mb": 0.921875,
+    "duration": 0.016510963439941406,
+    "total_packets": 95
+  },
+  "deduplication_optimized": {
+    "duration": 0.01697516441345215,
+    "throughput_mbps": 4.258655318192671,
+    "packets_per_second": 5596.411185550359,
+    "memory_used_mb": 0.921875,
+    "total_packets": 95,
+    "cache_hits": 95
+  },
+  "improvements": {
+    "trimming": {
+      "throughput_improvement": 23.58438551028284,
+      "speed_improvement": 23.58438551028284,
+      "memory_improvement": 51.388888888888886
+    },
+    "deduplication": {
+      "throughput_improvement": -2.734588968946192,
+      "speed_improvement": -2.7345889689461913,
+      "memory_improvement": 0.0
+    }
+  }
+}
