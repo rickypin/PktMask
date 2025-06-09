@@ -8,7 +8,7 @@
 
 from typing import Optional, List, Dict, Any
 from pathlib import Path
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class UIConfig(BaseModel):
@@ -34,14 +34,16 @@ class UIConfig(BaseModel):
     auto_open_output: bool = Field(default=False, description="处理完成后自动打开输出目录")
     show_progress_details: bool = Field(default=True, description="显示详细进度信息")
     
-    @validator('theme')
+    @field_validator('theme')
+    @classmethod
     def validate_theme(cls, v):
         valid_themes = ['auto', 'light', 'dark']
         if v not in valid_themes:
             raise ValueError(f"Theme must be one of {valid_themes}")
         return v
     
-    @validator('language')
+    @field_validator('language')
+    @classmethod
     def validate_language(cls, v):
         valid_languages = ['zh_CN', 'en_US']
         if v not in valid_languages:
@@ -70,14 +72,16 @@ class ProcessingConfig(BaseModel):
     trim_application_data: bool = Field(default=True, description="裁切应用数据")
     max_payload_size: int = Field(default=1024, ge=0, le=65535, description="最大载荷大小")
     
-    @validator('anonymization_strategy')
+    @field_validator('anonymization_strategy')
+    @classmethod
     def validate_anonymization_strategy(cls, v):
         valid_strategies = ['hierarchical', 'random', 'cryptographic']
         if v not in valid_strategies:
             raise ValueError(f"Anonymization strategy must be one of {valid_strategies}")
         return v
     
-    @validator('dedup_algorithm')
+    @field_validator('dedup_algorithm')
+    @classmethod
     def validate_dedup_algorithm(cls, v):
         valid_algorithms = ['hash_based', 'content_based', 'hybrid']
         if v not in valid_algorithms:
@@ -143,7 +147,8 @@ class LoggingConfig(BaseModel):
     include_module_name: bool = Field(default=True, description="包含模块名")
     include_line_number: bool = Field(default=False, description="包含行号")
     
-    @validator('console_level', 'file_level')
+    @field_validator('console_level', 'file_level')
+    @classmethod
     def validate_log_level(cls, v):
         valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
         if v not in valid_levels:
@@ -167,17 +172,18 @@ class PktMaskConfig(BaseModel):
     created_at: Optional[str] = Field(default=None, description="配置创建时间")
     updated_at: Optional[str] = Field(default=None, description="配置更新时间")
     
-    class Config:
+    model_config = {
         # 允许额外字段以支持扩展
-        extra = "allow"
+        "extra": "allow",
         # 字段的JSON编码使用别名
-        validate_by_name = True
+        "validate_default": True,
         # 验证赋值
-        validate_assignment = True
+        "validate_assignment": True
+    }
     
     def dict_for_serialization(self) -> Dict[str, Any]:
         """返回用于序列化的字典，排除敏感信息"""
-        data = self.dict()
+        data = self.model_dump()
         
         # 可以在这里过滤敏感信息
         # 例如: data.pop('sensitive_field', None)

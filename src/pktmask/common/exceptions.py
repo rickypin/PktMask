@@ -138,6 +138,19 @@ class PluginError(PktMaskError):
         self.plugin_name = plugin_name
 
 
+class SecurityError(PktMaskError):
+    """安全相关错误"""
+    
+    def __init__(
+        self,
+        message: str,
+        security_level: Optional[str] = None,
+        **kwargs
+    ):
+        super().__init__(message, error_code="SECURITY_ERROR", **kwargs)
+        self.security_level = security_level
+
+
 class DependencyError(PktMaskError):
     """依赖相关错误"""
     

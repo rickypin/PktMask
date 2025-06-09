@@ -7,12 +7,16 @@
 """
 
 import os
+import sys
 import time
 import tempfile
 import shutil
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 from pathlib import Path
+
+# 添加src路径到Python路径
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from pktmask.core.strategy import HierarchicalAnonymizationStrategy
 from pktmask.core.strategy_optimized import OptimizedHierarchicalAnonymizationStrategy

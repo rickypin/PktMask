@@ -6,8 +6,29 @@
 
 from datetime import datetime
 from typing import Dict, Any, Optional, Set
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from PyQt6.QtCore import QTime
+
+
+class PacketStatistics(BaseModel):
+    """数据包统计信息"""
+    total_packets: int = Field(default=0, ge=0, description="总包数")
+    processed_packets: int = Field(default=0, ge=0, description="已处理包数")
+    filtered_packets: int = Field(default=0, ge=0, description="过滤的包数")
+    dropped_packets: int = Field(default=0, ge=0, description="丢弃的包数")
+    error_packets: int = Field(default=0, ge=0, description="错误包数")
+    
+    def get_success_rate(self) -> float:
+        """获取成功处理率"""
+        if self.total_packets == 0:
+            return 0.0
+        return (self.processed_packets / self.total_packets) * 100.0
+    
+    def get_filter_rate(self) -> float:
+        """获取过滤率"""
+        if self.total_packets == 0:
+            return 0.0
+        return (self.filtered_packets / self.total_packets) * 100.0
 
 
 class ProcessingMetrics(BaseModel):
@@ -16,9 +37,10 @@ class ProcessingMetrics(BaseModel):
     total_files_to_process: int = Field(default=0, ge=0, description="总文件数")
     packets_processed: int = Field(default=0, ge=0, description="已处理包数")
     
-    @validator('files_processed')
-    def validate_files_processed(cls, v, values):
-        total = values.get('total_files_to_process', 0)
+    @field_validator('files_processed')
+    @classmethod
+    def validate_files_processed(cls, v, info):
+        total = info.data.get('total_files_to_process', 0) if info.data else 0
         if total > 0 and v > total:
             raise ValueError(f"已处理文件数({v})不能超过总文件数({total})")
         return v
@@ -35,8 +57,9 @@ class TimingData(BaseModel):
     start_time: Optional[datetime] = Field(default=None, description="开始时间")
     processing_time_ms: int = Field(default=0, ge=0, description="处理耗时(毫秒)")
     
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
     
     def get_elapsed_time_string(self) -> str:
         """获取格式化的耗时字符串"""
@@ -64,7 +87,8 @@ class FileProcessingResults(BaseModel):
     timestamp: Optional[str] = Field(default=None, description="处理时间戳")
     status: str = Field(default="pending", description="处理状态")
     
-    @validator('status')
+    @field_validator('status')
+    @classmethod
     def validate_status(cls, v):
         valid_statuses = ['pending', 'processing', 'completed', 'failed', 'skipped']
         if v not in valid_statuses:
@@ -97,8 +121,9 @@ class ProcessingState(BaseModel):
     subdirs_packets_counted: Set[str] = Field(default_factory=set, description="已计数包的子目录")
     printed_summary_headers: Set[str] = Field(default_factory=set, description="已打印摘要头的集合")
     
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
 
 
 class StatisticsData(BaseModel):
@@ -131,7 +156,7 @@ class StatisticsData(BaseModel):
             'processing_time': self.timing.get_elapsed_time_string(),
             'step_results': self.step_results.copy(),
             'file_processing_results': {
-                filename: result.dict() for filename, result in self.file_results.items()
+                filename: result.model_dump() for filename, result in self.file_results.items()
             },
             'global_ip_mappings': self.ip_mapping.global_mappings.copy(),
             'all_ip_reports': self.ip_mapping.reports_by_subdir.copy()

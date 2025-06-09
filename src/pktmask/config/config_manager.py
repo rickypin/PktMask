@@ -27,6 +27,7 @@ from .algorithm_configs import (
 from ..algorithms.interfaces.algorithm_interface import (
     AlgorithmConfig, AlgorithmType, ValidationResult
 )
+from pydantic import BaseModel
 from ..infrastructure.logging import get_logger
 
 
@@ -620,4 +621,90 @@ def get_config_manager() -> AlgorithmConfigManager:
     global _config_manager
     if _config_manager is None:
         _config_manager = AlgorithmConfigManager()
-    return _config_manager 
+    return _config_manager
+
+
+class ConfigManager:
+    """配置管理器 - 为测试兼容性提供的简化接口"""
+    
+    def __init__(self, config_dir: Optional[Union[str, Path]] = None):
+        """初始化配置管理器"""
+        if config_dir is None:
+            config_dir = Path.cwd() / "configs"
+        self.config_dir = Path(config_dir)
+        self.config_dir.mkdir(exist_ok=True, parents=True)
+        
+        # 内部使用AlgorithmConfigManager
+        self._algorithm_manager = AlgorithmConfigManager()
+    
+    def save_config(self, config: BaseModel, filename: str, format: str = "json") -> str:
+        """保存配置到文件"""
+        config_path = self.config_dir / filename
+        
+        if format.lower() == "json":
+            import json
+            with open(config_path, 'w', encoding='utf-8') as f:
+                json.dump(config.model_dump(), f, indent=2, ensure_ascii=False)
+        elif format.lower() in ["yaml", "yml"]:
+            import yaml
+            with open(config_path, 'w', encoding='utf-8') as f:
+                yaml.dump(config.model_dump(), f, default_flow_style=False, allow_unicode=True)
+        else:
+            raise ValueError(f"Unsupported format: {format}")
+        
+        # 返回配置版本（简化版本号）
+        import hashlib
+        config_hash = hashlib.md5(str(config.model_dump()).encode()).hexdigest()[:8]
+        return f"v{config_hash}"
+    
+    def load_config(self, filename: str, config_class: type) -> BaseModel:
+        """从文件加载配置"""
+        config_path = self.config_dir / filename
+        
+        if not config_path.exists():
+            raise FileNotFoundError(f"Config file not found: {config_path}")
+        
+        if filename.endswith('.json'):
+            import json
+            with open(config_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        elif filename.endswith(('.yaml', '.yml')):
+            import yaml
+            with open(config_path, 'r', encoding='utf-8') as f:
+                data = yaml.safe_load(f)
+        else:
+            raise ValueError(f"Unsupported file format: {filename}")
+        
+        return config_class(**data)
+    
+    def get_config(self, filename: str, config_class: type) -> BaseModel:
+        """获取配置（load_config的别名）"""
+        return self.load_config(filename, config_class)
+    
+    def get_template(self, template_name: str) -> Optional[BaseModel]:
+        """获取配置模板"""
+        from .algorithm_configs import IPAnonymizationConfig, DeduplicationConfig, PacketProcessingConfig
+        
+        templates = {
+            'ip_anonymization': IPAnonymizationConfig(),
+            'deduplication': DeduplicationConfig(),
+            'packet_processing': PacketProcessingConfig()
+        }
+        
+        return templates.get(template_name)
+    
+    def get_config_versions(self, filename: str) -> List[str]:
+        """获取配置版本历史（简化实现）"""
+        # 简化实现，返回当前版本
+        config_path = self.config_dir / filename
+        if config_path.exists():
+            import hashlib
+            with open(config_path, 'rb') as f:
+                file_hash = hashlib.md5(f.read()).hexdigest()[:8]
+            return [f"v{file_hash}"]
+        return []
+    
+    def register_hot_reload(self, filename: str, callback):
+        """注册热重载回调（占位实现）"""
+        # 简化实现，实际项目中可以实现文件监听
+        pass 

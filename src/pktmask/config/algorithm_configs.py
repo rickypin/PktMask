@@ -8,7 +8,7 @@
 
 from typing import Dict, List, Optional, Union, Any
 from enum import Enum
-from pydantic import BaseModel, Field, validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from pathlib import Path
 
 from ..algorithms.interfaces.algorithm_interface import AlgorithmConfig, AlgorithmType
@@ -125,7 +125,8 @@ class IPAnonymizationConfig(AlgorithmConfig):
         description="并行工作线程数"
     )
     
-    @validator('anonymization_levels')
+    @field_validator('anonymization_levels')
+    @classmethod
     def validate_anonymization_levels(cls, v):
         if not v:
             raise ValueError("匿名化级别不能为空")
@@ -135,7 +136,8 @@ class IPAnonymizationConfig(AlgorithmConfig):
             raise ValueError("匿名化级别不能重复")
         return sorted(v)
     
-    @validator('hash_algorithm')
+    @field_validator('hash_algorithm')
+    @classmethod
     def validate_hash_algorithm(cls, v):
         allowed_algorithms = ['md5', 'sha1', 'sha256', 'sha512']
         if v.lower() not in allowed_algorithms:
@@ -258,14 +260,16 @@ class PacketProcessingConfig(AlgorithmConfig):
         description="IO超时时间(秒)"
     )
     
-    @validator('processing_mode')
+    @field_validator('processing_mode')
+    @classmethod
     def validate_processing_mode(cls, v):
         allowed_modes = ['streaming', 'batch', 'hybrid']
         if v not in allowed_modes:
             raise ValueError(f"处理模式必须是: {', '.join(allowed_modes)}")
         return v
     
-    @validator('filter_protocols')
+    @field_validator('filter_protocols')
+    @classmethod
     def validate_filter_protocols(cls, v):
         allowed_protocols = ['TCP', 'UDP', 'ICMP', 'HTTP', 'HTTPS', 'FTP', 'SSH']
         for protocol in v:
@@ -375,14 +379,16 @@ class DeduplicationConfig(AlgorithmConfig):
         description="并行处理阈值"
     )
     
-    @validator('hash_algorithm')
+    @field_validator('hash_algorithm')
+    @classmethod
     def validate_hash_algorithm(cls, v):
         allowed_algorithms = ['md5', 'sha1', 'sha256', 'crc32']
         if v.lower() not in allowed_algorithms:
             raise ValueError(f"哈希算法必须是: {', '.join(allowed_algorithms)}")
         return v.lower()
     
-    @validator('comparison_fields')
+    @field_validator('comparison_fields')
+    @classmethod
     def validate_comparison_fields(cls, v):
         allowed_fields = [
             'src_ip', 'dst_ip', 'src_port', 'dst_port', 'protocol',
@@ -434,7 +440,8 @@ class CustomAlgorithmConfig(AlgorithmConfig):
         description="验证钩子函数名列表"
     )
     
-    @validator('config_file_path')
+    @field_validator('config_file_path')
+    @classmethod
     def validate_config_file_path(cls, v):
         if v is not None:
             path = Path(v)

@@ -11,12 +11,12 @@ import time
 from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime
 
-from pktmask.algorithms.interfaces.ip_anonymization_interface import (
+from ...interfaces.ip_anonymization_interface import (
     IPAnonymizationInterface, IPAnonymizationConfig, IPAnonymizationResult,
     IPMappingResult, IPFrequencyData
 )
-from pktmask.algorithms.interfaces.algorithm_interface import AlgorithmInfo, AlgorithmType, ValidationResult, AlgorithmStatus, AlgorithmConfig
-from pktmask.algorithms.interfaces.performance_interface import get_algorithm_tracker
+from ...interfaces.algorithm_interface import AlgorithmInfo, AlgorithmType, ValidationResult, AlgorithmStatus, AlgorithmConfig
+from ...interfaces.performance_interface import get_algorithm_tracker
 from pktmask.core.strategy import HierarchicalAnonymizationStrategy
 from pktmask.infrastructure.logging import get_logger
 

@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime
 from packaging import version as pkg_version
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from ...infrastructure.logging import get_logger
 from ...common.exceptions import ProcessingError, ValidationError
@@ -135,8 +135,9 @@ class AlgorithmConfig(BaseModel):
     hot_reload: bool = Field(default=False, description="是否支持热重载")
     performance_monitoring: bool = Field(default=True, description="是否启用性能监控")
     
-    class Config:
-        extra = "allow"  # 允许子类添加额外字段
+    model_config = {
+        "extra": "allow"  # 允许子类添加额外字段
+    }
 
 
 class PluginConfig(BaseModel):
@@ -149,7 +150,8 @@ class PluginConfig(BaseModel):
     max_restart_attempts: int = Field(default=3, ge=0, description="最大重启尝试次数")
     hot_reload: bool = Field(default=False, description="是否支持热重载")
     
-    @validator('config_file')
+    @field_validator('config_file')
+    @classmethod
     def validate_config_file(cls, v):
         if v and not v.endswith(('.json', '.yaml', '.yml', '.toml')):
             raise ValueError("配置文件必须是 .json, .yaml, .yml 或 .toml 格式")
@@ -186,8 +188,9 @@ class ProcessingResult(BaseModel):
     warnings: List[str] = Field(default_factory=list, description="警告信息")
     processing_time_ms: float = Field(default=0.0, description="处理时间(毫秒)")
     
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
 
 
 class AlgorithmInterface(ABC):

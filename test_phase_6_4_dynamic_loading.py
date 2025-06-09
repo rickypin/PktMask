@@ -34,8 +34,10 @@ from src.pktmask.algorithms.registry.plugin_marketplace import (
     PluginMarketplace, PluginManifest, PluginCategory, PluginLicense, PluginValidator
 )
 from src.pktmask.algorithms.interfaces.algorithm_interface import (
-    AlgorithmInterface, AlgorithmInfo, AlgorithmType, AlgorithmDependency, DependencyType
+    AlgorithmInterface, AlgorithmInfo, AlgorithmType, AlgorithmDependency, DependencyType,
+    AlgorithmConfig, ValidationResult
 )
+from typing import Dict, Any
 
 
 class MockTestAlgorithm(AlgorithmInterface):
@@ -53,6 +55,8 @@ class MockTestAlgorithm(AlgorithmInterface):
             description="测试算法",
             algorithm_type=AlgorithmType.CUSTOM,
             author="Test Author",
+            supported_formats=[".test"],
+            requirements={},
             dependencies=[
                 AlgorithmDependency(
                     name="numpy",
@@ -61,6 +65,34 @@ class MockTestAlgorithm(AlgorithmInterface):
                 )
             ]
         )
+    
+    def get_default_config(self) -> AlgorithmConfig:
+        """获取默认配置"""
+        return AlgorithmConfig()
+    
+    def validate_config(self, config) -> ValidationResult:
+        """验证配置"""
+        return ValidationResult(is_valid=True)
+    
+    def _apply_config(self, config: AlgorithmConfig) -> bool:
+        """应用配置"""
+        return True
+    
+    def _do_initialize(self) -> bool:
+        """执行初始化"""
+        return True
+    
+    def _do_cleanup(self):
+        """执行清理"""
+        pass
+    
+    def get_performance_metrics(self) -> Dict[str, Any]:
+        """获取性能指标"""
+        return {"test_metric": 1.0}
+    
+    def _do_reset_metrics(self):
+        """重置性能指标"""
+        pass
     
     def process(self, data, **kwargs):
         return f"Processed: {data}"

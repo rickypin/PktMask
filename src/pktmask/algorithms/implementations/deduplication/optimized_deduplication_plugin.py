@@ -21,7 +21,7 @@ from ...interfaces.deduplication_interface import (
     DeduplicationResult,
     DeduplicationStats
 )
-from ...interfaces.algorithm_interface import AlgorithmInfo, AlgorithmType, AlgorithmStatus
+from ...interfaces.algorithm_interface import AlgorithmInfo, AlgorithmType, AlgorithmStatus, AlgorithmConfig
 from ....infrastructure.logging import get_logger
 from ....common.exceptions import ProcessingError
 from ....infrastructure.error_handling import handle_errors
@@ -34,6 +34,7 @@ class OptimizedDeduplicationPlugin(DeduplicationInterface):
     """
     
     def __init__(self):
+        super().__init__()  # 调用父类构造函数，初始化_initialized等属性
         self._logger = get_logger('algorithm.deduplication.optimized')
         self._config: Optional[DeduplicationConfig] = None
         self._status = AlgorithmStatus.IDLE
@@ -50,47 +51,37 @@ class OptimizedDeduplicationPlugin(DeduplicationInterface):
     def get_algorithm_info(self) -> AlgorithmInfo:
         """获取算法信息"""
         return AlgorithmInfo(
-            name="optimized_deduplication",
-            display_name="优化版数据包去重",
-            description="基于MD5哈希的高性能数据包去重算法，支持智能哈希和批处理优化",
+            name="Optimized Deduplication",
             version="2.0.0",
             algorithm_type=AlgorithmType.DEDUPLICATION,
             author="PktMask Team",
-            requires_config=True,
-            config_schema={
-                "batch_size": {
-                    "type": "integer",
-                    "default": 1000,
-                    "minimum": 100,
-                    "maximum": 10000,
-                    "description": "批处理大小"
-                },
-                "large_packet_threshold": {
-                    "type": "integer", 
-                    "default": 100,
-                    "minimum": 50,
-                    "maximum": 1000,
-                    "description": "大包阈值（字节）"
-                },
-                "enable_detailed_logging": {
-                    "type": "boolean",
-                    "default": False,
-                    "description": "是否启用详细日志"
-                }
-            }
+            description="基于MD5哈希的高性能数据包去重算法，支持智能哈希和批处理优化",
+            supported_formats=[".pcap", ".pcapng"],
+            requirements={"scapy": ">=2.4.0"}
         )
     
-    def initialize(self, config: DeduplicationConfig) -> bool:
-        """初始化算法"""
+    def _apply_config(self, config: AlgorithmConfig) -> bool:
+        """应用配置"""
         try:
-            self._config = config
-            self._status = AlgorithmStatus.READY
+            if isinstance(config, DeduplicationConfig):
+                self._batch_size = getattr(config, 'batch_size', 1000)
+                self._large_packet_threshold = getattr(config, 'large_packet_threshold', 100)
+                self._enable_detailed_logging = getattr(config, 'enable_detailed_logging', False)
+            else:
+                # 兼容其他配置类型
+                self._batch_size = 1000
+                self._large_packet_threshold = 100
+                self._enable_detailed_logging = False
             
-            # 应用配置
-            self._batch_size = getattr(config, 'batch_size', 1000)
-            self._large_packet_threshold = getattr(config, 'large_packet_threshold', 100)
-            self._enable_detailed_logging = getattr(config, 'enable_detailed_logging', False)
-            
+            self._logger.info("优化版去重算法配置应用成功")
+            return True
+        except Exception as e:
+            self._logger.error(f"应用配置失败: {e}")
+            return False
+    
+    def _do_initialize(self) -> bool:
+        """执行具体的初始化逻辑"""
+        try:
             # 重置统计信息
             self._reset_statistics()
             
@@ -99,7 +90,6 @@ class OptimizedDeduplicationPlugin(DeduplicationInterface):
             
         except Exception as e:
             self._logger.error(f"去重算法初始化失败: {e}")
-            self._status = AlgorithmStatus.ERROR
             return False
     
     @handle_errors(auto_recover=True, reraise_on_failure=False)
@@ -342,18 +332,6 @@ class OptimizedDeduplicationPlugin(DeduplicationInterface):
             result.success = False
             result.errors = [str(e)]
             return result
-    
-    def _apply_config(self, config: DeduplicationConfig):
-        """应用配置"""
-        self._batch_size = getattr(config, 'batch_size', 1000)
-        self._large_packet_threshold = getattr(config, 'large_packet_threshold', 100)
-        self._enable_detailed_logging = getattr(config, 'enable_detailed_logging', False)
-    
-    def _do_initialize(self, config: DeduplicationConfig) -> bool:
-        """执行初始化逻辑"""
-        self._apply_config(config)
-        self._reset_statistics()
-        return True
     
     def _do_cleanup(self):
         """执行清理逻辑"""

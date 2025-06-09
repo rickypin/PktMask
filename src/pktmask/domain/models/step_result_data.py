@@ -6,7 +6,7 @@
 
 from datetime import datetime
 from typing import Dict, Any, Optional, List
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 
 
@@ -80,14 +80,15 @@ class DeduplicationResult(BaseStepResult):
     def __init__(self, **data):
         super().__init__(step_type="dedup_packet", **data)
     
-    @validator('deduplication_ratio', pre=True)
-    def calculate_deduplication_ratio(cls, v, values):
+    @field_validator('deduplication_ratio', mode='before')
+    @classmethod
+    def calculate_deduplication_ratio(cls, v, info):
         """自动计算去重比例"""
         if v is not None:
             return v
         
-        original = values.get('original_packets', 0)
-        duplicates = values.get('duplicates_removed', 0)
+        original = info.data.get('original_packets', 0) if info.data else 0
+        duplicates = info.data.get('duplicates_removed', 0) if info.data else 0
         
         if original == 0:
             return 0.0

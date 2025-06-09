@@ -1,15 +1,11 @@
 {
   "path": ".",
   "stats": {
-    "total_unique_ips": 3,
-    "total_mapped_ips": 3
+    "total_unique_ips": 0,
+    "total_mapped_ips": 0
   },
   "data": {
-    "total_mapping": {
-      "12.2.7.33": "8.1.8.33",
-      "12.31.52.101": "8.35.54.101",
-      "16.18.16.45": "19.14.18.45"
-    }
+    "total_mapping": {}
   },
-  "generated_at": "2025-06-09 18:17:41"
+  "generated_at": "2025-06-09 22:47:38"
 }

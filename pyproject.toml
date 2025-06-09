@@ -37,7 +37,8 @@ dependencies = [
     "PyYAML>=6.0.0",
     "psutil>=5.9.0",
     "watchdog>=3.0.0",
-    "toml>=0.10.2"
+    "toml>=0.10.2",
+    "networkx>=3.0.0"
 ]
 
 [project.optional-dependencies]

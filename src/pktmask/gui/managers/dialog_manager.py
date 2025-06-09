@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import Qt, QTime
 from PyQt6.QtGui import QFont
+import os
 
 if TYPE_CHECKING:
     from ..main_window import MainWindow
@@ -301,6 +302,24 @@ class DialogManager:
             if not error_message or error_message.strip() == "Unknown error":
                 error_message = "An unexpected error occurred during processing. Please check the logs for more details."
             
+            # 检查是否在自动化测试环境中
+            is_automated_test = (
+                os.environ.get('QT_QPA_PLATFORM') == 'offscreen' or  # 无头模式
+                os.environ.get('PYTEST_CURRENT_TEST') is not None or  # pytest环境
+                os.environ.get('CI') == 'true' or  # CI环境
+                hasattr(self.main_window, '_test_mode')  # 测试模式标志
+            )
+            
+            if is_automated_test:
+                # 在自动化测试环境中，只记录错误而不显示阻塞性对话框
+                self._logger.error(f"处理错误（自动化测试模式）: {error_message}")
+                # 更新主窗口日志以便测试验证
+                self.main_window.update_log(f"Error: {error_message}")
+                # 可选：发送一个非阻塞的通知
+                self._send_non_blocking_error_notification(error_message)
+                return
+            
+            # 在正常GUI环境中显示模态对话框
             error_dialog = QMessageBox(self.main_window)
             error_dialog.setIcon(QMessageBox.Icon.Critical)
             error_dialog.setWindowTitle("Processing Error")
@@ -328,6 +347,20 @@ class DialogManager:
             self._logger.error(f"显示处理错误对话框失败: {e}")
             # 如果对话框显示失败，至少更新日志
             self.main_window.update_log(f"Error: {error_message}")
+    
+    def _send_non_blocking_error_notification(self, error_message: str):
+        """发送非阻塞的错误通知（用于自动化测试）"""
+        try:
+            # 这里可以发送状态栏消息、日志更新或其他非阻塞通知
+            if hasattr(self.main_window, 'statusBar'):
+                self.main_window.statusBar().showMessage(f"Error: {error_message}", 5000)
+            
+            # 发出错误信号供测试监听
+            if hasattr(self.main_window, 'error_occurred'):
+                self.main_window.error_occurred.emit(error_message)
+                
+        except Exception as e:
+            self._logger.debug(f"发送非阻塞通知失败: {e}")
 
     def show_processing_complete(self, summary: str):
         """显示处理完成对话框"""

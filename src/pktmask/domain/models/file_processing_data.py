@@ -7,7 +7,7 @@
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 
 
@@ -36,13 +36,14 @@ class FileInfo(BaseModel):
     creation_time: Optional[datetime] = Field(default=None, description="文件创建时间")
     modification_time: Optional[datetime] = Field(default=None, description="文件修改时间")
     
-    @validator('file_type', pre=True)
-    def determine_file_type(cls, v, values):
+    @field_validator('file_type', mode='before')
+    @classmethod
+    def determine_file_type(cls, v, info):
         """根据文件名确定文件类型"""
         if v != FileType.UNKNOWN:
             return v
         
-        filename = values.get('filename', '')
+        filename = info.data.get('filename', '') if info.data else ''
         if filename.lower().endswith('.pcap'):
             return FileType.PCAP
         elif filename.lower().endswith('.pcapng'):

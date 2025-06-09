@@ -19,7 +19,7 @@ from ...interfaces.packet_processing_interface import (
     PacketProcessingResult,
     PacketProcessingStrategy
 )
-from ...interfaces.algorithm_interface import AlgorithmInfo, AlgorithmType, AlgorithmStatus
+from ...interfaces.algorithm_interface import AlgorithmInfo, AlgorithmType, AlgorithmStatus, AlgorithmConfig
 from ....infrastructure.logging import get_logger
 from ....common.exceptions import ProcessingError
 from ....infrastructure.error_handling import handle_errors
@@ -32,6 +32,7 @@ class OptimizedTrimmingPlugin(PacketProcessingInterface):
     """
     
     def __init__(self):
+        super().__init__()  # 调用父类构造函数，初始化_initialized等属性
         self._logger = get_logger('algorithm.packet_processing.optimized')
         self._config: Optional[PacketProcessingConfig] = None
         self._status = AlgorithmStatus.IDLE
@@ -58,54 +59,35 @@ class OptimizedTrimmingPlugin(PacketProcessingInterface):
     def get_algorithm_info(self) -> AlgorithmInfo:
         """获取算法信息"""
         return AlgorithmInfo(
-            name="optimized_trimming",
-            display_name="优化版智能裁切",
-            description="基于TLS信令检测的高性能数据包载荷裁切算法，支持TCP层缓存和会话缓存优化",
+            name="Optimized Trimming",
             version="2.0.0",
             algorithm_type=AlgorithmType.PACKET_PROCESSING,
             author="PktMask Team",
-            requires_config=True,
-            config_schema={
-                "trim_payload": {
-                    "type": "boolean",
-                    "default": True,
-                    "description": "是否裁切载荷"
-                },
-                "preserve_tls_handshake": {
-                    "type": "boolean", 
-                    "default": True,
-                    "description": "保留TLS握手"
-                },
-                "preserve_certificates": {
-                    "type": "boolean",
-                    "default": True,
-                    "description": "保留证书"
-                },
-                "batch_size": {
-                    "type": "integer",
-                    "default": 1000,
-                    "minimum": 100,
-                    "maximum": 10000,
-                    "description": "批处理大小"
-                },
-                "enable_caching": {
-                    "type": "boolean",
-                    "default": True,
-                    "description": "启用缓存机制"
-                }
-            }
+            description="基于TLS信令检测的高性能数据包载荷裁切算法，支持TCP层缓存和会话缓存优化",
+            supported_formats=[".pcap", ".pcapng"],
+            requirements={"scapy": ">=2.4.0"}
         )
     
-    def initialize(self, config: PacketProcessingConfig) -> bool:
-        """初始化算法"""
+    def _apply_config(self, config: AlgorithmConfig) -> bool:
+        """应用配置"""
         try:
-            self._config = config
-            self._status = AlgorithmStatus.READY
+            if isinstance(config, PacketProcessingConfig):
+                self._batch_size = getattr(config, 'batch_size', 1000)
+                self._enable_caching = getattr(config, 'enable_caching', True)
+            else:
+                # 兼容其他配置类型
+                self._batch_size = 1000
+                self._enable_caching = True
             
-            # 应用配置
-            self._batch_size = getattr(config, 'batch_size', 1000)
-            self._enable_caching = getattr(config, 'enable_caching', True)
-            
+            self._logger.info("优化版数据包处理算法配置应用成功")
+            return True
+        except Exception as e:
+            self._logger.error(f"应用配置失败: {e}")
+            return False
+    
+    def _do_initialize(self) -> bool:
+        """执行具体的初始化逻辑"""
+        try:
             # 重置统计信息
             self._reset_statistics()
             
@@ -114,7 +96,6 @@ class OptimizedTrimmingPlugin(PacketProcessingInterface):
             
         except Exception as e:
             self._logger.error(f"裁切算法初始化失败: {e}")
-            self._status = AlgorithmStatus.ERROR
             return False
     
     @handle_errors(auto_recover=True, reraise_on_failure=False)
@@ -495,17 +476,6 @@ class OptimizedTrimmingPlugin(PacketProcessingInterface):
         }
     
     # === 实现抽象方法 ===
-    
-    def _apply_config(self, config: PacketProcessingConfig):
-        """应用配置"""
-        self._batch_size = getattr(config, 'batch_size', 1000)
-        self._enable_caching = getattr(config, 'enable_caching', True)
-    
-    def _do_initialize(self, config: PacketProcessingConfig) -> bool:
-        """执行初始化逻辑"""
-        self._apply_config(config)
-        self._reset_statistics()
-        return True
     
     def _do_cleanup(self):
         """执行清理逻辑"""

@@ -6,7 +6,7 @@
 
 from datetime import datetime
 from typing import Dict, Any, Optional, Union
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 
 from ...core.events import PipelineEvents
@@ -28,8 +28,9 @@ class BaseEventData(BaseModel):
     severity: EventSeverity = Field(default=EventSeverity.INFO, description="事件严重程度")
     message: Optional[str] = Field(default=None, description="事件消息")
     
-    class Config:
-        use_enum_values = True
+    model_config = {
+        "use_enum_values": True
+    }
 
 
 class PipelineStartData(BaseEventData):
@@ -203,10 +204,11 @@ class PipelineEventData(BaseModel):
         PacketsScannedData, LogEventData, ErrorEventData, BaseEventData
     ] = Field(..., description="事件数据")
     
-    @validator('data', pre=True)
-    def validate_event_data(cls, v, values):
+    @field_validator('data', mode='before')
+    @classmethod
+    def validate_event_data(cls, v, info):
         """验证事件数据类型"""
-        event_type = values.get('event_type')
+        event_type = info.data.get('event_type') if info.data else None
         
         if isinstance(v, dict):
             # 如果是字典，尝试转换为相应的数据类型
@@ -215,12 +217,13 @@ class PipelineEventData(BaseModel):
         
         return v
     
-    class Config:
-        use_enum_values = True
+    model_config = {
+        "use_enum_values": True
+    }
     
     def to_legacy_dict(self) -> dict:
         """转换为遗留的字典格式，用于向后兼容"""
-        result = self.data.dict()
+        result = self.data.model_dump()
         result['type'] = self.event_type.name if hasattr(self.event_type, 'name') else str(self.event_type)
         return result
     

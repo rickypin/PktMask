@@ -672,6 +672,11 @@ def get_plugin_manager() -> EnhancedPluginManager:
     return _plugin_manager
 
 
+def get_enhanced_plugin_manager() -> EnhancedPluginManager:
+    """获取增强插件管理器实例（别名）"""
+    return get_plugin_manager()
+
+
 def initialize_plugin_system(search_paths: Optional[List[str]] = None):
     """初始化插件系统"""
     global _plugin_manager

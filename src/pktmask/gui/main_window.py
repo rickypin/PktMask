@@ -85,6 +85,10 @@ class PipelineThread(QThread):
 
 class MainWindow(QMainWindow):
     """主窗口"""
+    
+    # 定义信号
+    error_occurred = pyqtSignal(str)  # 错误发生信号，用于自动化测试
+    
     def __init__(self):
         super().__init__()
         self._logger = get_logger('main_window')
@@ -326,8 +330,6 @@ class MainWindow(QMainWindow):
         """初始化界面（委托给UIManager处理）"""
         self.ui_manager.init_ui()
 
-
-
     def _get_current_theme(self) -> str:
         """检测当前系统是浅色还是深色模式。"""
         return self.ui_manager.get_current_theme()
@@ -415,19 +417,13 @@ class MainWindow(QMainWindow):
         """生成用户停止时的部分汇总统计（委托给ReportManager）"""
         self.report_manager.generate_partial_summary_on_stop()
 
-
-
     def stop_pipeline_processing(self):
         """停止管道处理（委托给PipelineManager）"""
         self.pipeline_manager.stop_pipeline_processing()
 
-
-
     def start_pipeline_processing(self):
         """开始管道处理（委托给PipelineManager）"""
         self.pipeline_manager.start_pipeline_processing()
-
-
 
     def start_processing(self, pipeline: Pipeline):
         self.log_text.append(f"--- Pipeline Started ---\n")
@@ -533,25 +529,17 @@ class MainWindow(QMainWindow):
         """收集每个步骤的处理结果（委托给ReportManager）"""
         self.report_manager.collect_step_result(data)
 
-
-
     def generate_file_complete_report(self, original_filename: str):
         """为单个文件生成完整的处理报告（委托给ReportManager）"""
         self.report_manager.generate_file_complete_report(original_filename)
-
-
 
     def update_summary_report(self, data: dict):
         """更新摘要报告（委托给ReportManager）"""
         self.report_manager.update_summary_report(data)
 
-
-
     def set_final_summary_report(self, report: dict):
         """设置最终汇总报告（委托给ReportManager）"""
         self.report_manager.set_final_summary_report(report)
-
-
 
     def update_log(self, message: str):
         """更新日志显示"""
@@ -560,8 +548,6 @@ class MainWindow(QMainWindow):
     def processing_finished(self):
         """处理完成（委托给PipelineManager）"""
         self.pipeline_manager.processing_finished()
-
-
 
     def processing_error(self, error_message: str):
         """处理错误"""
@@ -836,6 +822,15 @@ class MainWindow(QMainWindow):
         self.current_processing_file = None
         self.global_ip_mappings = {}
         self.processed_files_count = 0
+
+    def set_test_mode(self, enabled: bool = True):
+        """设置测试模式（用于自动化测试）"""
+        self._test_mode = enabled
+        if enabled:
+            self._logger.info("已启用测试模式 - 对话框将自动处理")
+        else:
+            self._logger.info("已禁用测试模式")
+        return self
 
 def main():
     """主函数"""

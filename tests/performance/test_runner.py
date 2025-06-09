@@ -7,10 +7,14 @@
 """
 
 import os
+import sys
 import time
 import json
 from typing import Dict, List, Any, Optional
 from pathlib import Path
+
+# 添加src路径到Python路径
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from pktmask.infrastructure.logging import get_logger
 from pktmask.utils.time import current_timestamp

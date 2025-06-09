@@ -52,6 +52,20 @@ def register_optimized_plugins() -> bool:
             if registry.register_algorithm(plugin_class, plugin_name):
                 logger.info(f"✓ 成功注册插件: {plugin_name}")
                 success_count += 1
+                
+                # 手动确保类型索引正确更新（临时修复）
+                try:
+                    temp_instance = plugin_class()
+                    algo_info = temp_instance.get_algorithm_info()
+                    algo_type = algo_info.algorithm_type
+                    
+                    # 检查并修复类型索引
+                    if plugin_name not in registry._type_index[algo_type]:
+                        registry._type_index[algo_type].append(plugin_name)
+                        logger.debug(f"修复类型索引: {plugin_name} -> {algo_type.value}")
+                except Exception as e:
+                    logger.warning(f"修复类型索引失败 {plugin_name}: {e}")
+                    
             else:
                 logger.warning(f"✗ 插件注册失败: {plugin_name}")
         except Exception as e:

@@ -366,70 +366,34 @@ class ReportManager:
         self.main_window.summary_text.append(f"{'='*separator_length}")
     
     def generate_processing_finished_report(self):
-        """生成处理完成后的报告"""
-        # 如果用户已经停止，不再显示完成信息
-        if self.main_window.user_stopped:
-            return
-            
-        self.main_window.log_text.append(f"\n--- Pipeline Finished ---")
-        
-        # 添加处理完成的汇总信息
-        if self.main_window.timer:
-            self.main_window.timer.stop()
-        self.main_window.update_time_elapsed()
-        
-        final_time = self.main_window.time_elapsed_label.text()
-        total_files = self.main_window.files_processed_count
-        total_packets = self.main_window.packets_processed_count
-        
-        separator_length = 70
-        completion_report = f"\n{'='*separator_length}\n✅ PROCESSING COMPLETED SUCCESSFULLY\n{'='*separator_length}\n"
-        completion_report += f"📊 Overall Statistics:\n"
-        completion_report += f"   • Total Files Processed: {total_files}\n"
-        completion_report += f"   • Total Packets Processed: {total_packets:,}\n"
-        completion_report += f"   • Processing Time: {final_time}\n"
-        
-        # 计算处理速度 (更安全的方式)
-        try:
-            time_parts = final_time.split(':')
-            if len(time_parts) >= 2:
-                minutes = int(time_parts[-2])
-                seconds_with_ms = time_parts[-1].split('.')
-                seconds = int(seconds_with_ms[0])
-                total_seconds = minutes * 60 + seconds
-                if total_seconds > 0:
-                    speed = total_packets / total_seconds
-                    completion_report += f"   • Average Speed: {speed:,.0f} packets/second\n\n"
-                else:
-                    completion_report += f"   • Average Speed: N/A (processing too fast)\n\n"
-            else:
-                completion_report += f"   • Average Speed: N/A\n\n"
-        except:
-            completion_report += f"   • Average Speed: N/A\n\n"
+        """生成处理完成时的报告"""
+        separator_length = 70  # 保持一致的分隔线长度
         
         enabled_steps = []
-        if self.main_window.mask_ip_cb.isChecked():
-            enabled_steps.append("IP Masking")
         if self.main_window.dedup_packet_cb.isChecked():
             enabled_steps.append("Deduplication")
+        if self.main_window.mask_ip_cb.isChecked():
+            enabled_steps.append("IP Anonymization")
         if self.main_window.trim_packet_cb.isChecked():
             enabled_steps.append("Payload Trimming")
             
+        completion_report = f"\n{'='*separator_length}\n🎉 PROCESSING COMPLETED!\n{'='*separator_length}\n"
+        completion_report += f"🎯 All {self.main_window.processed_files_count} files have been successfully processed.\n"
+        completion_report += f"📈 Files Processed: {self.main_window.processed_files_count}\n"
+        completion_report += f"📊 Total Packets Processed: {self.main_window.packets_processed_count}\n"
+        completion_report += f"⏱️ Time Elapsed: {self.main_window.time_elapsed_label.text()}\n"
         completion_report += f"🔧 Applied Processing Steps: {', '.join(enabled_steps)}\n"
-        completion_report += f"📁 Output Location: {os.path.basename(self.main_window.current_output_dir)}\n"
+        
+        # 安全处理输出目录显示
+        if self.main_window.current_output_dir:
+            completion_report += f"📁 Output Location: {os.path.basename(self.main_window.current_output_dir)}\n"
+        else:
+            completion_report += f"📁 Output Location: Not specified\n"
+            
         completion_report += f"📝 All processed files saved to output directory.\n"
         completion_report += f"{'='*separator_length}\n"
         
         self.main_window.summary_text.append(completion_report)
-
-        # 如果处理了≥2个文件且有IP映射，显示全局IP映射
-        if self.main_window.processed_files_count >= 2 and self.main_window.global_ip_mappings:
-            global_mapping_report = self._generate_global_ip_mappings_report(separator_length, False)
-            if global_mapping_report:
-                self.main_window.summary_text.append(global_mapping_report)
-
-        # 保存summary report到输出目录
-        self.main_window.save_summary_report_to_output_dir()
 
     def set_final_summary_report(self, report: dict):
         """设置最终的汇总报告，包括详细的IP映射信息。"""

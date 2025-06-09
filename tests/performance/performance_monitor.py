@@ -7,10 +7,15 @@
 """
 
 import time
+import sys
 import threading
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
+
+# 添加src路径到Python路径
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from pktmask.infrastructure.logging import get_logger
 

@@ -85,7 +85,7 @@ class PluginManifest:
     
     # 技术信息
     algorithm_type: AlgorithmType = AlgorithmType.CUSTOM
-    min_python_version: str = "3.8"
+    min_python_version: str = "3.8.0"
     max_python_version: str = ""
     supported_platforms: List[str] = field(default_factory=lambda: ["any"])
     
