@@ -48,6 +48,11 @@ class ReportManager:
         # 计算当前的时间
         if self.main_window.timer:
             self.main_window.timer.stop()
+        
+        # 停止统计管理器的计时
+        if hasattr(self.main_window, 'pipeline_manager') and hasattr(self.main_window.pipeline_manager, 'statistics'):
+            self.main_window.pipeline_manager.statistics.stop_timing()
+            
         self.main_window.update_time_elapsed()
         
         partial_time = self.main_window.time_elapsed_label.text()
@@ -368,6 +373,16 @@ class ReportManager:
     def generate_processing_finished_report(self):
         """生成处理完成时的报告"""
         separator_length = 70  # 保持一致的分隔线长度
+        
+        # 停止计时器
+        if self.main_window.timer and self.main_window.timer.isActive():
+            self.main_window.timer.stop()
+        
+        # 停止统计管理器的计时
+        if hasattr(self.main_window, 'pipeline_manager') and hasattr(self.main_window.pipeline_manager, 'statistics'):
+            self.main_window.pipeline_manager.statistics.stop_timing()
+            
+        self.main_window.update_time_elapsed()
         
         enabled_steps = []
         if self.main_window.dedup_packet_cb.isChecked():
