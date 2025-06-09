@@ -1,9 +1,9 @@
 """
-数据包处理算法插件实现
+数据包处理算法实现模块
 """
 
-from .trimming_plugin import IntelligentTrimmingPlugin
+from .optimized_trimming_plugin import OptimizedTrimmingPlugin
 
 __all__ = [
-    'IntelligentTrimmingPlugin'
+    'OptimizedTrimmingPlugin'
 ] 

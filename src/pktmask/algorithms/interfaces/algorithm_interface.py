@@ -7,11 +7,12 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List
-from dataclasses import dataclass
+from typing import Dict, Any, Optional, List, Set, Union
+from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime
-from pydantic import BaseModel, Field
+from packaging import version as pkg_version
+from pydantic import BaseModel, Field, validator
 
 from ...infrastructure.logging import get_logger
 from ...common.exceptions import ProcessingError, ValidationError
@@ -33,6 +34,46 @@ class AlgorithmStatus(Enum):
     PAUSED = "paused"
     ERROR = "error"
     STOPPED = "stopped"
+    LOADING = "loading"
+    UNLOADING = "unloading"
+
+
+class DependencyType(Enum):
+    """依赖类型枚举"""
+    REQUIRED = "required"
+    OPTIONAL = "optional"
+    DEVELOPMENT = "development"
+
+
+@dataclass
+class AlgorithmDependency:
+    """算法依赖信息"""
+    name: str
+    version_spec: str  # 版本规范，如 ">=1.0.0,<2.0.0"
+    dependency_type: DependencyType = DependencyType.REQUIRED
+    description: Optional[str] = None
+    
+    def is_version_compatible(self, installed_version: str) -> bool:
+        """检查版本兼容性"""
+        try:
+            from packaging import specifiers
+            spec_set = specifiers.SpecifierSet(self.version_spec)
+            return pkg_version.parse(installed_version) in spec_set
+        except Exception:
+            return False
+
+
+@dataclass
+class AlgorithmMetadata:
+    """算法元数据"""
+    tags: Set[str] = field(default_factory=set)
+    category: Optional[str] = None
+    keywords: List[str] = field(default_factory=list)
+    homepage: Optional[str] = None
+    documentation: Optional[str] = None
+    license: Optional[str] = None
+    changelog: Optional[str] = None
+    config_schema: Optional[Dict[str, Any]] = None
 
 
 @dataclass
@@ -45,12 +86,42 @@ class AlgorithmInfo:
     description: str
     supported_formats: List[str]
     requirements: Dict[str, str]
+    dependencies: List[AlgorithmDependency] = field(default_factory=list)
+    metadata: AlgorithmMetadata = field(default_factory=AlgorithmMetadata)
     performance_baseline: Optional[Dict[str, float]] = None
     created_at: Optional[datetime] = None
+    min_python_version: str = "3.8"
+    max_python_version: Optional[str] = None
     
     def __post_init__(self):
         if self.created_at is None:
             self.created_at = datetime.now()
+    
+    def is_compatible_with_python(self, python_version: str) -> bool:
+        """检查Python版本兼容性"""
+        try:
+            current_version = pkg_version.parse(python_version)
+            min_version = pkg_version.parse(self.min_python_version)
+            
+            if current_version < min_version:
+                return False
+                
+            if self.max_python_version:
+                max_version = pkg_version.parse(self.max_python_version)
+                if current_version > max_version:
+                    return False
+                    
+            return True
+        except Exception:
+            return False
+    
+    def get_required_dependencies(self) -> List[AlgorithmDependency]:
+        """获取必需的依赖"""
+        return [dep for dep in self.dependencies if dep.dependency_type == DependencyType.REQUIRED]
+    
+    def get_optional_dependencies(self) -> List[AlgorithmDependency]:
+        """获取可选的依赖"""
+        return [dep for dep in self.dependencies if dep.dependency_type == DependencyType.OPTIONAL]
 
 
 class AlgorithmConfig(BaseModel):
@@ -61,9 +132,28 @@ class AlgorithmConfig(BaseModel):
     max_memory_mb: int = Field(default=512, ge=64, le=4096, description="最大内存使用(MB)")
     enable_caching: bool = Field(default=True, description="是否启用缓存")
     debug_mode: bool = Field(default=False, description="调试模式")
+    hot_reload: bool = Field(default=False, description="是否支持热重载")
+    performance_monitoring: bool = Field(default=True, description="是否启用性能监控")
     
     class Config:
         extra = "allow"  # 允许子类添加额外字段
+
+
+class PluginConfig(BaseModel):
+    """插件级配置"""
+    auto_register: bool = Field(default=True, description="是否自动注册")
+    load_on_startup: bool = Field(default=True, description="启动时是否加载")
+    config_file: Optional[str] = Field(default=None, description="独立配置文件路径")
+    enable_monitoring: bool = Field(default=True, description="是否启用监控")
+    health_check_interval: int = Field(default=60, ge=10, description="健康检查间隔(秒)")
+    max_restart_attempts: int = Field(default=3, ge=0, description="最大重启尝试次数")
+    hot_reload: bool = Field(default=False, description="是否支持热重载")
+    
+    @validator('config_file')
+    def validate_config_file(cls, v):
+        if v and not v.endswith(('.json', '.yaml', '.yml', '.toml')):
+            raise ValueError("配置文件必须是 .json, .yaml, .yml 或 .toml 格式")
+        return v
 
 
 class ValidationResult(BaseModel):

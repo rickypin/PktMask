@@ -1,9 +1,9 @@
 """
-去重算法插件实现
+数据包去重算法实现模块
 """
 
-from .hash_based_plugin import HashBasedDeduplicationPlugin
+from .optimized_deduplication_plugin import OptimizedDeduplicationPlugin
 
 __all__ = [
-    'HashBasedDeduplicationPlugin'
+    'OptimizedDeduplicationPlugin'
 ] 
