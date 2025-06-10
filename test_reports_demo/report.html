@@ -3,11 +3,332 @@
   <head>
     <meta charset="utf-8"/>
     <title id="head-title">report.html</title>
-      <link href="assets/style.css" rel="stylesheet" type="text/css"/>
+      <style type="text/css">body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  /* do not increase min-width as some may use split screens */
+  min-width: 800px;
+  color: #999;
+}
+
+h1 {
+  font-size: 24px;
+  color: black;
+}
+
+h2 {
+  font-size: 16px;
+  color: black;
+}
+
+p {
+  color: black;
+}
+
+a {
+  color: #999;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+#environment td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  vertical-align: top;
+}
+#environment tr:nth-child(odd) {
+  background-color: #f6f6f6;
+}
+#environment ul {
+  margin: 0;
+  padding: 0 20px;
+}
+
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed,
+.passed .col-result {
+  color: green;
+}
+
+span.skipped,
+span.xfailed,
+span.rerun,
+.skipped .col-result,
+.xfailed .col-result,
+.rerun .col-result {
+  color: orange;
+}
+
+span.error,
+span.failed,
+span.xpassed,
+.error .col-result,
+.failed .col-result,
+.xpassed .col-result {
+  color: red;
+}
+
+.col-links__extra {
+  margin-right: 3px;
+}
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+#results-table {
+  border: 1px solid #e6e6e6;
+  color: #999;
+  font-size: 12px;
+  width: 100%;
+}
+#results-table th,
+#results-table td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  text-align: left;
+}
+#results-table th {
+  font-weight: bold;
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+.logwrapper {
+  max-height: 230px;
+  overflow-y: scroll;
+  background-color: #e6e6e6;
+}
+.logwrapper.expanded {
+  max-height: none;
+}
+.logwrapper.expanded .logexpander:after {
+  content: "collapse [-]";
+}
+.logwrapper .logexpander {
+  z-index: 1;
+  position: sticky;
+  top: 10px;
+  width: max-content;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 5px 7px;
+  margin: 10px 0 10px calc(100% - 80px);
+  cursor: pointer;
+  background-color: #e6e6e6;
+}
+.logwrapper .logexpander:after {
+  content: "expand [+]";
+}
+.logwrapper .logexpander:hover {
+  color: #000;
+  border-color: #000;
+}
+.logwrapper .log {
+  min-height: 40px;
+  position: relative;
+  top: -50px;
+  height: calc(100% + 50px);
+  border: 1px solid #e6e6e6;
+  color: black;
+  display: block;
+  font-family: "Courier New", Courier, monospace;
+  padding: 5px;
+  padding-right: 80px;
+  white-space: pre-wrap;
+}
+
+div.media {
+  border: 1px solid #e6e6e6;
+  float: right;
+  height: 240px;
+  margin: 0 5px;
+  overflow: hidden;
+  width: 320px;
+}
+
+.media-container {
+  display: grid;
+  grid-template-columns: 25px auto 25px;
+  align-items: center;
+  flex: 1 1;
+  overflow: hidden;
+  height: 200px;
+}
+
+.media-container--fullscreen {
+  grid-template-columns: 0px auto 0px;
+}
+
+.media-container__nav--right,
+.media-container__nav--left {
+  text-align: center;
+  cursor: pointer;
+}
+
+.media-container__viewport {
+  cursor: pointer;
+  text-align: center;
+  height: inherit;
+}
+.media-container__viewport img,
+.media-container__viewport video {
+  object-fit: cover;
+  width: 100%;
+  max-height: 100%;
+}
+
+.media__name,
+.media__counter {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  flex: 0 0 25px;
+  align-items: center;
+}
+
+.collapsible td:not(.col-links) {
+  cursor: pointer;
+}
+.collapsible td:not(.col-links):hover::after {
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.col-result {
+  width: 130px;
+}
+.col-result:hover::after {
+  content: " (hide details)";
+}
+
+.col-result.collapsed:hover::after {
+  content: " (show details)";
+}
+
+#environment-header h2:hover::after {
+  content: " (hide details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#environment-header.collapsed h2:hover::after {
+  content: " (show details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+  cursor: pointer;
+}
+.sortable.desc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: -12.5px;
+  border: 10px solid #4caf50;
+  border-bottom: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+.sortable.asc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: 12.5px;
+  border: 10px solid #4caf50;
+  border-top: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+
+.hidden, .summary__reload__button.hidden {
+  display: none;
+}
+
+.summary__data {
+  flex: 0 0 550px;
+}
+.summary__reload {
+  flex: 1 1;
+  display: flex;
+  justify-content: center;
+}
+.summary__reload__button {
+  flex: 0 0 300px;
+  display: flex;
+  color: white;
+  font-weight: bold;
+  background-color: #4caf50;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.summary__reload__button:hover {
+  background-color: #46a049;
+}
+.summary__spacer {
+  flex: 0 0 550px;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+}
+
+.filters,
+.collapse {
+  display: flex;
+  align-items: center;
+}
+.filters button,
+.collapse button {
+  color: #999;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.filters button:hover,
+.collapse button:hover {
+  color: #ccc;
+}
+
+.filter__label {
+  margin-right: 10px;
+}
+
+      </style>
+    
   </head>
   <body>
     <h1 id="title">report.html</h1>
-    <p>Report generated on 10-Jun-2025 at 14:59:37 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a>
+    <p>Report generated on 10-Jun-2025 at 15:31:46 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a>
         v4.1.1</p>
     <div id="environment-header">
       <h2>Environment</h2>
@@ -61,7 +382,7 @@
         <h2>Summary</h2>
         <div class="additional-summary prefix">
         </div>
-        <p class="run-count">2 tests took 109 ms.</p>
+        <p class="run-count">10 tests took 124 ms.</p>
         <p class="filter">(Un)check the boxes to filter the results.</p>
         <div class="summary__reload">
           <div class="summary__reload__button hidden" onclick="location.reload()">
@@ -71,12 +392,12 @@
         <div class="summary__spacer"></div>
         <div class="controls">
           <div class="filters">
-            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="failed" disabled/>
-            <span class="failed">0 Failed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="failed" />
+            <span class="failed">3 Failed,</span>
             <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="passed" />
-            <span class="passed">2 Passed,</span>
+            <span class="passed">7 Passed,</span>
             <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="skipped" />
-            <span class="skipped">11 Skipped,</span>
+            <span class="skipped">7 Skipped,</span>
             <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xfailed" disabled/>
             <span class="xfailed">0 Expected failures,</span>
             <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xpassed" disabled/>
@@ -108,7 +429,7 @@
     </table>
   </body>
   <footer>
-    <div id="data-container" data-jsonblob="{&#34;environment&#34;: {&#34;Python&#34;: &#34;3.13.3&#34;, &#34;Platform&#34;: &#34;macOS-15.5-arm64-arm-64bit-Mach-O&#34;, &#34;Packages&#34;: {&#34;pytest&#34;: &#34;8.4.0&#34;, &#34;pluggy&#34;: &#34;1.6.0&#34;}, &#34;Plugins&#34;: {&#34;qt&#34;: &#34;4.4.0&#34;, &#34;html&#34;: &#34;4.1.1&#34;, &#34;metadata&#34;: &#34;3.1.1&#34;, &#34;cov&#34;: &#34;6.1.1&#34;}}, &#34;tests&#34;: {&#34;tests/test_integration_phase_7.py::TestPluginSystemIntegration::test_plugin_registry_integration&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_integration_phase_7.py::TestPluginSystemIntegration::test_plugin_registry_integration&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_integration_phase_7.py::TestPluginSystemIntegration::test_plugin_registry_integration&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_integration_phase_7.py&amp;#x27;, 54, &amp;#x27;Skipped: \u63d2\u4ef6\u7cfb\u7edf\u6a21\u5757\u4e0d\u53ef\u7528&amp;#x27;)\n&#34;}], &#34;tests/test_integration_phase_7.py::TestPluginSystemIntegration::test_plugin_discovery_integration&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_integration_phase_7.py::TestPluginSystemIntegration::test_plugin_discovery_integration&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_integration_phase_7.py::TestPluginSystemIntegration::test_plugin_discovery_integration&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_integration_phase_7.py&amp;#x27;, 81, &amp;#x27;Skipped: \u63d2\u4ef6\u53d1\u73b0\u6a21\u5757\u4e0d\u53ef\u7528&amp;#x27;)\n&#34;}], &#34;tests/test_integration_phase_7.py::TestPluginSystemIntegration::test_dynamic_plugin_loading_integration&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_integration_phase_7.py::TestPluginSystemIntegration::test_dynamic_plugin_loading_integration&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_integration_phase_7.py::TestPluginSystemIntegration::test_dynamic_plugin_loading_integration&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_integration_phase_7.py&amp;#x27;, 104, &amp;#x27;Skipped: \u52a8\u6001\u52a0\u8f7d\u6a21\u5757\u4e0d\u53ef\u7528&amp;#x27;)\n&#34;}], &#34;tests/test_integration_phase_7.py::TestConfigurationIntegration::test_config_algorithm_integration&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_integration_phase_7.py::TestConfigurationIntegration::test_config_algorithm_integration&#34;, &#34;duration&#34;: &#34;12 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_integration_phase_7.py::TestConfigurationIntegration::test_config_algorithm_integration&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;12 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_integration_phase_7.py&amp;#x27;, 149, &amp;#x27;Skipped: \u914d\u7f6e\u7cfb\u7edf\u6a21\u5757\u4e0d\u53ef\u7528&amp;#x27;)\n&#34;}], &#34;tests/test_integration_phase_7.py::TestConfigurationIntegration::test_config_hot_reload_integration&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_integration_phase_7.py::TestConfigurationIntegration::test_config_hot_reload_integration&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_integration_phase_7.py::TestConfigurationIntegration::test_config_hot_reload_integration&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_integration_phase_7.py&amp;#x27;, 181, &amp;#x27;Skipped: \u914d\u7f6e\u70ed\u91cd\u8f7d\u6a21\u5757\u4e0d\u53ef\u7528&amp;#x27;)\n&#34;}], &#34;tests/test_integration_phase_7.py::TestDataFlowIntegration::test_statistics_data_integration&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_integration_phase_7.py::TestDataFlowIntegration::test_statistics_data_integration&#34;, &#34;duration&#34;: &#34;81 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_integration_phase_7.py::TestDataFlowIntegration::test_statistics_data_integration&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;81 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_integration_phase_7.py::TestDataFlowIntegration::test_pipeline_event_integration&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_integration_phase_7.py::TestDataFlowIntegration::test_pipeline_event_integration&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_integration_phase_7.py::TestDataFlowIntegration::test_pipeline_event_integration&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_integration_phase_7.py&amp;#x27;, 253, &amp;quot;Skipped: \u7ba1\u9053\u4e8b\u4ef6\u96c6\u6210\u6d4b\u8bd5\u8df3\u8fc7: 2 validation errors for PipelineEventData\\nevent_type\\n  Input should be 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 or 19 [type=enum, input_value=&amp;#x27;step_start&amp;#x27;, input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.11/v/enum\\ndata\\n  Field required [type=missing, input_value={&amp;#x27;event_type&amp;#x27;: &amp;#x27;step_star...ssing IP anonymization&amp;#x27;}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.11/v/missing&amp;quot;)\n&#34;}], &#34;tests/test_integration_phase_7.py::TestErrorHandlingIntegration::test_algorithm_error_handling&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_integration_phase_7.py::TestErrorHandlingIntegration::test_algorithm_error_handling&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_integration_phase_7.py::TestErrorHandlingIntegration::test_algorithm_error_handling&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_integration_phase_7.py&amp;#x27;, 275, &amp;#x27;Skipped: \u7b97\u6cd5\u6ce8\u518c\u8868\u4e0d\u53ef\u7528&amp;#x27;)\n&#34;}], &#34;tests/test_integration_phase_7.py::TestErrorHandlingIntegration::test_config_validation_integration&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_integration_phase_7.py::TestErrorHandlingIntegration::test_config_validation_integration&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_integration_phase_7.py::TestErrorHandlingIntegration::test_config_validation_integration&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_integration_phase_7.py&amp;#x27;, 303, &amp;#x27;Skipped: \u914d\u7f6e\u9a8c\u8bc1\u6a21\u5757\u4e0d\u53ef\u7528&amp;#x27;)\n&#34;}], &#34;tests/test_integration_phase_7.py::TestPerformanceIntegration::test_algorithm_performance_integration&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_integration_phase_7.py::TestPerformanceIntegration::test_algorithm_performance_integration&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_integration_phase_7.py::TestPerformanceIntegration::test_algorithm_performance_integration&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_integration_phase_7.py&amp;#x27;, 338, &amp;#x27;Skipped: \u7b97\u6cd5\u6027\u80fd\u6d4b\u8bd5\u6a21\u5757\u4e0d\u53ef\u7528&amp;#x27;)\n&#34;}], &#34;tests/test_integration_phase_7.py::TestPerformanceIntegration::test_config_loading_performance&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_integration_phase_7.py::TestPerformanceIntegration::test_config_loading_performance&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_integration_phase_7.py::TestPerformanceIntegration::test_config_loading_performance&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_integration_phase_7.py&amp;#x27;, 375, &amp;#x27;Skipped: \u914d\u7f6e\u6027\u80fd\u6d4b\u8bd5\u6a21\u5757\u4e0d\u53ef\u7528&amp;#x27;)\n&#34;}], &#34;tests/test_integration_phase_7.py::TestSystemStabilityIntegration::test_memory_usage_stability&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_integration_phase_7.py::TestSystemStabilityIntegration::test_memory_usage_stability&#34;, &#34;duration&#34;: &#34;12 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_integration_phase_7.py::TestSystemStabilityIntegration::test_memory_usage_stability&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;12 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_integration_phase_7.py::TestSystemStabilityIntegration::test_concurrent_operations_stability&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_integration_phase_7.py::TestSystemStabilityIntegration::test_concurrent_operations_stability&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_integration_phase_7.py::TestSystemStabilityIntegration::test_concurrent_operations_stability&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_integration_phase_7.py&amp;#x27;, 451, &amp;#x27;Skipped: \u5e76\u53d1\u7a33\u5b9a\u6027\u6d4b\u8bd5\u6a21\u5757\u4e0d\u53ef\u7528&amp;#x27;)\n&#34;}]}, &#34;renderCollapsed&#34;: [&#34;passed&#34;], &#34;initialSort&#34;: &#34;result&#34;, &#34;title&#34;: &#34;report.html&#34;}"></div>
+    <div id="data-container" data-jsonblob="{&#34;environment&#34;: {&#34;Python&#34;: &#34;3.13.3&#34;, &#34;Platform&#34;: &#34;macOS-15.5-arm64-arm-64bit-Mach-O&#34;, &#34;Packages&#34;: {&#34;pytest&#34;: &#34;8.4.0&#34;, &#34;pluggy&#34;: &#34;1.6.0&#34;}, &#34;Plugins&#34;: {&#34;html&#34;: &#34;4.1.1&#34;, &#34;metadata&#34;: &#34;3.1.1&#34;, &#34;cov&#34;: &#34;6.1.1&#34;}}, &#34;tests&#34;: {&#34;tests/test_basic_phase_7.py::TestPhase7BasicFunctionality::test_project_structure_exists&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7BasicFunctionality::test_project_structure_exists&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7BasicFunctionality::test_project_structure_exists&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_basic_phase_7.TestPhase7BasicFunctionality object at 0x102a3cb90&amp;gt;\n\n    def test_project_structure_exists(self):\n        &amp;quot;&amp;quot;&amp;quot;\u6d4b\u8bd5\u9879\u76ee\u57fa\u7840\u7ed3\u6784\u5b58\u5728&amp;quot;&amp;quot;&amp;quot;\n        project_root = Path(__file__).parent.parent\n        src_dir = project_root / &amp;quot;src&amp;quot; / &amp;quot;pktmask&amp;quot;\n    \n        # \u9a8c\u8bc1\u4e3b\u8981\u76ee\u5f55\u5b58\u5728\n        assert src_dir.exists(), &amp;quot;src/pktmask \u76ee\u5f55\u5e94\u8be5\u5b58\u5728&amp;quot;\n        assert (src_dir / &amp;quot;gui&amp;quot;).exists(), &amp;quot;GUI\u76ee\u5f55\u5e94\u8be5\u5b58\u5728&amp;quot;\n&amp;gt;       assert (src_dir / &amp;quot;algorithms&amp;quot;).exists(), &amp;quot;\u7b97\u6cd5\u76ee\u5f55\u5e94\u8be5\u5b58\u5728&amp;quot;\nE       AssertionError: \u7b97\u6cd5\u76ee\u5f55\u5e94\u8be5\u5b58\u5728\nE       assert False\nE        +  where False = exists()\nE        +    where exists = (PosixPath(&amp;#x27;/Users/ricky/Downloads/PktMask/src/pktmask&amp;#x27;) / &amp;#x27;algorithms&amp;#x27;).exists\n\ntests/test_basic_phase_7.py:29: AssertionError\n&#34;}], &#34;tests/test_basic_phase_7.py::TestPhase7BasicFunctionality::test_manager_files_exist&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7BasicFunctionality::test_manager_files_exist&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7BasicFunctionality::test_manager_files_exist&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic_phase_7.py::TestPhase7BasicFunctionality::test_algorithm_interfaces_exist&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7BasicFunctionality::test_algorithm_interfaces_exist&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7BasicFunctionality::test_algorithm_interfaces_exist&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_basic_phase_7.TestPhase7BasicFunctionality object at 0x102d55ba0&amp;gt;\n\n    def test_algorithm_interfaces_exist(self):\n        &amp;quot;&amp;quot;&amp;quot;\u6d4b\u8bd5\u7b97\u6cd5\u63a5\u53e3\u5b58\u5728&amp;quot;&amp;quot;&amp;quot;\n        interfaces_dir = Path(__file__).parent.parent / &amp;quot;src&amp;quot; / &amp;quot;pktmask&amp;quot; / &amp;quot;algorithms&amp;quot; / &amp;quot;interfaces&amp;quot;\n    \n        expected_interfaces = [\n            &amp;quot;algorithm_interface.py&amp;quot;,\n            &amp;quot;ip_anonymization_interface.py&amp;quot;,\n            &amp;quot;deduplication_interface.py&amp;quot;,\n            &amp;quot;packet_processing_interface.py&amp;quot;\n        ]\n    \n        for interface_file in expected_interfaces:\n            interface_path = interfaces_dir / interface_file\n&amp;gt;           assert interface_path.exists(), f&amp;quot;\u7b97\u6cd5\u63a5\u53e3 {interface_file} \u5e94\u8be5\u5b58\u5728&amp;quot;\nE           AssertionError: \u7b97\u6cd5\u63a5\u53e3 algorithm_interface.py \u5e94\u8be5\u5b58\u5728\nE           assert False\nE            +  where False = exists()\nE            +    where exists = PosixPath(&amp;#x27;/Users/ricky/Downloads/PktMask/src/pktmask/algorithms/interfaces/algorithm_interface.py&amp;#x27;).exists\n\ntests/test_basic_phase_7.py:62: AssertionError\n&#34;}], &#34;tests/test_basic_phase_7.py::TestPhase7BasicFunctionality::test_config_modules_exist&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Failed&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7BasicFunctionality::test_config_modules_exist&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Failed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7BasicFunctionality::test_config_modules_exist&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;self = &amp;lt;test_basic_phase_7.TestPhase7BasicFunctionality object at 0x102d55e00&amp;gt;\n\n    def test_config_modules_exist(self):\n        &amp;quot;&amp;quot;&amp;quot;\u6d4b\u8bd5\u914d\u7f6e\u6a21\u5757\u5b58\u5728&amp;quot;&amp;quot;&amp;quot;\n        config_dir = Path(__file__).parent.parent / &amp;quot;src&amp;quot; / &amp;quot;pktmask&amp;quot; / &amp;quot;config&amp;quot;\n    \n        expected_configs = [\n            &amp;quot;models.py&amp;quot;,\n            &amp;quot;algorithm_configs.py&amp;quot;,\n            &amp;quot;config_manager.py&amp;quot;\n        ]\n    \n        for config_file in expected_configs:\n            config_path = config_dir / config_file\n&amp;gt;           assert config_path.exists(), f&amp;quot;\u914d\u7f6e\u6587\u4ef6 {config_file} \u5e94\u8be5\u5b58\u5728&amp;quot;\nE           AssertionError: \u914d\u7f6e\u6587\u4ef6 models.py \u5e94\u8be5\u5b58\u5728\nE           assert False\nE            +  where False = exists()\nE            +    where exists = PosixPath(&amp;#x27;/Users/ricky/Downloads/PktMask/src/pktmask/config/models.py&amp;#x27;).exists\n\ntests/test_basic_phase_7.py:76: AssertionError\n&#34;}], &#34;tests/test_basic_phase_7.py::TestPhase7BasicFunctionality::test_data_models_exist&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7BasicFunctionality::test_data_models_exist&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7BasicFunctionality::test_data_models_exist&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic_phase_7.py::TestPhase7ModuleImports::test_import_basic_modules&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7ModuleImports::test_import_basic_modules&#34;, &#34;duration&#34;: &#34;14 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7ModuleImports::test_import_basic_modules&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;14 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_basic_phase_7.py&amp;#x27;, 109, &amp;quot;Skipped: \u8df3\u8fc7\u5bfc\u5165\u6d4b\u8bd5\uff0c\u56e0\u4e3a\u6a21\u5757\u4e0d\u53ef\u7528: cannot import name &amp;#x27;models&amp;#x27; from &amp;#x27;pktmask.config&amp;#x27; (/Users/ricky/Downloads/PktMask/src/pktmask/config/__init__.py)&amp;quot;)\n&#34;}], &#34;tests/test_basic_phase_7.py::TestPhase7ModuleImports::test_import_algorithm_registry&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7ModuleImports::test_import_algorithm_registry&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7ModuleImports::test_import_algorithm_registry&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_basic_phase_7.py&amp;#x27;, 118, &amp;quot;Skipped: \u8df3\u8fc7\u7b97\u6cd5\u6ce8\u518c\u8868\u6d4b\u8bd5\uff0c\u56e0\u4e3a\u6a21\u5757\u4e0d\u53ef\u7528: No module named &amp;#x27;pktmask.algorithms&amp;#x27;&amp;quot;)\n&#34;}], &#34;tests/test_basic_phase_7.py::TestPhase7ModuleImports::test_import_data_models&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7ModuleImports::test_import_data_models&#34;, &#34;duration&#34;: &#34;105 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7ModuleImports::test_import_data_models&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;105 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic_phase_7.py::TestPhase7ConfigSystem::test_algorithm_configs_basic&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7ConfigSystem::test_algorithm_configs_basic&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7ConfigSystem::test_algorithm_configs_basic&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_basic_phase_7.py&amp;#x27;, 146, &amp;#x27;Skipped: \u7b97\u6cd5\u914d\u7f6e\u6a21\u5757\u4e0d\u53ef\u7528&amp;#x27;)\n&#34;}], &#34;tests/test_basic_phase_7.py::TestPhase7ConfigSystem::test_config_manager_basic&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7ConfigSystem::test_config_manager_basic&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7ConfigSystem::test_config_manager_basic&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_basic_phase_7.py&amp;#x27;, 162, &amp;#x27;Skipped: \u914d\u7f6e\u7ba1\u7406\u5668\u6a21\u5757\u4e0d\u53ef\u7528&amp;#x27;)\n&#34;}], &#34;tests/test_basic_phase_7.py::TestPhase7AlgorithmSystem::test_algorithm_registry_basic&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7AlgorithmSystem::test_algorithm_registry_basic&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7AlgorithmSystem::test_algorithm_registry_basic&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_basic_phase_7.py&amp;#x27;, 181, &amp;#x27;Skipped: \u7b97\u6cd5\u6ce8\u518c\u8868\u6a21\u5757\u4e0d\u53ef\u7528&amp;#x27;)\n&#34;}], &#34;tests/test_basic_phase_7.py::TestPhase7AlgorithmSystem::test_plugin_discovery_basic&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7AlgorithmSystem::test_plugin_discovery_basic&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7AlgorithmSystem::test_plugin_discovery_basic&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_basic_phase_7.py&amp;#x27;, 194, &amp;#x27;Skipped: \u63d2\u4ef6\u53d1\u73b0\u6a21\u5757\u4e0d\u53ef\u7528&amp;#x27;)\n&#34;}], &#34;tests/test_basic_phase_7.py::TestPhase7DataModels::test_statistics_data_basic&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7DataModels::test_statistics_data_basic&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7DataModels::test_statistics_data_basic&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic_phase_7.py::TestPhase7DataModels::test_pipeline_event_data_basic&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Skipped&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7DataModels::test_pipeline_event_data_basic&#34;, &#34;duration&#34;: &#34;1 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Skipped&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7DataModels::test_pipeline_event_data_basic&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;1 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;(&amp;#x27;/Users/ricky/Downloads/PktMask/tests/test_basic_phase_7.py&amp;#x27;, 239, &amp;quot;Skipped: \u7ba1\u9053\u4e8b\u4ef6\u6570\u636e\u6d4b\u8bd5\u8df3\u8fc7: 2 validation errors for PipelineEventData\\nevent_type\\n  Input should be 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 or 19 [type=enum, input_value=&amp;#x27;test&amp;#x27;, input_type=str]\\n    For further information visit https://errors.pydantic.dev/2.11/v/enum\\ndata\\n  Field required [type=missing, input_value={&amp;#x27;event_type&amp;#x27;: &amp;#x27;test&amp;#x27;, &amp;#x27;s...essage&amp;#x27;: &amp;#x27;Test message&amp;#x27;}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.11/v/missing&amp;quot;)\n&#34;}], &#34;tests/test_basic_phase_7.py::TestPhase7TestingInfrastructure::test_pytest_working&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7TestingInfrastructure::test_pytest_working&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7TestingInfrastructure::test_pytest_working&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic_phase_7.py::TestPhase7TestingInfrastructure::test_mocking_available&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7TestingInfrastructure::test_mocking_available&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7TestingInfrastructure::test_mocking_available&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_basic_phase_7.py::TestPhase7TestingInfrastructure::test_tempfile_working&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_basic_phase_7.py::TestPhase7TestingInfrastructure::test_tempfile_working&#34;, &#34;duration&#34;: &#34;0 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_basic_phase_7.py::TestPhase7TestingInfrastructure::test_tempfile_working&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;0 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}]}, &#34;renderCollapsed&#34;: [&#34;passed&#34;], &#34;initialSort&#34;: &#34;result&#34;, &#34;title&#34;: &#34;report.html&#34;}"></div>
     <script>
       (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 const { getCollapsedCategory, setCollapsedIds } = require('./storage.js')

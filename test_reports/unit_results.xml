@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="1.460" timestamp="2025-06-10T14:59:35.043946+08:00" hostname="Rickys-MacBook-Air.local"><testcase classname="" name="tests.test_config_system" time="0.000"><error message="collection failure">ImportError while importing test module '/Users/ricky/Downloads/PktMask/tests/test_config_system.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/homebrew/Cellar/python@3.13/3.13.3/Frameworks/Python.framework/Versions/3.13/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_config_system.py:19: in &lt;module&gt;
+    from pktmask.config.app_config import AppConfig
+E   ModuleNotFoundError: No module named 'pktmask.config.app_config'</error></testcase></testsuite></testsuites>
