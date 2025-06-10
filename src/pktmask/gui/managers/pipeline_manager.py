@@ -350,26 +350,34 @@ class PipelineManager:
             self._logger.error(f"生成最终报告时发生错误: {e}")
     
     def _build_pipeline_steps(self) -> list:
-        """构建处理步骤列表"""
-        steps = []
+        """构建处理步骤列表 - 使用新的处理器系统"""
+        from ...core.processors import ProcessorRegistry, ProcessorConfig, adapt_processors_to_pipeline
         
-        # 根据复选框状态添加步骤
+        processors = []
+        
+        # 根据复选框状态添加处理器
         if self.main_window.mask_ip_cb.isChecked():
-            step = get_step_instance('mask_ip')
-            steps.append(step)
-            self._logger.debug("添加IP掩码步骤")
+            config = ProcessorConfig(enabled=True, name='mask_ip', priority=1)
+            processor = ProcessorRegistry.get_processor('mask_ip', config)
+            processors.append(processor)
+            self._logger.debug("添加IP匿名化处理器")
         
         if self.main_window.dedup_packet_cb.isChecked():
-            step = get_step_instance('dedup_packet')
-            steps.append(step)
-            self._logger.debug("添加去重步骤")
+            config = ProcessorConfig(enabled=True, name='dedup_packet', priority=2)
+            processor = ProcessorRegistry.get_processor('dedup_packet', config)
+            processors.append(processor)
+            self._logger.debug("添加去重处理器")
         
         if self.main_window.trim_packet_cb.isChecked():
-            step = get_step_instance('trim_packet')
-            steps.append(step)
-            self._logger.debug("添加裁切步骤")
+            config = ProcessorConfig(enabled=True, name='trim_packet', priority=3)
+            processor = ProcessorRegistry.get_processor('trim_packet', config)
+            processors.append(processor)
+            self._logger.debug("添加裁切处理器")
         
         # 注意：web_focused暂未实现
         
-        # 这里已经移除重复的日志 - 调用者负责记录
+        # 将处理器转换为管道步骤（通过适配器）
+        steps = adapt_processors_to_pipeline(processors)
+        self._logger.info(f"成功适配 {len(steps)} 个处理器为管道步骤")
+        
         return steps 

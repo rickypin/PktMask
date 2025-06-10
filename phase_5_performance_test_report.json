@@ -1,0 +1,53 @@
+{
+  "start_time": 1749527528.417102,
+  "tests": {
+    "processing_speed": {
+      "small": {
+        "file_size_mb": 2.272735595703125,
+        "processors": {
+          "mask_ip": {
+            "success": false,
+            "error": "IP匿名化处理失败: Not a supported capture file"
+          },
+          "dedup_packet": {
+            "success": false,
+            "error": "去重处理失败: Not a supported capture file"
+          },
+          "trim_packet": {
+            "success": false,
+            "error": "裁切处理失败: Not a supported capture file"
+          }
+        }
+      },
+      "large": {
+        "file_size_mb": 395.52569675445557,
+        "processors": {
+          "mask_ip": {
+            "time": 453.8991689682007,
+            "throughput": 0.8713955076268609,
+            "success": true
+          },
+          "dedup_packet": {
+            "time": 230.51556777954102,
+            "throughput": 1.715830737873313,
+            "success": true
+          },
+          "trim_packet": {
+            "time": 349.03148674964905,
+            "throughput": 1.133209213981762,
+            "success": true
+          }
+        }
+      }
+    }
+  },
+  "summary": {
+    "overall_status": "PASS",
+    "tests_run": 1,
+    "performance_metrics": {
+      "average_throughput_mbps": 1.2401451531606453
+    }
+  },
+  "end_time": 1749531427.413165,
+  "total_time": 3898.9960629940033
+}

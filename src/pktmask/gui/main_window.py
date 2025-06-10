@@ -29,7 +29,7 @@ from pktmask.utils.path import resource_path
 from pktmask.common.constants import UIConstants, FormatConstants, SystemConstants, PROCESS_DISPLAY_NAMES
 from pktmask.utils import current_timestamp, format_milliseconds_to_time, open_directory_in_system, current_time
 from pktmask.infrastructure.logging import get_logger
-from pktmask.config import get_config_manager
+from pktmask.config import get_app_config
 from .stylesheet import generate_stylesheet
 
 # PROCESS_DISPLAY_NAMES 已移至 common.constants
@@ -94,11 +94,9 @@ class MainWindow(QMainWindow):
         self._logger = get_logger('main_window')
         
         # 初始化配置管理器
-        self.config_manager = get_config_manager()
-        self.config = self.config_manager.config
+        self.config = get_app_config()
         
-        # 注册配置变更回调
-        self.config_manager.register_change_callback(self._on_config_changed)
+        # 注册配置变更回调 (简化版本暂时移除复杂的回调机制)
         
         # 基本属性
         self.base_dir: Optional[str] = None
@@ -106,7 +104,7 @@ class MainWindow(QMainWindow):
         self.current_output_dir: Optional[str] = None  # 新增：当前处理的输出目录
         
         # 使用配置中的目录设置
-        self.last_opened_dir = self.config.file.default_input_dir or os.path.join(os.path.expanduser("~"), "Desktop")
+        self.last_opened_dir = self.config.ui.last_input_dir or os.path.join(os.path.expanduser("~"), "Desktop")
         self.allowed_root = os.path.expanduser("~")
         
         # 时间相关属性（由PipelineManager管理，但需要在这里声明以保持兼容性）
@@ -286,25 +284,22 @@ class MainWindow(QMainWindow):
     def save_window_state(self):
         """保存窗口状态到配置"""
         current_size = self.size()
-        self.config_manager.update_ui_config(
-            window_width=current_size.width(),
-            window_height=current_size.height()
-        )
+        self.config.ui.window_width = current_size.width()
+        self.config.ui.window_height = current_size.height()
+        self.config.save()
     
     def save_user_preferences(self):
         """保存用户偏好设置"""
         # 保存处理选项的默认状态
-        self.config_manager.update_ui_config(
-            default_dedup=self.dedup_packet_cb.isChecked(),
-            default_mask_ip=self.mask_ip_cb.isChecked(),
-            default_trim=self.trim_packet_cb.isChecked()
-        )
+        self.config.ui.default_dedup = self.dedup_packet_cb.isChecked()
+        self.config.ui.default_mask_ip = self.mask_ip_cb.isChecked()
+        self.config.ui.default_trim = self.trim_packet_cb.isChecked()
         
         # 保存最后使用的目录
         if self.base_dir and self.config.ui.remember_last_dir:
-            self.config_manager.update_file_config(
-                default_input_dir=self.base_dir
-            )
+            self.config.ui.last_input_dir = self.base_dir
+            
+        self.config.save()
     
     def closeEvent(self, event):
         """窗口关闭事件"""
@@ -321,8 +316,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'event_coordinator'):
             self.event_coordinator.shutdown()
         
-        # 取消注册配置回调
-        self.config_manager.unregister_change_callback(self._on_config_changed)
+        # 取消注册配置回调 (简化版本暂时移除)
         
         event.accept()
 

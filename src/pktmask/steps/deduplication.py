@@ -23,7 +23,7 @@ def process_file_dedup(file_path, error_log):
     total_count = 0
     try:
         ext = os.path.splitext(file_path)[1].lower()
-        if ext == FileExtension.PCAP.value:
+        if ext == ".pcap":
             reader_cls = PcapReader
         elif ext == ".pcapng":
             reader_cls = PcapNgReader

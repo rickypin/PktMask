@@ -1,0 +1,144 @@
+{
+  "start_time": 1749532548.84021,
+  "tests": {
+    "add_new_processors": {
+      "registration": {
+        "success": true,
+        "registered_count": 2,
+        "total_processors": 2
+      },
+      "processor_creation": {
+        "web_focused": {
+          "creation": true,
+          "display_name": "Web-Focused Traffic",
+          "type_correct": true
+        },
+        "protocol_analyzer": {
+          "creation": true,
+          "display_name": "Protocol Analyzer",
+          "type_correct": true
+        }
+      }
+    },
+    "registry_extension": {
+      "registry_state": {
+        "total_processors": 5,
+        "original_processors_intact": true,
+        "new_processors_registered": true,
+        "processor_list": [
+          "web_focused",
+          "protocol_analyzer",
+          "mask_ip",
+          "dedup_packet",
+          "trim_packet"
+        ]
+      },
+      "batch_retrieval": {
+        "success": true,
+        "processors_tested": 4,
+        "results": {
+          "mask_ip": {
+            "success": true,
+            "display_name": "Mask IPs"
+          },
+          "dedup_packet": {
+            "success": true,
+            "display_name": "Remove Dupes"
+          },
+          "web_focused": {
+            "success": true,
+            "display_name": "Web-Focused Traffic"
+          },
+          "protocol_analyzer": {
+            "success": true,
+            "display_name": "Protocol Analyzer"
+          }
+        }
+      }
+    },
+    "combined_processing": {
+      "scenario_1": {
+        "success": true,
+        "step1_stats": {
+          "original_ips": 2,
+          "anonymized_ips": 2,
+          "total_packets": 95,
+          "anonymized_packets": 95,
+          "ip_mappings": {
+            "10.144.215.133": "8.151.219.133",
+            "11.193.209.97": "7.206.194.97"
+          },
+          "anonymization_rate": 100.0
+        },
+        "step2_stats": {
+          "web_packets": 500,
+          "http_packets": 300,
+          "https_packets": 200,
+          "other_packets": 1000,
+          "filtered_count": 500,
+          "filter_rate": 33.3
+        },
+        "processing_mode": "real_processing"
+      },
+      "scenario_2": {
+        "success": true,
+        "step1_stats": {
+          "duplicates_removed": 5,
+          "unique_packets": 95
+        },
+        "step2_stats": {
+          "tcp_packets": 80,
+          "udp_packets": 15
+        },
+        "processing_mode": "simulated_for_extensibility"
+      },
+      "scenario_3": {
+        "success": true,
+        "processors_created": 3,
+        "processor_names": [
+          "Mask IPs",
+          "Remove Dupes",
+          "Web-Focused Traffic"
+        ],
+        "processing_mode": "architecture_validation"
+      },
+      "scenario_4": {
+        "success": true,
+        "total_processors": 6,
+        "new_processor_registered": true,
+        "extensibility_validated": true
+      }
+    },
+    "architecture_stability": {
+      "duplicate_registration": {
+        "success": true,
+        "count_unchanged": true,
+        "handled_gracefully": true
+      },
+      "invalid_processor": {
+        "success": true,
+        "error_handling": "正确抛出异常"
+      },
+      "memory_stability": {
+        "success": true,
+        "initial_memory_mb": 81.5,
+        "final_memory_mb": 81.5,
+        "memory_growth_mb": 0.0,
+        "memory_stable": true
+      }
+    }
+  },
+  "summary": {
+    "overall_status": "PARTIAL",
+    "tests_run": 4,
+    "extensibility_metrics": {
+      "total_tests": 11,
+      "passed_tests": 9,
+      "success_rate": 81.81818181818183,
+      "new_processors_added": 2,
+      "total_processors_after_extension": 6
+    }
+  },
+  "end_time": 1749532548.938838,
+  "total_time": 0.09862804412841797
+}

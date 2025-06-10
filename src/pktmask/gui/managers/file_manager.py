@@ -78,7 +78,7 @@ class FileManager:
         timestamp = current_timestamp()
         
         # 使用配置中的输出目录模式
-        output_pattern = self.config.file.output_dir_pattern
+        output_pattern = self.config.ui.output_dir_pattern
         output_name = output_pattern.format(timestamp=timestamp)
         
         if self.main_window.output_dir:
@@ -86,8 +86,8 @@ class FileManager:
             actual_path = os.path.join(self.main_window.output_dir, output_name)
         else:
             # 默认输出目录
-            if self.config.file.default_output_dir:
-                actual_path = os.path.join(self.config.file.default_output_dir, output_name)
+            if self.config.ui.default_output_dir:
+                actual_path = os.path.join(self.config.ui.default_output_dir, output_name)
             else:
                 # 使用输入目录的子目录
                 actual_path = os.path.join(self.main_window.base_dir, output_name)

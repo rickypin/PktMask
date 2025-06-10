@@ -230,6 +230,14 @@ class ReportManager:
     
     def _generate_global_ip_mappings_report(self, separator_length: int, is_partial: bool = False) -> Optional[str]:
         """生成全局IP映射报告"""
+        # 首先检查是否有IP匿名化处理
+        if not self.main_window.mask_ip_cb.isChecked():
+            return None
+            
+        # 检查是否有全局IP映射数据
+        if not self.main_window.global_ip_mappings:
+            return None
+        
         # 检查是否有完全完成的文件
         has_completed_files = False
         for filename, file_result in self.main_window.file_processing_results.items():
@@ -332,7 +340,7 @@ class ReportManager:
                 step_type = step_result['type']
                 data = step_result['data']
                 
-                if step_type == 'mask_ip':
+                if step_type in ['mask_ip', 'mask_ips']:  # 修复：支持两种命名格式
                     # 使用新的IP统计数据
                     original_ips = data.get('original_ips', 0)
                     masked_ips = data.get('anonymized_ips', 0)
@@ -349,7 +357,7 @@ class ReportManager:
                     rate = (removed / total_before * 100) if total_before > 0 else 0
                     line = f"  🔄 {step_name:<18} | Unique Pkts: {unique:>4} | Removed Pkts: {removed:>4} | Rate: {rate:5.1f}%"
                 
-                elif step_type == 'intelligent_trim':
+                elif step_type in ['intelligent_trim', 'trim_payloads']:  # 修复：支持两种命名格式
                     total = data.get('total_packets', 0)
                     trimmed = data.get('trimmed_packets', 0)
                     full_pkts = total - trimmed
@@ -409,6 +417,14 @@ class ReportManager:
         completion_report += f"{'='*separator_length}\n"
         
         self.main_window.summary_text.append(completion_report)
+        
+        # 修复：添加全局IP映射汇总报告（多文件处理时显示去重的全局IP映射）
+        global_ip_report = self._generate_global_ip_mappings_report(separator_length, is_partial=False)
+        if global_ip_report:
+            self.main_window.summary_text.append(global_ip_report)
+        
+        # 修复：处理完成后自动保存Summary Report到输出目录
+        self._save_summary_report_to_output()
 
     def set_final_summary_report(self, report: dict):
         """设置最终的汇总报告，包括详细的IP映射信息。"""
@@ -675,6 +691,19 @@ class ReportManager:
         except Exception as e:
             self._logger.error(f"导出摘要报告失败: {e}")
             return False
+    
+    def _save_summary_report_to_output(self):
+        """私有方法：保存摘要报告到输出目录"""
+        try:
+            # 委托给FileManager或使用MainWindow的现有方法
+            if hasattr(self.main_window, 'save_summary_report_to_output_dir'):
+                self.main_window.save_summary_report_to_output_dir()
+            elif hasattr(self.main_window, 'file_manager'):
+                self.main_window.file_manager.save_summary_report_to_output_dir()
+            else:
+                self._logger.warning("无法找到保存Summary Report的方法")
+        except Exception as e:
+            self._logger.error(f"保存Summary Report到输出目录失败: {e}")
 
     def collect_step_result(self, data: dict):
         """收集每个步骤的处理结果，但不立即显示"""
@@ -690,11 +719,13 @@ class ReportManager:
                     self.set_final_summary_report(report_data)
             return
         
-        # 标准化步骤名称
+        # 标准化步骤名称 - 修复Pipeline和ReportManager之间的映射不匹配
         step_display_names = {
             'mask_ip': 'IP Masking',
+            'mask_ips': 'IP Masking',  # 修复：Pipeline发送的是复数形式
             'remove_dupes': 'Deduplication', 
-            'intelligent_trim': 'Payload Trimming'
+            'intelligent_trim': 'Payload Trimming',
+            'trim_payloads': 'Payload Trimming'  # 修复：Pipeline发送的是trim_payloads
         }
         
         step_name = step_display_names.get(step_type, step_type)
@@ -706,7 +737,7 @@ class ReportManager:
         }
         
         # 如果是IP匿名化步骤，提取文件级别的IP映射
-        if step_type == 'mask_ip' and 'file_ip_mappings' in data:
+        if step_type in ['mask_ip', 'mask_ips'] and 'file_ip_mappings' in data:
             if not hasattr(self.main_window, '_current_file_ips'):
                 self.main_window._current_file_ips = {}
             self.main_window._current_file_ips[self.main_window.current_processing_file] = data['file_ip_mappings']

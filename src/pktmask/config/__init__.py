@@ -2,25 +2,42 @@
 # -*- coding: utf-8 -*-
 
 """
-配置管理模块
-提供统一的应用程序配置管理功能
+简化的配置管理模块
+
+替代复杂的企业级配置系统，提供简单直观的配置管理功能。
 """
 
-from .models import PktMaskConfig, UIConfig, ProcessingConfig, PerformanceConfig, FileConfig
-from .manager import ConfigManager, get_config_manager, get_config, update_config
-from .validators import ConfigValidator
-from .loader import ConfigLoader
+from .settings import (
+    AppConfig, UISettings, ProcessingSettings, LoggingSettings,
+    get_app_config, reload_app_config, save_app_config
+)
+from .defaults import (
+    DEFAULT_UI_CONFIG, DEFAULT_PROCESSING_CONFIG, DEFAULT_LOGGING_CONFIG,
+    get_default_config_dict, get_processor_config,
+    is_valid_theme, is_valid_log_level, is_valid_dedup_algorithm
+)
 
 __all__ = [
-    'PktMaskConfig',
-    'UIConfig', 
-    'ProcessingConfig',
-    'PerformanceConfig',
-    'FileConfig',
-    'ConfigManager',
-    'ConfigValidator',
-    'ConfigLoader',
-    'get_config_manager',
-    'get_config',
-    'update_config'
+    # 主要配置类
+    'AppConfig',
+    'UISettings', 
+    'ProcessingSettings',
+    'LoggingSettings',
+    
+    # 全局配置管理
+    'get_app_config',
+    'reload_app_config', 
+    'save_app_config',
+    
+    # 默认值和常量
+    'DEFAULT_UI_CONFIG',
+    'DEFAULT_PROCESSING_CONFIG',
+    'DEFAULT_LOGGING_CONFIG',
+    'get_default_config_dict',
+    'get_processor_config',
+    
+    # 验证函数
+    'is_valid_theme',
+    'is_valid_log_level',
+    'is_valid_dedup_algorithm'
 ] 
