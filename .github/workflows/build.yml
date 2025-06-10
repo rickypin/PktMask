@@ -48,6 +48,110 @@ jobs:
         pyinstaller PktMask.spec
         ls dist
 
+    - name: Sign macOS App (if certificates available)
+      if: matrix.os == 'macos-latest'
+      env:
+        MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+        MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+        MACOS_CERTIFICATE_NAME: ${{ secrets.MACOS_CERTIFICATE_NAME }}
+        MACOS_CI_KEYCHAIN_PWD: ${{ secrets.MACOS_CI_KEYCHAIN_PWD }}
+      run: |
+        if [ "$MACOS_CERTIFICATE" != "" ]; then
+          echo "Certificates available, proceeding with code signing..."
+          
+          echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
+          
+          security create-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+          
+          security import certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" build.keychain
+          
+          find dist/PktMask.app -name "*.so" -exec codesign --force --verify --verbose --sign "$MACOS_CERTIFICATE_NAME" {} \;
+          find dist/PktMask.app -name "*.dylib" -exec codesign --force --verify --verbose --sign "$MACOS_CERTIFICATE_NAME" {} \;
+          codesign --force --options=runtime --verify --verbose --sign "$MACOS_CERTIFICATE_NAME" dist/PktMask.app/Contents/MacOS/*
+          codesign --force --options=runtime --verify --verbose --sign "$MACOS_CERTIFICATE_NAME" dist/PktMask.app
+          
+          codesign --verify --deep --strict --verbose=2 dist/PktMask.app
+          spctl -a -t exec -vv dist/PktMask.app
+          
+          echo "Code signing completed successfully"
+          
+          pip install dmgbuild
+          dmgbuild -s dmg_settings.py "PktMask" dist/PktMask-Signed.dmg
+          
+          echo "SIGNED_BUILD=true" >> $GITHUB_ENV
+        else
+          echo "No certificates found, creating unsigned build..."
+          echo "SIGNED_BUILD=false" >> $GITHUB_ENV
+        fi
+
+    - name: Create DMG settings
+      if: matrix.os == 'macos-latest' && env.SIGNED_BUILD == 'true'
+      run: |
+        cat > dmg_settings.py << 'EOF'
+        import os
+        
+        application = 'dist/PktMask.app'
+        
+        format = 'UDZO'
+        size = '500M'
+        files = [application]
+        symlinks = {'Applications': '/Applications'}
+        
+        background = None
+        show_status_bar = False
+        show_tab_view = False
+        show_toolbar = False
+        show_pathbar = False
+        show_sidebar = False
+        sidebar_width = 180
+        
+        window_rect = ((100, 100), (600, 400))
+        
+        icon_locations = {
+            'PktMask.app': (150, 200),
+            'Applications': (450, 200)
+        }
+        EOF
+
+    - name: Create usage instructions for unsigned macOS build
+      if: matrix.os == 'macos-latest' && env.SIGNED_BUILD == 'false'
+      run: |
+        cat > dist/MACOS_INSTALLATION_INSTRUCTIONS.txt << 'EOF'
+        PktMask macOS 安装说明
+        ======================
+        
+        由于此版本未进行代码签名，您需要按照以下步骤来运行应用：
+        
+        方法一：通过系统偏好设置允许应用运行
+        1. 解压下载的zip文件
+        2. 将PktMask文件夹移动到您希望的位置（如Applications文件夹）
+        3. 双击PktMask可执行文件
+        4. 如果出现安全警告，点击"取消"
+        5. 打开"系统偏好设置" -> "安全性与隐私" -> "通用"选项卡
+        6. 在底部找到关于PktMask的消息，点击"仍要打开"
+        7. 在确认对话框中点击"打开"
+        
+        方法二：通过终端绕过安全检查
+        1. 解压下载的zip文件
+        2. 打开终端（Terminal）
+        3. 输入以下命令来移除隔离属性：
+           xattr -dr com.apple.quarantine /path/to/PktMask
+           （将/path/to/PktMask替换为实际的PktMask文件夹路径）
+        4. 现在可以正常运行PktMask了
+        
+        方法三：使用右键菜单
+        1. 解压下载的zip文件
+        2. 在Finder中找到PktMask可执行文件
+        3. 按住Control键并点击文件（或右键点击）
+        4. 选择"打开"
+        5. 在警告对话框中点击"打开"
+        
+        注意：这些方法仅适用于您信任此应用程序。PktMask是开源软件，您可以在GitHub上查看源代码。
+        EOF
+
     - name: Upload Windows Artifact
       if: matrix.os == 'windows-latest'
       uses: actions/upload-artifact@v4
@@ -55,12 +159,21 @@ jobs:
         name: PktMask-Windows
         path: dist/PktMask/**
 
-    - name: Upload macOS Artifact
-      if: matrix.os == 'macos-latest'
+    - name: Upload macOS Signed Artifact
+      if: matrix.os == 'macos-latest' && env.SIGNED_BUILD == 'true'
       uses: actions/upload-artifact@v4
       with:
-        name: PktMask-macOS
-        path: dist/PktMask/**
+        name: PktMask-macOS-Signed
+        path: dist/PktMask-Signed.dmg
+
+    - name: Upload macOS Unsigned Artifact
+      if: matrix.os == 'macos-latest' && env.SIGNED_BUILD == 'false'
+      uses: actions/upload-artifact@v4
+      with:
+        name: PktMask-macOS-Unsigned
+        path: |
+          dist/PktMask/**
+          dist/MACOS_INSTALLATION_INSTRUCTIONS.txt
 
   release:
     needs: build
@@ -73,19 +186,69 @@ jobs:
           path: ./artifacts
       - name: List artifacts
         run: ls -R ./artifacts
+      
       - name: Zip Windows App
         run: |
           cd ./artifacts/PktMask-Windows
           zip -r ../../PktMask-Windows.zip .
-      - name: Zip macOS App
+      
+      - name: Prepare macOS Release
         run: |
-          cd ./artifacts/PktMask-macOS
-          zip -r ../../PktMask-macOS.zip .
-      - name: Create Release
+          if [ -d "./artifacts/PktMask-macOS-Signed" ]; then
+            echo "Found signed macOS build"
+            cp ./artifacts/PktMask-macOS-Signed/PktMask-Signed.dmg ./PktMask-macOS.dmg
+            echo "MACOS_SIGNED=true" >> $GITHUB_ENV
+          elif [ -d "./artifacts/PktMask-macOS-Unsigned" ]; then
+            echo "Found unsigned macOS build"
+            cd ./artifacts/PktMask-macOS-Unsigned
+            zip -r ../../PktMask-macOS-Unsigned.zip .
+            echo "MACOS_SIGNED=false" >> $GITHUB_ENV
+          fi
+      
+      - name: Create Release (with signed macOS)
+        if: env.MACOS_SIGNED == 'true'
         uses: softprops/action-gh-release@v1
         with:
           files: |
             ./PktMask-Windows.zip
-            ./PktMask-macOS.zip
+            ./PktMask-macOS.dmg
+          body: |
+            ## PktMask Release
+            
+            ### 下载说明：
+            - **Windows用户**: 下载 `PktMask-Windows.zip`，解压后运行
+            - **macOS用户**: 下载 `PktMask-macOS.dmg`，挂载后拖拽到Applications文件夹
+            
+            ### 新特性和改进：
+            - 已签名的macOS版本，可直接运行
+            - 完整的安全性和兼容性支持
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create Release (with unsigned macOS)
+        if: env.MACOS_SIGNED == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./PktMask-Windows.zip
+            ./PktMask-macOS-Unsigned.zip
+          body: |
+            ## PktMask Release
+            
+            ### 下载说明：
+            - **Windows用户**: 下载 `PktMask-Windows.zip`，解压后运行
+            - **macOS用户**: 下载 `PktMask-macOS-Unsigned.zip`，解压后按照包含的安装说明运行
+            
+            ### ⚠️ macOS用户重要提示：
+            此版本未进行代码签名，首次运行时需要按照以下步骤：
+            1. 解压zip文件
+            2. 在终端中运行：`xattr -dr com.apple.quarantine /path/to/PktMask`
+            3. 或者通过系统偏好设置 -> 安全性与隐私允许运行
+            
+            详细说明请查看压缩包内的 `MACOS_INSTALLATION_INSTRUCTIONS.txt` 文件。
+            
+            ### 新特性和改进：
+            - 最新的功能更新
+            - Bug修复和性能优化
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
