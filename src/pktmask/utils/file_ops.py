@@ -10,7 +10,7 @@ import os
 import shutil
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
-from ..common.constants import ValidationConstants, FileConstants, SystemConstants
+from ..common.constants import ValidationConstants, FileConstants, SystemConstants, ProcessingConstants
 from ..common.exceptions import FileError, ValidationError
 from ..infrastructure.logging import get_logger
 
@@ -143,7 +143,7 @@ def is_supported_file(filepath: Union[str, Path]) -> bool:
         是否为支持的文件格式
     """
     ext = get_file_extension(filepath)
-    return ext in FileConstants.SUPPORTED_EXTENSIONS
+    return ext in ProcessingConstants.SUPPORTED_EXTENSIONS
 
 
 def find_files_by_extension(directory: Union[str, Path], 
@@ -186,7 +186,7 @@ def find_pcap_files(directory: Union[str, Path]) -> List[str]:
     Returns:
         找到的PCAP文件路径列表
     """
-    return find_files_by_extension(directory, FileConstants.SUPPORTED_EXTENSIONS)
+    return find_files_by_extension(directory, ProcessingConstants.SUPPORTED_EXTENSIONS)
 
 
 def copy_file_safely(src: Union[str, Path], dst: Union[str, Path], 
