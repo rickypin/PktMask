@@ -48,6 +48,7 @@ dev = [
     "pytest-html",
     "pytest-metadata",
     "pytest-qt",
+    "pytest-xdist",
     "coverage",
     "iniconfig",
     "pluggy"
