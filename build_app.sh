@@ -15,17 +15,17 @@ fi
 
 # 检查必要的依赖是否安装
 echo "🔍 检查打包依赖..."
-python -c "import PyInstaller; print('✅ PyInstaller 已安装')" 2>/dev/null || {
+python3 -c "import PyInstaller; print('✅ PyInstaller 已安装')" 2>/dev/null || {
     echo "❌ PyInstaller 未安装，正在安装..."
     pip install pyinstaller
 }
 
-python -c "import pydantic; print('✅ Pydantic 已安装')" 2>/dev/null || {
+python3 -c "import pydantic; print('✅ Pydantic 已安装')" 2>/dev/null || {
     echo "❌ Pydantic 未安装，请运行: pip install -r requirements.txt"
     exit 1
 }
 
-python -c "import yaml; print('✅ PyYAML 已安装')" 2>/dev/null || {
+python3 -c "import yaml; print('✅ PyYAML 已安装')" 2>/dev/null || {
     echo "❌ PyYAML 未安装，请运行: pip install -r requirements.txt"
     exit 1
 }
