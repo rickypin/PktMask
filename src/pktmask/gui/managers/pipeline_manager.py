@@ -79,6 +79,10 @@ class PipelineManager:
         self.main_window.all_ip_reports.clear()
         self.main_window.files_processed_count = 0
         self.main_window.packets_processed_count = 0
+        
+        # 重置Live Dashboard显示
+        self.main_window.files_processed_label.setText("0")
+        self.main_window.packets_processed_label.setText("0")
         self.main_window.subdirs_files_counted.clear()
         self.main_window.subdirs_packets_counted.clear()
         self.main_window.printed_summary_headers.clear()
@@ -200,6 +204,8 @@ class PipelineManager:
             # 处理文件完成事件
             elif event_type in (PipelineEvents.FILE_END, PipelineEvents.FILE_COMPLETED):
                 self.statistics.increment_file_count()
+                # 更新Live Dashboard显示
+                self.main_window.files_processed_label.setText(str(self.statistics.files_processed))
                 self._update_progress()
                 
             # 处理管道完成事件

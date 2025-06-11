@@ -8,6 +8,7 @@ from scapy.all import PcapReader, PcapNgReader, IP, IPv6, TCP, UDP
 from ..infrastructure.logging import get_logger, log_performance
 from ..common.exceptions import ProcessingError, NetworkError
 from ..common.constants import ProcessingConstants
+from .encapsulation import ProcessingAdapter, EncapsulationType
 
 class AnonymizationStrategy(ABC):
     """IP 匿名化策略的抽象基类。"""
@@ -304,9 +305,25 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
     """
     def __init__(self):
         self._ip_map: Dict[str, str] = {}
+        # 新增：封装处理适配器
+        self._encap_adapter = ProcessingAdapter()
+        self._encap_stats = {
+            'total_packets_scanned': 0,
+            'encapsulated_packets': 0,
+            'multi_layer_ip_packets': 0,
+            'plain_packets': 0
+        }
 
     def reset(self):
         self._ip_map = {}
+        # 重置封装统计
+        self._encap_adapter.reset_stats()
+        self._encap_stats = {
+            'total_packets_scanned': 0,
+            'encapsulated_packets': 0,
+            'multi_layer_ip_packets': 0,
+            'plain_packets': 0
+        }
 
     def get_ip_map(self) -> Dict[str, str]:
         return self._ip_map
@@ -365,17 +382,43 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                 reader_class = PcapNgReader if ext == ".pcapng" else PcapReader
                 with reader_class(file_path) as reader:
                     for packet in reader:
-                        # 处理IPv4数据包
-                        if packet.haslayer(IP):
-                            # 处理源IP和目标IP
-                            process_ipv4_address(packet.getlayer(IP).src)
-                            process_ipv4_address(packet.getlayer(IP).dst)
+                        self._encap_stats['total_packets_scanned'] += 1
                         
-                        # 处理IPv6数据包
-                        if packet.haslayer(IPv6):
-                            # 处理源IP和目标IP
-                            process_ipv6_address(packet.getlayer(IPv6).src)
-                            process_ipv6_address(packet.getlayer(IPv6).dst)
+                        # 【增强】使用封装适配器分析数据包，提取所有层级的IP
+                        ip_analysis = self._encap_adapter.analyze_packet_for_ip_processing(packet)
+                        
+                        # 更新封装统计
+                        if ip_analysis['has_encapsulation']:
+                            self._encap_stats['encapsulated_packets'] += 1
+                            if ip_analysis['has_multiple_ips']:
+                                self._encap_stats['multi_layer_ip_packets'] += 1
+                        else:
+                            self._encap_stats['plain_packets'] += 1
+                        
+                        # 【增强】处理所有层级的IP地址
+                        ip_pairs = self._encap_adapter.extract_ips_for_anonymization(ip_analysis)
+                        for src_ip, dst_ip, context in ip_pairs:
+                            # 处理IPv4地址
+                            if '.' in src_ip:
+                                process_ipv4_address(src_ip)
+                            elif ':' in src_ip:
+                                process_ipv6_address(src_ip)
+                            
+                            if '.' in dst_ip:
+                                process_ipv4_address(dst_ip)
+                            elif ':' in dst_ip:
+                                process_ipv6_address(dst_ip)
+                        
+                        # 【兼容性】保持原有的简单IP提取作为备选
+                        if not ip_pairs:
+                            # 回退到原有逻辑
+                            if packet.haslayer(IP):
+                                process_ipv4_address(packet.getlayer(IP).src)
+                                process_ipv4_address(packet.getlayer(IP).dst)
+                            
+                            if packet.haslayer(IPv6):
+                                process_ipv6_address(packet.getlayer(IPv6).src)
+                                process_ipv6_address(packet.getlayer(IPv6).dst)
                             
             except Exception as e:
                 error_log.append(f"Error scanning file {file_path}: {str(e)}")
@@ -383,11 +426,31 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         # 记录频率统计信息和性能指标
         end_time = time.time()
         duration = end_time - start_time
+        
+        # 【增强】获取封装处理统计
+        encap_proc_stats = self._encap_adapter.get_processing_stats()
+        
         log_performance('ip_prescan_addresses', duration, 'ip_anonymization.performance', 
-                       files_processed=len(files_to_process), unique_ips=len(unique_ips))
+                       files_processed=len(files_to_process), unique_ips=len(unique_ips),
+                       encapsulated_packets=self._encap_stats['encapsulated_packets'],
+                       multi_layer_ip_packets=self._encap_stats['multi_layer_ip_packets'])
         
         logger = get_logger('anonymization.strategy')
         logger.info(f"频率统计完成: 唯一IP总数={len(unique_ips)}, 耗时={duration:.2f}秒")
+        
+        # 【增强】封装处理统计报告
+        logger.info(f"封装处理统计: 总包数={self._encap_stats['total_packets_scanned']}, "
+                   f"封装包数={self._encap_stats['encapsulated_packets']}, "
+                   f"多层IP包数={self._encap_stats['multi_layer_ip_packets']}, "
+                   f"普通包数={self._encap_stats['plain_packets']}")
+        if self._encap_stats['total_packets_scanned'] > 0:
+            encap_ratio = self._encap_stats['encapsulated_packets'] / self._encap_stats['total_packets_scanned']
+            multi_ip_ratio = self._encap_stats['multi_layer_ip_packets'] / self._encap_stats['total_packets_scanned']
+            logger.info(f"封装比例: {encap_ratio:.1%}, 多层IP比例: {multi_ip_ratio:.1%}")
+        
+        if encap_proc_stats['encapsulation_distribution']:
+            logger.debug(f"封装类型分布: {encap_proc_stats['encapsulation_distribution']}")
+        
         if freq_ipv4_1:
             top_ipv4_a = dict(sorted(freq_ipv4_1.items(), key=lambda x: x[1], reverse=True)[:5])
             logger.debug(f"IPv4 A段频率统计(前5): {top_ipv4_a}")
@@ -524,34 +587,61 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         self.create_mapping(filenames, subdir_path, error_log)
 
     def anonymize_packet(self, pkt) -> Tuple[object, bool]:
-        """根据已构建的映射匿名化单个数据包。"""
+        """根据已构建的映射匿名化单个数据包。【增强】支持多层封装IP匿名化。"""
         is_anonymized = False
         
-        # 处理IPv4
-        if pkt.haslayer(IP):
-            layer = pkt.getlayer(IP)
-            if layer.src in self._ip_map:
-                layer.src = self._ip_map[layer.src]
-                is_anonymized = True
-            if layer.dst in self._ip_map:
-                layer.dst = self._ip_map[layer.dst]
-                is_anonymized = True
+        # 【增强】使用封装适配器分析数据包
+        ip_analysis = self._encap_adapter.analyze_packet_for_ip_processing(pkt)
         
-        # 处理IPv6
-        if pkt.haslayer(IPv6):
-            layer = pkt.getlayer(IPv6)
-            if layer.src in self._ip_map:
-                layer.src = self._ip_map[layer.src]
-                is_anonymized = True
-            if layer.dst in self._ip_map:
-                layer.dst = self._ip_map[layer.dst]
-                is_anonymized = True
+        if ip_analysis['has_encapsulation'] and ip_analysis['ip_layers']:
+            # 【增强】多层封装处理 - 匿名化所有层级的IP
+            for ip_layer_info in ip_analysis['ip_layers']:
+                ip_layer = ip_layer_info.layer_object
                 
-        # 删除校验和以强制重新计算
+                # 匿名化源IP
+                if ip_layer_info.src_ip in self._ip_map:
+                    ip_layer.src = self._ip_map[ip_layer_info.src_ip]
+                    is_anonymized = True
+                
+                # 匿名化目标IP
+                if ip_layer_info.dst_ip in self._ip_map:
+                    ip_layer.dst = self._ip_map[ip_layer_info.dst_ip]
+                    is_anonymized = True
+        else:
+            # 【兼容性】回退到原有逻辑处理简单数据包
+            # 处理IPv4
+            if pkt.haslayer(IP):
+                layer = pkt.getlayer(IP)
+                if layer.src in self._ip_map:
+                    layer.src = self._ip_map[layer.src]
+                    is_anonymized = True
+                if layer.dst in self._ip_map:
+                    layer.dst = self._ip_map[layer.dst]
+                    is_anonymized = True
+            
+            # 处理IPv6
+            if pkt.haslayer(IPv6):
+                layer = pkt.getlayer(IPv6)
+                if layer.src in self._ip_map:
+                    layer.src = self._ip_map[layer.src]
+                    is_anonymized = True
+                if layer.dst in self._ip_map:
+                    layer.dst = self._ip_map[layer.dst]
+                    is_anonymized = True
+                
+        # 删除校验和以强制重新计算（适用于所有被修改的IP层）
         if is_anonymized:
-            if pkt.haslayer(IP): del pkt.getlayer(IP).chksum
-            if pkt.haslayer(IPv6): del pkt.getlayer(IPv6).len
-            if pkt.haslayer(TCP): del pkt.getlayer(TCP).chksum
-            if pkt.haslayer(UDP): del pkt.getlayer(UDP).chksum
+            # 清除所有可能受影响的校验和
+            current_layer = pkt
+            while current_layer:
+                if hasattr(current_layer, 'chksum'):
+                    del current_layer.chksum
+                elif hasattr(current_layer, 'len') and current_layer.__class__.__name__ == 'IPv6':
+                    del current_layer.len
+                
+                if hasattr(current_layer, 'payload'):
+                    current_layer = current_layer.payload
+                else:
+                    break
             
         return pkt, is_anonymized 

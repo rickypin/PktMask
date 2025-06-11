@@ -389,6 +389,12 @@ class MainWindow(QMainWindow):
         # 使用StatisticsManager统一重置所有统计数据
         self.pipeline_manager.statistics.reset_all_statistics()
         
+        # 重置Live Dashboard显示
+        self.files_processed_label.setText("0")
+        self.packets_processed_label.setText("0")
+        self.time_elapsed_label.setText("00:00.00")
+        self.progress_bar.setValue(0)
+        
         # 重置其他状态
         self.user_stopped = False            # 重置停止标志
         if hasattr(self, '_current_file_ips'):
@@ -469,8 +475,7 @@ class MainWindow(QMainWindow):
             self.update_log(f"Processing directory: {data.get('name', 'N/A')}")
         
         elif event_type == PipelineEvents.FILE_START:
-            self.files_processed_count += 1
-            self.files_processed_label.setText(str(self.files_processed_count))
+            # 不在这里递增文件计数，应该在FILE_END时递增
             file_path = data['path']
             self.current_processing_file = os.path.basename(file_path)
             self.update_log(f"\nProcessing file: {self.current_processing_file}")

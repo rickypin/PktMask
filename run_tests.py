@@ -29,7 +29,7 @@ class TestRunner:
         运行指定类型的测试
         
         Args:
-            test_type: 测试类型 (unit, integration, e2e, performance, all)
+            test_type: 测试类型 (unit, integration, e2e, performance, real_data, all)
             coverage: 是否生成覆盖率报告
             html_report: 是否生成HTML报告
             verbose: 详细输出
@@ -115,6 +115,34 @@ class TestRunner:
             coverage=False,
             verbose=True
         )
+    
+    def real_data_test(self) -> int:
+        """真实数据验证测试"""
+        print("🔍 真实数据验证测试模式")
+        return self.run_tests(
+            test_type="real_data",
+            coverage=False,
+            verbose=True,
+            html_report=True
+        )
+    
+    def samples_validation(self) -> int:
+        """样本验证测试 - 专门针对所有samples目录"""
+        print("📁 样本数据完整验证测试")
+        print("🎯 测试范围: tests/data/samples/ 下的所有目录")
+        
+        # 运行特定的真实数据验证测试
+        return self.run_tests(
+            test_type="real_data and integration",
+            coverage=False,
+            verbose=True,
+            html_report=True,
+            custom_args=[
+                "tests/integration/test_real_data_validation.py",
+                "--durations=20",  # 显示最慢的20个测试
+                "-s"  # 不捕获输出，显示print语句
+            ]
+        )
 
 
 def main():
@@ -128,12 +156,17 @@ def main():
   integration - 集成测试  
   e2e         - 端到端测试
   performance - 性能测试
+  real_data   - 真实数据验证测试
   all         - 所有测试
+
+专门测试模式:
+  --samples   - 样本数据完整验证 (覆盖所有samples目录)
 
 使用示例:
   python run_tests.py --quick          # 快速单元测试
   python run_tests.py --full           # 完整测试套件
-  python run_tests.py --type unit      # 只运行单元测试
+  python run_tests.py --samples        # 样本数据验证
+  python run_tests.py --type real_data # 真实数据测试
   python run_tests.py --type performance # 性能测试
   python run_tests.py --no-coverage    # 不生成覆盖率
         """
@@ -145,9 +178,11 @@ def main():
                            help="快速模式 - 仅单元测试")
     mode_group.add_argument("--full", action="store_true",
                            help="完整模式 - 所有测试 + 报告")
+    mode_group.add_argument("--samples", action="store_true",
+                           help="样本验证 - tests/data/samples/ 完整验证")
     
     # 测试配置
-    parser.add_argument("--type", choices=["unit", "integration", "e2e", "performance", "all"],
+    parser.add_argument("--type", choices=["unit", "integration", "e2e", "performance", "real_data", "all"],
                        default="all", help="测试类型")
     parser.add_argument("--no-coverage", action="store_true",
                        help="禁用覆盖率报告")
@@ -174,6 +209,8 @@ def main():
         return runner.quick_test()
     elif args.full:
         return runner.full_test()
+    elif args.samples:
+        return runner.samples_validation()
     else:
         return runner.run_tests(
             test_type=args.type,
