@@ -25,7 +25,8 @@ from src.pktmask.steps.trimming import (
     _process_pcap_data_enhanced,
     _process_pcap_data,
     find_tls_signaling_ranges,
-    trim_packet_payload
+    trim_packet_payload,
+    ProcessingConstants
 )
 from src.pktmask.core.encapsulation.adapter import ProcessingAdapter
 from src.pktmask.core.encapsulation.types import EncapsulationType
@@ -110,73 +111,61 @@ class TestEnhancedPayloadTrimming(unittest.TestCase):
         self.assertEqual(direction, original_dir)
 
     def test_process_pcap_data_enhanced_plain_packets(self):
-        """测试增强版数据处理 - 普通数据包"""
-        # 创建测试数据包
-        packets = [
-            Ether() / IP(src="192.168.1.1", dst="192.168.1.2") / TCP(sport=80, dport=8080, seq=1000) / Raw(b"HTTP/1.1 200 OK"),
-            Ether() / IP(src="192.168.1.2", dst="192.168.1.1") / TCP(sport=8080, dport=80, seq=2000) / Raw(b"GET / HTTP/1.1"),
-        ]
+        """测试增强版数据处理 - 普通数据包 - 使用统一基类"""
+        from tests.conftest import BasePcapProcessingTest
+        
+        # 使用标准测试数据包
+        packets = BasePcapProcessingTest.create_test_packets("plain")
         
         # 使用增强版处理
-        result_packets, total, trimmed, errors = _process_pcap_data_enhanced(packets, self.adapter)
+        result = _process_pcap_data_enhanced(packets, self.adapter)
         
-        # 验证基本结果
-        self.assertEqual(total, 2)
-        self.assertEqual(len(result_packets), 2)
-        self.assertIsInstance(errors, list)
+        # 使用统一验证方法
+        BasePcapProcessingTest.verify_pcap_processing_result(result, expected_total=2, result_format="enhanced_tuple")
         
-        # 验证统计信息
+        # 验证封装统计信息
         stats = self.adapter.get_processing_stats()
-        self.assertEqual(stats['total_packets'], 2)
-        self.assertEqual(stats['encapsulated_packets'], 0)  # 普通包无封装
+        BasePcapProcessingTest.verify_encapsulation_stats(stats, expected_total=2, expected_encap_count=0)
 
     def test_process_pcap_data_enhanced_vlan_packets(self):
-        """测试增强版数据处理 - VLAN封装数据包"""
+        """测试增强版数据处理 - VLAN封装数据包 - 使用统一基类"""
+        from tests.conftest import BasePcapProcessingTest
+        
         # 创建新的适配器实例避免状态干扰
         test_adapter = ProcessingAdapter()
         
-        # 创建VLAN封装测试数据包
-        packets = [
-            Ether() / Dot1Q(vlan=100) / IP(src="10.1.1.1", dst="10.1.1.2") / TCP(sport=443, dport=9443, seq=1000) / Raw(b"TLS data"),
-            Ether() / Dot1Q(vlan=100) / IP(src="10.1.1.2", dst="10.1.1.1") / TCP(sport=9443, dport=443, seq=2000) / Raw(b"TLS response"),
-        ]
+        # 使用标准VLAN测试数据包
+        packets = BasePcapProcessingTest.create_test_packets("vlan")
         
         # 使用增强版处理
-        result_packets, total, trimmed, errors = _process_pcap_data_enhanced(packets, test_adapter)
+        result = _process_pcap_data_enhanced(packets, test_adapter)
         
-        # 验证基本结果
-        self.assertEqual(total, 2)
-        self.assertEqual(len(result_packets), 2)
+        # 使用统一验证方法
+        BasePcapProcessingTest.verify_pcap_processing_result(result, expected_total=2, result_format="enhanced_tuple")
         
         # 验证封装统计
         stats = test_adapter.get_processing_stats()
-        self.assertEqual(stats['total_packets'], 2)
-        self.assertEqual(stats['encapsulated_packets'], 2)  # VLAN封装包
-        self.assertGreater(stats['encapsulation_ratio'], 0)
+        BasePcapProcessingTest.verify_encapsulation_stats(stats, expected_total=2, expected_encap_count=2)
 
     def test_process_pcap_data_enhanced_mixed_packets(self):
-        """测试增强版数据处理 - 混合数据包"""
+        """测试增强版数据处理 - 混合数据包 - 使用统一基类"""
+        from tests.conftest import BasePcapProcessingTest
+        
         # 创建新的适配器实例避免状态干扰
         test_adapter = ProcessingAdapter()
         
-        # 创建混合测试数据包（普通 + VLAN）
-        packets = [
-            Ether() / IP(src="192.168.1.1", dst="192.168.1.2") / TCP(sport=80, dport=8080, seq=1000) / Raw(b"plain TCP"),
-            Ether() / Dot1Q(vlan=200) / IP(src="10.2.2.1", dst="10.2.2.2") / TCP(sport=443, dport=9443, seq=2000) / Raw(b"VLAN TCP"),
-        ]
+        # 使用标准混合测试数据包
+        packets = BasePcapProcessingTest.create_test_packets("mixed")
         
         # 使用增强版处理
-        result_packets, total, trimmed, errors = _process_pcap_data_enhanced(packets, test_adapter)
+        result = _process_pcap_data_enhanced(packets, test_adapter)
         
-        # 验证结果
-        self.assertEqual(total, 2)
-        self.assertEqual(len(result_packets), 2)
+        # 使用统一验证方法
+        BasePcapProcessingTest.verify_pcap_processing_result(result, expected_total=2, result_format="enhanced_tuple")
         
         # 验证混合统计
         stats = test_adapter.get_processing_stats()
-        self.assertEqual(stats['total_packets'], 2)
-        self.assertEqual(stats['encapsulated_packets'], 1)  # 只有一个VLAN包
-        self.assertEqual(stats['encapsulation_ratio'], 0.5)
+        BasePcapProcessingTest.verify_encapsulation_stats(stats, expected_total=2, expected_encap_count=1)
 
     def test_process_pcap_data_enhanced_without_adapter(self):
         """测试增强版数据处理 - 无适配器时的回退"""
@@ -193,11 +182,15 @@ class TestEnhancedPayloadTrimming(unittest.TestCase):
         self.assertEqual(total, original_result[1])
 
     def test_trimming_step_initialization(self):
-        """测试裁切步骤的初始化"""
+        """测试智能裁切步骤完整初始化（合并增强版本）"""
         step = IntelligentTrimmingStep()
         
-        # 验证初始化
+        # 基础属性验证
         self.assertEqual(step.name, "Intelligent Trim")
+        self.assertEqual(step.suffix, ProcessingConstants.TRIM_PACKET_SUFFIX)
+        self.assertTrue(hasattr(step, '_logger'))
+        
+        # 增强功能验证  
         self.assertIsNotNone(step._encap_adapter)
         self.assertIsInstance(step._encap_adapter, ProcessingAdapter)
 
@@ -270,44 +263,57 @@ class TestEnhancedPayloadTrimming(unittest.TestCase):
         self.assertTrue(trimmed_packet.haslayer(TCP))   # TCP层保留
 
     def test_encapsulation_statistics_collection(self):
-        """测试封装统计信息收集"""
-        # 创建混合数据包
-        packets = [
-            Ether() / IP(src="192.168.1.1", dst="192.168.1.2") / TCP(sport=80, dport=8080),  # 普通包
-            Ether() / Dot1Q(vlan=100) / IP(src="10.1.1.1", dst="10.1.1.2") / TCP(sport=443, dport=9443),  # VLAN包
-            Ether() / Dot1Q(vlan=200) / IP(src="10.2.2.1", dst="10.2.2.2") / TCP(sport=22, dport=2222),   # VLAN包
-        ]
+        """测试封装统计信息收集 - 使用统一基类"""
+        from tests.conftest import BasePcapProcessingTest
+        
+        # 创建混合数据包（1个普通包 + 2个VLAN包）
+        plain_packets = BasePcapProcessingTest.create_test_packets("plain")[:1]  # 取1个普通包
+        vlan_packets = BasePcapProcessingTest.create_test_packets("vlan")       # 取2个VLAN包
+        packets = plain_packets + vlan_packets
         
         # 重置统计
         self.adapter.reset_stats()
         
         # 处理数据包
-        _process_pcap_data_enhanced(packets, self.adapter)
+        result = _process_pcap_data_enhanced(packets, self.adapter)
         
-        # 获取统计信息
+        # 使用统一验证方法
+        BasePcapProcessingTest.verify_pcap_processing_result(result, expected_total=3, result_format="enhanced_tuple")
+        
+        # 获取并验证统计信息
         stats = self.adapter.get_processing_stats()
+        BasePcapProcessingTest.verify_encapsulation_stats(stats, expected_total=3, expected_encap_count=2)
         
-        # 验证统计结果
-        self.assertEqual(stats['total_packets'], 3)
-        self.assertEqual(stats['encapsulated_packets'], 2)  # 2个VLAN包
-        self.assertAlmostEqual(stats['encapsulation_ratio'], 2/3, places=2)
+        # 验证封装分布信息
+        self.assertIn('encapsulation_distribution', stats)
         self.assertIn('vlan', stats['encapsulation_distribution'])
 
     def test_error_handling_and_fallback(self):
-        """测试错误处理和回退机制"""
-        # 创建可能导致错误的数据包
-        invalid_packet = Ether() / Raw(b"invalid packet structure")
-        normal_packet = Ether() / IP(src="192.168.1.1", dst="192.168.1.2") / TCP(sport=80, dport=8080)
+        """测试错误处理和回退机制 - 使用统一错误处理工具"""
+        from tests.conftest import ErrorHandlingTestMixin, BasePcapProcessingTest
         
-        packets = [invalid_packet, normal_packet]
+        # 创建错误诱导数据
+        error_data = ErrorHandlingTestMixin.create_error_inducing_data()
+        normal_packets = BasePcapProcessingTest.create_test_packets("plain")
         
-        # 处理数据包（应该优雅处理错误）
-        result_packets, total, trimmed, errors = _process_pcap_data_enhanced(packets, self.adapter)
+        # 混合正常和异常数据包
+        packets = [error_data["invalid_packet"]] + normal_packets
         
-        # 验证错误处理
-        self.assertEqual(total, 2)
-        self.assertEqual(len(result_packets), 2)  # 所有包都应该被处理
-        # 可能有错误，但不应该导致崩溃
+        # 使用统一错误处理验证
+        result = ErrorHandlingTestMixin.assert_graceful_error_handling(
+            _process_pcap_data_enhanced, 
+            packets, 
+            self.adapter,
+            expected_result_type=tuple
+        )
+        
+        # 验证错误处理 - 使用统一基类验证
+        BasePcapProcessingTest.verify_pcap_processing_result(
+            result, expected_total=3, result_format="enhanced_tuple"
+        )
+        
+        # 验证函数能够优雅处理错误而不崩溃
+        self.assertIsNotNone(result)
 
     def test_tcp_session_consistency(self):
         """测试TCP会话一致性"""
@@ -333,41 +339,53 @@ class TestEnhancedPayloadTrimming(unittest.TestCase):
             self.assertEqual(direction, first_dir)
 
     def test_performance_logging_integration(self):
-        """测试性能日志集成"""
-        # 创建测试数据包
-        packets = [
-            Ether() / Dot1Q(vlan=100) / IP(src="10.1.1.1", dst="10.1.1.2") / TCP(sport=443, dport=9443) / Raw(b"test"),
-        ]
+        """测试性能日志集成 - 使用统一性能测试套件"""
+        from tests.conftest import PerformanceTestSuite, BasePcapProcessingTest
+        
+        # 使用标准测试数据包
+        packets = BasePcapProcessingTest.create_test_packets("vlan")
         
         # 创建临时文件进行完整测试
-        with tempfile.NamedTemporaryFile(suffix='.pcap', delete=False) as tmp_input:
-            input_path = tmp_input.name
-        
-        with tempfile.NamedTemporaryFile(suffix='.pcap', delete=False) as tmp_output:
-            output_path = tmp_output.name
+        input_path = BasePcapProcessingTest.create_temp_pcap_file(packets)
+        output_path = input_path.replace('.pcap', '_output.pcap')
         
         try:
-            wrpcap(input_path, packets)
+            # 性能测量函数
+            def performance_test_func(_):
+                with patch('src.pktmask.infrastructure.logging.log_performance') as mock_log:
+                    step = IntelligentTrimmingStep()
+                    summary = step.process_file(input_path, output_path)
+                    
+                    # 验证性能日志被调用
+                    mock_log.assert_called_once()
+                    call_args = mock_log.call_args
+                    
+                    # 验证日志参数
+                    self.assertEqual(call_args[0][0], 'enhanced_trimming_process_file')
+                    self.assertIn('encapsulated_packets', call_args[1])
+                    self.assertIn('encapsulation_ratio', call_args[1])
+                    
+                    return summary
             
-            # 模拟性能日志记录
-            with patch('src.pktmask.infrastructure.logging.log_performance') as mock_log:
-                step = IntelligentTrimmingStep()
-                summary = step.process_file(input_path, output_path)
-                
-                # 验证性能日志被调用
-                mock_log.assert_called_once()
-                call_args = mock_log.call_args
-                
-                # 验证日志参数
-                self.assertEqual(call_args[0][0], 'enhanced_trimming_process_file')
-                self.assertIn('encapsulated_packets', call_args[1])
-                self.assertIn('encapsulation_ratio', call_args[1])
+            # 使用统一性能测量
+            performance_result = PerformanceTestSuite.measure_processing_performance(
+                performance_test_func, 
+                None,  # 不需要数据参数
+                iterations=1
+            )
+            
+            # 验证性能报告
+            PerformanceTestSuite.verify_performance_report(performance_result)
+            
+            # 验证性能阈值
+            PerformanceTestSuite.assert_performance_threshold(
+                performance_result["avg_time"], 
+                "small_file_processing"
+            )
                 
         finally:
-            if os.path.exists(input_path):
-                os.unlink(input_path)
-            if os.path.exists(output_path):
-                os.unlink(output_path)
+            BasePcapProcessingTest.cleanup_temp_file(input_path)
+            BasePcapProcessingTest.cleanup_temp_file(output_path)
 
 
 if __name__ == '__main__':

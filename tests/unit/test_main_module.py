@@ -5,8 +5,9 @@
 import pytest
 import sys
 import importlib
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock
 from pathlib import Path
+import os
 
 # 添加src路径到系统路径以便导入
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
@@ -178,18 +179,49 @@ class TestMainModuleExecutionModes:
 class TestModuleCoverage:
     """专门测试模块覆盖率"""
     
-    @patch('pktmask.gui.main_window.main')
-    def test_main_module_execution_branch(self, mock_main):
-        """测试主模块执行分支覆盖"""
+    @patch('sys.exit')
+    @patch('pktmask.gui.main_window.MainWindow')
+    @patch('pktmask.gui.main_window.QApplication')
+    def test_main_module_execution_branch(self, mock_qapp, mock_main_window, mock_exit):
+        """测试主模块执行分支覆盖（无GUI启动）"""
+        # 配置Mock对象
+        mock_app_instance = Mock()
+        mock_qapp.return_value = mock_app_instance
+        mock_qapp.instance.return_value = None  # 模拟无现有应用实例
+        mock_app_instance.exec.return_value = 0
+        
+        mock_window = Mock()
+        mock_main_window.return_value = mock_window
+        
         # 导入模块不会触发执行
         import pktmask.__main__
         
         # 验证main函数存在但未被调用
         assert hasattr(pktmask.__main__, 'main')
         
-        # 测试手动调用main函数（不会实际启动GUI）
-        pktmask.__main__.main()
-        mock_main.assert_called_once()
+        # 设置环境变量模拟正常模式（非测试模式）
+        original_test_mode = os.environ.get('PKTMASK_TEST_MODE', '')
+        original_headless = os.environ.get('PKTMASK_HEADLESS', '')
+        
+        try:
+            # 临时设置为正常模式以测试完整的GUI启动路径
+            os.environ['PKTMASK_TEST_MODE'] = 'false'
+            os.environ['PKTMASK_HEADLESS'] = 'false'
+            
+            # 测试手动调用main函数（不会实际启动GUI）
+            pktmask.__main__.main()
+            
+            # 验证GUI组件被正确调用
+            mock_qapp.assert_called_once()
+            mock_main_window.assert_called_once()
+            mock_window.show.assert_called_once()
+            mock_app_instance.exec.assert_called_once()
+            mock_exit.assert_called_once_with(0)
+            
+        finally:
+            # 恢复原始环境变量
+            os.environ['PKTMASK_TEST_MODE'] = original_test_mode
+            os.environ['PKTMASK_HEADLESS'] = original_headless
     
     def test_services_module_all_export(self):
         """测试services模块导出功能"""

@@ -833,7 +833,33 @@ class MainWindow(QMainWindow):
 
 def main():
     """主函数"""
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec()) 
+    import os
+    
+    # 检查是否在测试模式或无头模式
+    test_mode = os.getenv('PKTMASK_TEST_MODE', '').lower() in ('true', '1', 'yes')
+    headless_mode = os.getenv('PKTMASK_HEADLESS', '').lower() in ('true', '1', 'yes')
+    
+    if test_mode or headless_mode:
+        # 测试模式：创建应用但不显示窗口和进入事件循环
+        try:
+            app = QApplication.instance()
+            if app is None:
+                app = QApplication(sys.argv)
+            
+            # 在测试模式下创建窗口但不显示
+            window = MainWindow()
+            if hasattr(window, 'set_test_mode'):
+                window.set_test_mode(True)
+            
+            # 测试模式下立即返回，不进入事件循环
+            return window if test_mode else 0
+            
+        except Exception as e:
+            print(f"测试模式下GUI初始化失败: {e}")
+            return None
+    else:
+        # 正常模式：完整的GUI启动
+        app = QApplication(sys.argv)
+        window = MainWindow()
+        window.show()
+        sys.exit(app.exec()) 

@@ -79,7 +79,7 @@ class TestDeduplicationStepComprehensive:
         assert len(error_log) == 1
         assert "不支持的文件扩展名" in error_log[0]
     
-    def test_process_file_method(self, temp_test_dir):
+    def test_deduplication_process_file_method(self, temp_test_dir):
         """测试DeduplicationStep的process_file方法"""
         step = DeduplicationStep()
         
@@ -176,12 +176,7 @@ class TestDeduplicationStepComprehensive:
 class TestIntelligentTrimmingStepComprehensive:
     """智能裁切步骤的全面测试"""
     
-    def test_trimming_step_initialization(self):
-        """测试智能裁切步骤初始化"""
-        step = IntelligentTrimmingStep()
-        assert step.name == "Intelligent Trim"
-        assert step.suffix == ProcessingConstants.TRIM_PACKET_SUFFIX
-        assert hasattr(step, '_logger')
+
     
     def test_find_tls_signaling_ranges_basic(self):
         """测试TLS信令范围查找"""
@@ -265,21 +260,18 @@ class TestIntelligentTrimmingStepComprehensive:
         assert direction is None
     
     def test_process_pcap_data_basic(self):
-        """测试_process_pcap_data基本功能"""
-        # 创建简单的TCP包列表
-        packets = [
-            Ether()/IP(src="1.1.1.1", dst="2.2.2.2")/TCP(sport=80, dport=8080, flags="S"),  # SYN包不应被裁切
-            Ether()/IP(src="1.1.1.1", dst="2.2.2.2")/TCP(sport=80, dport=8080, seq=1000)/b"data",  # 数据包
-        ]
+        """测试_process_pcap_data基本功能 - 使用统一基类"""
+        from tests.conftest import BasePcapProcessingTest
         
-        processed_packets, total, trimmed, error_log = _process_pcap_data(packets)
+        # 使用标准测试数据包
+        packets = BasePcapProcessingTest.create_test_packets("tcp_with_payload")
         
-        assert total == 2
-        assert len(processed_packets) == 2
-        assert trimmed >= 0  # 裁切数量可能为0或更多
-        assert len(error_log) == 0
+        result = _process_pcap_data(packets)
+        
+        # 使用统一验证方法
+        BasePcapProcessingTest.verify_pcap_processing_result(result, expected_total=2, result_format="tuple")
     
-    def test_process_file_method(self, temp_test_dir):
+    def test_trimming_process_file_method(self, temp_test_dir):
         """测试IntelligentTrimmingStep的process_file方法"""
         step = IntelligentTrimmingStep()
         

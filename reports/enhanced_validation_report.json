@@ -3,21 +3,21 @@
     "total_tests": 15,
     "successful_tests": 15,
     "success_rate": 1.0,
-    "total_time": 10.216248035430908,
-    "timestamp": "2025-06-11 17:51:55"
+    "total_time": 42.605544090270996,
+    "timestamp": "2025-06-11 21:43:23"
   },
   "validation_metrics": {
     "average_coverage": 1.0,
     "average_uniqueness": 1.0,
-    "total_original_ips": 126,
-    "total_mappings": 126
+    "total_original_ips": 186,
+    "total_mappings": 186
   },
   "test_results": [
     {
       "file_path": "tests/data/samples/TLS/tls_sample.pcap",
       "category": "plain_ip",
       "success": true,
-      "processing_time": 0.0159299373626709,
+      "processing_time": 0.07073402404785156,
       "original_ip_count": 2,
       "anonymized_ip_count": 2,
       "mapping_count": 2,
@@ -41,7 +41,7 @@
       "file_path": "tests/data/samples/singlevlan/10.200.33.61(10笔).pcap",
       "category": "single_vlan",
       "success": true,
-      "processing_time": 0.19124293327331543,
+      "processing_time": 0.8550357818603516,
       "original_ip_count": 2,
       "anonymized_ip_count": 2,
       "mapping_count": 2,
@@ -51,8 +51,8 @@
       "anonymization_coverage": 1.0,
       "unique_mapping_ratio": 1.0,
       "encapsulation_stats": {
-        "vlan": 34,
-        "plain": 16
+        "vlan": 68,
+        "plain": 32
       },
       "errors": [],
       "validation_details": {
@@ -66,7 +66,7 @@
       "file_path": "tests/data/samples/doublevlan/172.24.0.51.pcap",
       "category": "double_vlan",
       "success": true,
-      "processing_time": 1.6978552341461182,
+      "processing_time": 6.83784294128418,
       "original_ip_count": 2,
       "anonymized_ip_count": 2,
       "mapping_count": 2,
@@ -76,7 +76,7 @@
       "anonymization_coverage": 1.0,
       "unique_mapping_ratio": 1.0,
       "encapsulation_stats": {
-        "double_vlan": 50
+        "double_vlan": 100
       },
       "errors": [],
       "validation_details": {
@@ -90,7 +90,7 @@
       "file_path": "tests/data/samples/mpls/mpls.pcap",
       "category": "mpls",
       "success": true,
-      "processing_time": 0.8508012294769287,
+      "processing_time": 3.427517890930176,
       "original_ip_count": 5,
       "anonymized_ip_count": 5,
       "mapping_count": 5,
@@ -100,7 +100,7 @@
       "anonymization_coverage": 1.0,
       "unique_mapping_ratio": 1.0,
       "encapsulation_stats": {
-        "mpls": 50
+        "mpls": 100
       },
       "errors": [],
       "validation_details": {
@@ -114,7 +114,7 @@
       "file_path": "tests/data/samples/vxlan/vxlan.pcap",
       "category": "vxlan",
       "success": true,
-      "processing_time": 0.00943899154663086,
+      "processing_time": 0.04047417640686035,
       "original_ip_count": 4,
       "anonymized_ip_count": 4,
       "mapping_count": 4,
@@ -138,7 +138,7 @@
       "file_path": "tests/data/samples/gre/20160406152100.pcap",
       "category": "gre",
       "success": true,
-      "processing_time": 2.2730257511138916,
+      "processing_time": 9.961563110351562,
       "original_ip_count": 2,
       "anonymized_ip_count": 2,
       "mapping_count": 2,
@@ -148,7 +148,7 @@
       "anonymization_coverage": 1.0,
       "unique_mapping_ratio": 1.0,
       "encapsulation_stats": {
-        "gre": 50
+        "gre": 100
       },
       "errors": [],
       "validation_details": {
@@ -162,24 +162,24 @@
       "file_path": "tests/data/samples/vlan_gre/case17-parts.pcap",
       "category": "vlan_gre",
       "success": true,
-      "processing_time": 4.081173896789551,
-      "original_ip_count": 14,
-      "anonymized_ip_count": 14,
-      "mapping_count": 14,
+      "processing_time": 16.84333896636963,
+      "original_ip_count": 15,
+      "anonymized_ip_count": 15,
+      "mapping_count": 15,
       "mapping_consistency": true,
       "ip_count_preserved": true,
       "anonymized_ip_validity": true,
       "anonymization_coverage": 1.0,
       "unique_mapping_ratio": 1.0,
       "encapsulation_stats": {
-        "double_vlan": 32,
-        "vlan": 18
+        "double_vlan": 61,
+        "vlan": 39
       },
       "errors": [],
       "validation_details": {
-        "original_ip_count": 14,
-        "anonymized_ip_count": 14,
-        "mapping_count": 14,
+        "original_ip_count": 15,
+        "anonymized_ip_count": 15,
+        "mapping_count": 15,
         "invalid_anonymized_ips": 0
       }
     },
@@ -187,24 +187,24 @@
       "file_path": "tests/data/samples/vxlan_vlan/vxlan_servicetag_1001.pcap",
       "category": "vxlan_vlan",
       "success": true,
-      "processing_time": 0.19795584678649902,
-      "original_ip_count": 28,
-      "anonymized_ip_count": 28,
-      "mapping_count": 28,
+      "processing_time": 0.9016268253326416,
+      "original_ip_count": 39,
+      "anonymized_ip_count": 39,
+      "mapping_count": 39,
       "mapping_consistency": true,
       "ip_count_preserved": true,
       "anonymized_ip_validity": true,
       "anonymization_coverage": 1.0,
       "unique_mapping_ratio": 1.0,
       "encapsulation_stats": {
-        "vlan": 49,
-        "plain": 1
+        "vlan": 95,
+        "plain": 5
       },
       "errors": [],
       "validation_details": {
-        "original_ip_count": 28,
-        "anonymized_ip_count": 28,
-        "mapping_count": 28,
+        "original_ip_count": 39,
+        "anonymized_ip_count": 39,
+        "mapping_count": 39,
         "invalid_anonymized_ips": 0
       }
     },
@@ -212,7 +212,7 @@
       "file_path": "tests/data/samples/TLS70/sslerr1-70.pcap",
       "category": "tls70",
       "success": true,
-      "processing_time": 0.06845283508300781,
+      "processing_time": 0.340670108795166,
       "original_ip_count": 2,
       "anonymized_ip_count": 2,
       "mapping_count": 2,
@@ -222,7 +222,7 @@
       "anonymization_coverage": 1.0,
       "unique_mapping_ratio": 1.0,
       "encapsulation_stats": {
-        "plain": 50
+        "plain": 100
       },
       "errors": [],
       "validation_details": {
@@ -236,7 +236,7 @@
       "file_path": "tests/data/samples/doublevlan_tls/TC-007-3-20230829-01.pcap",
       "category": "doublevlan_tls",
       "success": true,
-      "processing_time": 0.14866900444030762,
+      "processing_time": 0.6788170337677002,
       "original_ip_count": 6,
       "anonymized_ip_count": 6,
       "mapping_count": 6,
@@ -246,7 +246,7 @@
       "anonymization_coverage": 1.0,
       "unique_mapping_ratio": 1.0,
       "encapsulation_stats": {
-        "double_vlan": 50
+        "double_vlan": 100
       },
       "errors": [],
       "validation_details": {
@@ -260,23 +260,23 @@
       "file_path": "tests/data/samples/IPTCP-200ips/TC-002-6-20200927-S-A-Replaced.pcapng",
       "category": "large_dataset",
       "success": true,
-      "processing_time": 0.033030033111572266,
-      "original_ip_count": 50,
-      "anonymized_ip_count": 50,
-      "mapping_count": 50,
+      "processing_time": 0.19162487983703613,
+      "original_ip_count": 96,
+      "anonymized_ip_count": 96,
+      "mapping_count": 96,
       "mapping_consistency": true,
       "ip_count_preserved": true,
       "anonymized_ip_validity": true,
       "anonymization_coverage": 1.0,
       "unique_mapping_ratio": 1.0,
       "encapsulation_stats": {
-        "vlan": 50
+        "vlan": 100
       },
       "errors": [],
       "validation_details": {
-        "original_ip_count": 50,
-        "anonymized_ip_count": 50,
-        "mapping_count": 50,
+        "original_ip_count": 96,
+        "anonymized_ip_count": 96,
+        "mapping_count": 96,
         "invalid_anonymized_ips": 0
       }
     },
@@ -284,7 +284,7 @@
       "file_path": "tests/data/samples/IPTCP-TC-001-1-20160407/TC-001-1-20160407-A.pcap",
       "category": "test_case_001",
       "success": true,
-      "processing_time": 0.33680105209350586,
+      "processing_time": 0.439298152923584,
       "original_ip_count": 2,
       "anonymized_ip_count": 2,
       "mapping_count": 2,
@@ -294,7 +294,7 @@
       "anonymization_coverage": 1.0,
       "unique_mapping_ratio": 1.0,
       "encapsulation_stats": {
-        "plain": 50
+        "plain": 100
       },
       "errors": [],
       "validation_details": {
@@ -308,23 +308,23 @@
       "file_path": "tests/data/samples/IPTCP-TC-002-5-20220215/TC-002-5-20220215-FW-in.pcap",
       "category": "test_case_002_5",
       "success": true,
-      "processing_time": 0.27256107330322266,
-      "original_ip_count": 3,
-      "anonymized_ip_count": 3,
-      "mapping_count": 3,
+      "processing_time": 1.8113889694213867,
+      "original_ip_count": 5,
+      "anonymized_ip_count": 5,
+      "mapping_count": 5,
       "mapping_consistency": true,
       "ip_count_preserved": true,
       "anonymized_ip_validity": true,
       "anonymization_coverage": 1.0,
       "unique_mapping_ratio": 1.0,
       "encapsulation_stats": {
-        "vlan": 50
+        "vlan": 100
       },
       "errors": [],
       "validation_details": {
-        "original_ip_count": 3,
-        "anonymized_ip_count": 3,
-        "mapping_count": 3,
+        "original_ip_count": 5,
+        "anonymized_ip_count": 5,
+        "mapping_count": 5,
         "invalid_anonymized_ips": 0
       }
     },
@@ -332,7 +332,7 @@
       "file_path": "tests/data/samples/IPTCP-TC-002-8-20210817/TC-002-8-20210817.pcapng",
       "category": "test_case_002_8",
       "success": true,
-      "processing_time": 0.02403116226196289,
+      "processing_time": 0.1608741283416748,
       "original_ip_count": 2,
       "anonymized_ip_count": 2,
       "mapping_count": 2,
@@ -342,7 +342,7 @@
       "anonymization_coverage": 1.0,
       "unique_mapping_ratio": 1.0,
       "encapsulation_stats": {
-        "vlan": 50
+        "vlan": 95
       },
       "errors": [],
       "validation_details": {
@@ -356,7 +356,7 @@
       "file_path": "tests/data/samples/vxlan4787/vxlan-double-http.pcap",
       "category": "vxlan4787",
       "success": true,
-      "processing_time": 0.009353876113891602,
+      "processing_time": 0.040802955627441406,
       "original_ip_count": 2,
       "anonymized_ip_count": 2,
       "mapping_count": 2,
