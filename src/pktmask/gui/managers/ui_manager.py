@@ -159,7 +159,7 @@ class UIManager:
         row2_layout.setSpacing(12)
         
         # Step 2: Configure Pipeline
-        pipeline_group = QGroupBox("Set Options")
+        pipeline_group = QGroupBox("Set Actions")
         pipeline_group.setMaximumHeight(85)
         pipeline_layout = QHBoxLayout(pipeline_group)
         pipeline_layout.setContentsMargins(15, 12, 15, 12)
@@ -329,38 +329,104 @@ class UIManager:
     def _show_initial_guides(self):
         """显示初始指南"""
         self.main_window.log_text.setPlaceholderText(
-            "🚀 Welcome to PktMask!\n\n"
+            "\n🚀 Welcome to PktMask!\n\n"
             "┌─ Quick Start Guide ──────────┐\n"
             "│ 1. Select pcap directory     │\n"
-            "│ 2. Configure options         │\n"
+            "│ 2. Configure actions         │\n"
             "│ 3. Start processing          │\n"
             "└──────────────────────────────┘\n\n"
             "💡 Remove Dupes & Mask IPs enabled by default\n\n"
             "Processing logs will appear here..."
         )
-        self.main_window.summary_text.setPlaceholderText(
-             "📊 Processing results and statistics will be displayed here.\n\n"
-             "═══════════════════════════════════════════════════════════════════\n\n"
-             "📦 About PktMask - Network Packet Processing Tool\n\n"
-             "🔄 Remove Dupes\n"
-             "   • Eliminates duplicate packets to reduce file size\n"
-             "   • Reduces noise in network analysis and forensics\n"
-             "   • Optimizes storage and speeds up analysis\n\n"
-             "🛡️ Mask IPs - Advanced Anonymization\n"
-             "   • Preserves network topology and subnet relationships\n"
-             "   • Uses hierarchical anonymization for consistent mapping\n"
-             "   • Perfect for data sharing, compliance, and research\n\n"
-             "✂️ Trim Payloads - Intelligent Data Reduction\n"
-             "   • Removes sensitive payload data while preserving headers\n"
-             "   • Keeps TLS handshakes intact for protocol analysis\n"
-             "   • Reduces file size without losing network behavior insights\n\n"
-             "🌐 Web-Focused Traffic Only (Coming Soon)\n"
-             "   • Filter and analyze only web-related traffic\n"
-             "   • Focus on HTTP/HTTPS communications\n"
-             "   • Streamline web security analysis workflows\n\n"
-             "🎯 Use Cases: Security research, network troubleshooting,\n"
-             "   compliance reporting, and safe data sharing."
-        )
+        
+        # 读取summary.md文件内容
+        try:
+            from pktmask.utils.path import resource_path
+            with open(resource_path('summary.md'), 'r', encoding='utf-8') as f:
+                summary_md_content = f.read()
+            
+            # 将markdown内容转换为适合显示的格式，保持现有样式
+            formatted_content = "\n" + self._format_summary_md_content(summary_md_content)
+            
+        except Exception as e:
+            # 如果读取失败，使用备用内容
+            formatted_content = (
+                "\n📊 Processing results and statistics will be displayed here.\n\n"
+                "═══════════════════════════════════════════════════════════════════\n\n"
+                "📦 PktMask — Network Packet Processing Tool\n\n"
+                "🔄 Remove Dupes\n"
+                "   • Eliminates duplicate packets to reduce file size\n"
+                "   • Reduces noise in network analysis and forensics\n"
+                "   • Optimizes storage and speeds up analysis\n\n"
+                "🛡️ Mask IPs - Advanced Anonymization\n"
+                "   • Preserves network topology and subnet relationships\n"
+                "   • Uses hierarchical anonymization for consistent mapping\n"
+                "   • Perfect for data sharing, compliance, and research\n\n"
+                "✂️ Trim Payloads - Intelligent Data Reduction\n"
+                "   • Removes sensitive payload data while preserving headers\n"
+                "   • Keeps TLS handshakes intact for protocol analysis\n"
+                "   • Reduces file size without losing network behavior insights\n\n"
+                "🌐 Web-Focused Traffic Only (Coming Soon)\n"
+                "   • Filter and analyze only web-related traffic\n"
+                "   • Focus on HTTP/HTTPS communications\n"
+                "   • Streamline web security analysis workflows\n\n"
+                "🎯 Use Cases: Security research, network troubleshooting,\n"
+                "   compliance reporting, and safe data sharing."
+            )
+        
+        self.main_window.summary_text.setPlaceholderText(formatted_content)
+    
+    def _format_summary_md_content(self, md_content: str) -> str:
+        """将markdown内容格式化为适合显示的纯文本格式"""
+        lines = md_content.split('\n')
+        formatted_lines = []
+        
+        # 直接开始，不添加顶部横线
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                formatted_lines.append("")
+            elif line.startswith('# '):
+                # 主标题 - 在标题上方和下方都添加横线
+                title = line[2:].strip()
+                formatted_lines.append("─" * 80)
+                formatted_lines.append(f"📦 {title}")
+                formatted_lines.append("─" * 80)
+                formatted_lines.append("")
+            elif line.startswith('## '):
+                # 子标题
+                subtitle = line[3:].strip()
+                emoji_map = {
+                    'Mask IPs': '🛡️',
+                    'Remove Dupes': '🔄',
+                    'Trim Payloads': '✂️',
+                    'Processing Flow': '⚡',
+                    'Key Benefits': '🎯'
+                }
+                emoji = emoji_map.get(subtitle, '🔧')
+                formatted_lines.append(f"{emoji} {subtitle}")
+            elif line.startswith('   - '):
+                # 列表项
+                item = line[5:].strip()
+                formatted_lines.append(f"   • {item}")
+            elif line.startswith('   '):
+                # 缩进内容
+                content = line[3:].strip()
+                if content.startswith('- '):
+                    content = content[2:].strip()
+                formatted_lines.append(f"   - {content}")
+            elif line and not line.startswith('#'):
+                # 普通段落
+                formatted_lines.append(f"   {line}")
+            
+            # 在某些部分后添加空行
+            if line.startswith('## ') and line != lines[-1]:
+                formatted_lines.append("")
+        
+        # 不再添加底部的Web-focused和Use Cases部分
+        
+        return '\n'.join(formatted_lines)
     
     # 样式管理方法
     def get_current_theme(self) -> str:
@@ -556,7 +622,7 @@ class UIManager:
     def _update_start_button_state(self):
         """根据输入目录和选项状态更新Start按钮"""
         has_input_dir = self.main_window.base_dir is not None
-        has_any_option = (self.main_window.mask_ip_cb.isChecked() or 
+        has_any_action = (self.main_window.mask_ip_cb.isChecked() or 
                          self.main_window.dedup_packet_cb.isChecked() or 
                          self.main_window.trim_packet_cb.isChecked())
         
@@ -564,8 +630,8 @@ class UIManager:
         is_processing = (self.main_window.pipeline_thread is not None and 
                         self.main_window.pipeline_thread.isRunning())
         
-        # 只有当有输入目录且至少选择一个选项时才启用按钮，或者正在处理中时保持启用
-        should_enable = (has_input_dir and has_any_option) or is_processing
+        # 只有当有输入目录且至少选择一个操作时才启用按钮，或者正在处理中时保持启用
+        should_enable = (has_input_dir and has_any_action) or is_processing
         self.main_window.start_proc_btn.setEnabled(should_enable)
         
         # 同时更新按钮样式

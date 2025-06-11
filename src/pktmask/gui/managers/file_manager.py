@@ -77,9 +77,14 @@ class FileManager:
         """生成实际的输出目录路径"""
         timestamp = current_timestamp()
         
-        # 使用配置中的输出目录模式
-        output_pattern = self.config.ui.output_dir_pattern
-        output_name = output_pattern.format(timestamp=timestamp)
+        # 获取输入目录名称
+        if self.main_window.base_dir:
+            input_dir_name = os.path.basename(self.main_window.base_dir)
+            # 生成新的命名格式：输入目录名-Masked-时间戳
+            output_name = f"{input_dir_name}-Masked-{timestamp}"
+        else:
+            # 如果没有输入目录，使用默认格式
+            output_name = f"PktMask-{timestamp}"
         
         if self.main_window.output_dir:
             # 自定义输出目录

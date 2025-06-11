@@ -182,7 +182,7 @@ class UIStrings(Enum):
     
     # 组框标题
     GROUP_DIRECTORIES = "Set Working Directories"
-    GROUP_OPTIONS = "Set Options"
+    GROUP_OPTIONS = "Set Actions"
     GROUP_PROCESSING = "Run Processing"
     GROUP_DASHBOARD = "Live Dashboard"
     GROUP_LOG = "Log"

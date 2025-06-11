@@ -40,7 +40,7 @@ class UISettings:
     
     # 输出目录设置
     default_output_dir: Optional[str] = None
-    output_dir_pattern: str = "PktMask-{timestamp}"
+    output_dir_pattern: str = "{input_dir_name}-Masked-{timestamp}"
     
     # 高级界面选项
     show_progress_details: bool = True
