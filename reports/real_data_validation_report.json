@@ -3,7 +3,7 @@
     "total_files": 23,
     "successful_files": 23,
     "success_rate": 1.0,
-    "test_timestamp": "2025-06-11 23:17:55",
+    "test_timestamp": "2025-06-12 11:40:13",
     "categories_tested": 15
   },
   "category_stats": {
@@ -12,105 +12,105 @@
       "successful_files": 1,
       "success_rate": 1.0,
       "total_packets": 22,
-      "avg_processing_time": 0.193878173828125
+      "avg_processing_time": 0.013337850570678711
     },
     "plain_ip_tls70": {
       "total_files": 1,
       "successful_files": 1,
       "success_rate": 1.0,
       "total_packets": 688,
-      "avg_processing_time": 0.4319190979003906
+      "avg_processing_time": 0.1412510871887207
     },
     "single_vlan": {
       "total_files": 2,
       "successful_files": 2,
       "success_rate": 1.0,
       "total_packets": 12866,
-      "avg_processing_time": 3.203813314437866
+      "avg_processing_time": 1.2394545078277588
     },
     "double_vlan": {
       "total_files": 1,
       "successful_files": 1,
       "success_rate": 1.0,
       "total_packets": 16025,
-      "avg_processing_time": 10.375619173049927
+      "avg_processing_time": 3.633969783782959
     },
     "double_vlan_tls": {
       "total_files": 2,
       "successful_files": 2,
       "success_rate": 1.0,
       "total_packets": 2965,
-      "avg_processing_time": 1.231145977973938
+      "avg_processing_time": 0.3618590831756592
     },
     "mpls": {
       "total_files": 2,
       "successful_files": 2,
       "success_rate": 1.0,
       "total_packets": 19815,
-      "avg_processing_time": 5.615885972976685
+      "avg_processing_time": 1.9280445575714111
     },
     "gre_tunnel": {
       "total_files": 2,
       "successful_files": 2,
       "success_rate": 1.0,
       "total_packets": 114780,
-      "avg_processing_time": 44.1748024225235
+      "avg_processing_time": 14.605037450790405
     },
     "vxlan": {
       "total_files": 2,
       "successful_files": 2,
       "success_rate": 1.0,
       "total_packets": 5010,
-      "avg_processing_time": 2.1314080953598022
+      "avg_processing_time": 0.4305589199066162
     },
     "vxlan_custom": {
       "total_files": 1,
       "successful_files": 1,
       "success_rate": 1.0,
       "total_packets": 26,
-      "avg_processing_time": 0.0357968807220459
+      "avg_processing_time": 0.011661052703857422
     },
     "vxlan_vlan_composite": {
       "total_files": 1,
       "successful_files": 1,
       "success_rate": 1.0,
       "total_packets": 1000,
-      "avg_processing_time": 1.2693181037902832
+      "avg_processing_time": 0.4555180072784424
     },
     "vlan_gre_composite": {
       "total_files": 1,
       "successful_files": 1,
       "success_rate": 1.0,
       "total_packets": 30000,
-      "avg_processing_time": 25.287086963653564
+      "avg_processing_time": 9.759140729904175
     },
     "large_ip_set": {
       "total_files": 2,
       "successful_files": 2,
       "success_rate": 1.0,
       "total_packets": 738,
-      "avg_processing_time": 0.3173314332962036
+      "avg_processing_time": 0.09254646301269531
     },
     "test_case_001": {
       "total_files": 2,
       "successful_files": 2,
       "success_rate": 1.0,
       "total_packets": 2910,
-      "avg_processing_time": 0.6716867685317993
+      "avg_processing_time": 0.2423255443572998
     },
     "test_case_002_5": {
       "total_files": 2,
       "successful_files": 2,
       "success_rate": 1.0,
       "total_packets": 2703,
-      "avg_processing_time": 1.9384005069732666
+      "avg_processing_time": 0.6104609966278076
     },
     "test_case_002_8": {
       "total_files": 1,
       "successful_files": 1,
       "success_rate": 1.0,
       "total_packets": 95,
-      "avg_processing_time": 0.14743804931640625
+      "avg_processing_time": 0.04430198669433594
     }
   },
   "detailed_results": [
@@ -125,7 +125,7 @@
       },
       "ip_count": 2,
       "tcp_sessions": 22,
-      "processing_time": 0.193878173828125,
+      "processing_time": 0.013337850570678711,
       "validation_details": {
         "expected_encapsulation": "plain",
         "detected_encapsulations": {
@@ -148,7 +148,7 @@
       },
       "ip_count": 2,
       "tcp_sessions": 100,
-      "processing_time": 0.4319190979003906,
+      "processing_time": 0.1412510871887207,
       "validation_details": {
         "expected_encapsulation": "plain",
         "detected_encapsulations": {
@@ -172,7 +172,7 @@
       },
       "ip_count": 2,
       "tcp_sessions": 100,
-      "processing_time": 1.2337958812713623,
+      "processing_time": 0.7046449184417725,
       "validation_details": {
         "expected_encapsulation": "vlan",
         "detected_encapsulations": {
@@ -197,7 +197,7 @@
       },
       "ip_count": 2,
       "tcp_sessions": 100,
-      "processing_time": 5.17383074760437,
+      "processing_time": 1.7742640972137451,
       "validation_details": {
         "expected_encapsulation": "vlan",
         "detected_encapsulations": {
@@ -221,7 +221,7 @@
       },
       "ip_count": 2,
       "tcp_sessions": 100,
-      "processing_time": 10.375619173049927,
+      "processing_time": 3.633969783782959,
       "validation_details": {
         "expected_encapsulation": "double_vlan",
         "detected_encapsulations": {
@@ -244,7 +244,7 @@
       },
       "ip_count": 6,
       "tcp_sessions": 88,
-      "processing_time": 1.183725118637085,
+      "processing_time": 0.3036782741546631,
       "validation_details": {
         "expected_encapsulation": "double_vlan",
         "detected_encapsulations": {
@@ -267,7 +267,7 @@
       },
       "ip_count": 2,
       "tcp_sessions": 100,
-      "processing_time": 1.278566837310791,
+      "processing_time": 0.4200398921966553,
       "validation_details": {
         "expected_encapsulation": "double_vlan",
         "detected_encapsulations": {
@@ -290,7 +290,7 @@
       },
       "ip_count": 5,
       "tcp_sessions": 100,
-      "processing_time": 5.170984983444214,
+      "processing_time": 1.7998499870300293,
       "validation_details": {
         "expected_encapsulation": "mpls",
         "detected_encapsulations": {
@@ -313,7 +313,7 @@
       },
       "ip_count": 46,
       "tcp_sessions": 100,
-      "processing_time": 6.060786962509155,
+      "processing_time": 2.056239128112793,
       "validation_details": {
         "expected_encapsulation": "mpls",
         "detected_encapsulations": {
@@ -336,7 +336,7 @@
       },
       "ip_count": 2,
       "tcp_sessions": 0,
-      "processing_time": 16.05498194694519,
+      "processing_time": 5.335152864456177,
       "validation_details": {
         "expected_encapsulation": "gre",
         "detected_encapsulations": {
@@ -360,7 +360,7 @@
       },
       "ip_count": 8,
       "tcp_sessions": 99,
-      "processing_time": 72.2946228981018,
+      "processing_time": 23.874922037124634,
       "validation_details": {
         "expected_encapsulation": "gre",
         "detected_encapsulations": {
@@ -384,7 +384,7 @@
       },
       "ip_count": 11,
       "tcp_sessions": 72,
-      "processing_time": 4.2335991859436035,
+      "processing_time": 0.8516600131988525,
       "validation_details": {
         "expected_encapsulation": "vxlan",
         "detected_encapsulations": {
@@ -407,7 +407,7 @@
       },
       "ip_count": 4,
       "tcp_sessions": 0,
-      "processing_time": 0.029217004776000977,
+      "processing_time": 0.009457826614379883,
       "validation_details": {
         "expected_encapsulation": "vxlan",
         "detected_encapsulations": {
@@ -430,7 +430,7 @@
       },
       "ip_count": 2,
       "tcp_sessions": 0,
-      "processing_time": 0.0357968807220459,
+      "processing_time": 0.011661052703857422,
       "validation_details": {
         "expected_encapsulation": "vxlan",
         "detected_encapsulations": {
@@ -454,7 +454,7 @@
       },
       "ip_count": 39,
       "tcp_sessions": 100,
-      "processing_time": 1.2693181037902832,
+      "processing_time": 0.4555180072784424,
       "validation_details": {
         "expected_encapsulation": "composite",
         "detected_encapsulations": {
@@ -479,7 +479,7 @@
       },
       "ip_count": 15,
       "tcp_sessions": 100,
-      "processing_time": 25.287086963653564,
+      "processing_time": 9.759140729904175,
       "validation_details": {
         "expected_encapsulation": "composite",
         "detected_encapsulations": {
@@ -504,7 +504,7 @@
       },
       "ip_count": 2,
       "tcp_sessions": 100,
-      "processing_time": 0.32704687118530273,
+      "processing_time": 0.1188359260559082,
       "validation_details": {
         "expected_encapsulation": "plain",
         "detected_encapsulations": {
@@ -528,7 +528,7 @@
       },
       "ip_count": 96,
       "tcp_sessions": 100,
-      "processing_time": 0.3076159954071045,
+      "processing_time": 0.06625699996948242,
       "validation_details": {
         "expected_encapsulation": "plain",
         "detected_encapsulations": {
@@ -551,7 +551,7 @@
       },
       "ip_count": 2,
       "tcp_sessions": 100,
-      "processing_time": 0.7390437126159668,
+      "processing_time": 0.2732069492340088,
       "validation_details": {
         "expected_encapsulation": "mixed",
         "detected_encapsulations": {
@@ -574,7 +574,7 @@
       },
       "ip_count": 2,
       "tcp_sessions": 100,
-      "processing_time": 0.6043298244476318,
+      "processing_time": 0.21144413948059082,
       "validation_details": {
         "expected_encapsulation": "mixed",
         "detected_encapsulations": {
@@ -597,7 +597,7 @@
       },
       "ip_count": 2,
       "tcp_sessions": 100,
-      "processing_time": 1.978074073791504,
+      "processing_time": 0.3412151336669922,
       "validation_details": {
         "expected_encapsulation": "mixed",
         "detected_encapsulations": {
@@ -620,7 +620,7 @@
       },
       "ip_count": 5,
       "tcp_sessions": 100,
-      "processing_time": 1.8987269401550293,
+      "processing_time": 0.879706859588623,
       "validation_details": {
         "expected_encapsulation": "mixed",
         "detected_encapsulations": {
@@ -643,7 +643,7 @@
       },
       "ip_count": 2,
       "tcp_sessions": 95,
-      "processing_time": 0.14743804931640625,
+      "processing_time": 0.04430198669433594,
       "validation_details": {
         "expected_encapsulation": "mixed",
         "detected_encapsulations": {
