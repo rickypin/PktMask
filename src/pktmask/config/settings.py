@@ -85,6 +85,31 @@ class LoggingSettings:
     log_file_max_size: int = 10 * 1024 * 1024  # 10MB
     log_backup_count: int = 5
     performance_logging: bool = False
+
+
+@dataclass
+class TSharkSettings:
+    """TShark工具设置"""
+    executable_paths: list = field(default_factory=lambda: [
+        '/usr/bin/tshark',
+        '/usr/local/bin/tshark',
+        '/opt/wireshark/bin/tshark',
+        'C:\\Program Files\\Wireshark\\tshark.exe',
+        'C:\\Program Files (x86)\\Wireshark\\tshark.exe',
+        '/Applications/Wireshark.app/Contents/MacOS/tshark'
+    ])
+    custom_executable: Optional[str] = None
+    enable_reassembly: bool = True
+    enable_defragmentation: bool = True
+    timeout_seconds: int = 300
+    max_memory_mb: int = 1024
+    quiet_mode: bool = True
+
+
+@dataclass 
+class ToolsSettings:
+    """外部工具设置"""
+    tshark: TSharkSettings = field(default_factory=TSharkSettings)
     
     
 @dataclass 
@@ -97,6 +122,7 @@ class AppConfig:
     ui: UISettings = field(default_factory=UISettings)
     processing: ProcessingSettings = field(default_factory=ProcessingSettings)
     logging: LoggingSettings = field(default_factory=LoggingSettings)
+    tools: ToolsSettings = field(default_factory=ToolsSettings)
     
     # 元数据
     config_version: str = "2.0"
@@ -131,11 +157,20 @@ class AppConfig:
             ui_data = data.get('ui', {})
             processing_data = data.get('processing', {})
             logging_data = data.get('logging', {})
+            tools_data = data.get('tools', {})
+            
+            # 处理工具配置的嵌套结构
+            tools_settings = ToolsSettings()
+            if tools_data:
+                tshark_data = tools_data.get('tshark', {})
+                if tshark_data:
+                    tools_settings.tshark = TSharkSettings(**tshark_data)
             
             return cls(
                 ui=UISettings(**ui_data) if ui_data else UISettings(),
                 processing=ProcessingSettings(**processing_data) if processing_data else ProcessingSettings(),
                 logging=LoggingSettings(**logging_data) if logging_data else LoggingSettings(),
+                tools=tools_settings,
                 config_version=data.get('config_version', '2.0'),
                 created_at=data.get('created_at'),
                 updated_at=data.get('updated_at')
@@ -259,6 +294,18 @@ class AppConfig:
             'last_output_dir': self.ui.last_output_dir,
             'auto_open_output': self.ui.auto_open_output,
             'theme': self.ui.theme
+        }
+    
+    def get_tools_config(self) -> Dict[str, Any]:
+        """获取工具配置字典"""
+        return {
+            'tshark_executable_paths': self.tools.tshark.executable_paths,
+            'tshark_custom_executable': self.tools.tshark.custom_executable,
+            'tshark_enable_reassembly': self.tools.tshark.enable_reassembly,
+            'tshark_enable_defragmentation': self.tools.tshark.enable_defragmentation,
+            'tshark_timeout_seconds': self.tools.tshark.timeout_seconds,
+            'tshark_max_memory_mb': self.tools.tshark.max_memory_mb,
+            'tshark_quiet_mode': self.tools.tshark.quiet_mode
         }
     
     def update_last_directories(self, input_dir: Optional[str] = None, 

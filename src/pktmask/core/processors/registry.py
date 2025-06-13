@@ -30,16 +30,25 @@ class ProcessorRegistry:
             from .ip_anonymizer import IPAnonymizer
             from .deduplicator import Deduplicator  
             from .trimmer import Trimmer
+            from .enhanced_trimmer import EnhancedTrimmer  # Phase 4.2: 导入智能处理器
             
             cls._processors.update({
                 'mask_ip': IPAnonymizer,
                 'dedup_packet': Deduplicator,
-                'trim_packet': Trimmer,
+                'trim_packet': EnhancedTrimmer,  # Phase 4.2: 零GUI改动 - 智能替换
+                # 'trim_packet': Trimmer,  # Phase 4.2: 保留原实现作为备选
             })
             cls._loaded = True
             
         except ImportError as e:
             print(f"加载内置处理器时出错: {e}")
+            # Phase 4.2: 降级处理 - 如果EnhancedTrimmer导入失败，使用原版
+            try:
+                from .trimmer import Trimmer
+                cls._processors['trim_packet'] = Trimmer
+                print("降级使用原版Trimmer处理器")
+            except ImportError:
+                print("警告: 无法加载任何载荷裁切处理器")
     
     @classmethod
     def get_processor(cls, name: str, config: ProcessorConfig) -> BaseProcessor:
@@ -119,4 +128,20 @@ class ProcessorRegistry:
     def clear_registry(cls):
         """清空注册表 (主要用于测试)"""
         cls._processors.clear()
-        cls._loaded = False 
+        cls._loaded = False
+        
+    # Phase 4.2: 新增便利方法
+    @classmethod
+    def get_active_trimmer_class(cls) -> Type[BaseProcessor]:
+        """获取当前活跃的载荷裁切处理器类"""
+        cls._load_builtin_processors()
+        return cls._processors.get('trim_packet', None)
+        
+    @classmethod
+    def is_enhanced_mode_enabled(cls) -> bool:
+        """检查是否启用了增强模式"""
+        cls._load_builtin_processors()
+        trimmer_class = cls._processors.get('trim_packet', None)
+        if trimmer_class:
+            return trimmer_class.__name__ == 'EnhancedTrimmer'
+        return False 

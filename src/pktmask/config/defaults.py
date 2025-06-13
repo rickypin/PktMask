@@ -141,6 +141,26 @@ ERROR_HANDLING_DEFAULTS = {
     'continue_on_error': False
 }
 
+# 外部工具配置
+EXTERNAL_TOOLS_DEFAULTS = {
+    'tshark': {
+        'executable_paths': [
+            '/usr/bin/tshark',
+            '/usr/local/bin/tshark',
+            '/opt/wireshark/bin/tshark',
+            'C:\\Program Files\\Wireshark\\tshark.exe',
+            'C:\\Program Files (x86)\\Wireshark\\tshark.exe',
+            '/Applications/Wireshark.app/Contents/MacOS/tshark'
+        ],
+        'custom_executable': None,
+        'enable_reassembly': True,
+        'enable_defragmentation': True,
+        'timeout_seconds': 300,
+        'max_memory_mb': 1024,
+        'quiet_mode': True
+    }
+}
+
 
 def get_default_config_dict():
     """获取完整的默认配置字典"""
@@ -148,6 +168,7 @@ def get_default_config_dict():
         'ui': DEFAULT_UI_CONFIG,
         'processing': DEFAULT_PROCESSING_CONFIG,
         'logging': DEFAULT_LOGGING_CONFIG,
+        'tools': EXTERNAL_TOOLS_DEFAULTS,
         'config_version': '2.0',
         'created_at': None,
         'updated_at': None
@@ -186,4 +207,14 @@ def get_supported_file_extensions() -> list:
 
 def get_legacy_config_files() -> list:
     """获取旧版配置文件名列表"""
-    return CONFIG_CONSTANTS['legacy_config_files'].copy() 
+    return CONFIG_CONSTANTS['legacy_config_files'].copy()
+
+
+def get_tool_config(tool_name: str) -> dict:
+    """获取特定工具的默认配置"""
+    return EXTERNAL_TOOLS_DEFAULTS.get(tool_name, {})
+
+
+def get_tshark_paths() -> list:
+    """获取TShark可执行文件的默认搜索路径"""
+    return EXTERNAL_TOOLS_DEFAULTS.get('tshark', {}).get('executable_paths', []) 
