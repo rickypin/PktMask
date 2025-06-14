@@ -873,12 +873,10 @@ class ScapyRewriter(BaseStage):
         self._logger.debug("Scapy回写器资源清理完成")
     
     def _extract_packet_payload(self, packet) -> Tuple[bytes, int]:
-        """提取数据包载荷 - 统一使用完整TCP载荷
+        """提取数据包载荷 - 支持多层封装的完整TCP载荷提取
         
-        这个方法简化了载荷提取逻辑，统一使用完整TCP载荷而不是TLS层优先。
-        但在TShark重组包中，载荷可能被解析到TLS层，因此增加TLS层作为备选。
-        这样可以确保与PyShark分析器的载荷长度完全一致，让MaskAfter(5)
-        在掩码应用时自然处理TLS头部保护。
+        修复多层封装场景下的载荷提取问题，正确计算所有封装层的头部长度。
+        确保在双层VLAN、MPLS、VXLAN、GRE等复杂封装下能准确定位TCP载荷。
         
         Args:
             packet: Scapy数据包对象
@@ -893,8 +891,7 @@ class ScapyRewriter(BaseStage):
         tcp_layer = packet['TCP']
         seq_number = tcp_layer.seq
         
-        # 统一使用完整TCP载荷提取（与PyShark分析器保持一致）
-        # 方法1: 优先从Raw层提取完整载荷
+        # 方法1: 优先从Raw层提取完整载荷（最可靠）
         if packet.haslayer('Raw'):
             raw_layer = packet['Raw']
             payload = bytes(raw_layer.load)
@@ -909,39 +906,23 @@ class ScapyRewriter(BaseStage):
                 self._logger.debug(f"从TCP层提取载荷: {len(payload)} 字节")
                 return payload, seq_number
         
-        # 方法3: TShark重组包的备选方案 - 手动计算TCP载荷
-        # 当TShark重组后Raw层不存在时，通过字节计算提取完整TCP载荷
+        # 方法3: 多层封装感知的手动计算TCP载荷
+        # 修复：正确计算所有封装层的头部长度
         try:
             packet_bytes = bytes(packet)
-            
-            # 计算所有头部长度
-            headers_length = 0
-            
-            # 以太网头部
-            if packet.haslayer('Ether'):
-                headers_length += 14
-            
-            # IP头部
-            if packet.haslayer('IP'):
-                headers_length += packet['IP'].ihl * 4
-            elif packet.haslayer('IPv6'):
-                headers_length += 40
-            
-            # TCP头部
-            if packet.haslayer('TCP'):
-                headers_length += packet['TCP'].dataofs * 4
+            headers_length = self._calculate_all_headers_length(packet)
             
             # 计算载荷长度
             payload_length = len(packet_bytes) - headers_length
             if payload_length > 0:
-                # 从数据包末尾提取载荷
+                # 从正确位置提取载荷
                 payload = packet_bytes[headers_length:]
-                self._logger.debug(f"通过字节计算提取完整TCP载荷: {len(payload)} 字节")
+                self._logger.debug(f"通过多层封装感知计算提取TCP载荷: {len(payload)} 字节 (头部长度={headers_length})")
                 return payload, seq_number
         except Exception as e:
-            self._logger.debug(f"字节计算载荷提取失败: {e}")
+            self._logger.debug(f"多层封装载荷提取失败: {e}")
         
-        # 方法4: 从数据包级别获取载荷
+        # 方法4: 从数据包级别获取载荷（最后备选）
         if hasattr(packet, 'load'):
             payload = bytes(packet.load)
             if payload:
@@ -950,5 +931,203 @@ class ScapyRewriter(BaseStage):
         
         self._logger.debug("无载荷数据")
         return b'', seq_number
+    
+    def _calculate_all_headers_length(self, packet) -> int:
+        """计算所有协议层的头部长度，支持多层封装
+        
+        正确处理各种封装场景：
+        - 双层VLAN (QinQ)
+        - MPLS标签栈
+        - VXLAN隧道
+        - GRE隧道
+        - 复合封装
+        
+        Args:
+            packet: Scapy数据包对象
+            
+        Returns:
+            总头部长度（字节）
+        """
+        headers_length = 0
+        
+        # 1. 以太网头部 (固定14字节)
+        if packet.haslayer('Ether'):
+            headers_length += 14
+            self._logger.debug(f"以太网头部: +14字节")
+        
+        # 2. VLAN封装层处理
+        vlan_length = self._calculate_vlan_headers_length(packet)
+        headers_length += vlan_length
+        if vlan_length > 0:
+            self._logger.debug(f"VLAN封装头部: +{vlan_length}字节")
+        
+        # 3. MPLS标签栈处理
+        mpls_length = self._calculate_mpls_headers_length(packet)
+        headers_length += mpls_length
+        if mpls_length > 0:
+            self._logger.debug(f"MPLS标签头部: +{mpls_length}字节")
+        
+        # 4. 隧道协议处理 (VXLAN/GRE)
+        tunnel_length = self._calculate_tunnel_headers_length(packet)
+        headers_length += tunnel_length
+        if tunnel_length > 0:
+            self._logger.debug(f"隧道协议头部: +{tunnel_length}字节")
+        
+        # 5. IP头部 (外层和内层)
+        ip_length = self._calculate_ip_headers_length(packet)
+        headers_length += ip_length
+        if ip_length > 0:
+            self._logger.debug(f"IP头部: +{ip_length}字节")
+        
+        # 6. TCP头部 (最内层)
+        tcp_length = self._calculate_tcp_header_length(packet)
+        headers_length += tcp_length
+        if tcp_length > 0:
+            self._logger.debug(f"TCP头部: +{tcp_length}字节")
+        
+        self._logger.debug(f"总头部长度: {headers_length}字节")
+        return headers_length
+    
+    def _calculate_vlan_headers_length(self, packet) -> int:
+        """计算VLAN头部长度，支持单层和双层VLAN"""
+        vlan_length = 0
+        
+        # 检测VLAN层数
+        if packet.haslayer('Dot1Q'):
+            vlan_layers = []
+            current = packet
+            
+            # 遍历所有层，收集VLAN层
+            while current:
+                if hasattr(current, 'name') and 'Dot1Q' in str(type(current)):
+                    vlan_layers.append(current)
+                    vlan_length += 4  # 每个VLAN标签4字节
+                
+                if hasattr(current, 'payload'):
+                    current = current.payload
+                else:
+                    break
+            
+            self._logger.debug(f"检测到{len(vlan_layers)}层VLAN标签")
+        
+        # 检测802.1ad (QinQ)
+        try:
+            from scapy.layers.l2 import Dot1AD
+            if packet.haslayer('Dot1AD'):
+                vlan_length += 4  # Service Tag (S-Tag) 4字节
+                self._logger.debug("检测到802.1ad服务标签")
+        except ImportError:
+            pass
+        
+        return vlan_length
+    
+    def _calculate_mpls_headers_length(self, packet) -> int:
+        """计算MPLS标签栈长度"""
+        mpls_length = 0
+        
+        try:
+            if packet.haslayer('MPLS'):
+                current = packet
+                while current:
+                    if hasattr(current, 'name') and 'MPLS' in str(type(current)):
+                        mpls_length += 4  # 每个MPLS标签4字节
+                        # 检查是否是栈底标签
+                        if hasattr(current, 's') and current.s == 1:
+                            break
+                    
+                    if hasattr(current, 'payload'):
+                        current = current.payload
+                    else:
+                        break
+        except Exception:
+            pass
+        
+        return mpls_length
+    
+    def _calculate_tunnel_headers_length(self, packet) -> int:
+        """计算隧道协议头部长度 (VXLAN/GRE)"""
+        tunnel_length = 0
+        
+        # VXLAN处理
+        try:
+            if packet.haslayer('VXLAN'):
+                tunnel_length += 8  # VXLAN头部8字节
+                tunnel_length += 8  # UDP头部8字节  
+                self._logger.debug("检测到VXLAN隧道")
+        except Exception:
+            pass
+        
+        # GRE处理
+        try:
+            if packet.haslayer('GRE'):
+                gre_layer = packet['GRE']
+                gre_length = 4  # 基本GRE头部4字节
+                
+                # 可选字段处理
+                if hasattr(gre_layer, 'chksum_present') and gre_layer.chksum_present:
+                    gre_length += 4
+                if hasattr(gre_layer, 'key_present') and gre_layer.key_present:
+                    gre_length += 4
+                if hasattr(gre_layer, 'seqnum_present') and gre_layer.seqnum_present:
+                    gre_length += 4
+                
+                tunnel_length += gre_length
+                self._logger.debug(f"检测到GRE隧道，头部长度{gre_length}字节")
+        except Exception:
+            pass
+        
+        return tunnel_length
+    
+    def _calculate_ip_headers_length(self, packet) -> int:
+        """计算IP头部长度，处理外层和内层IP"""
+        ip_length = 0
+        
+        # 收集所有IP层
+        ip_layers = []
+        current = packet
+        while current:
+            if hasattr(current, 'name'):
+                if 'IP' in str(type(current)) and 'IPv6' not in str(type(current)):
+                    ip_layers.append(('IPv4', current))
+                elif 'IPv6' in str(type(current)):
+                    ip_layers.append(('IPv6', current))
+            
+            if hasattr(current, 'payload'):
+                current = current.payload
+            else:
+                break
+        
+        # 计算每个IP层的长度
+        for ip_type, ip_layer in ip_layers:
+            if ip_type == 'IPv4':
+                if hasattr(ip_layer, 'ihl') and ip_layer.ihl is not None:
+                    layer_length = ip_layer.ihl * 4
+                    ip_length += layer_length
+                    self._logger.debug(f"IPv4头部: {layer_length}字节")
+                else:
+                    # 默认IPv4头部长度20字节（无选项）
+                    layer_length = 20
+                    ip_length += layer_length
+                    self._logger.debug(f"IPv4头部(默认): {layer_length}字节")
+            elif ip_type == 'IPv6':
+                ip_length += 40  # IPv6头部固定40字节
+                self._logger.debug(f"IPv6头部: 40字节")
+        
+        return ip_length
+    
+    def _calculate_tcp_header_length(self, packet) -> int:
+        """计算TCP头部长度"""
+        if packet.haslayer('TCP'):
+            tcp_layer = packet['TCP']
+            if hasattr(tcp_layer, 'dataofs') and tcp_layer.dataofs is not None:
+                tcp_length = tcp_layer.dataofs * 4
+                self._logger.debug(f"TCP头部: {tcp_length}字节")
+                return tcp_length
+            else:
+                # 默认TCP头部长度20字节（无选项）
+                tcp_length = 20
+                self._logger.debug(f"TCP头部(默认): {tcp_length}字节")
+                return tcp_length
+        return 0
     
  
