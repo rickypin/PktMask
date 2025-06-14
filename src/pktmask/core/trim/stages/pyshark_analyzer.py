@@ -316,7 +316,7 @@ class PySharkAnalyzer(BaseStage):
                 pass
     
     def _analyze_single_packet(self, packet) -> Optional[PacketAnalysis]:
-        """分析单个数据包
+        """分析单个数据包 - 扩展协议识别支持ICMP和DNS
         
         Args:
             packet: PyShark数据包对象
@@ -355,13 +355,44 @@ class PySharkAnalyzer(BaseStage):
                     
                 self._logger.info(f"=== PyShark数据包{packet_number} 调试结束 ===")
             
-            # 检查是否为TCP或UDP
+            # 扩展协议识别：支持TCP、UDP、ICMP、DNS
+            analysis = None
+            
+            # 检查TCP协议
             if hasattr(packet, 'tcp'):
-                return self._analyze_tcp_packet(packet, packet_number, timestamp)
+                analysis = self._analyze_tcp_packet(packet, packet_number, timestamp)
+                
+            # 检查UDP协议
             elif hasattr(packet, 'udp') and self._analyze_udp:
-                return self._analyze_udp_packet(packet, packet_number, timestamp)
-            else:
-                return None
+                analysis = self._analyze_udp_packet(packet, packet_number, timestamp)
+                
+            # 新增：检查ICMP协议
+            elif hasattr(packet, 'icmp'):
+                analysis = self._analyze_icmp_packet(packet, packet_number, timestamp)
+                
+            # 新增：检查DNS协议 (可能在UDP或TCP上)
+            elif hasattr(packet, 'dns'):
+                analysis = self._analyze_dns_packet(packet, packet_number, timestamp)
+                
+            # 如果有分析结果，进一步检查应用层协议
+            if analysis:
+                # 新增ICMP识别
+                if hasattr(packet, 'icmp'):
+                    analysis.application_layer = 'ICMP'
+                    self._logger.debug(f"识别到ICMP协议包: {packet.number}")
+                
+                # 新增DNS识别  
+                elif hasattr(packet, 'dns'):
+                    analysis.application_layer = 'DNS'
+                    self._logger.debug(f"识别到DNS协议包: {packet.number}")
+                
+                # 现有HTTP/TLS识别逻辑保持不变
+                elif hasattr(packet, 'http'):
+                    self._analyze_http_layer(packet.http, analysis)
+                elif hasattr(packet, 'tls'):
+                    self._analyze_tls_layer(packet.tls, analysis)
+            
+            return analysis
                 
         except Exception as e:
             self._logger.debug(f"分析数据包时出错: {e}")
@@ -517,6 +548,140 @@ class PySharkAnalyzer(BaseStage):
             
         except Exception as e:
             self._logger.debug(f"分析UDP数据包时出错: {e}")
+            return None
+    
+    def _analyze_icmp_packet(self, packet, packet_number: int, timestamp: float) -> Optional[PacketAnalysis]:
+        """分析ICMP数据包
+        
+        Args:
+            packet: PyShark数据包对象
+            packet_number: 数据包编号
+            timestamp: 时间戳
+            
+        Returns:
+            ICMP数据包分析结果
+        """
+        try:
+            # 提取基本ICMP信息
+            icmp_layer = packet.icmp
+            ip_layer = packet.ip if hasattr(packet, 'ip') else packet.ipv6
+            
+            src_ip = ip_layer.src
+            dst_ip = ip_layer.dst
+            
+            # ICMP没有端口概念，使用类型和代码作为标识
+            icmp_type = int(icmp_layer.type) if hasattr(icmp_layer, 'type') else 0
+            icmp_code = int(icmp_layer.code) if hasattr(icmp_layer, 'code') else 0
+            
+            # 生成ICMP流ID (使用特殊格式)
+            stream_id = f"ICMP_{src_ip}_{dst_ip}_{icmp_type}_{icmp_code}"
+            
+            # 获取ICMP载荷长度
+            payload_length = 0
+            if hasattr(icmp_layer, 'data') and icmp_layer.data:
+                try:
+                    if hasattr(icmp_layer.data, 'binary_value'):
+                        payload_length = len(icmp_layer.data.binary_value)
+                    elif hasattr(icmp_layer.data, 'raw_value'):
+                        payload_length = len(icmp_layer.data.raw_value) // 2
+                except Exception:
+                    # 对于ICMP，如果无法获取数据长度，设为8字节（最小ICMP包大小）
+                    payload_length = 8
+            else:
+                # ICMP最小包大小
+                payload_length = 8
+            
+            # 创建分析结果
+            analysis = PacketAnalysis(
+                packet_number=packet_number,
+                timestamp=timestamp,
+                stream_id=stream_id,
+                seq_number=None,  # ICMP没有序列号
+                payload_length=payload_length,
+                application_layer='ICMP'
+            )
+            
+            self._logger.debug(f"数据包{packet_number}: 识别为ICMP，类型={icmp_type}，代码={icmp_code}，载荷长度={payload_length}字节")
+            return analysis
+            
+        except Exception as e:
+            self._logger.debug(f"分析ICMP数据包时出错: {e}")
+            return None
+    
+    def _analyze_dns_packet(self, packet, packet_number: int, timestamp: float) -> Optional[PacketAnalysis]:
+        """分析DNS数据包
+        
+        Args:
+            packet: PyShark数据包对象
+            packet_number: 数据包编号
+            timestamp: 时间戳
+            
+        Returns:
+            DNS数据包分析结果
+        """
+        try:
+            # 提取基本DNS信息
+            dns_layer = packet.dns
+            ip_layer = packet.ip if hasattr(packet, 'ip') else packet.ipv6
+            
+            src_ip = ip_layer.src
+            dst_ip = ip_layer.dst
+            
+            # DNS可能基于UDP或TCP
+            if hasattr(packet, 'udp'):
+                udp_layer = packet.udp
+                src_port = int(udp_layer.srcport)
+                dst_port = int(udp_layer.dstport)
+                transport_protocol = 'UDP'
+            elif hasattr(packet, 'tcp'):
+                tcp_layer = packet.tcp
+                src_port = int(tcp_layer.srcport)
+                dst_port = int(tcp_layer.dstport)
+                transport_protocol = 'TCP'
+            else:
+                # 默认UDP端口53
+                src_port = 53
+                dst_port = 53
+                transport_protocol = 'UDP'
+            
+            # 生成DNS流ID
+            stream_id = f"DNS_{src_ip}:{src_port}_{dst_ip}:{dst_port}_{transport_protocol}"
+            
+            # 获取DNS载荷长度
+            payload_length = 0
+            try:
+                # DNS查询和响应的长度计算
+                if hasattr(packet, 'udp') and hasattr(packet.udp, 'length'):
+                    udp_header_len = 8
+                    total_len = int(packet.udp.length)
+                    payload_length = max(0, total_len - udp_header_len)
+                elif hasattr(packet, 'tcp') and hasattr(packet.tcp, 'len'):
+                    payload_length = int(packet.tcp.len)
+                else:
+                    # 默认DNS最小包大小
+                    payload_length = 12  # DNS头部大小
+            except Exception:
+                payload_length = 12
+            
+            # 创建分析结果
+            analysis = PacketAnalysis(
+                packet_number=packet_number,
+                timestamp=timestamp,
+                stream_id=stream_id,
+                seq_number=None,  # DNS通常基于UDP，没有序列号
+                payload_length=payload_length,
+                application_layer='DNS'
+            )
+            
+            # 提取DNS查询信息用于调试
+            dns_qr = getattr(dns_layer, 'qr', 'N/A')  # 0=查询, 1=响应
+            dns_opcode = getattr(dns_layer, 'opcode', 'N/A')
+            
+            self._logger.debug(f"数据包{packet_number}: 识别为DNS，QR={dns_qr}，OPCODE={dns_opcode}，载荷长度={payload_length}字节，传输协议={transport_protocol}")
+            return analysis
+            
+        except Exception as e:
+            self._logger.debug(f"分析DNS数据包时出错: {e}")
             return None
     
     def _analyze_http_layer(self, http_layer, analysis: PacketAnalysis) -> None:
@@ -722,27 +887,69 @@ class PySharkAnalyzer(BaseStage):
         stream_id = analysis.stream_id
         
         if stream_id not in self._streams:
-            # 从stream_id解析流信息
+            # 根据协议类型解析流信息
             parts = stream_id.split('_')
             protocol = parts[0]
-            src_endpoint = parts[1]
-            dst_endpoint = parts[2]
             
-            src_ip, src_port = src_endpoint.rsplit(':', 1)
-            dst_ip, dst_port = dst_endpoint.rsplit(':', 1)
-            
-            # 创建新的流信息
-            self._streams[stream_id] = StreamInfo(
-                stream_id=stream_id,
-                src_ip=src_ip,
-                dst_ip=dst_ip,
-                src_port=int(src_port),
-                dst_port=int(dst_port),
-                protocol=protocol,
-                application_protocol=analysis.application_layer,
-                first_seen=analysis.timestamp,
-                last_seen=analysis.timestamp
-            )
+            if protocol == 'ICMP':
+                # ICMP流ID格式: ICMP_src_ip_dst_ip_type_code
+                src_ip = parts[1]
+                dst_ip = parts[2]
+                icmp_type = parts[3]
+                icmp_code = parts[4]
+                
+                # 创建ICMP流信息
+                self._streams[stream_id] = StreamInfo(
+                    stream_id=stream_id,
+                    src_ip=src_ip,
+                    dst_ip=dst_ip,
+                    src_port=int(icmp_type),  # 使用type作为port
+                    dst_port=int(icmp_code),  # 使用code作为port
+                    protocol=protocol,
+                    application_protocol=analysis.application_layer,
+                    first_seen=analysis.timestamp,
+                    last_seen=analysis.timestamp
+                )
+            elif protocol == 'DNS':
+                # DNS流ID格式: DNS_src_ip:src_port_dst_ip:dst_port_transport_protocol
+                src_endpoint = parts[1]
+                dst_endpoint = parts[2]
+                
+                src_ip, src_port = src_endpoint.rsplit(':', 1)
+                dst_ip, dst_port = dst_endpoint.rsplit(':', 1)
+                
+                # 创建DNS流信息
+                self._streams[stream_id] = StreamInfo(
+                    stream_id=stream_id,
+                    src_ip=src_ip,
+                    dst_ip=dst_ip,
+                    src_port=int(src_port),
+                    dst_port=int(dst_port),
+                    protocol=protocol,
+                    application_protocol=analysis.application_layer,
+                    first_seen=analysis.timestamp,
+                    last_seen=analysis.timestamp
+                )
+            else:
+                # 标准TCP/UDP流ID格式: PROTOCOL_src_ip:src_port_dst_ip:dst_port
+                src_endpoint = parts[1]
+                dst_endpoint = parts[2]
+                
+                src_ip, src_port = src_endpoint.rsplit(':', 1)
+                dst_ip, dst_port = dst_endpoint.rsplit(':', 1)
+                
+                # 创建标准流信息
+                self._streams[stream_id] = StreamInfo(
+                    stream_id=stream_id,
+                    src_ip=src_ip,
+                    dst_ip=dst_ip,
+                    src_port=int(src_port),
+                    dst_port=int(dst_port),
+                    protocol=protocol,
+                    application_protocol=analysis.application_layer,
+                    first_seen=analysis.timestamp,
+                    last_seen=analysis.timestamp
+                )
         
         # 更新流统计信息
         stream_info = self._streams[stream_id]
@@ -785,6 +992,10 @@ class PySharkAnalyzer(BaseStage):
             elif stream_info.application_protocol == 'TLS':
                 self._logger.info(f"使用TLS掩码策略处理流{stream_id}")
                 self._generate_tls_masks(mask_table, stream_id, packets)
+            elif stream_info.application_protocol in ['ICMP', 'DNS']:
+                # 新增：对ICMP和DNS协议使用完全保留策略
+                self._logger.info(f"使用完全保留策略处理{stream_info.application_protocol}流{stream_id}")
+                self._generate_preserve_all_masks(mask_table, stream_id, packets)
             else:
                 # 对于其他协议，使用通用策略
                 self._logger.info(f"使用通用掩码策略处理流{stream_id}，协议={stream_info.application_protocol}")
@@ -834,30 +1045,19 @@ class PySharkAnalyzer(BaseStage):
                 self._logger.warning(f"添加HTTP掩码条目失败: {e}")
     
     def _generate_tls_masks(self, mask_table: StreamMaskTable, stream_id: str, packets: List[PacketAnalysis]) -> None:
-        """为TLS流生成掩码
+        """为TLS流生成掩码 - 简化版本
         
         Args:
             mask_table: 掩码表
             stream_id: 流ID
             packets: 该流的数据包分析结果列表
         """
-        self._logger.info(f"为TLS流{stream_id}生成掩码，包含{len(packets)}个数据包")
+        # 先进行TLS流重组分析
+        reassembled_packets = self._reassemble_tls_stream(packets)
         
-        # 新增：TLS流重组逻辑，处理跨TCP段的TLS消息
-        packets_with_tls_context = self._reassemble_tls_stream(packets)
+        self._logger.info(f"生成TLS掩码：流{stream_id}，共{len(reassembled_packets)}个数据包")
         
-        for packet in packets_with_tls_context:
-            self._logger.debug(f"检查数据包{packet.packet_number}: content_type={packet.tls_content_type}, payload_len={packet.payload_length}, tls_reassembled={getattr(packet, 'tls_reassembled', False)}")
-            
-            # 检查是否是TLS包或TLS重组包
-            is_tls_packet = (packet.is_tls_handshake or packet.is_tls_application_data or 
-                           packet.is_tls_change_cipher_spec or packet.is_tls_alert or packet.is_tls_heartbeat or
-                           getattr(packet, 'tls_reassembled', False))
-            
-            if not is_tls_packet:
-                self._logger.debug(f"跳过数据包{packet.packet_number}: 不是TLS包")
-                continue
-            
+        for packet in reassembled_packets:
             if packet.seq_number is None or packet.payload_length == 0:
                 self._logger.debug(f"跳过数据包{packet.packet_number}: seq_number={packet.seq_number}, payload_length={packet.payload_length}")
                 continue
@@ -865,33 +1065,10 @@ class PySharkAnalyzer(BaseStage):
             seq_start = packet.seq_number
             seq_end = seq_start + packet.payload_length
             
-            # 根据TLS记录类型或重组状态决定掩码策略
-            if packet.tls_content_type == 23 and packet.is_tls_application_data and self._tls_mask_application_data:
-                # 23 (ApplicationData): 保留TLS记录头，掩码应用数据
-                if packet.tls_record_length and packet.tls_record_length >= 5:
-                    mask_spec = MaskAfter(5)  # 保留5字节TLS记录头
-                    self._logger.info(f"TLS ApplicationData包{packet.packet_number}: 保留5字节头，掩码其余{packet.payload_length-5}字节")
-                    self._logger.info(f"    序列号范围: {seq_start}-{seq_end} (载荷长度={packet.payload_length})")
-                else:
-                    mask_spec = MaskAfter(0)  # 完全掩码
-                    self._logger.info(f"TLS ApplicationData包{packet.packet_number}: 完全掩码{packet.payload_length}字节")
-            elif getattr(packet, 'tls_reassembled', False):
-                # TLS重组包：根据重组记录类型决定掩码策略
-                reassembly_info = getattr(packet, 'tls_reassembly_info', {})
-                record_type = reassembly_info.get('record_type', 'Unknown')
-                
-                if record_type == 'ApplicationData' and self._tls_mask_application_data:
-                    # 重组的ApplicationData包仍然应用掩码策略
-                    mask_spec = MaskAfter(5)
-                    self._logger.info(f"TLS重组包{packet.packet_number}: 保留5字节头，掩码其余{packet.payload_length - 5}字节 (属于{record_type})")
-                else:
-                    # 其他类型的重组包（Handshake, Alert等）保留全部载荷
-                    mask_spec = KeepAll()
-                    self._logger.info(f"TLS重组包{packet.packet_number}: 保留全部载荷{packet.payload_length}字节 (属于{record_type})")
-            elif (packet.tls_content_type in [20, 21, 22, 24] and 
-                  (packet.is_tls_change_cipher_spec or packet.is_tls_alert or 
-                   packet.is_tls_handshake or packet.is_tls_heartbeat)):
-                # 20 (ChangeCipherSpec), 21 (Alert), 22 (Handshake), 24 (Heartbeat): 保留全包
+            # 简化的TLS策略：根据content type决定处理方式
+            if packet.tls_content_type in [20, 21, 22, 24]:
+                # TLS content type 20(ChangeCipherSpec), 21(Alert), 22(Handshake), 24(Heartbeat)
+                # 完全保留这些重要的TLS控制和握手消息
                 mask_spec = KeepAll()
                 
                 tls_type_name = {
@@ -900,15 +1077,32 @@ class PySharkAnalyzer(BaseStage):
                     22: "Handshake",
                     24: "Heartbeat"
                 }.get(packet.tls_content_type, "Unknown")
-                self._logger.info(f"TLS {tls_type_name}包{packet.packet_number}: 保留全部载荷{packet.payload_length}字节")
-            else:
-                # 其他情况，根据配置决定
-                if self._tls_keep_handshake:
-                    mask_spec = KeepAll()
-                    self._logger.info(f"TLS包{packet.packet_number}: 保留全部载荷 (配置决定)")
-                else:
+                self._logger.info(f"TLS {tls_type_name}包{packet.packet_number}: 完全保留{packet.payload_length}字节")
+                
+            elif packet.tls_content_type == 23:
+                # TLS content type 23 (ApplicationData)
+                # 简化处理：全部置零，不保留任何载荷
+                mask_spec = MaskAfter(0)
+                self._logger.info(f"TLS ApplicationData包{packet.packet_number}: 全部掩码{packet.payload_length}字节")
+                
+            elif getattr(packet, 'tls_reassembled', False):
+                # TLS重组包：根据重组记录类型决定掩码策略
+                reassembly_info = getattr(packet, 'tls_reassembly_info', {})
+                record_type = reassembly_info.get('record_type', 'Unknown')
+                
+                if record_type == 'ApplicationData':
+                    # 重组的ApplicationData包按简化策略处理
                     mask_spec = MaskAfter(0)
-                    self._logger.info(f"TLS包{packet.packet_number}: 完全掩码 (配置决定)")
+                    self._logger.info(f"TLS重组包{packet.packet_number}: 全部掩码{packet.payload_length}字节 (ApplicationData重组)")
+                else:
+                    # 其他类型的重组包（Handshake, Alert等）完全保留
+                    mask_spec = KeepAll()
+                    self._logger.info(f"TLS重组包{packet.packet_number}: 完全保留{packet.payload_length}字节 ({record_type}重组)")
+                    
+            else:
+                # 其他TLS包或未识别的包：按通用协议处理（全部置零）
+                mask_spec = MaskAfter(0)
+                self._logger.info(f"TLS其他包{packet.packet_number}: 全部掩码{packet.payload_length}字节 (通用处理)")
             
             try:
                 mask_table.add_mask_range(stream_id, seq_start, seq_end, mask_spec)
@@ -998,6 +1192,60 @@ class PySharkAnalyzer(BaseStage):
         # 第二步：返回所有包（已经标记了重组信息）
         self._logger.info(f"TLS流重组完成，标记了{sum(1 for p in sorted_packets if getattr(p, 'tls_reassembled', False))}个重组包")
         return sorted_packets
+    
+    def _generate_preserve_all_masks(self, mask_table: StreamMaskTable, stream_id: str, packets: List[PacketAnalysis]) -> None:
+        """为需要完全保留的协议生成掩码（用于ICMP/DNS等）
+        
+        Args:
+            mask_table: 掩码表
+            stream_id: 流ID
+            packets: 该流的数据包分析结果列表
+        """
+        for packet in packets:
+            if packet.payload_length == 0:
+                self._logger.debug(f"跳过数据包{packet.packet_number}: 载荷长度为0")
+                continue
+            
+            # 对于ICMP和DNS协议，完全保留所有内容
+            mask_spec = KeepAll()
+            
+            if packet.application_layer == 'ICMP':
+                # ICMP使用特殊的流ID格式，使用包编号作为序列号
+                try:
+                    entry = StreamMaskEntry(
+                        stream_id=stream_id,
+                        seq_start=packet.packet_number,  # 使用包编号代替序列号
+                        seq_end=packet.packet_number + packet.payload_length,
+                        mask_spec=mask_spec
+                    )
+                    mask_table.add_entry(entry)
+                    self._logger.info(f"ICMP包{packet.packet_number}: 完全保留{packet.payload_length}字节")
+                except StreamMaskTableError as e:
+                    self._logger.warning(f"添加ICMP掩码条目失败: {e}")
+                    
+            elif packet.application_layer == 'DNS':
+                # DNS也没有序列号概念（基于UDP时），使用包编号作为序列号
+                try:
+                    entry = StreamMaskEntry(
+                        stream_id=stream_id,
+                        seq_start=packet.packet_number,  # 使用包编号代替序列号
+                        seq_end=packet.packet_number + packet.payload_length,
+                        mask_spec=mask_spec
+                    )
+                    mask_table.add_entry(entry)
+                    self._logger.info(f"DNS包{packet.packet_number}: 完全保留{packet.payload_length}字节")
+                except StreamMaskTableError as e:
+                    self._logger.warning(f"添加DNS掩码条目失败: {e}")
+            else:
+                # 其他需要完全保留的协议，使用标准方式
+                if packet.seq_number is not None:
+                    seq_start = packet.seq_number
+                    seq_end = seq_start + packet.payload_length
+                    try:
+                        mask_table.add_mask_range(stream_id, seq_start, seq_end, mask_spec)
+                        self._logger.info(f"{packet.application_layer}包{packet.packet_number}: 完全保留{packet.payload_length}字节")
+                    except StreamMaskTableError as e:
+                        self._logger.warning(f"添加{packet.application_layer}掩码条目失败: {e}")
     
     def _generate_generic_masks(self, mask_table: StreamMaskTable, stream_id: str, packets: List[PacketAnalysis]) -> None:
         """为通用流生成掩码
