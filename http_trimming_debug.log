@@ -1,0 +1,1222 @@
+2025-06-15 16:17:26,832 - pktmask.core.trim.stages.base_stage.TShark预处理器 - INFO - 找到TShark版本: TShark (Wireshark) 4.4.6 (v4.4.6-0-gaebb20483889).
+2025-06-15 16:17:27,043 - pktmask.core.trim.stages.base_stage.TShark预处理器 - INFO - TShark预处理器初始化完成
+2025-06-15 16:17:27,043 - pktmask.core.trim.stages.base_stage.TShark预处理器 - INFO - Stage 'TShark预处理器' 初始化成功
+2025-06-15 16:17:27,043 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 0.0%
+2025-06-15 16:17:27,044 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 10.0%
+2025-06-15 16:17:27,044 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 20.0%
+2025-06-15 16:17:27,044 - pktmask.core.trim.stages.base_stage.TShark预处理器 - INFO - 执行TShark命令: /Applications/Wireshark.app/Contents/MacOS/tshark -r tests/samples/http/http-proxy-problem.pcapng -w /var/folders/wz/ql3l9vh10z3c4kt7h9c1ydvh0000gn/T/tmpmdfgfq59/tshark_output_p93dxvtc.pcap -o tcp.desegment_tcp_streams:TRUE -o tcp.reassemble_out_of_order:TRUE -o ip.defragment:TRUE -o ipv6.defragment:TRUE -q
+2025-06-15 16:17:27,157 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 80.0%
+2025-06-15 16:17:27,157 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 80.0%
+2025-06-15 16:17:27,157 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 90.0%
+2025-06-15 16:17:27,157 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 100.0%
+2025-06-15 16:17:27,158 - pktmask.core.trim.stages.base_stage.PyShark分析器 - WARNING - 无法获取PyShark版本信息
+2025-06-15 16:17:27,158 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark分析器初始化完成
+2025-06-15 16:17:27,158 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - Stage 'PyShark分析器' 初始化成功
+2025-06-15 16:17:27,158 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 开始PyShark协议分析...
+2025-06-15 16:17:27,158 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 0.0%
+2025-06-15 16:17:27,158 - asyncio - DEBUG - Using selector: KqueueSelector
+2025-06-15 16:17:27,158 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 成功打开PCAP文件: /var/folders/wz/ql3l9vh10z3c4kt7h9c1ydvh0000gn/T/tmpmdfgfq59/tshark_output_p93dxvtc.pcap
+2025-06-15 16:17:27,158 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:27,363 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包1: 获取UDP payload失败，使用udp.length计算: Non-hexadecimal digit found
+2025-06-15 16:17:27,363 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包1: 使用udp.length计算载荷长度 = 36字节
+2025-06-15 16:17:27,363 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 识别到DNS协议包: 1
+2025-06-15 16:17:27,363 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:27,363 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:27,364 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:27,364 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包4: 获取UDP payload失败，使用udp.length计算: Non-hexadecimal digit found
+2025-06-15 16:17:27,364 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包4: 使用udp.length计算载荷长度 = 132字节
+2025-06-15 16:17:27,364 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 识别到DNS协议包: 4
+2025-06-15 16:17:27,364 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:27,364 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包5: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,364 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包5: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:27,364 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包5: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,364 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:27,364 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包6: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,364 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包6: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:27,364 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包6: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,364 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:27,364 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包7: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,364 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包7: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包7: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包8: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包8: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=5282->1029
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包8: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.1%
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包9: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包9: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包9: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.1%
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包10: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包10: 使用tcp.len获取载荷长度 = 233字节
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包10: payload_len=233, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包10: 未识别为HTTP/TLS，载荷长度=233
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.1%
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包11: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包11: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=5282->1029
+2025-06-15 16:17:27,365 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包11: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,366 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:27,366 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: 使用tcp.len获取载荷长度 = 148字节
+2025-06-15 16:17:27,366 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: payload_len=148, has_tls=False, has_ssl=False, has_http=True, port=1029->5282
+2025-06-15 16:17:27,366 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: 识别为HTTP
+2025-06-15 16:17:27,366 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: HTTP层存在但缺少request_method和response_code
+2025-06-15 16:17:27,366 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: 基于字段启发式判断为HTTP请求
+2025-06-15 16:17:27,366 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: 设置默认HTTP头长度为37字节
+2025-06-15 16:17:27,366 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包13: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:27,366 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包13: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:27,366 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包13: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1029
+2025-06-15 16:17:27,366 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包13: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:27,366 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - === PyShark调试数据包14 详细信息 ===
+2025-06-15 16:17:27,367 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14: Packet (Length: 1434)
+[1m[33mLayer ETH
+:[0m[32m	dst:[0m[1m 00:d0:59:aa:af:80
+[0m[32m	dst:[0m[1m
+[0m[32m		oui:[0m[1m 53337
+[0m[32m		oui_resolved:[0m[1m Ambit Microsystems Corp.
+[0m[32m		dst_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		addr:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		addr_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		ig:[0m[1m 0
+[0m[32m		eth.dst_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		lg:[0m[1m 0
+[0m[32m	stream:[0m[1m 0
+[0m[32m	type:[0m[1m 0x0800
+[0m[32m	src:[0m[1m
+[0m[32m		oui:[0m[1m 45156
+[0m[32m		oui_resolved:[0m[1m Cisco Systems, Inc
+[0m[32m		addr:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		eth.src_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		ig:[0m[1m 0
+[0m[32m		src_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		addr_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		lg:[0m[1m 0
+[0m[32m	src:[0m[1m 00:b0:64:6e:92:40
+[0m[1m[33mLayer IP
+:[0m[32m	dsfield:[0m[1m
+[0m[32m		dscp:[0m[1m 0
+[0m[32m		ecn:[0m[1m 0
+[0m[32m	dst_host:[0m[1m 12.234.15.56
+[0m[32m	dsfield:[0m[1m 0x00
+[0m[32m	version:[0m[1m 4
+[0m[32m	host:[0m[1m 207.217.127.97
+[0m[32m	host:[0m[1m 12.234.15.56
+[0m[32m	hdr_len:[0m[1m 20
+[0m[32m	proto:[0m[1m 6
+[0m[32m	dst:[0m[1m 12.234.15.56
+[0m[32m	stream:[0m[1m 1
+[0m[32m	status:[0m[1m 2
+[0m[32m	flags:[0m[1m 0x02
+[0m[32m	id:[0m[1m 0xc6ee
+[0m[32m	ttl:[0m[1m 125
+[0m[32m	flags:[0m[1m
+[0m[32m		rb:[0m[1m 0
+[0m[32m		df:[0m[1m 1
+[0m[32m		mf:[0m[1m 0
+[0m[32m	frag_offset:[0m[1m 0
+[0m[32m	src_host:[0m[1m 207.217.127.97
+[0m[32m	len:[0m[1m 1420
+[0m[32m	checksum.status:[0m[1m 2
+[0m[32m	addr:[0m[1m 207.217.127.97
+[0m[32m	addr:[0m[1m 12.234.15.56
+[0m[32m	checksum:[0m[1m 0xc620
+[0m[32m	src:[0m[1m 207.217.127.97
+[0m[1m[33mLayer TCP
+:[0m[32m	seq_raw:[0m[1m 5483955
+[0m[32m	nxtseq:[0m[1m 2761
+[0m[32m	ack:[0m[1m 382
+[0m[32m	stream.pnum:[0m[1m 10
+[0m[32m	pnum:[0m[1m 10
+[0m[32m	completeness:[0m[1m
+[0m[32m		str:[0m[1m ··DASS
+[0m[32m		syn:[0m[1m 1
+[0m[32m		fin:[0m[1m 0
+[0m[32m		ack:[0m[1m 1
+[0m[32m		syn-ack:[0m[1m 1
+[0m[32m		rst:[0m[1m 0
+[0m[32m		data:[0m[1m 1
+[0m[32m	srcport:[0m[1m 5282
+[0m[32m	ack_raw:[0m[1m 2282254031
+[0m[32m	window_size_value:[0m[1m 16179
+[0m[32m	hdr_len:[0m[1m 20
+[0m[32m	seq:[0m[1m 1381
+[0m[32m	stream:[0m[1m 0
+[0m[32m	window_size:[0m[1m 16179
+[0m[32m	status:[0m[1m 2
+[0m[32m	flags:[0m[1m 0x0010
+[0m[32m	completeness:[0m[1m 15
+[0m[32m	segment_data:[0m[1m 67:69:6e:69:6e:67:20:0d:0a:09:2f:2f:6f:66:20:74:68:65:20:74:72:75:65:20:55:52:4c:2c:20:61:6e:64:20:61:64:64:20:31:20:74:6f:20:73:6b:69:70:20:69:74:20:2d:20:74:68:69:73:20:69:73:20:74:68:65:20:42:65:67:69:6e:55:52:4c:20:76:61:6c:75:65:2e:20:57:65:20:75:73:65:20:73:65:72:76:65:72:49:6e:64:65:78:20:61:73:20:74:68:65:20:65:6e:64:20:6d:61:72:6b:65:72:2e:0d:0a:09:2f:2f:75:72:6c:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:70:72:6f:74:6f:63:6f:6c:49:6e:64:65:78:20:2d:20:34:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:42:65:67:69:6e:55:52:4c:3d:44:6f:63:55:52:4c:2e:69:6e:64:65:78:4f:66:28:22:23:22:2c:31:29:20:2b:20:31:3b:0d:0a:09:75:72:6c:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:42:65:67:69:6e:55:52:4c:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:09:0d:0a:09:2f:2f:66:6f:72:20:64:69:73:70:6c:61:79:2c:20:77:65:20:6e:65:65:64:20:74:6f:20:73:6b:69:70:20:61:66:74:65:72:20:68:74:74:70:3a:2f:2f:2c:20:61:6e:64:20:67:6f:20:74:6f:20:74:68:65:20:6e:65:78:74:20:73:6c:61:73:68:0d:0a:09:64:69:73:70:6c:61:79:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:70:72:6f:74:6f:63:6f:6c:49:6e:64:65:78:20:2b:20:33:20:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:64:6f:63:75:6d:65:6e:74:2e:77:72:69:74:65:28:27:3c:41:20:48:52:45:46:3d:22:27:20:2b:20:75:72:6c:72:65:73:75:6c:74:20:2b:20:27:22:3e:27:20:2b:20:64:69:73:70:6c:61:79:72:65:73:75:6c:74:20:2b:20:22:3c:2f:61:3e:22:29:3b:0d:0a:7d:0d:0a:2f:2f:2d:2d:3e:0d:0a:3c:2f:53:43:52:49:50:54:3e:0d:0a:0d:0a:3c:4d:45:54:41:20:63:6f:6e:74:65:6e:74:3d:22:4d:53:48:54:4d:4c:20:35:2e:35:30:2e:34:35:32:32:2e:31:38:30:30:22:20:6e:61:6d:65:3d:47:45:4e:45:52:41:54:4f:52:3e:3c:2f:48:45:41:44:3e:0d:0a:3c:42:4f:44:59:20:62:67:43:6f:6c:6f:72:3d:23:66:66:66:66:66:66:3e:0d:0a:3c:54:41:42:4c:45:20:63:65:6c:6c:53:70:61:63:69:6e:67:3d:35:20:63:65:6c:6c:50:61:64:64:69:6e:67:3d:33:20:77:69:64:74:68:3d:34:31:30:3e:0d:0a:20:20:3c:54:42:4f:44:59:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:76:41:6c:69:67:6e:3d:63:65:6e:74:65:72:20:61:6c:69:67:6e:3d:6c:65:66:74:20:77:69:64:74:68:3d:33:36:30:3e:0d:0a:20:20:20:20:20:20:3c:48:31:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:31:33:70:74:2f:31:35:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:3c:21:2d:2d:50:72:6f:62:6c:65:6d:2d:2d:3e:54:68:65:20:70:61:67:65:20:0d:0a:20:20:20:20:20:20:63:61:6e:6e:6f:74:20:62:65:20:64:69:73:70:6c:61:79:65:64:3c:2f:48:31:3e:3c:2f:54:44:3e:3c:2f:54:52:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:77:69:64:74:68:3d:34:30:30:20:63:6f:6c:53:70:61:6e:3d:32:3e:3c:46:4f:4e:54:20:0d:0a:20:20:20:20:20:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:38:70:74:2f:31:31:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:54:68:65:72:65:20:69:73:20:61:20:70:72:6f:62:6c:65:6d:20:77:69:74:68:20:74:68:65:20:0d:0a:20:20:20:20:20:20:70:61:67:65:20:79:6f:75:20:61:72:65:20:74:72:79:69:6e:67:20:74:6f:20:72:65:61:63:68:20:61:6e:64:20:69:74:20:63:61:6e:6e:6f:74:20:62:65:20:64:69:73:70:6c:61:79:65:64:2e:3c:2f:46:4f:4e:54:3e:3c:2f:54:44:3e:3c:2f:54:52:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:77:69:64:74:68:3d:34:30:30:20:63:6f:6c:53:70:61:6e:3d:32:3e:3c:46:4f:4e:54:20:0d:0a:20:20:20:20:20:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:38:70:74:2f:31:31:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:0d:0a:20:20:20:20:20:20:3c:48:52:20:63:6f:6c:6f:72:3d:23:63:30:63:30:63:30:20:6e:6f:53:68:61:64:65:3e:0d:0a:0d:0a:20:20:20:20:20:20:3c:50:3e:50:6c:65:61:73:65:20:74:72:79:20:74:68:65:20:66:6f:6c:6c:6f:77:69:6e:67:3a:3c:2f:50:3e:0d:0a:20:20:20:20:20:20:3c:55:4c:3e:0d:0a:20:20:20:20:20:20:20:20:3c:4c:49:3e:43:6c:69:63:6b:20:74:68:65:20:3c:41:20:68:72:65:66:3d:22:6a:61:76:61:73:63:72:69:70:74:3a:6c:6f:63:61:74:69:6f:6e:2e:72:65:6c:6f:61:64:28:29:22:3e:52:65:66:72:65:73:68:3c:2f:41:3e:20:62:75:74:74:6f:6e:2c:20:0d:0a:20:20:20:20:20:20:20:20:6f:72:20:74:72:79:20:61:67:61:69:6e:20:6c:61:74:65:72:2e:3c:42:52:3e:0d:0a:20:20:20:20:20:20:20:20:3c:4c:49:3e:4f:70:65:6e:20:74:68:65:0d:0a:20:20:20:20:20:20:20:20:3c:53:43:52
+[0m[32m	window_size_scalefactor:[0m[1m -2
+[0m[32m	dstport:[0m[1m 1029
+[0m[32m	analysis:[0m[1m
+[0m[32m		push_bytes_sent:[0m[1m 2760
+[0m[32m		initial_rtt:[0m[1m 0.031915000
+[0m[32m		bytes_in_flight:[0m[1m 2760
+[0m[32m	len:[0m[1m 1380
+[0m[32m	checksum.status:[0m[1m 2
+[0m[32m	port:[0m[1m 5282
+[0m[32m	port:[0m[1m 1029
+[0m[32m	payload:[0m[1m 67:69:6e:69:6e:67:20:0d:0a:09:2f:2f:6f:66:20:74:68:65:20:74:72:75:65:20:55:52:4c:2c:20:61:6e:64:20:61:64:64:20:31:20:74:6f:20:73:6b:69:70:20:69:74:20:2d:20:74:68:69:73:20:69:73:20:74:68:65:20:42:65:67:69:6e:55:52:4c:20:76:61:6c:75:65:2e:20:57:65:20:75:73:65:20:73:65:72:76:65:72:49:6e:64:65:78:20:61:73:20:74:68:65:20:65:6e:64:20:6d:61:72:6b:65:72:2e:0d:0a:09:2f:2f:75:72:6c:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:70:72:6f:74:6f:63:6f:6c:49:6e:64:65:78:20:2d:20:34:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:42:65:67:69:6e:55:52:4c:3d:44:6f:63:55:52:4c:2e:69:6e:64:65:78:4f:66:28:22:23:22:2c:31:29:20:2b:20:31:3b:0d:0a:09:75:72:6c:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:42:65:67:69:6e:55:52:4c:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:09:0d:0a:09:2f:2f:66:6f:72:20:64:69:73:70:6c:61:79:2c:20:77:65:20:6e:65:65:64:20:74:6f:20:73:6b:69:70:20:61:66:74:65:72:20:68:74:74:70:3a:2f:2f:2c:20:61:6e:64:20:67:6f:20:74:6f:20:74:68:65:20:6e:65:78:74:20:73:6c:61:73:68:0d:0a:09:64:69:73:70:6c:61:79:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:70:72:6f:74:6f:63:6f:6c:49:6e:64:65:78:20:2b:20:33:20:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:64:6f:63:75:6d:65:6e:74:2e:77:72:69:74:65:28:27:3c:41:20:48:52:45:46:3d:22:27:20:2b:20:75:72:6c:72:65:73:75:6c:74:20:2b:20:27:22:3e:27:20:2b:20:64:69:73:70:6c:61:79:72:65:73:75:6c:74:20:2b:20:22:3c:2f:61:3e:22:29:3b:0d:0a:7d:0d:0a:2f:2f:2d:2d:3e:0d:0a:3c:2f:53:43:52:49:50:54:3e:0d:0a:0d:0a:3c:4d:45:54:41:20:63:6f:6e:74:65:6e:74:3d:22:4d:53:48:54:4d:4c:20:35:2e:35:30:2e:34:35:32:32:2e:31:38:30:30:22:20:6e:61:6d:65:3d:47:45:4e:45:52:41:54:4f:52:3e:3c:2f:48:45:41:44:3e:0d:0a:3c:42:4f:44:59:20:62:67:43:6f:6c:6f:72:3d:23:66:66:66:66:66:66:3e:0d:0a:3c:54:41:42:4c:45:20:63:65:6c:6c:53:70:61:63:69:6e:67:3d:35:20:63:65:6c:6c:50:61:64:64:69:6e:67:3d:33:20:77:69:64:74:68:3d:34:31:30:3e:0d:0a:20:20:3c:54:42:4f:44:59:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:76:41:6c:69:67:6e:3d:63:65:6e:74:65:72:20:61:6c:69:67:6e:3d:6c:65:66:74:20:77:69:64:74:68:3d:33:36:30:3e:0d:0a:20:20:20:20:20:20:3c:48:31:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:31:33:70:74:2f:31:35:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:3c:21:2d:2d:50:72:6f:62:6c:65:6d:2d:2d:3e:54:68:65:20:70:61:67:65:20:0d:0a:20:20:20:20:20:20:63:61:6e:6e:6f:74:20:62:65:20:64:69:73:70:6c:61:79:65:64:3c:2f:48:31:3e:3c:2f:54:44:3e:3c:2f:54:52:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:77:69:64:74:68:3d:34:30:30:20:63:6f:6c:53:70:61:6e:3d:32:3e:3c:46:4f:4e:54:20:0d:0a:20:20:20:20:20:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:38:70:74:2f:31:31:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:54:68:65:72:65:20:69:73:20:61:20:70:72:6f:62:6c:65:6d:20:77:69:74:68:20:74:68:65:20:0d:0a:20:20:20:20:20:20:70:61:67:65:20:79:6f:75:20:61:72:65:20:74:72:79:69:6e:67:20:74:6f:20:72:65:61:63:68:20:61:6e:64:20:69:74:20:63:61:6e:6e:6f:74:20:62:65:20:64:69:73:70:6c:61:79:65:64:2e:3c:2f:46:4f:4e:54:3e:3c:2f:54:44:3e:3c:2f:54:52:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:77:69:64:74:68:3d:34:30:30:20:63:6f:6c:53:70:61:6e:3d:32:3e:3c:46:4f:4e:54:20:0d:0a:20:20:20:20:20:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:38:70:74:2f:31:31:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:0d:0a:20:20:20:20:20:20:3c:48:52:20:63:6f:6c:6f:72:3d:23:63:30:63:30:63:30:20:6e:6f:53:68:61:64:65:3e:0d:0a:0d:0a:20:20:20:20:20:20:3c:50:3e:50:6c:65:61:73:65:20:74:72:79:20:74:68:65:20:66:6f:6c:6c:6f:77:69:6e:67:3a:3c:2f:50:3e:0d:0a:20:20:20:20:20:20:3c:55:4c:3e:0d:0a:20:20:20:20:20:20:20:20:3c:4c:49:3e:43:6c:69:63:6b:20:74:68:65:20:3c:41:20:68:72:65:66:3d:22:6a:61:76:61:73:63:72:69:70:74:3a:6c:6f:63:61:74:69:6f:6e:2e:72:65:6c:6f:61:64:28:29:22:3e:52:65:66:72:65:73:68:3c:2f:41:3e:20:62:75:74:74:6f:6e:2c:20:0d:0a:20:20:20:20:20:20:20:20:6f:72:20:74:72:79:20:61:67:61:69:6e:20:6c:61:74:65:72:2e:3c:42:52:3e:0d:0a:20:20:20:20:20:20:20:20:3c:4c:49:3e:4f:70:65:6e:20:74:68:65:0d:0a:20:20:20:20:20:20:20:20:3c:53:43:52
+[0m[32m	checksum:[0m[1m 0x811e
+[0m[32m	flags:[0m[1m
+[0m[32m		str:[0m[1m ·······A····
+[0m[32m		ece:[0m[1m 0
+[0m[32m		cwr:[0m[1m 0
+[0m[32m		ae:[0m[1m 0
+[0m[32m		syn:[0m[1m 0
+[0m[32m		fin:[0m[1m 0
+[0m[32m		ack:[0m[1m 1
+[0m[32m		push:[0m[1m 0
+[0m[32m		reset:[0m[1m 0
+[0m[32m		res:[0m[1m 0
+[0m[32m		urg:[0m[1m 0
+[0m[32m	urgent_pointer:[0m[1m 0
+[0m
+2025-06-15 16:17:27,367 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14 协议层: ['eth', 'ip', 'tcp']
+2025-06-15 16:17:27,367 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14 TCP层存在
+2025-06-15 16:17:27,367 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14 TCP序列号: 1381
+2025-06-15 16:17:27,367 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14 TCP载荷长度: 1380
+2025-06-15 16:17:27,367 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14 TCP有载荷字段
+2025-06-15 16:17:27,367 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - === PyShark数据包14 调试结束 ===
+2025-06-15 16:17:27,367 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包14: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:27,367 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包14: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:27,367 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包14: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1029
+2025-06-15 16:17:27,367 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包14: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:27,368 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - === PyShark调试数据包15 详细信息 ===
+2025-06-15 16:17:27,368 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15: Packet (Length: 60)
+[1m[33mLayer ETH
+:[0m[32m	dst:[0m[1m 00:b0:64:6e:92:40
+[0m[32m	dst:[0m[1m
+[0m[32m		oui:[0m[1m 45156
+[0m[32m		oui_resolved:[0m[1m Cisco Systems, Inc
+[0m[32m		dst_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		addr:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		addr_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		ig:[0m[1m 0
+[0m[32m		eth.dst_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		lg:[0m[1m 0
+[0m[32m	stream:[0m[1m 0
+[0m[32m	padding:[0m[1m 00:00:00:00:00:00
+[0m[32m	type:[0m[1m 0x0800
+[0m[32m	src:[0m[1m
+[0m[32m		oui:[0m[1m 53337
+[0m[32m		oui_resolved:[0m[1m Ambit Microsystems Corp.
+[0m[32m		addr:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		eth.src_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		ig:[0m[1m 0
+[0m[32m		src_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		addr_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		lg:[0m[1m 0
+[0m[32m	src:[0m[1m 00:d0:59:aa:af:80
+[0m[1m[33mLayer IP
+:[0m[32m	dsfield:[0m[1m
+[0m[32m		dscp:[0m[1m 0
+[0m[32m		ecn:[0m[1m 0
+[0m[32m	dst_host:[0m[1m 207.217.127.97
+[0m[32m	dsfield:[0m[1m 0x00
+[0m[32m	version:[0m[1m 4
+[0m[32m	host:[0m[1m 12.234.15.56
+[0m[32m	host:[0m[1m 207.217.127.97
+[0m[32m	hdr_len:[0m[1m 20
+[0m[32m	proto:[0m[1m 6
+[0m[32m	dst:[0m[1m 207.217.127.97
+[0m[32m	stream:[0m[1m 1
+[0m[32m	status:[0m[1m 2
+[0m[32m	flags:[0m[1m 0x02
+[0m[32m	id:[0m[1m 0x000f
+[0m[32m	ttl:[0m[1m 128
+[0m[32m	flags:[0m[1m
+[0m[32m		rb:[0m[1m 0
+[0m[32m		df:[0m[1m 1
+[0m[32m		mf:[0m[1m 0
+[0m[32m	frag_offset:[0m[1m 0
+[0m[32m	src_host:[0m[1m 12.234.15.56
+[0m[32m	len:[0m[1m 40
+[0m[32m	checksum.status:[0m[1m 2
+[0m[32m	addr:[0m[1m 12.234.15.56
+[0m[32m	addr:[0m[1m 207.217.127.97
+[0m[32m	checksum:[0m[1m 0x8f64
+[0m[32m	src:[0m[1m 12.234.15.56
+[0m[1m[33mLayer TCP
+:[0m[32m	seq_raw:[0m[1m 2282254031
+[0m[32m	nxtseq:[0m[1m 382
+[0m[32m	ack:[0m[1m 2761
+[0m[32m	stream.pnum:[0m[1m 11
+[0m[32m	pnum:[0m[1m 11
+[0m[32m	completeness:[0m[1m
+[0m[32m		str:[0m[1m ··DASS
+[0m[32m		syn:[0m[1m 1
+[0m[32m		fin:[0m[1m 0
+[0m[32m		ack:[0m[1m 1
+[0m[32m		syn-ack:[0m[1m 1
+[0m[32m		rst:[0m[1m 0
+[0m[32m		data:[0m[1m 1
+[0m[32m	srcport:[0m[1m 1029
+[0m[32m	ack_raw:[0m[1m 5485335
+[0m[32m	window_size_value:[0m[1m 64512
+[0m[32m	hdr_len:[0m[1m 20
+[0m[32m	seq:[0m[1m 382
+[0m[32m	stream:[0m[1m 0
+[0m[32m	window_size:[0m[1m 64512
+[0m[32m	status:[0m[1m 2
+[0m[32m	flags:[0m[1m 0x0010
+[0m[32m	completeness:[0m[1m 15
+[0m[32m	window_size_scalefactor:[0m[1m -2
+[0m[32m	dstport:[0m[1m 5282
+[0m[32m	analysis:[0m[1m
+[0m[32m		ack_rtt:[0m[1m 0.000048000
+[0m[32m		initial_rtt:[0m[1m 0.031915000
+[0m[32m		acks_frame:[0m[1m 14
+[0m[32m	len:[0m[1m 0
+[0m[32m	checksum.status:[0m[1m 2
+[0m[32m	port:[0m[1m 1029
+[0m[32m	port:[0m[1m 5282
+[0m[32m	checksum:[0m[1m 0x858d
+[0m[32m	flags:[0m[1m
+[0m[32m		str:[0m[1m ·······A····
+[0m[32m		ece:[0m[1m 0
+[0m[32m		cwr:[0m[1m 0
+[0m[32m		ae:[0m[1m 0
+[0m[32m		syn:[0m[1m 0
+[0m[32m		fin:[0m[1m 0
+[0m[32m		ack:[0m[1m 1
+[0m[32m		push:[0m[1m 0
+[0m[32m		reset:[0m[1m 0
+[0m[32m		res:[0m[1m 0
+[0m[32m		urg:[0m[1m 0
+[0m[32m	urgent_pointer:[0m[1m 0
+[0m
+2025-06-15 16:17:27,369 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15 协议层: ['eth', 'ip', 'tcp']
+2025-06-15 16:17:27,369 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15 TCP层存在
+2025-06-15 16:17:27,369 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15 TCP序列号: 382
+2025-06-15 16:17:27,369 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15 TCP载荷长度: 0
+2025-06-15 16:17:27,369 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15 TCP无载荷字段
+2025-06-15 16:17:27,369 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - === PyShark数据包15 调试结束 ===
+2025-06-15 16:17:27,369 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包15: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,369 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包15: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:27,369 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包15: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,369 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包16: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:27,370 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包16: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:27,370 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包16: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1029
+2025-06-15 16:17:27,370 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包16: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:27,370 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包17: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,370 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包17: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:27,370 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包17: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: 使用tcp.len获取载荷长度 = 115字节
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: payload_len=115, has_tls=False, has_ssl=False, has_http=True, port=5282->1029
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: 识别为HTTP
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: HTTP层存在但缺少request_method和response_code
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: 基于字段启发式判断为HTTP请求
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: 设置默认HTTP头长度为28字节
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包19: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包19: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包19: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包20: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包20: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包20: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包21: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包21: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包21: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包22: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包22: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=5282->1030
+2025-06-15 16:17:27,371 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包22: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包23: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包23: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包23: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包24: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包24: 使用tcp.len获取载荷长度 = 238字节
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包24: payload_len=238, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包24: 未识别为HTTP/TLS，载荷长度=238
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包25: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包25: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=5282->1030
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包25: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: 使用tcp.len获取载荷长度 = 153字节
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: payload_len=153, has_tls=False, has_ssl=False, has_http=True, port=1030->5282
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: 识别为HTTP
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: HTTP层存在但缺少request_method和response_code
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: 基于字段启发式判断为HTTP请求
+2025-06-15 16:17:27,372 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: 设置默认HTTP头长度为38字节
+2025-06-15 16:17:27,373 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包27: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:27,373 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包27: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:27,373 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包27: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1030
+2025-06-15 16:17:27,373 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包27: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:27,373 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包28: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:27,373 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包28: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:27,373 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包28: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1030
+2025-06-15 16:17:27,373 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包28: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:27,373 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包29: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,373 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包29: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:27,373 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包29: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,373 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包30: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:27,373 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包30: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:27,373 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包30: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1030
+2025-06-15 16:17:27,373 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包30: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:27,374 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包31: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,374 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包31: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:27,374 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包31: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,374 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:27,374 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: 使用tcp.len获取载荷长度 = 115字节
+2025-06-15 16:17:27,374 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: payload_len=115, has_tls=False, has_ssl=False, has_http=True, port=5282->1030
+2025-06-15 16:17:27,374 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: 识别为HTTP
+2025-06-15 16:17:27,374 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: HTTP层存在但缺少request_method和response_code
+2025-06-15 16:17:27,374 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: 基于字段启发式判断为HTTP请求
+2025-06-15 16:17:27,374 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: 设置默认HTTP头长度为28字节
+2025-06-15 16:17:27,374 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包33: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,374 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包33: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:27,374 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包33: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,380 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包34: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:27,380 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包34: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:27,380 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包34: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:27,381 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 数据包分析完成，共处理34个数据包
+2025-06-15 16:17:27,381 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 80.0%
+2025-06-15 16:17:27,381 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 开始生成掩码表...
+2025-06-15 16:17:27,381 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 处理流UDP_12.234.15.56:1028_216.148.227.68:53: 协议=DNS, 包数=2
+2025-06-15 16:17:27,381 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 使用完全保留策略处理DNS流UDP_12.234.15.56:1028_216.148.227.68:53
+2025-06-15 16:17:27,381 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: UDP_12.234.15.56:1028_216.148.227.68:53 [1:37) 完全保留载荷
+2025-06-15 16:17:27,381 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - DNS包1: 完全保留36字节
+2025-06-15 16:17:27,381 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: UDP_12.234.15.56:1028_216.148.227.68:53 [4:136) 完全保留载荷
+2025-06-15 16:17:27,381 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - DNS包4: 完全保留132字节
+2025-06-15 16:17:27,381 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 处理流TCP_12.234.15.56:1029_207.217.127.97:5282_forward: 协议=HTTP, 包数=10
+2025-06-15 16:17:27,381 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 使用HTTP掩码策略处理流TCP_12.234.15.56:1029_207.217.127.97:5282_forward
+2025-06-15 16:17:27,382 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - HTTP包12: 保留头部37字节，掩码111字节
+2025-06-15 16:17:27,382 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: TCP_12.234.15.56:1029_207.217.127.97:5282_forward [234:382) 保留前37字节，其余置零
+2025-06-15 16:17:27,382 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 处理流TCP_12.234.15.56:1029_207.217.127.97:5282_reverse: 协议=HTTP, 包数=6
+2025-06-15 16:17:27,382 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 使用HTTP掩码策略处理流TCP_12.234.15.56:1029_207.217.127.97:5282_reverse
+2025-06-15 16:17:27,382 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - HTTP包18: 保留头部28字节，掩码87字节
+2025-06-15 16:17:27,382 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: TCP_12.234.15.56:1029_207.217.127.97:5282_reverse [4141:4256) 保留前28字节，其余置零
+2025-06-15 16:17:27,382 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 处理流TCP_12.234.15.56:1030_207.217.127.97:5282_forward: 协议=HTTP, 包数=8
+2025-06-15 16:17:27,382 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 使用HTTP掩码策略处理流TCP_12.234.15.56:1030_207.217.127.97:5282_forward
+2025-06-15 16:17:27,382 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - HTTP包26: 保留头部38字节，掩码115字节
+2025-06-15 16:17:27,382 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: TCP_12.234.15.56:1030_207.217.127.97:5282_forward [239:392) 保留前38字节，其余置零
+2025-06-15 16:17:27,382 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 处理流TCP_12.234.15.56:1030_207.217.127.97:5282_reverse: 协议=HTTP, 包数=6
+2025-06-15 16:17:27,382 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 使用HTTP掩码策略处理流TCP_12.234.15.56:1030_207.217.127.97:5282_reverse
+2025-06-15 16:17:27,382 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - HTTP包32: 保留头部28字节，掩码87字节
+2025-06-15 16:17:27,382 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: TCP_12.234.15.56:1030_207.217.127.97:5282_reverse [4141:4256) 保留前28字节，其余置零
+2025-06-15 16:17:27,382 - pktmask.core.trim.models.mask_table - INFO - 开始完成流掩码表构建...
+2025-06-15 16:17:27,382 - pktmask.core.trim.models.mask_table - INFO - 流掩码表构建完成: 6 -> 6 条目
+2025-06-15 16:17:27,382 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 掩码表生成完成，包含6个条目
+2025-06-15 16:17:27,382 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 90.0%
+2025-06-15 16:17:27,382 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 100.0%
+2025-06-15 16:17:27,382 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark分析完成: 34个数据包, 5个流, 耗时0.22秒
+2025-06-15 16:17:27,402 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 内存清理完成
+2025-06-15 16:17:27,403 - root - ERROR - 分析过程异常
+Traceback (most recent call last):
+  File "/Users/ricky/Downloads/PktMask/debug_http_trimming_issue.py", line 211, in analyze_http_sample
+    entries = mask_table.get_entries_for_stream(stream_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'StreamMaskTable' object has no attribute 'get_entries_for_stream'
+2025-06-15 16:17:27,508 - pktmask.core.trim.stages.base_stage.TShark预处理器 - INFO - 找到TShark版本: TShark (Wireshark) 4.4.6 (v4.4.6-0-gaebb20483889).
+2025-06-15 16:17:27,698 - pktmask.core.trim.stages.base_stage.TShark预处理器 - INFO - TShark预处理器初始化完成
+2025-06-15 16:17:27,698 - pktmask.core.trim.stages.base_stage.TShark预处理器 - INFO - Stage 'TShark预处理器' 初始化成功
+2025-06-15 16:17:27,699 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 0.0%
+2025-06-15 16:17:27,699 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 10.0%
+2025-06-15 16:17:27,699 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 20.0%
+2025-06-15 16:17:27,699 - pktmask.core.trim.stages.base_stage.TShark预处理器 - INFO - 执行TShark命令: /Applications/Wireshark.app/Contents/MacOS/tshark -r tests/samples/http/http-proxy-problem.pcapng -w /var/folders/wz/ql3l9vh10z3c4kt7h9c1ydvh0000gn/T/tmpr9ifxrmh/tshark_output_wbv0ijxd.pcap -o tcp.desegment_tcp_streams:TRUE -o tcp.reassemble_out_of_order:TRUE -o ip.defragment:TRUE -o ipv6.defragment:TRUE -q
+2025-06-15 16:17:27,805 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 80.0%
+2025-06-15 16:17:27,805 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 80.0%
+2025-06-15 16:17:27,805 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 90.0%
+2025-06-15 16:17:27,805 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 100.0%
+2025-06-15 16:17:27,805 - pktmask.core.trim.stages.base_stage.PyShark分析器 - WARNING - 无法获取PyShark版本信息
+2025-06-15 16:17:27,805 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark分析器初始化完成
+2025-06-15 16:17:27,805 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - Stage 'PyShark分析器' 初始化成功
+2025-06-15 16:17:27,805 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 开始PyShark协议分析...
+2025-06-15 16:17:27,805 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 0.0%
+2025-06-15 16:17:27,806 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 成功打开PCAP文件: /var/folders/wz/ql3l9vh10z3c4kt7h9c1ydvh0000gn/T/tmpr9ifxrmh/tshark_output_wbv0ijxd.pcap
+2025-06-15 16:17:27,806 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:28,004 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包1: 获取UDP payload失败，使用udp.length计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,005 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包1: 使用udp.length计算载荷长度 = 36字节
+2025-06-15 16:17:28,005 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 识别到DNS协议包: 1
+2025-06-15 16:17:28,005 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:28,005 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:28,005 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:28,005 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包4: 获取UDP payload失败，使用udp.length计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,005 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包4: 使用udp.length计算载荷长度 = 132字节
+2025-06-15 16:17:28,005 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 识别到DNS协议包: 4
+2025-06-15 16:17:28,005 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:28,005 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包5: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,005 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包5: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,005 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包5: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,005 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包6: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包6: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包6: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包7: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包7: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包7: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包8: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包8: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=5282->1029
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包8: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.1%
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包9: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包9: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包9: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.1%
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包10: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包10: 使用tcp.len获取载荷长度 = 233字节
+2025-06-15 16:17:28,006 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包10: payload_len=233, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包10: 未识别为HTTP/TLS，载荷长度=233
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.1%
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包11: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包11: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=5282->1029
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包11: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: 使用tcp.len获取载荷长度 = 148字节
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: payload_len=148, has_tls=False, has_ssl=False, has_http=True, port=1029->5282
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: 识别为HTTP
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: HTTP层存在但缺少request_method和response_code
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: 基于字段启发式判断为HTTP请求
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: 设置默认HTTP头长度为37字节
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包13: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包13: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包13: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1029
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包13: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:28,007 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - === PyShark调试数据包14 详细信息 ===
+2025-06-15 16:17:28,008 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14: Packet (Length: 1434)
+[1m[33mLayer ETH
+:[0m[32m	dst:[0m[1m 00:d0:59:aa:af:80
+[0m[32m	dst:[0m[1m
+[0m[32m		oui:[0m[1m 53337
+[0m[32m		oui_resolved:[0m[1m Ambit Microsystems Corp.
+[0m[32m		dst_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		addr:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		addr_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		ig:[0m[1m 0
+[0m[32m		eth.dst_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		lg:[0m[1m 0
+[0m[32m	stream:[0m[1m 0
+[0m[32m	type:[0m[1m 0x0800
+[0m[32m	src:[0m[1m
+[0m[32m		oui:[0m[1m 45156
+[0m[32m		oui_resolved:[0m[1m Cisco Systems, Inc
+[0m[32m		addr:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		eth.src_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		ig:[0m[1m 0
+[0m[32m		src_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		addr_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		lg:[0m[1m 0
+[0m[32m	src:[0m[1m 00:b0:64:6e:92:40
+[0m[1m[33mLayer IP
+:[0m[32m	dsfield:[0m[1m
+[0m[32m		dscp:[0m[1m 0
+[0m[32m		ecn:[0m[1m 0
+[0m[32m	dst_host:[0m[1m 12.234.15.56
+[0m[32m	dsfield:[0m[1m 0x00
+[0m[32m	version:[0m[1m 4
+[0m[32m	host:[0m[1m 207.217.127.97
+[0m[32m	host:[0m[1m 12.234.15.56
+[0m[32m	hdr_len:[0m[1m 20
+[0m[32m	proto:[0m[1m 6
+[0m[32m	dst:[0m[1m 12.234.15.56
+[0m[32m	stream:[0m[1m 1
+[0m[32m	status:[0m[1m 2
+[0m[32m	flags:[0m[1m 0x02
+[0m[32m	id:[0m[1m 0xc6ee
+[0m[32m	ttl:[0m[1m 125
+[0m[32m	flags:[0m[1m
+[0m[32m		rb:[0m[1m 0
+[0m[32m		df:[0m[1m 1
+[0m[32m		mf:[0m[1m 0
+[0m[32m	frag_offset:[0m[1m 0
+[0m[32m	src_host:[0m[1m 207.217.127.97
+[0m[32m	len:[0m[1m 1420
+[0m[32m	checksum.status:[0m[1m 2
+[0m[32m	addr:[0m[1m 207.217.127.97
+[0m[32m	addr:[0m[1m 12.234.15.56
+[0m[32m	checksum:[0m[1m 0xc620
+[0m[32m	src:[0m[1m 207.217.127.97
+[0m[1m[33mLayer TCP
+:[0m[32m	seq_raw:[0m[1m 5483955
+[0m[32m	nxtseq:[0m[1m 2761
+[0m[32m	ack:[0m[1m 382
+[0m[32m	stream.pnum:[0m[1m 10
+[0m[32m	pnum:[0m[1m 10
+[0m[32m	completeness:[0m[1m
+[0m[32m		str:[0m[1m ··DASS
+[0m[32m		syn:[0m[1m 1
+[0m[32m		fin:[0m[1m 0
+[0m[32m		ack:[0m[1m 1
+[0m[32m		syn-ack:[0m[1m 1
+[0m[32m		rst:[0m[1m 0
+[0m[32m		data:[0m[1m 1
+[0m[32m	srcport:[0m[1m 5282
+[0m[32m	ack_raw:[0m[1m 2282254031
+[0m[32m	window_size_value:[0m[1m 16179
+[0m[32m	hdr_len:[0m[1m 20
+[0m[32m	seq:[0m[1m 1381
+[0m[32m	stream:[0m[1m 0
+[0m[32m	window_size:[0m[1m 16179
+[0m[32m	status:[0m[1m 2
+[0m[32m	flags:[0m[1m 0x0010
+[0m[32m	completeness:[0m[1m 15
+[0m[32m	segment_data:[0m[1m 67:69:6e:69:6e:67:20:0d:0a:09:2f:2f:6f:66:20:74:68:65:20:74:72:75:65:20:55:52:4c:2c:20:61:6e:64:20:61:64:64:20:31:20:74:6f:20:73:6b:69:70:20:69:74:20:2d:20:74:68:69:73:20:69:73:20:74:68:65:20:42:65:67:69:6e:55:52:4c:20:76:61:6c:75:65:2e:20:57:65:20:75:73:65:20:73:65:72:76:65:72:49:6e:64:65:78:20:61:73:20:74:68:65:20:65:6e:64:20:6d:61:72:6b:65:72:2e:0d:0a:09:2f:2f:75:72:6c:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:70:72:6f:74:6f:63:6f:6c:49:6e:64:65:78:20:2d:20:34:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:42:65:67:69:6e:55:52:4c:3d:44:6f:63:55:52:4c:2e:69:6e:64:65:78:4f:66:28:22:23:22:2c:31:29:20:2b:20:31:3b:0d:0a:09:75:72:6c:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:42:65:67:69:6e:55:52:4c:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:09:0d:0a:09:2f:2f:66:6f:72:20:64:69:73:70:6c:61:79:2c:20:77:65:20:6e:65:65:64:20:74:6f:20:73:6b:69:70:20:61:66:74:65:72:20:68:74:74:70:3a:2f:2f:2c:20:61:6e:64:20:67:6f:20:74:6f:20:74:68:65:20:6e:65:78:74:20:73:6c:61:73:68:0d:0a:09:64:69:73:70:6c:61:79:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:70:72:6f:74:6f:63:6f:6c:49:6e:64:65:78:20:2b:20:33:20:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:64:6f:63:75:6d:65:6e:74:2e:77:72:69:74:65:28:27:3c:41:20:48:52:45:46:3d:22:27:20:2b:20:75:72:6c:72:65:73:75:6c:74:20:2b:20:27:22:3e:27:20:2b:20:64:69:73:70:6c:61:79:72:65:73:75:6c:74:20:2b:20:22:3c:2f:61:3e:22:29:3b:0d:0a:7d:0d:0a:2f:2f:2d:2d:3e:0d:0a:3c:2f:53:43:52:49:50:54:3e:0d:0a:0d:0a:3c:4d:45:54:41:20:63:6f:6e:74:65:6e:74:3d:22:4d:53:48:54:4d:4c:20:35:2e:35:30:2e:34:35:32:32:2e:31:38:30:30:22:20:6e:61:6d:65:3d:47:45:4e:45:52:41:54:4f:52:3e:3c:2f:48:45:41:44:3e:0d:0a:3c:42:4f:44:59:20:62:67:43:6f:6c:6f:72:3d:23:66:66:66:66:66:66:3e:0d:0a:3c:54:41:42:4c:45:20:63:65:6c:6c:53:70:61:63:69:6e:67:3d:35:20:63:65:6c:6c:50:61:64:64:69:6e:67:3d:33:20:77:69:64:74:68:3d:34:31:30:3e:0d:0a:20:20:3c:54:42:4f:44:59:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:76:41:6c:69:67:6e:3d:63:65:6e:74:65:72:20:61:6c:69:67:6e:3d:6c:65:66:74:20:77:69:64:74:68:3d:33:36:30:3e:0d:0a:20:20:20:20:20:20:3c:48:31:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:31:33:70:74:2f:31:35:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:3c:21:2d:2d:50:72:6f:62:6c:65:6d:2d:2d:3e:54:68:65:20:70:61:67:65:20:0d:0a:20:20:20:20:20:20:63:61:6e:6e:6f:74:20:62:65:20:64:69:73:70:6c:61:79:65:64:3c:2f:48:31:3e:3c:2f:54:44:3e:3c:2f:54:52:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:77:69:64:74:68:3d:34:30:30:20:63:6f:6c:53:70:61:6e:3d:32:3e:3c:46:4f:4e:54:20:0d:0a:20:20:20:20:20:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:38:70:74:2f:31:31:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:54:68:65:72:65:20:69:73:20:61:20:70:72:6f:62:6c:65:6d:20:77:69:74:68:20:74:68:65:20:0d:0a:20:20:20:20:20:20:70:61:67:65:20:79:6f:75:20:61:72:65:20:74:72:79:69:6e:67:20:74:6f:20:72:65:61:63:68:20:61:6e:64:20:69:74:20:63:61:6e:6e:6f:74:20:62:65:20:64:69:73:70:6c:61:79:65:64:2e:3c:2f:46:4f:4e:54:3e:3c:2f:54:44:3e:3c:2f:54:52:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:77:69:64:74:68:3d:34:30:30:20:63:6f:6c:53:70:61:6e:3d:32:3e:3c:46:4f:4e:54:20:0d:0a:20:20:20:20:20:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:38:70:74:2f:31:31:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:0d:0a:20:20:20:20:20:20:3c:48:52:20:63:6f:6c:6f:72:3d:23:63:30:63:30:63:30:20:6e:6f:53:68:61:64:65:3e:0d:0a:0d:0a:20:20:20:20:20:20:3c:50:3e:50:6c:65:61:73:65:20:74:72:79:20:74:68:65:20:66:6f:6c:6c:6f:77:69:6e:67:3a:3c:2f:50:3e:0d:0a:20:20:20:20:20:20:3c:55:4c:3e:0d:0a:20:20:20:20:20:20:20:20:3c:4c:49:3e:43:6c:69:63:6b:20:74:68:65:20:3c:41:20:68:72:65:66:3d:22:6a:61:76:61:73:63:72:69:70:74:3a:6c:6f:63:61:74:69:6f:6e:2e:72:65:6c:6f:61:64:28:29:22:3e:52:65:66:72:65:73:68:3c:2f:41:3e:20:62:75:74:74:6f:6e:2c:20:0d:0a:20:20:20:20:20:20:20:20:6f:72:20:74:72:79:20:61:67:61:69:6e:20:6c:61:74:65:72:2e:3c:42:52:3e:0d:0a:20:20:20:20:20:20:20:20:3c:4c:49:3e:4f:70:65:6e:20:74:68:65:0d:0a:20:20:20:20:20:20:20:20:3c:53:43:52
+[0m[32m	window_size_scalefactor:[0m[1m -2
+[0m[32m	dstport:[0m[1m 1029
+[0m[32m	analysis:[0m[1m
+[0m[32m		push_bytes_sent:[0m[1m 2760
+[0m[32m		initial_rtt:[0m[1m 0.031915000
+[0m[32m		bytes_in_flight:[0m[1m 2760
+[0m[32m	len:[0m[1m 1380
+[0m[32m	checksum.status:[0m[1m 2
+[0m[32m	port:[0m[1m 5282
+[0m[32m	port:[0m[1m 1029
+[0m[32m	payload:[0m[1m 67:69:6e:69:6e:67:20:0d:0a:09:2f:2f:6f:66:20:74:68:65:20:74:72:75:65:20:55:52:4c:2c:20:61:6e:64:20:61:64:64:20:31:20:74:6f:20:73:6b:69:70:20:69:74:20:2d:20:74:68:69:73:20:69:73:20:74:68:65:20:42:65:67:69:6e:55:52:4c:20:76:61:6c:75:65:2e:20:57:65:20:75:73:65:20:73:65:72:76:65:72:49:6e:64:65:78:20:61:73:20:74:68:65:20:65:6e:64:20:6d:61:72:6b:65:72:2e:0d:0a:09:2f:2f:75:72:6c:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:70:72:6f:74:6f:63:6f:6c:49:6e:64:65:78:20:2d:20:34:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:42:65:67:69:6e:55:52:4c:3d:44:6f:63:55:52:4c:2e:69:6e:64:65:78:4f:66:28:22:23:22:2c:31:29:20:2b:20:31:3b:0d:0a:09:75:72:6c:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:42:65:67:69:6e:55:52:4c:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:09:0d:0a:09:2f:2f:66:6f:72:20:64:69:73:70:6c:61:79:2c:20:77:65:20:6e:65:65:64:20:74:6f:20:73:6b:69:70:20:61:66:74:65:72:20:68:74:74:70:3a:2f:2f:2c:20:61:6e:64:20:67:6f:20:74:6f:20:74:68:65:20:6e:65:78:74:20:73:6c:61:73:68:0d:0a:09:64:69:73:70:6c:61:79:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:70:72:6f:74:6f:63:6f:6c:49:6e:64:65:78:20:2b:20:33:20:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:64:6f:63:75:6d:65:6e:74:2e:77:72:69:74:65:28:27:3c:41:20:48:52:45:46:3d:22:27:20:2b:20:75:72:6c:72:65:73:75:6c:74:20:2b:20:27:22:3e:27:20:2b:20:64:69:73:70:6c:61:79:72:65:73:75:6c:74:20:2b:20:22:3c:2f:61:3e:22:29:3b:0d:0a:7d:0d:0a:2f:2f:2d:2d:3e:0d:0a:3c:2f:53:43:52:49:50:54:3e:0d:0a:0d:0a:3c:4d:45:54:41:20:63:6f:6e:74:65:6e:74:3d:22:4d:53:48:54:4d:4c:20:35:2e:35:30:2e:34:35:32:32:2e:31:38:30:30:22:20:6e:61:6d:65:3d:47:45:4e:45:52:41:54:4f:52:3e:3c:2f:48:45:41:44:3e:0d:0a:3c:42:4f:44:59:20:62:67:43:6f:6c:6f:72:3d:23:66:66:66:66:66:66:3e:0d:0a:3c:54:41:42:4c:45:20:63:65:6c:6c:53:70:61:63:69:6e:67:3d:35:20:63:65:6c:6c:50:61:64:64:69:6e:67:3d:33:20:77:69:64:74:68:3d:34:31:30:3e:0d:0a:20:20:3c:54:42:4f:44:59:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:76:41:6c:69:67:6e:3d:63:65:6e:74:65:72:20:61:6c:69:67:6e:3d:6c:65:66:74:20:77:69:64:74:68:3d:33:36:30:3e:0d:0a:20:20:20:20:20:20:3c:48:31:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:31:33:70:74:2f:31:35:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:3c:21:2d:2d:50:72:6f:62:6c:65:6d:2d:2d:3e:54:68:65:20:70:61:67:65:20:0d:0a:20:20:20:20:20:20:63:61:6e:6e:6f:74:20:62:65:20:64:69:73:70:6c:61:79:65:64:3c:2f:48:31:3e:3c:2f:54:44:3e:3c:2f:54:52:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:77:69:64:74:68:3d:34:30:30:20:63:6f:6c:53:70:61:6e:3d:32:3e:3c:46:4f:4e:54:20:0d:0a:20:20:20:20:20:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:38:70:74:2f:31:31:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:54:68:65:72:65:20:69:73:20:61:20:70:72:6f:62:6c:65:6d:20:77:69:74:68:20:74:68:65:20:0d:0a:20:20:20:20:20:20:70:61:67:65:20:79:6f:75:20:61:72:65:20:74:72:79:69:6e:67:20:74:6f:20:72:65:61:63:68:20:61:6e:64:20:69:74:20:63:61:6e:6e:6f:74:20:62:65:20:64:69:73:70:6c:61:79:65:64:2e:3c:2f:46:4f:4e:54:3e:3c:2f:54:44:3e:3c:2f:54:52:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:77:69:64:74:68:3d:34:30:30:20:63:6f:6c:53:70:61:6e:3d:32:3e:3c:46:4f:4e:54:20:0d:0a:20:20:20:20:20:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:38:70:74:2f:31:31:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:0d:0a:20:20:20:20:20:20:3c:48:52:20:63:6f:6c:6f:72:3d:23:63:30:63:30:63:30:20:6e:6f:53:68:61:64:65:3e:0d:0a:0d:0a:20:20:20:20:20:20:3c:50:3e:50:6c:65:61:73:65:20:74:72:79:20:74:68:65:20:66:6f:6c:6c:6f:77:69:6e:67:3a:3c:2f:50:3e:0d:0a:20:20:20:20:20:20:3c:55:4c:3e:0d:0a:20:20:20:20:20:20:20:20:3c:4c:49:3e:43:6c:69:63:6b:20:74:68:65:20:3c:41:20:68:72:65:66:3d:22:6a:61:76:61:73:63:72:69:70:74:3a:6c:6f:63:61:74:69:6f:6e:2e:72:65:6c:6f:61:64:28:29:22:3e:52:65:66:72:65:73:68:3c:2f:41:3e:20:62:75:74:74:6f:6e:2c:20:0d:0a:20:20:20:20:20:20:20:20:6f:72:20:74:72:79:20:61:67:61:69:6e:20:6c:61:74:65:72:2e:3c:42:52:3e:0d:0a:20:20:20:20:20:20:20:20:3c:4c:49:3e:4f:70:65:6e:20:74:68:65:0d:0a:20:20:20:20:20:20:20:20:3c:53:43:52
+[0m[32m	checksum:[0m[1m 0x811e
+[0m[32m	flags:[0m[1m
+[0m[32m		str:[0m[1m ·······A····
+[0m[32m		ece:[0m[1m 0
+[0m[32m		cwr:[0m[1m 0
+[0m[32m		ae:[0m[1m 0
+[0m[32m		syn:[0m[1m 0
+[0m[32m		fin:[0m[1m 0
+[0m[32m		ack:[0m[1m 1
+[0m[32m		push:[0m[1m 0
+[0m[32m		reset:[0m[1m 0
+[0m[32m		res:[0m[1m 0
+[0m[32m		urg:[0m[1m 0
+[0m[32m	urgent_pointer:[0m[1m 0
+[0m
+2025-06-15 16:17:28,008 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14 协议层: ['eth', 'ip', 'tcp']
+2025-06-15 16:17:28,008 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14 TCP层存在
+2025-06-15 16:17:28,008 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14 TCP序列号: 1381
+2025-06-15 16:17:28,008 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14 TCP载荷长度: 1380
+2025-06-15 16:17:28,008 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14 TCP有载荷字段
+2025-06-15 16:17:28,008 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - === PyShark数据包14 调试结束 ===
+2025-06-15 16:17:28,008 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包14: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,008 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包14: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:28,008 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包14: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1029
+2025-06-15 16:17:28,008 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包14: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:28,009 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - === PyShark调试数据包15 详细信息 ===
+2025-06-15 16:17:28,009 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15: Packet (Length: 60)
+[1m[33mLayer ETH
+:[0m[32m	dst:[0m[1m 00:b0:64:6e:92:40
+[0m[32m	dst:[0m[1m
+[0m[32m		oui:[0m[1m 45156
+[0m[32m		oui_resolved:[0m[1m Cisco Systems, Inc
+[0m[32m		dst_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		addr:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		addr_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		ig:[0m[1m 0
+[0m[32m		eth.dst_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		lg:[0m[1m 0
+[0m[32m	stream:[0m[1m 0
+[0m[32m	padding:[0m[1m 00:00:00:00:00:00
+[0m[32m	type:[0m[1m 0x0800
+[0m[32m	src:[0m[1m
+[0m[32m		oui:[0m[1m 53337
+[0m[32m		oui_resolved:[0m[1m Ambit Microsystems Corp.
+[0m[32m		addr:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		eth.src_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		ig:[0m[1m 0
+[0m[32m		src_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		addr_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		lg:[0m[1m 0
+[0m[32m	src:[0m[1m 00:d0:59:aa:af:80
+[0m[1m[33mLayer IP
+:[0m[32m	dsfield:[0m[1m
+[0m[32m		dscp:[0m[1m 0
+[0m[32m		ecn:[0m[1m 0
+[0m[32m	dst_host:[0m[1m 207.217.127.97
+[0m[32m	dsfield:[0m[1m 0x00
+[0m[32m	version:[0m[1m 4
+[0m[32m	host:[0m[1m 12.234.15.56
+[0m[32m	host:[0m[1m 207.217.127.97
+[0m[32m	hdr_len:[0m[1m 20
+[0m[32m	proto:[0m[1m 6
+[0m[32m	dst:[0m[1m 207.217.127.97
+[0m[32m	stream:[0m[1m 1
+[0m[32m	status:[0m[1m 2
+[0m[32m	flags:[0m[1m 0x02
+[0m[32m	id:[0m[1m 0x000f
+[0m[32m	ttl:[0m[1m 128
+[0m[32m	flags:[0m[1m
+[0m[32m		rb:[0m[1m 0
+[0m[32m		df:[0m[1m 1
+[0m[32m		mf:[0m[1m 0
+[0m[32m	frag_offset:[0m[1m 0
+[0m[32m	src_host:[0m[1m 12.234.15.56
+[0m[32m	len:[0m[1m 40
+[0m[32m	checksum.status:[0m[1m 2
+[0m[32m	addr:[0m[1m 12.234.15.56
+[0m[32m	addr:[0m[1m 207.217.127.97
+[0m[32m	checksum:[0m[1m 0x8f64
+[0m[32m	src:[0m[1m 12.234.15.56
+[0m[1m[33mLayer TCP
+:[0m[32m	seq_raw:[0m[1m 2282254031
+[0m[32m	nxtseq:[0m[1m 382
+[0m[32m	ack:[0m[1m 2761
+[0m[32m	stream.pnum:[0m[1m 11
+[0m[32m	pnum:[0m[1m 11
+[0m[32m	completeness:[0m[1m
+[0m[32m		str:[0m[1m ··DASS
+[0m[32m		syn:[0m[1m 1
+[0m[32m		fin:[0m[1m 0
+[0m[32m		ack:[0m[1m 1
+[0m[32m		syn-ack:[0m[1m 1
+[0m[32m		rst:[0m[1m 0
+[0m[32m		data:[0m[1m 1
+[0m[32m	srcport:[0m[1m 1029
+[0m[32m	ack_raw:[0m[1m 5485335
+[0m[32m	window_size_value:[0m[1m 64512
+[0m[32m	hdr_len:[0m[1m 20
+[0m[32m	seq:[0m[1m 382
+[0m[32m	stream:[0m[1m 0
+[0m[32m	window_size:[0m[1m 64512
+[0m[32m	status:[0m[1m 2
+[0m[32m	flags:[0m[1m 0x0010
+[0m[32m	completeness:[0m[1m 15
+[0m[32m	window_size_scalefactor:[0m[1m -2
+[0m[32m	dstport:[0m[1m 5282
+[0m[32m	analysis:[0m[1m
+[0m[32m		ack_rtt:[0m[1m 0.000048000
+[0m[32m		initial_rtt:[0m[1m 0.031915000
+[0m[32m		acks_frame:[0m[1m 14
+[0m[32m	len:[0m[1m 0
+[0m[32m	checksum.status:[0m[1m 2
+[0m[32m	port:[0m[1m 1029
+[0m[32m	port:[0m[1m 5282
+[0m[32m	checksum:[0m[1m 0x858d
+[0m[32m	flags:[0m[1m
+[0m[32m		str:[0m[1m ·······A····
+[0m[32m		ece:[0m[1m 0
+[0m[32m		cwr:[0m[1m 0
+[0m[32m		ae:[0m[1m 0
+[0m[32m		syn:[0m[1m 0
+[0m[32m		fin:[0m[1m 0
+[0m[32m		ack:[0m[1m 1
+[0m[32m		push:[0m[1m 0
+[0m[32m		reset:[0m[1m 0
+[0m[32m		res:[0m[1m 0
+[0m[32m		urg:[0m[1m 0
+[0m[32m	urgent_pointer:[0m[1m 0
+[0m
+2025-06-15 16:17:28,010 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15 协议层: ['eth', 'ip', 'tcp']
+2025-06-15 16:17:28,010 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15 TCP层存在
+2025-06-15 16:17:28,010 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15 TCP序列号: 382
+2025-06-15 16:17:28,010 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15 TCP载荷长度: 0
+2025-06-15 16:17:28,010 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15 TCP无载荷字段
+2025-06-15 16:17:28,010 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - === PyShark数据包15 调试结束 ===
+2025-06-15 16:17:28,010 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包15: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,010 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包15: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,010 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包15: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,010 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包16: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,010 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包16: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:28,010 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包16: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1029
+2025-06-15 16:17:28,010 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包16: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:28,010 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包17: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,010 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包17: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,010 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包17: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,011 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,011 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: 使用tcp.len获取载荷长度 = 115字节
+2025-06-15 16:17:28,011 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: payload_len=115, has_tls=False, has_ssl=False, has_http=True, port=5282->1029
+2025-06-15 16:17:28,011 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: 识别为HTTP
+2025-06-15 16:17:28,011 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: HTTP层存在但缺少request_method和response_code
+2025-06-15 16:17:28,011 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: 基于字段启发式判断为HTTP请求
+2025-06-15 16:17:28,011 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: 设置默认HTTP头长度为28字节
+2025-06-15 16:17:28,011 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包19: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,011 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包19: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,011 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包19: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,011 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包20: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,011 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包20: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,011 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包20: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,011 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包21: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,011 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包21: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:28,011 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包21: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,012 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包22: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,012 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包22: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=5282->1030
+2025-06-15 16:17:28,012 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包22: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,012 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包23: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,012 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包23: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:28,012 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包23: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,012 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包24: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,012 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包24: 使用tcp.len获取载荷长度 = 238字节
+2025-06-15 16:17:28,012 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包24: payload_len=238, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:28,012 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包24: 未识别为HTTP/TLS，载荷长度=238
+2025-06-15 16:17:28,012 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包25: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,012 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包25: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=5282->1030
+2025-06-15 16:17:28,012 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包25: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: 使用tcp.len获取载荷长度 = 153字节
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: payload_len=153, has_tls=False, has_ssl=False, has_http=True, port=1030->5282
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: 识别为HTTP
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: HTTP层存在但缺少request_method和response_code
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: 基于字段启发式判断为HTTP请求
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: 设置默认HTTP头长度为38字节
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包27: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包27: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包27: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1030
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包27: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包28: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包28: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包28: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1030
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包28: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包29: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包29: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包29: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包30: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包30: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包30: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1030
+2025-06-15 16:17:28,013 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包30: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:28,014 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包31: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,014 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包31: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:28,014 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包31: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,014 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,014 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: 使用tcp.len获取载荷长度 = 115字节
+2025-06-15 16:17:28,014 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: payload_len=115, has_tls=False, has_ssl=False, has_http=True, port=5282->1030
+2025-06-15 16:17:28,014 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: 识别为HTTP
+2025-06-15 16:17:28,014 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: HTTP层存在但缺少request_method和response_code
+2025-06-15 16:17:28,014 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: 基于字段启发式判断为HTTP请求
+2025-06-15 16:17:28,014 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: 设置默认HTTP头长度为28字节
+2025-06-15 16:17:28,014 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包33: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,014 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包33: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:28,014 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包33: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,020 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包34: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,021 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包34: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:28,021 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包34: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,021 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 数据包分析完成，共处理34个数据包
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 80.0%
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 开始生成掩码表...
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 处理流UDP_12.234.15.56:1028_216.148.227.68:53: 协议=DNS, 包数=2
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 使用完全保留策略处理DNS流UDP_12.234.15.56:1028_216.148.227.68:53
+2025-06-15 16:17:28,022 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: UDP_12.234.15.56:1028_216.148.227.68:53 [1:37) 完全保留载荷
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - DNS包1: 完全保留36字节
+2025-06-15 16:17:28,022 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: UDP_12.234.15.56:1028_216.148.227.68:53 [4:136) 完全保留载荷
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - DNS包4: 完全保留132字节
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 处理流TCP_12.234.15.56:1029_207.217.127.97:5282_forward: 协议=HTTP, 包数=10
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 使用HTTP掩码策略处理流TCP_12.234.15.56:1029_207.217.127.97:5282_forward
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - HTTP包12: 全部掩码148字节 (简化策略)
+2025-06-15 16:17:28,022 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: TCP_12.234.15.56:1029_207.217.127.97:5282_forward [234:382) 全部载荷置零
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 处理流TCP_12.234.15.56:1029_207.217.127.97:5282_reverse: 协议=HTTP, 包数=6
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 使用HTTP掩码策略处理流TCP_12.234.15.56:1029_207.217.127.97:5282_reverse
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - HTTP包18: 全部掩码115字节 (简化策略)
+2025-06-15 16:17:28,022 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: TCP_12.234.15.56:1029_207.217.127.97:5282_reverse [4141:4256) 全部载荷置零
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 处理流TCP_12.234.15.56:1030_207.217.127.97:5282_forward: 协议=HTTP, 包数=8
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 使用HTTP掩码策略处理流TCP_12.234.15.56:1030_207.217.127.97:5282_forward
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - HTTP包26: 全部掩码153字节 (简化策略)
+2025-06-15 16:17:28,022 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: TCP_12.234.15.56:1030_207.217.127.97:5282_forward [239:392) 全部载荷置零
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 处理流TCP_12.234.15.56:1030_207.217.127.97:5282_reverse: 协议=HTTP, 包数=6
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 使用HTTP掩码策略处理流TCP_12.234.15.56:1030_207.217.127.97:5282_reverse
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - HTTP包32: 全部掩码115字节 (简化策略)
+2025-06-15 16:17:28,022 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: TCP_12.234.15.56:1030_207.217.127.97:5282_reverse [4141:4256) 全部载荷置零
+2025-06-15 16:17:28,022 - pktmask.core.trim.models.mask_table - INFO - 开始完成流掩码表构建...
+2025-06-15 16:17:28,022 - pktmask.core.trim.models.mask_table - INFO - 流掩码表构建完成: 6 -> 6 条目
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 掩码表生成完成，包含6个条目
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 90.0%
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 100.0%
+2025-06-15 16:17:28,022 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark分析完成: 34个数据包, 5个流, 耗时0.22秒
+2025-06-15 16:17:28,039 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 内存清理完成
+2025-06-15 16:17:28,040 - root - ERROR - 分析过程异常
+Traceback (most recent call last):
+  File "/Users/ricky/Downloads/PktMask/debug_http_trimming_issue.py", line 211, in analyze_http_sample
+    entries = mask_table.get_entries_for_stream(stream_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'StreamMaskTable' object has no attribute 'get_entries_for_stream'
+2025-06-15 16:17:28,145 - pktmask.core.trim.stages.base_stage.TShark预处理器 - INFO - 找到TShark版本: TShark (Wireshark) 4.4.6 (v4.4.6-0-gaebb20483889).
+2025-06-15 16:17:28,330 - pktmask.core.trim.stages.base_stage.TShark预处理器 - INFO - TShark预处理器初始化完成
+2025-06-15 16:17:28,330 - pktmask.core.trim.stages.base_stage.TShark预处理器 - INFO - Stage 'TShark预处理器' 初始化成功
+2025-06-15 16:17:28,331 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 0.0%
+2025-06-15 16:17:28,331 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 10.0%
+2025-06-15 16:17:28,331 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 20.0%
+2025-06-15 16:17:28,331 - pktmask.core.trim.stages.base_stage.TShark预处理器 - INFO - 执行TShark命令: /Applications/Wireshark.app/Contents/MacOS/tshark -r tests/samples/http/http-proxy-problem.pcapng -w /var/folders/wz/ql3l9vh10z3c4kt7h9c1ydvh0000gn/T/tmpki346yjz/tshark_output_bxjq16x1.pcap -o tcp.desegment_tcp_streams:TRUE -o tcp.reassemble_out_of_order:TRUE -o ip.defragment:TRUE -o ipv6.defragment:TRUE -q
+2025-06-15 16:17:28,436 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 80.0%
+2025-06-15 16:17:28,436 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 80.0%
+2025-06-15 16:17:28,436 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 90.0%
+2025-06-15 16:17:28,436 - pktmask.core.trim.stages.base_stage.TShark预处理器 - DEBUG - Stage 'TShark预处理器' 进度: 100.0%
+2025-06-15 16:17:28,437 - pktmask.core.trim.stages.base_stage.PyShark分析器 - WARNING - 无法获取PyShark版本信息
+2025-06-15 16:17:28,437 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark分析器初始化完成
+2025-06-15 16:17:28,437 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - Stage 'PyShark分析器' 初始化成功
+2025-06-15 16:17:28,437 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 开始PyShark协议分析...
+2025-06-15 16:17:28,437 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 0.0%
+2025-06-15 16:17:28,437 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 成功打开PCAP文件: /var/folders/wz/ql3l9vh10z3c4kt7h9c1ydvh0000gn/T/tmpki346yjz/tshark_output_bxjq16x1.pcap
+2025-06-15 16:17:28,437 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:28,636 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包1: 获取UDP payload失败，使用udp.length计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,636 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包1: 使用udp.length计算载荷长度 = 36字节
+2025-06-15 16:17:28,636 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 识别到DNS协议包: 1
+2025-06-15 16:17:28,636 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:28,636 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:28,636 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:28,637 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包4: 获取UDP payload失败，使用udp.length计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,637 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包4: 使用udp.length计算载荷长度 = 132字节
+2025-06-15 16:17:28,637 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 识别到DNS协议包: 4
+2025-06-15 16:17:28,637 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:28,637 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包5: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,637 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包5: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,637 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包5: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,637 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:28,637 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包6: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,637 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包6: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,637 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包6: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,637 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:28,637 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包7: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,637 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包7: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,637 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包7: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,637 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.0%
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包8: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包8: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=5282->1029
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包8: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.1%
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包9: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包9: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包9: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.1%
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包10: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包10: 使用tcp.len获取载荷长度 = 233字节
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包10: payload_len=233, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包10: 未识别为HTTP/TLS，载荷长度=233
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 10.1%
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包11: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包11: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=5282->1029
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包11: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: 使用tcp.len获取载荷长度 = 148字节
+2025-06-15 16:17:28,638 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: payload_len=148, has_tls=False, has_ssl=False, has_http=True, port=1029->5282
+2025-06-15 16:17:28,639 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: 识别为HTTP
+2025-06-15 16:17:28,639 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: HTTP层存在但缺少request_method和response_code
+2025-06-15 16:17:28,639 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: 基于字段启发式判断为HTTP请求
+2025-06-15 16:17:28,639 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包12: 设置默认HTTP头长度为37字节
+2025-06-15 16:17:28,639 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包13: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,639 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包13: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:28,639 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包13: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1029
+2025-06-15 16:17:28,639 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包13: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:28,639 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - === PyShark调试数据包14 详细信息 ===
+2025-06-15 16:17:28,639 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14: Packet (Length: 1434)
+[1m[33mLayer ETH
+:[0m[32m	dst:[0m[1m 00:d0:59:aa:af:80
+[0m[32m	dst:[0m[1m
+[0m[32m		oui:[0m[1m 53337
+[0m[32m		oui_resolved:[0m[1m Ambit Microsystems Corp.
+[0m[32m		dst_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		addr:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		addr_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		ig:[0m[1m 0
+[0m[32m		eth.dst_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		lg:[0m[1m 0
+[0m[32m	stream:[0m[1m 0
+[0m[32m	type:[0m[1m 0x0800
+[0m[32m	src:[0m[1m
+[0m[32m		oui:[0m[1m 45156
+[0m[32m		oui_resolved:[0m[1m Cisco Systems, Inc
+[0m[32m		addr:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		eth.src_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		ig:[0m[1m 0
+[0m[32m		src_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		addr_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		lg:[0m[1m 0
+[0m[32m	src:[0m[1m 00:b0:64:6e:92:40
+[0m[1m[33mLayer IP
+:[0m[32m	dsfield:[0m[1m
+[0m[32m		dscp:[0m[1m 0
+[0m[32m		ecn:[0m[1m 0
+[0m[32m	dst_host:[0m[1m 12.234.15.56
+[0m[32m	dsfield:[0m[1m 0x00
+[0m[32m	version:[0m[1m 4
+[0m[32m	host:[0m[1m 207.217.127.97
+[0m[32m	host:[0m[1m 12.234.15.56
+[0m[32m	hdr_len:[0m[1m 20
+[0m[32m	proto:[0m[1m 6
+[0m[32m	dst:[0m[1m 12.234.15.56
+[0m[32m	stream:[0m[1m 1
+[0m[32m	status:[0m[1m 2
+[0m[32m	flags:[0m[1m 0x02
+[0m[32m	id:[0m[1m 0xc6ee
+[0m[32m	ttl:[0m[1m 125
+[0m[32m	flags:[0m[1m
+[0m[32m		rb:[0m[1m 0
+[0m[32m		df:[0m[1m 1
+[0m[32m		mf:[0m[1m 0
+[0m[32m	frag_offset:[0m[1m 0
+[0m[32m	src_host:[0m[1m 207.217.127.97
+[0m[32m	len:[0m[1m 1420
+[0m[32m	checksum.status:[0m[1m 2
+[0m[32m	addr:[0m[1m 207.217.127.97
+[0m[32m	addr:[0m[1m 12.234.15.56
+[0m[32m	checksum:[0m[1m 0xc620
+[0m[32m	src:[0m[1m 207.217.127.97
+[0m[1m[33mLayer TCP
+:[0m[32m	seq_raw:[0m[1m 5483955
+[0m[32m	nxtseq:[0m[1m 2761
+[0m[32m	ack:[0m[1m 382
+[0m[32m	stream.pnum:[0m[1m 10
+[0m[32m	pnum:[0m[1m 10
+[0m[32m	completeness:[0m[1m
+[0m[32m		str:[0m[1m ··DASS
+[0m[32m		syn:[0m[1m 1
+[0m[32m		fin:[0m[1m 0
+[0m[32m		ack:[0m[1m 1
+[0m[32m		syn-ack:[0m[1m 1
+[0m[32m		rst:[0m[1m 0
+[0m[32m		data:[0m[1m 1
+[0m[32m	srcport:[0m[1m 5282
+[0m[32m	ack_raw:[0m[1m 2282254031
+[0m[32m	window_size_value:[0m[1m 16179
+[0m[32m	hdr_len:[0m[1m 20
+[0m[32m	seq:[0m[1m 1381
+[0m[32m	stream:[0m[1m 0
+[0m[32m	window_size:[0m[1m 16179
+[0m[32m	status:[0m[1m 2
+[0m[32m	flags:[0m[1m 0x0010
+[0m[32m	completeness:[0m[1m 15
+[0m[32m	segment_data:[0m[1m 67:69:6e:69:6e:67:20:0d:0a:09:2f:2f:6f:66:20:74:68:65:20:74:72:75:65:20:55:52:4c:2c:20:61:6e:64:20:61:64:64:20:31:20:74:6f:20:73:6b:69:70:20:69:74:20:2d:20:74:68:69:73:20:69:73:20:74:68:65:20:42:65:67:69:6e:55:52:4c:20:76:61:6c:75:65:2e:20:57:65:20:75:73:65:20:73:65:72:76:65:72:49:6e:64:65:78:20:61:73:20:74:68:65:20:65:6e:64:20:6d:61:72:6b:65:72:2e:0d:0a:09:2f:2f:75:72:6c:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:70:72:6f:74:6f:63:6f:6c:49:6e:64:65:78:20:2d:20:34:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:42:65:67:69:6e:55:52:4c:3d:44:6f:63:55:52:4c:2e:69:6e:64:65:78:4f:66:28:22:23:22:2c:31:29:20:2b:20:31:3b:0d:0a:09:75:72:6c:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:42:65:67:69:6e:55:52:4c:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:09:0d:0a:09:2f:2f:66:6f:72:20:64:69:73:70:6c:61:79:2c:20:77:65:20:6e:65:65:64:20:74:6f:20:73:6b:69:70:20:61:66:74:65:72:20:68:74:74:70:3a:2f:2f:2c:20:61:6e:64:20:67:6f:20:74:6f:20:74:68:65:20:6e:65:78:74:20:73:6c:61:73:68:0d:0a:09:64:69:73:70:6c:61:79:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:70:72:6f:74:6f:63:6f:6c:49:6e:64:65:78:20:2b:20:33:20:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:64:6f:63:75:6d:65:6e:74:2e:77:72:69:74:65:28:27:3c:41:20:48:52:45:46:3d:22:27:20:2b:20:75:72:6c:72:65:73:75:6c:74:20:2b:20:27:22:3e:27:20:2b:20:64:69:73:70:6c:61:79:72:65:73:75:6c:74:20:2b:20:22:3c:2f:61:3e:22:29:3b:0d:0a:7d:0d:0a:2f:2f:2d:2d:3e:0d:0a:3c:2f:53:43:52:49:50:54:3e:0d:0a:0d:0a:3c:4d:45:54:41:20:63:6f:6e:74:65:6e:74:3d:22:4d:53:48:54:4d:4c:20:35:2e:35:30:2e:34:35:32:32:2e:31:38:30:30:22:20:6e:61:6d:65:3d:47:45:4e:45:52:41:54:4f:52:3e:3c:2f:48:45:41:44:3e:0d:0a:3c:42:4f:44:59:20:62:67:43:6f:6c:6f:72:3d:23:66:66:66:66:66:66:3e:0d:0a:3c:54:41:42:4c:45:20:63:65:6c:6c:53:70:61:63:69:6e:67:3d:35:20:63:65:6c:6c:50:61:64:64:69:6e:67:3d:33:20:77:69:64:74:68:3d:34:31:30:3e:0d:0a:20:20:3c:54:42:4f:44:59:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:76:41:6c:69:67:6e:3d:63:65:6e:74:65:72:20:61:6c:69:67:6e:3d:6c:65:66:74:20:77:69:64:74:68:3d:33:36:30:3e:0d:0a:20:20:20:20:20:20:3c:48:31:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:31:33:70:74:2f:31:35:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:3c:21:2d:2d:50:72:6f:62:6c:65:6d:2d:2d:3e:54:68:65:20:70:61:67:65:20:0d:0a:20:20:20:20:20:20:63:61:6e:6e:6f:74:20:62:65:20:64:69:73:70:6c:61:79:65:64:3c:2f:48:31:3e:3c:2f:54:44:3e:3c:2f:54:52:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:77:69:64:74:68:3d:34:30:30:20:63:6f:6c:53:70:61:6e:3d:32:3e:3c:46:4f:4e:54:20:0d:0a:20:20:20:20:20:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:38:70:74:2f:31:31:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:54:68:65:72:65:20:69:73:20:61:20:70:72:6f:62:6c:65:6d:20:77:69:74:68:20:74:68:65:20:0d:0a:20:20:20:20:20:20:70:61:67:65:20:79:6f:75:20:61:72:65:20:74:72:79:69:6e:67:20:74:6f:20:72:65:61:63:68:20:61:6e:64:20:69:74:20:63:61:6e:6e:6f:74:20:62:65:20:64:69:73:70:6c:61:79:65:64:2e:3c:2f:46:4f:4e:54:3e:3c:2f:54:44:3e:3c:2f:54:52:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:77:69:64:74:68:3d:34:30:30:20:63:6f:6c:53:70:61:6e:3d:32:3e:3c:46:4f:4e:54:20:0d:0a:20:20:20:20:20:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:38:70:74:2f:31:31:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:0d:0a:20:20:20:20:20:20:3c:48:52:20:63:6f:6c:6f:72:3d:23:63:30:63:30:63:30:20:6e:6f:53:68:61:64:65:3e:0d:0a:0d:0a:20:20:20:20:20:20:3c:50:3e:50:6c:65:61:73:65:20:74:72:79:20:74:68:65:20:66:6f:6c:6c:6f:77:69:6e:67:3a:3c:2f:50:3e:0d:0a:20:20:20:20:20:20:3c:55:4c:3e:0d:0a:20:20:20:20:20:20:20:20:3c:4c:49:3e:43:6c:69:63:6b:20:74:68:65:20:3c:41:20:68:72:65:66:3d:22:6a:61:76:61:73:63:72:69:70:74:3a:6c:6f:63:61:74:69:6f:6e:2e:72:65:6c:6f:61:64:28:29:22:3e:52:65:66:72:65:73:68:3c:2f:41:3e:20:62:75:74:74:6f:6e:2c:20:0d:0a:20:20:20:20:20:20:20:20:6f:72:20:74:72:79:20:61:67:61:69:6e:20:6c:61:74:65:72:2e:3c:42:52:3e:0d:0a:20:20:20:20:20:20:20:20:3c:4c:49:3e:4f:70:65:6e:20:74:68:65:0d:0a:20:20:20:20:20:20:20:20:3c:53:43:52
+[0m[32m	window_size_scalefactor:[0m[1m -2
+[0m[32m	dstport:[0m[1m 1029
+[0m[32m	analysis:[0m[1m
+[0m[32m		push_bytes_sent:[0m[1m 2760
+[0m[32m		initial_rtt:[0m[1m 0.031915000
+[0m[32m		bytes_in_flight:[0m[1m 2760
+[0m[32m	len:[0m[1m 1380
+[0m[32m	checksum.status:[0m[1m 2
+[0m[32m	port:[0m[1m 5282
+[0m[32m	port:[0m[1m 1029
+[0m[32m	payload:[0m[1m 67:69:6e:69:6e:67:20:0d:0a:09:2f:2f:6f:66:20:74:68:65:20:74:72:75:65:20:55:52:4c:2c:20:61:6e:64:20:61:64:64:20:31:20:74:6f:20:73:6b:69:70:20:69:74:20:2d:20:74:68:69:73:20:69:73:20:74:68:65:20:42:65:67:69:6e:55:52:4c:20:76:61:6c:75:65:2e:20:57:65:20:75:73:65:20:73:65:72:76:65:72:49:6e:64:65:78:20:61:73:20:74:68:65:20:65:6e:64:20:6d:61:72:6b:65:72:2e:0d:0a:09:2f:2f:75:72:6c:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:70:72:6f:74:6f:63:6f:6c:49:6e:64:65:78:20:2d:20:34:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:42:65:67:69:6e:55:52:4c:3d:44:6f:63:55:52:4c:2e:69:6e:64:65:78:4f:66:28:22:23:22:2c:31:29:20:2b:20:31:3b:0d:0a:09:75:72:6c:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:42:65:67:69:6e:55:52:4c:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:09:0d:0a:09:2f:2f:66:6f:72:20:64:69:73:70:6c:61:79:2c:20:77:65:20:6e:65:65:64:20:74:6f:20:73:6b:69:70:20:61:66:74:65:72:20:68:74:74:70:3a:2f:2f:2c:20:61:6e:64:20:67:6f:20:74:6f:20:74:68:65:20:6e:65:78:74:20:73:6c:61:73:68:0d:0a:09:64:69:73:70:6c:61:79:72:65:73:75:6c:74:3d:44:6f:63:55:52:4c:2e:73:75:62:73:74:72:69:6e:67:28:70:72:6f:74:6f:63:6f:6c:49:6e:64:65:78:20:2b:20:33:20:2c:73:65:72:76:65:72:49:6e:64:65:78:29:3b:0d:0a:09:64:6f:63:75:6d:65:6e:74:2e:77:72:69:74:65:28:27:3c:41:20:48:52:45:46:3d:22:27:20:2b:20:75:72:6c:72:65:73:75:6c:74:20:2b:20:27:22:3e:27:20:2b:20:64:69:73:70:6c:61:79:72:65:73:75:6c:74:20:2b:20:22:3c:2f:61:3e:22:29:3b:0d:0a:7d:0d:0a:2f:2f:2d:2d:3e:0d:0a:3c:2f:53:43:52:49:50:54:3e:0d:0a:0d:0a:3c:4d:45:54:41:20:63:6f:6e:74:65:6e:74:3d:22:4d:53:48:54:4d:4c:20:35:2e:35:30:2e:34:35:32:32:2e:31:38:30:30:22:20:6e:61:6d:65:3d:47:45:4e:45:52:41:54:4f:52:3e:3c:2f:48:45:41:44:3e:0d:0a:3c:42:4f:44:59:20:62:67:43:6f:6c:6f:72:3d:23:66:66:66:66:66:66:3e:0d:0a:3c:54:41:42:4c:45:20:63:65:6c:6c:53:70:61:63:69:6e:67:3d:35:20:63:65:6c:6c:50:61:64:64:69:6e:67:3d:33:20:77:69:64:74:68:3d:34:31:30:3e:0d:0a:20:20:3c:54:42:4f:44:59:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:76:41:6c:69:67:6e:3d:63:65:6e:74:65:72:20:61:6c:69:67:6e:3d:6c:65:66:74:20:77:69:64:74:68:3d:33:36:30:3e:0d:0a:20:20:20:20:20:20:3c:48:31:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:31:33:70:74:2f:31:35:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:3c:21:2d:2d:50:72:6f:62:6c:65:6d:2d:2d:3e:54:68:65:20:70:61:67:65:20:0d:0a:20:20:20:20:20:20:63:61:6e:6e:6f:74:20:62:65:20:64:69:73:70:6c:61:79:65:64:3c:2f:48:31:3e:3c:2f:54:44:3e:3c:2f:54:52:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:77:69:64:74:68:3d:34:30:30:20:63:6f:6c:53:70:61:6e:3d:32:3e:3c:46:4f:4e:54:20:0d:0a:20:20:20:20:20:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:38:70:74:2f:31:31:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:54:68:65:72:65:20:69:73:20:61:20:70:72:6f:62:6c:65:6d:20:77:69:74:68:20:74:68:65:20:0d:0a:20:20:20:20:20:20:70:61:67:65:20:79:6f:75:20:61:72:65:20:74:72:79:69:6e:67:20:74:6f:20:72:65:61:63:68:20:61:6e:64:20:69:74:20:63:61:6e:6e:6f:74:20:62:65:20:64:69:73:70:6c:61:79:65:64:2e:3c:2f:46:4f:4e:54:3e:3c:2f:54:44:3e:3c:2f:54:52:3e:0d:0a:20:20:3c:54:52:3e:0d:0a:20:20:20:20:3c:54:44:20:77:69:64:74:68:3d:34:30:30:20:63:6f:6c:53:70:61:6e:3d:32:3e:3c:46:4f:4e:54:20:0d:0a:20:20:20:20:20:20:73:74:79:6c:65:3d:22:46:4f:4e:54:3a:20:38:70:74:2f:31:31:70:74:20:76:65:72:64:61:6e:61:3b:20:43:4f:4c:4f:52:3a:20:23:30:30:30:30:30:30:22:3e:0d:0a:20:20:20:20:20:20:3c:48:52:20:63:6f:6c:6f:72:3d:23:63:30:63:30:63:30:20:6e:6f:53:68:61:64:65:3e:0d:0a:0d:0a:20:20:20:20:20:20:3c:50:3e:50:6c:65:61:73:65:20:74:72:79:20:74:68:65:20:66:6f:6c:6c:6f:77:69:6e:67:3a:3c:2f:50:3e:0d:0a:20:20:20:20:20:20:3c:55:4c:3e:0d:0a:20:20:20:20:20:20:20:20:3c:4c:49:3e:43:6c:69:63:6b:20:74:68:65:20:3c:41:20:68:72:65:66:3d:22:6a:61:76:61:73:63:72:69:70:74:3a:6c:6f:63:61:74:69:6f:6e:2e:72:65:6c:6f:61:64:28:29:22:3e:52:65:66:72:65:73:68:3c:2f:41:3e:20:62:75:74:74:6f:6e:2c:20:0d:0a:20:20:20:20:20:20:20:20:6f:72:20:74:72:79:20:61:67:61:69:6e:20:6c:61:74:65:72:2e:3c:42:52:3e:0d:0a:20:20:20:20:20:20:20:20:3c:4c:49:3e:4f:70:65:6e:20:74:68:65:0d:0a:20:20:20:20:20:20:20:20:3c:53:43:52
+[0m[32m	checksum:[0m[1m 0x811e
+[0m[32m	flags:[0m[1m
+[0m[32m		str:[0m[1m ·······A····
+[0m[32m		ece:[0m[1m 0
+[0m[32m		cwr:[0m[1m 0
+[0m[32m		ae:[0m[1m 0
+[0m[32m		syn:[0m[1m 0
+[0m[32m		fin:[0m[1m 0
+[0m[32m		ack:[0m[1m 1
+[0m[32m		push:[0m[1m 0
+[0m[32m		reset:[0m[1m 0
+[0m[32m		res:[0m[1m 0
+[0m[32m		urg:[0m[1m 0
+[0m[32m	urgent_pointer:[0m[1m 0
+[0m
+2025-06-15 16:17:28,640 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14 协议层: ['eth', 'ip', 'tcp']
+2025-06-15 16:17:28,640 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14 TCP层存在
+2025-06-15 16:17:28,640 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14 TCP序列号: 1381
+2025-06-15 16:17:28,640 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14 TCP载荷长度: 1380
+2025-06-15 16:17:28,640 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包14 TCP有载荷字段
+2025-06-15 16:17:28,640 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - === PyShark数据包14 调试结束 ===
+2025-06-15 16:17:28,640 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包14: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,640 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包14: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:28,640 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包14: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1029
+2025-06-15 16:17:28,640 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包14: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:28,640 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - === PyShark调试数据包15 详细信息 ===
+2025-06-15 16:17:28,641 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15: Packet (Length: 60)
+[1m[33mLayer ETH
+:[0m[32m	dst:[0m[1m 00:b0:64:6e:92:40
+[0m[32m	dst:[0m[1m
+[0m[32m		oui:[0m[1m 45156
+[0m[32m		oui_resolved:[0m[1m Cisco Systems, Inc
+[0m[32m		dst_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		addr:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		addr_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		ig:[0m[1m 0
+[0m[32m		eth.dst_resolved:[0m[1m 00:b0:64:6e:92:40
+[0m[32m		lg:[0m[1m 0
+[0m[32m	stream:[0m[1m 0
+[0m[32m	padding:[0m[1m 00:00:00:00:00:00
+[0m[32m	type:[0m[1m 0x0800
+[0m[32m	src:[0m[1m
+[0m[32m		oui:[0m[1m 53337
+[0m[32m		oui_resolved:[0m[1m Ambit Microsystems Corp.
+[0m[32m		addr:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		eth.src_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		ig:[0m[1m 0
+[0m[32m		src_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		addr_resolved:[0m[1m 00:d0:59:aa:af:80
+[0m[32m		lg:[0m[1m 0
+[0m[32m	src:[0m[1m 00:d0:59:aa:af:80
+[0m[1m[33mLayer IP
+:[0m[32m	dsfield:[0m[1m
+[0m[32m		dscp:[0m[1m 0
+[0m[32m		ecn:[0m[1m 0
+[0m[32m	dst_host:[0m[1m 207.217.127.97
+[0m[32m	dsfield:[0m[1m 0x00
+[0m[32m	version:[0m[1m 4
+[0m[32m	host:[0m[1m 12.234.15.56
+[0m[32m	host:[0m[1m 207.217.127.97
+[0m[32m	hdr_len:[0m[1m 20
+[0m[32m	proto:[0m[1m 6
+[0m[32m	dst:[0m[1m 207.217.127.97
+[0m[32m	stream:[0m[1m 1
+[0m[32m	status:[0m[1m 2
+[0m[32m	flags:[0m[1m 0x02
+[0m[32m	id:[0m[1m 0x000f
+[0m[32m	ttl:[0m[1m 128
+[0m[32m	flags:[0m[1m
+[0m[32m		rb:[0m[1m 0
+[0m[32m		df:[0m[1m 1
+[0m[32m		mf:[0m[1m 0
+[0m[32m	frag_offset:[0m[1m 0
+[0m[32m	src_host:[0m[1m 12.234.15.56
+[0m[32m	len:[0m[1m 40
+[0m[32m	checksum.status:[0m[1m 2
+[0m[32m	addr:[0m[1m 12.234.15.56
+[0m[32m	addr:[0m[1m 207.217.127.97
+[0m[32m	checksum:[0m[1m 0x8f64
+[0m[32m	src:[0m[1m 12.234.15.56
+[0m[1m[33mLayer TCP
+:[0m[32m	seq_raw:[0m[1m 2282254031
+[0m[32m	nxtseq:[0m[1m 382
+[0m[32m	ack:[0m[1m 2761
+[0m[32m	stream.pnum:[0m[1m 11
+[0m[32m	pnum:[0m[1m 11
+[0m[32m	completeness:[0m[1m
+[0m[32m		str:[0m[1m ··DASS
+[0m[32m		syn:[0m[1m 1
+[0m[32m		fin:[0m[1m 0
+[0m[32m		ack:[0m[1m 1
+[0m[32m		syn-ack:[0m[1m 1
+[0m[32m		rst:[0m[1m 0
+[0m[32m		data:[0m[1m 1
+[0m[32m	srcport:[0m[1m 1029
+[0m[32m	ack_raw:[0m[1m 5485335
+[0m[32m	window_size_value:[0m[1m 64512
+[0m[32m	hdr_len:[0m[1m 20
+[0m[32m	seq:[0m[1m 382
+[0m[32m	stream:[0m[1m 0
+[0m[32m	window_size:[0m[1m 64512
+[0m[32m	status:[0m[1m 2
+[0m[32m	flags:[0m[1m 0x0010
+[0m[32m	completeness:[0m[1m 15
+[0m[32m	window_size_scalefactor:[0m[1m -2
+[0m[32m	dstport:[0m[1m 5282
+[0m[32m	analysis:[0m[1m
+[0m[32m		ack_rtt:[0m[1m 0.000048000
+[0m[32m		initial_rtt:[0m[1m 0.031915000
+[0m[32m		acks_frame:[0m[1m 14
+[0m[32m	len:[0m[1m 0
+[0m[32m	checksum.status:[0m[1m 2
+[0m[32m	port:[0m[1m 1029
+[0m[32m	port:[0m[1m 5282
+[0m[32m	checksum:[0m[1m 0x858d
+[0m[32m	flags:[0m[1m
+[0m[32m		str:[0m[1m ·······A····
+[0m[32m		ece:[0m[1m 0
+[0m[32m		cwr:[0m[1m 0
+[0m[32m		ae:[0m[1m 0
+[0m[32m		syn:[0m[1m 0
+[0m[32m		fin:[0m[1m 0
+[0m[32m		ack:[0m[1m 1
+[0m[32m		push:[0m[1m 0
+[0m[32m		reset:[0m[1m 0
+[0m[32m		res:[0m[1m 0
+[0m[32m		urg:[0m[1m 0
+[0m[32m	urgent_pointer:[0m[1m 0
+[0m
+2025-06-15 16:17:28,641 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15 协议层: ['eth', 'ip', 'tcp']
+2025-06-15 16:17:28,641 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15 TCP层存在
+2025-06-15 16:17:28,641 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15 TCP序列号: 382
+2025-06-15 16:17:28,641 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15 TCP载荷长度: 0
+2025-06-15 16:17:28,641 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark数据包15 TCP无载荷字段
+2025-06-15 16:17:28,641 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - === PyShark数据包15 调试结束 ===
+2025-06-15 16:17:28,641 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包15: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,642 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包15: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,642 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包15: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,642 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包16: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,642 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包16: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:28,642 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包16: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1029
+2025-06-15 16:17:28,642 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包16: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:28,642 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包17: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,642 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包17: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,642 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包17: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,642 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,642 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: 使用tcp.len获取载荷长度 = 115字节
+2025-06-15 16:17:28,642 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: payload_len=115, has_tls=False, has_ssl=False, has_http=True, port=5282->1029
+2025-06-15 16:17:28,642 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: 识别为HTTP
+2025-06-15 16:17:28,642 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: HTTP层存在但缺少request_method和response_code
+2025-06-15 16:17:28,642 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: 基于字段启发式判断为HTTP请求
+2025-06-15 16:17:28,642 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包18: 设置默认HTTP头长度为28字节
+2025-06-15 16:17:28,643 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包19: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,643 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包19: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,643 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包19: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,643 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包20: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,643 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包20: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1029->5282
+2025-06-15 16:17:28,643 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包20: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,643 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包21: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,643 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包21: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:28,643 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包21: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,643 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包22: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,643 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包22: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=5282->1030
+2025-06-15 16:17:28,643 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包22: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包23: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包23: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包23: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包24: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包24: 使用tcp.len获取载荷长度 = 238字节
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包24: payload_len=238, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包24: 未识别为HTTP/TLS，载荷长度=238
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包25: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包25: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=5282->1030
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包25: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: 使用tcp.len获取载荷长度 = 153字节
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: payload_len=153, has_tls=False, has_ssl=False, has_http=True, port=1030->5282
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: 识别为HTTP
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: HTTP层存在但缺少request_method和response_code
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: 基于字段启发式判断为HTTP请求
+2025-06-15 16:17:28,644 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包26: 设置默认HTTP头长度为38字节
+2025-06-15 16:17:28,645 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包27: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,645 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包27: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:28,645 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包27: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1030
+2025-06-15 16:17:28,645 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包27: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:28,645 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包28: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,645 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包28: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:28,645 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包28: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1030
+2025-06-15 16:17:28,645 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包28: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:28,645 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包29: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,645 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包29: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:28,645 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包29: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,645 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包30: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,645 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包30: 使用tcp.len获取载荷长度 = 1380字节
+2025-06-15 16:17:28,645 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包30: payload_len=1380, has_tls=False, has_ssl=False, has_http=False, port=5282->1030
+2025-06-15 16:17:28,645 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包30: 未识别为HTTP/TLS，载荷长度=1380
+2025-06-15 16:17:28,646 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包31: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,646 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包31: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:28,646 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包31: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,646 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: 获取payload失败，使用tcp.len计算: Non-hexadecimal digit found
+2025-06-15 16:17:28,646 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: 使用tcp.len获取载荷长度 = 115字节
+2025-06-15 16:17:28,646 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: payload_len=115, has_tls=False, has_ssl=False, has_http=True, port=5282->1030
+2025-06-15 16:17:28,646 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: 识别为HTTP
+2025-06-15 16:17:28,646 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: HTTP层存在但缺少request_method和response_code
+2025-06-15 16:17:28,646 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: 基于字段启发式判断为HTTP请求
+2025-06-15 16:17:28,646 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包32: 设置默认HTTP头长度为28字节
+2025-06-15 16:17:28,646 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包33: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,646 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包33: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:28,646 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包33: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,652 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包34: 无payload对象，使用tcp.len = 0字节
+2025-06-15 16:17:28,652 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包34: payload_len=0, has_tls=False, has_ssl=False, has_http=False, port=1030->5282
+2025-06-15 16:17:28,652 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 数据包34: 未识别为HTTP/TLS，载荷长度=0
+2025-06-15 16:17:28,653 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 数据包分析完成，共处理34个数据包
+2025-06-15 16:17:28,653 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 80.0%
+2025-06-15 16:17:28,653 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 开始生成掩码表...
+2025-06-15 16:17:28,653 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 处理流UDP_12.234.15.56:1028_216.148.227.68:53: 协议=DNS, 包数=2
+2025-06-15 16:17:28,653 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 使用完全保留策略处理DNS流UDP_12.234.15.56:1028_216.148.227.68:53
+2025-06-15 16:17:28,653 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: UDP_12.234.15.56:1028_216.148.227.68:53 [1:37) 完全保留载荷
+2025-06-15 16:17:28,653 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - DNS包1: 完全保留36字节
+2025-06-15 16:17:28,653 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: UDP_12.234.15.56:1028_216.148.227.68:53 [4:136) 完全保留载荷
+2025-06-15 16:17:28,653 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - DNS包4: 完全保留132字节
+2025-06-15 16:17:28,653 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 处理流TCP_12.234.15.56:1029_207.217.127.97:5282_forward: 协议=HTTP, 包数=10
+2025-06-15 16:17:28,653 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 使用HTTP掩码策略处理流TCP_12.234.15.56:1029_207.217.127.97:5282_forward
+2025-06-15 16:17:28,654 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - HTTP包12: 保留头部37字节，掩码111字节
+2025-06-15 16:17:28,654 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: TCP_12.234.15.56:1029_207.217.127.97:5282_forward [234:382) 保留前37字节，其余置零
+2025-06-15 16:17:28,654 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 处理流TCP_12.234.15.56:1029_207.217.127.97:5282_reverse: 协议=HTTP, 包数=6
+2025-06-15 16:17:28,654 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 使用HTTP掩码策略处理流TCP_12.234.15.56:1029_207.217.127.97:5282_reverse
+2025-06-15 16:17:28,654 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - HTTP包18: 保留头部28字节，掩码87字节
+2025-06-15 16:17:28,654 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: TCP_12.234.15.56:1029_207.217.127.97:5282_reverse [4141:4256) 保留前28字节，其余置零
+2025-06-15 16:17:28,654 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 处理流TCP_12.234.15.56:1030_207.217.127.97:5282_forward: 协议=HTTP, 包数=8
+2025-06-15 16:17:28,654 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 使用HTTP掩码策略处理流TCP_12.234.15.56:1030_207.217.127.97:5282_forward
+2025-06-15 16:17:28,654 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - HTTP包26: 保留头部38字节，掩码115字节
+2025-06-15 16:17:28,654 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: TCP_12.234.15.56:1030_207.217.127.97:5282_forward [239:392) 保留前38字节，其余置零
+2025-06-15 16:17:28,654 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 处理流TCP_12.234.15.56:1030_207.217.127.97:5282_reverse: 协议=HTTP, 包数=6
+2025-06-15 16:17:28,654 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 使用HTTP掩码策略处理流TCP_12.234.15.56:1030_207.217.127.97:5282_reverse
+2025-06-15 16:17:28,654 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - HTTP包32: 保留头部28字节，掩码87字节
+2025-06-15 16:17:28,654 - pktmask.core.trim.models.mask_table - DEBUG - 添加掩码条目: TCP_12.234.15.56:1030_207.217.127.97:5282_reverse [4141:4256) 保留前28字节，其余置零
+2025-06-15 16:17:28,654 - pktmask.core.trim.models.mask_table - INFO - 开始完成流掩码表构建...
+2025-06-15 16:17:28,654 - pktmask.core.trim.models.mask_table - INFO - 流掩码表构建完成: 6 -> 6 条目
+2025-06-15 16:17:28,654 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - 掩码表生成完成，包含6个条目
+2025-06-15 16:17:28,654 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 90.0%
+2025-06-15 16:17:28,654 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - Stage 'PyShark分析器' 进度: 100.0%
+2025-06-15 16:17:28,654 - pktmask.core.trim.stages.base_stage.PyShark分析器 - INFO - PyShark分析完成: 34个数据包, 5个流, 耗时0.22秒
+2025-06-15 16:17:28,672 - pktmask.core.trim.stages.base_stage.PyShark分析器 - DEBUG - 内存清理完成
+2025-06-15 16:17:28,672 - root - ERROR - 分析过程异常
+Traceback (most recent call last):
+  File "/Users/ricky/Downloads/PktMask/debug_http_trimming_issue.py", line 211, in analyze_http_sample
+    entries = mask_table.get_entries_for_stream(stream_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'StreamMaskTable' object has no attribute 'get_entries_for_stream'

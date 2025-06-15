@@ -43,6 +43,9 @@ class EnhancedTrimConfig:
     default_strategy_enabled: bool = True
     auto_protocol_detection: bool = True
     
+    # HTTP简化配置 - Phase 1: 新增配置参数
+    http_full_mask: bool = False  # HTTP协议识别但全部置零（简化策略）
+    
     # 裁切参数
     preserve_ratio: float = 0.3
     min_preserve_bytes: int = 100
@@ -190,7 +193,9 @@ class EnhancedTrimmer(BaseProcessor):
                 'http_strategy_enabled': self.enhanced_config.http_strategy_enabled,
                 'tls_strategy_enabled': self.enhanced_config.tls_strategy_enabled,
                 'default_strategy_enabled': self.enhanced_config.default_strategy_enabled,
-                'auto_protocol_detection': self.enhanced_config.auto_protocol_detection
+                'auto_protocol_detection': self.enhanced_config.auto_protocol_detection,
+                # Phase 1: 传递HTTP简化配置到PyShark分析器
+                'http_full_mask': self.enhanced_config.http_full_mask
             })
         elif stage_type == "scapy":
             base_config.update({

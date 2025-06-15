@@ -97,6 +97,9 @@ class PySharkAnalyzer(BaseStage):
         self._http_keep_headers = self.get_config_value('http_keep_headers', True)
         self._http_mask_body = self.get_config_value('http_mask_body', True)
         
+        # Phase 2: HTTP简化配置 - 接收配置参数
+        self._http_full_mask = self.get_config_value('http_full_mask', False)
+        
         # TLS协议配置
         self._tls_keep_handshake = self.get_config_value('tls_keep_handshake', True)
         self._tls_mask_application_data = self.get_config_value('tls_mask_application_data', True)
@@ -728,6 +731,39 @@ class PySharkAnalyzer(BaseStage):
                         header_lines.append(f"{field_name}: {field_value}")
                 
                 analysis.http_header_length = sum(len(line) + 2 for line in header_lines) + 2
+            
+            # 关键修复: 如果检测到HTTP层但没有明确的请求/响应标识符，
+            # 根据端口号或其他启发式方法设置合理的默认值
+            elif not analysis.is_http_request and not analysis.is_http_response:
+                self._logger.debug(f"数据包{analysis.packet_number}: HTTP层存在但缺少request_method和response_code")
+                
+                # 启发式分析: 检查HTTP头字段
+                all_fields = getattr(http_layer, '_all_fields', {})
+                
+                # 查找常见的HTTP请求方法字段
+                request_indicators = ['http.request.method', 'http.request.uri', 'http.request']
+                response_indicators = ['http.response.code', 'http.response', 'http.response.phrase']
+                
+                has_request_indicators = any(field in all_fields for field in request_indicators)
+                has_response_indicators = any(field in all_fields for field in response_indicators)
+                
+                if has_request_indicators:
+                    analysis.is_http_request = True
+                    self._logger.debug(f"数据包{analysis.packet_number}: 基于字段启发式判断为HTTP请求")
+                elif has_response_indicators:
+                    analysis.is_http_response = True
+                    self._logger.debug(f"数据包{analysis.packet_number}: 基于字段启发式判断为HTTP响应")
+                else:
+                    # 最后的备选: 如果检测到HTTP层但无法确定类型，默认为请求
+                    # 这确保HTTP包不会被完全跳过
+                    analysis.is_http_request = True
+                    self._logger.debug(f"数据包{analysis.packet_number}: HTTP层存在，默认设置为请求以确保处理")
+                
+                # 设置默认头长度估算
+                if analysis.http_header_length is None:
+                    # 使用保守的默认头长度估算
+                    analysis.http_header_length = min(200, analysis.payload_length // 4)
+                    self._logger.debug(f"数据包{analysis.packet_number}: 设置默认HTTP头长度为{analysis.http_header_length}字节")
                 
         except Exception as e:
             self._logger.debug(f"分析HTTP层时出错: {e}")
@@ -1025,19 +1061,27 @@ class PySharkAnalyzer(BaseStage):
             seq_start = packet.seq_number
             seq_end = seq_start + packet.payload_length
             
-            # 根据配置决定掩码策略
-            if self._http_keep_headers and packet.http_header_length:
-                # 保留HTTP头，掩码消息体
+            # Phase 2: HTTP策略选择 - 新增全部置零选项
+            if self._http_full_mask:
+                # 新增简化策略：HTTP全部置零（等同于通用协议处理）
+                mask_spec = MaskAfter(0)
+                self._logger.info(f"HTTP包{packet.packet_number}: 全部掩码{packet.payload_length}字节 (简化策略)")
+            elif self._http_keep_headers and packet.http_header_length:
+                # 保留原有：保留HTTP头，掩码消息体
                 if packet.http_header_length < packet.payload_length:
                     mask_spec = MaskAfter(packet.http_header_length)
+                    self._logger.debug(f"HTTP包{packet.packet_number}: 保留头部{packet.http_header_length}字节，掩码{packet.payload_length - packet.http_header_length}字节")
                 else:
                     mask_spec = KeepAll()
+                    self._logger.debug(f"HTTP包{packet.packet_number}: 完全保留{packet.payload_length}字节")
             elif self._http_mask_body:
-                # 完全掩码HTTP载荷
+                # 保留原有：完全掩码HTTP载荷
                 mask_spec = MaskAfter(0)
+                self._logger.debug(f"HTTP包{packet.packet_number}: 全部掩码{packet.payload_length}字节")
             else:
-                # 保留全部
+                # 保留原有：保留全部
                 mask_spec = KeepAll()
+                self._logger.debug(f"HTTP包{packet.packet_number}: 完全保留{packet.payload_length}字节")
             
             try:
                 mask_table.add_mask_range(stream_id, seq_start, seq_end, mask_spec)
