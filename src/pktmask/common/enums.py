@@ -14,7 +14,7 @@ class ProcessingStepType(Enum):
     MASK_IP = "mask_ip"
     DEDUP_PACKET = "dedup_packet"
     TRIM_PACKET = "trim_packet"
-    WEB_FOCUSED = "web_focused"  # 预留功能
+    WEB_FOCUSED = "web_focused"  # HTTP功能已移除，保留向后兼容
 
 
 class PipelineStatus(Enum):
@@ -189,10 +189,10 @@ class UIStrings(Enum):
     GROUP_SUMMARY = "Summary Report"
     
     # 复选框文本
-    CHECKBOX_REMOVE_DUPES = "Remove Dupes"
-    CHECKBOX_MASK_IPS = "Mask IPs"
-    CHECKBOX_TRIM_PAYLOADS = "Trim Payloads (Preserve TLS Handshake)"
-    CHECKBOX_WEB_FOCUSED = "Web-Focused Traffic Only (Coming Soon)"
+    CHECKBOX_DEDUP_PACKET = "Remove Dupes"
+    CHECKBOX_MASK_IP = "Mask IPs"
+    CHECKBOX_TRIM_PACKET = "Trim Payloads (Preserve TLS Handshake)"
+    CHECKBOX_WEB_FOCUSED = "Web-Focused Traffic Only (功能已移除)"
     
     # 路径标签默认文本
     PATH_INPUT_DEFAULT = "Click and pick your pcap directory"
@@ -211,6 +211,19 @@ class UIStrings(Enum):
     MSG_WARNING = "Warning"
     MSG_ERROR = "Error"
     
-    # 提示信息
+    # 提示信息（更新HTTP功能状态）
     TOOLTIP_TRIM = "Intelligently trims packet payloads while preserving TLS handshake data."
-    TOOLTIP_WEB_FOCUSED = "Filter and process only web-related traffic (HTTP/HTTPS). This feature is under development." 
+    TOOLTIP_WEB_FOCUSED = "HTTP协议处理功能已从本版本中移除。仅支持TLS、IP匿名化和去重功能。"
+
+
+# 界面文本常量（更新HTTP功能状态）
+CHECKBOX_DEDUP_PACKET = "Remove Dupes"
+CHECKBOX_MASK_IP = "Mask IPs"
+CHECKBOX_TRIM_PACKET = "Trim Payloads (Preserve TLS Handshake)"
+CHECKBOX_WEB_FOCUSED = "Web-Focused Traffic Only (功能已移除)"
+
+# 工具提示常量（更新HTTP功能状态）
+TOOLTIP_DEDUP_PACKET = "Remove duplicate packets based on content hash to reduce file size."
+TOOLTIP_MASK_IP = "Replace IP addresses with anonymized versions while preserving network structure."
+TOOLTIP_TRIM_PACKET = "Intelligently trims packet payloads while preserving TLS handshake data."
+TOOLTIP_WEB_FOCUSED = "HTTP协议处理功能已从本版本中移除。仅支持TLS、IP匿名化和去重功能。" 

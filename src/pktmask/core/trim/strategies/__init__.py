@@ -6,12 +6,13 @@
 
 主要组件:
 - BaseStrategy: 策略基类，定义标准接口
-- ProtocolStrategyFactory: 策略工厂，管理策略创建和选择
-- 具体策略实现: HTTP策略、TLS策略等
+- StrategyFactory: 策略工厂，管理策略创建和选择
+- 具体策略实现: TLS策略、默认策略等
 
 作者: PktMask Team
 创建时间: 2025-01-15
-版本: 1.0.0
+版本: 2.0.0 (移除HTTP支持)
+更新时间: 2025-01-XX
 """
 
 from .base_strategy import (
@@ -22,26 +23,22 @@ from .base_strategy import (
 )
 
 from .factory import (
-    ProtocolStrategyFactory,
+    StrategyFactory,
     StrategyRegistry,
     get_strategy_factory,
     register_strategy
 )
 
 from .default_strategy import DefaultStrategy
-from .http_strategy import HTTPTrimStrategy
 from .tls_strategy import TLSTrimStrategy
 
 # 自动注册所有可用的策略
 def auto_register_all_strategies():
-    """自动注册所有可用的策略"""
+    """自动注册所有可用的策略（不包含HTTP策略）"""
     factory = get_strategy_factory()
     
     # 注册默认策略
     factory.register_strategy(DefaultStrategy)
-    
-    # 注册HTTP策略
-    factory.register_strategy(HTTPTrimStrategy)
     
     # 注册TLS策略
     factory.register_strategy(TLSTrimStrategy)
@@ -57,17 +54,16 @@ __all__ = [
     'TrimResult',
     
     # 策略工厂
-    'ProtocolStrategyFactory',
+    'StrategyFactory',
     'StrategyRegistry',
     'get_strategy_factory',
     'register_strategy',
     
     # 具体策略
     'DefaultStrategy',
-    'HTTPTrimStrategy',
     'TLSTrimStrategy',
 ]
 
 # 版本信息
-__version__ = '1.0.0'
+__version__ = '2.0.0'
 __author__ = 'PktMask Team' 

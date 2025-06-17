@@ -779,13 +779,12 @@ class ReportManager:
         return any(enhanced_indicators)
 
     def _generate_enhanced_trimming_report_line(self, step_name: str, data: Dict[str, Any]) -> str:
-        """生成Enhanced Trimmer的处理结果报告行"""
+        """生成Enhanced Trimmer的处理结果报告行（移除HTTP统计）"""
         total = data.get('total_packets', 0)
         trimmed = data.get('trimmed_packets', 0)
         
-        # 获取协议统计
+        # 获取协议统计（移除HTTP）
         protocol_stats = data.get('protocol_stats', {})
-        http_packets = protocol_stats.get('http_packets', 0)
         tls_packets = protocol_stats.get('tls_packets', 0)
         other_packets = protocol_stats.get('other_packets', 0)
         
@@ -796,12 +795,11 @@ class ReportManager:
         return line
 
     def _generate_enhanced_trimming_report(self, separator_length: int, is_partial: bool = False) -> Optional[str]:
-        """生成Enhanced Trimmer的智能处理统计总报告"""
+        """生成Enhanced Trimmer的智能处理统计总报告（移除HTTP支持）"""
         # 检查是否有Enhanced Trimmer处理的文件
         enhanced_files = []
         total_enhanced_stats = {
             'total_packets': 0,
-            'http_packets': 0,
             'tls_packets': 0,
             'other_packets': 0,
             'strategies_applied': set(),
@@ -817,12 +815,11 @@ class ReportManager:
                 enhanced_files.append(filename)
                 data = payload_step['data']
                 
-                # 汇总统计
+                # 汇总统计（移除HTTP）
                 total_enhanced_stats['files_processed'] += 1
                 total_enhanced_stats['total_packets'] += data.get('total_packets', 0)
                 
                 protocol_stats = data.get('protocol_stats', {})
-                total_enhanced_stats['http_packets'] += protocol_stats.get('http_packets', 0)
                 total_enhanced_stats['tls_packets'] += protocol_stats.get('tls_packets', 0)
                 total_enhanced_stats['other_packets'] += protocol_stats.get('other_packets', 0)
                 
@@ -845,15 +842,13 @@ class ReportManager:
         report += f"⚡ Enhancement Level: 4x accuracy improvement over simple trimming\n"
         report += f"📁 Enhanced Files: {total_enhanced_stats['files_processed']}/{len(self.main_window.file_processing_results)}\n\n"
         
-        # 协议检测统计
+        # 协议检测统计（移除HTTP）
         total_packets = total_enhanced_stats['total_packets']
         if total_packets > 0:
-            http_rate = (total_enhanced_stats['http_packets'] / total_packets) * 100
             tls_rate = (total_enhanced_stats['tls_packets'] / total_packets) * 100
             other_rate = (total_enhanced_stats['other_packets'] / total_packets) * 100
             
             report += f"📊 Protocol Detection Results:\n"
-            report += f"   • HTTP packets: {total_enhanced_stats['http_packets']:,} ({http_rate:.1f}%) - 智能HTTP策略\n"
             report += f"   • TLS packets: {total_enhanced_stats['tls_packets']:,} ({tls_rate:.1f}%) - 智能TLS策略\n"
             report += f"   • Other packets: {total_enhanced_stats['other_packets']:,} ({other_rate:.1f}%) - 通用策略\n"
             report += f"   • Total processed: {total_packets:,} packets in 4 stages\n\n"
@@ -866,10 +861,9 @@ class ReportManager:
                 report += f"   • {strategy}\n"
             report += "\n"
         
-        # 智能处理优势说明
+        # 智能处理优势说明（移除HTTP）
         report += f"🚀 Enhanced Processing Benefits:\n"
         report += f"   • Automatic protocol detection and strategy selection\n"
-        report += f"   • HTTP headers preserved, body intelligently trimmed\n"
         report += f"   • TLS handshake preserved, ApplicationData masked\n"
         report += f"   • Improved accuracy while maintaining network analysis capability\n"
         
@@ -878,7 +872,7 @@ class ReportManager:
         return report
 
     def _generate_enhanced_trimming_report_for_file(self, filename: str, separator_length: int) -> Optional[str]:
-        """为单个文件生成Enhanced Trimmer的处理结果报告"""
+        """为单个文件生成Enhanced Trimmer的处理结果报告（移除HTTP统计）"""
         if filename not in self.main_window.file_processing_results:
             return None
         
@@ -897,13 +891,8 @@ class ReportManager:
         
         total_packets = data.get('total_packets', 0)
         if total_packets > 0:
-            http_packets = protocol_stats.get('http_packets', 0)
             tls_packets = protocol_stats.get('tls_packets', 0)
             other_packets = protocol_stats.get('other_packets', 0)
-            
-            if http_packets > 0:
-                http_rate = (http_packets / total_packets) * 100
-                report += f"      • HTTP: {http_packets} packets ({http_rate:.1f}%) - Headers preserved\n"
             
             if tls_packets > 0:
                 tls_rate = (tls_packets / total_packets) * 100

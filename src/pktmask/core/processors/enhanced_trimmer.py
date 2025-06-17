@@ -3,7 +3,7 @@ Enhanced Trimmer 处理器
 
 基于多阶段处理架构的智能载荷裁切处理器。
 整合TShark预处理、PyShark分析、Scapy回写的完整流程，
-提供HTTP、TLS等协议的智能裁切能力。
+提供TLS等协议的智能裁切能力。
 
 特性:
 - 零GUI改动，100%向后兼容
@@ -14,7 +14,7 @@ Enhanced Trimmer 处理器
 
 作者: PktMask Team
 创建时间: 2025-01-15
-版本: 1.0.0
+版本: 2.0.0 (移除HTTP支持)
 """
 
 import os
@@ -35,16 +35,12 @@ from ...infrastructure.logging import get_logger
 
 @dataclass
 class EnhancedTrimConfig:
-    """Enhanced Trimmer 配置"""
+    """Enhanced Trimmer 配置（移除HTTP支持）"""
     
     # 协议策略配置
-    http_strategy_enabled: bool = True
     tls_strategy_enabled: bool = True
     default_strategy_enabled: bool = True
     auto_protocol_detection: bool = True
-    
-    # HTTP简化配置 - Phase 1: 新增配置参数
-    http_full_mask: bool = False  # HTTP协议识别但全部置零（简化策略）
     
     # 裁切参数
     preserve_ratio: float = 0.3
@@ -67,7 +63,7 @@ class EnhancedTrimmer(BaseProcessor):
     增强版载荷裁切处理器
     
     使用多阶段处理架构，整合TShark预处理、PyShark分析、Scapy回写，
-    提供HTTP、TLS等协议的智能裁切能力。
+    提供TLS等协议的智能裁切能力。
     
     处理流程:
     1. TShark预处理: TCP流重组和IP碎片重组
@@ -80,7 +76,7 @@ class EnhancedTrimmer(BaseProcessor):
         super().__init__(config)
         self._logger = get_logger('enhanced_trimmer')
         
-        # 智能配置：默认启用所有协议策略
+        # 智能配置：默认启用所有协议策略（不包含HTTP）
         self.enhanced_config = EnhancedTrimConfig()
         
         # 核心组件 (延迟导入以避免循环导入)
@@ -88,10 +84,9 @@ class EnhancedTrimmer(BaseProcessor):
         self._strategy_factory = None
         self._temp_dir: Optional[Path] = None
         
-        # 处理统计
+        # 处理统计（移除HTTP统计）
         self._processing_stats = {
             'total_packets': 0,
-            'http_packets': 0,
             'tls_packets': 0,
             'other_packets': 0,
             'strategies_applied': [],
@@ -165,7 +160,7 @@ class EnhancedTrimmer(BaseProcessor):
         self._logger.debug(f"已注册 {len(self._executor.stages)} 个处理阶段")
         
     def _create_stage_config(self, stage_type: str) -> Dict[str, Any]:
-        """为指定阶段创建配置"""
+        """为指定阶段创建配置（移除HTTP配置）"""
         from ...config.defaults import get_tshark_paths
         
         base_config = {
@@ -179,7 +174,6 @@ class EnhancedTrimmer(BaseProcessor):
             base_config.update({
                 'enable_tcp_reassembly': True,
                 'enable_ip_defragmentation': True,
-                'enable_http_desegmentation': True,
                 'enable_tls_desegmentation': True,
                 'tshark_executable_paths': get_tshark_paths(),
                 'tshark_custom_executable': None,
@@ -190,12 +184,9 @@ class EnhancedTrimmer(BaseProcessor):
             })
         elif stage_type == "pyshark":
             base_config.update({
-                'http_strategy_enabled': self.enhanced_config.http_strategy_enabled,
                 'tls_strategy_enabled': self.enhanced_config.tls_strategy_enabled,
                 'default_strategy_enabled': self.enhanced_config.default_strategy_enabled,
-                'auto_protocol_detection': self.enhanced_config.auto_protocol_detection,
-                # Phase 1: 传递HTTP简化配置到PyShark分析器
-                'http_full_mask': self.enhanced_config.http_full_mask
+                'auto_protocol_detection': self.enhanced_config.auto_protocol_detection
             })
         elif stage_type == "scapy":
             base_config.update({
@@ -298,7 +289,7 @@ class EnhancedTrimmer(BaseProcessor):
     def _generate_processing_report(self, execution_result: Any,
                                   input_path: str, output_path: str, 
                                   duration: float) -> Dict[str, Any]:
-        """生成详细的处理报告"""
+        """生成详细的处理报告（移除HTTP统计）"""
         
         # 计算文件大小变化
         space_saved = self._calculate_space_saved(input_path, output_path)
@@ -312,9 +303,8 @@ class EnhancedTrimmer(BaseProcessor):
             'total_duration': duration,
             'success': execution_result.success,
             
-            # 协议处理统计
+            # 协议处理统计（移除HTTP）
             'protocol_stats': {
-                'http_packets': self._processing_stats['http_packets'],
                 'tls_packets': self._processing_stats['tls_packets'], 
                 'other_packets': self._processing_stats['other_packets'],
                 'total_packets': self._processing_stats['total_packets']
@@ -408,7 +398,7 @@ class EnhancedTrimmer(BaseProcessor):
         }
         
     def _handle_stage_event(self, event_type: str, data: Dict[str, Any]):
-        """处理阶段事件，更新统计信息"""
+        """处理阶段事件，更新统计信息（移除HTTP统计）"""
         
         if event_type == "STAGE_PROGRESS":
             stage_name = data.get('stage_name', '')
@@ -416,10 +406,9 @@ class EnhancedTrimmer(BaseProcessor):
             
             self._logger.debug(f"阶段进度 [{stage_name}]: {progress:.1f}%")
             
-            # 更新协议统计
+            # 更新协议统计（移除HTTP）
             if 'protocol_stats' in data:
                 stats = data['protocol_stats']
-                self._processing_stats['http_packets'] += stats.get('http_packets', 0)
                 self._processing_stats['tls_packets'] += stats.get('tls_packets', 0)
                 self._processing_stats['other_packets'] += stats.get('other_packets', 0)
                 self._processing_stats['total_packets'] += stats.get('total_packets', 0)
@@ -430,10 +419,9 @@ class EnhancedTrimmer(BaseProcessor):
                 self._processing_stats['strategies_applied'].append(strategy_name)
                 
     def _reset_processing_stats(self):
-        """重置处理统计信息"""
+        """重置处理统计信息（移除HTTP统计）"""
         self._processing_stats.update({
             'total_packets': 0,
-            'http_packets': 0,
             'tls_packets': 0,
             'other_packets': 0,
             'strategies_applied': [],
@@ -457,16 +445,15 @@ class EnhancedTrimmer(BaseProcessor):
         return "Trim Payloads"
     
     def get_description(self) -> str:
-        """获取处理器描述"""
-        return "智能协议感知载荷裁切 - 支持HTTP/TLS等多协议智能识别与精确裁切"
+        """获取处理器描述（移除HTTP支持）"""
+        return "智能协议感知载荷裁切 - 支持TLS等协议智能识别与精确裁切"
         
     def get_enhanced_stats(self) -> Dict[str, Any]:
-        """获取增强版统计信息"""
+        """获取增强版统计信息（移除HTTP统计）"""
         return {
             'enhanced_mode': True,
             'processing_mode': self.enhanced_config.processing_mode,
             'protocol_stats': {
-                'http_packets': self._processing_stats['http_packets'],
                 'tls_packets': self._processing_stats['tls_packets'],
                 'other_packets': self._processing_stats['other_packets'],
                 'total_packets': self._processing_stats['total_packets']

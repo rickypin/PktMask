@@ -105,13 +105,10 @@ class TrimmerConfig:
     """
     载荷裁切配置
     
-    包含所有Enhanced Trim Payloads功能的配置参数。
+    包含所有Enhanced Trim Payloads功能的配置参数（已移除HTTP支持）。
     """
     
-    # 协议处理策略
-    http_keep_headers: bool = True
-    http_header_max_length: int = 8192  # HTTP头最大长度限制
-    
+    # TLS协议处理策略
     tls_keep_signaling: bool = True
     tls_keep_handshake: bool = True
     tls_keep_alerts: bool = True
@@ -161,12 +158,7 @@ class TrimmerConfig:
         """
         errors = []
         
-        # 验证数值范围
-        if self.http_header_max_length <= 0:
-            errors.append("HTTP头最大长度必须大于0")
-        elif self.http_header_max_length > 65536:
-            errors.append("HTTP头最大长度不能超过64KB")
-        
+        # 验证数值范围（移除HTTP验证）
         if self.default_keep_bytes < 0:
             errors.append("默认保留字节数不能为负数")
         elif self.default_keep_bytes > 65536:
@@ -208,16 +200,12 @@ class TrimmerConfig:
         return errors
     
     def _validate_cross_dependencies(self) -> List[str]:
-        """验证配置项之间的交叉依赖"""
+        """验证配置项之间的交叉依赖（移除HTTP交叉验证）"""
         errors = []
         
         # TLS配置交叉验证
         if not self.tls_keep_signaling and not self.tls_keep_handshake:
             errors.append("TLS配置：至少需要保留信令或握手消息之一")
-        
-        # HTTP配置交叉验证  
-        if self.http_keep_headers and self.default_trim_strategy == "mask_all":
-            errors.append("HTTP配置冲突：启用保留HTTP头时，默认策略不应为全部掩码")
         
         # 内存和性能配置交叉验证
         if self.chunk_size * 1500 > self.max_memory_usage_mb * 1024 * 1024 / 4:
@@ -231,12 +219,12 @@ class TrimmerConfig:
         if self.tshark_enable_reassembly and not self.pyshark_keep_packets:
             errors.append("TShark配置建议：启用重组时建议保留PyShark包对象以提高精度")
         
-        # 自定义协议验证
+        # 自定义协议验证（移除HTTP协议支持）
         for port, protocol in self.custom_port_mappings.items():
             if not isinstance(port, int) or port < 1 or port > 65535:
                 errors.append(f"端口映射错误：端口{port}超出有效范围[1-65535]")
-            if protocol not in ["http", "tls", "tcp", "udp"]:
-                errors.append(f"协议映射错误：不支持的协议类型'{protocol}'")
+            if protocol not in ["tls", "tcp", "udp"]:  # 移除http
+                errors.append(f"协议映射错误：不支持的协议类型'{protocol}'（HTTP支持已移除）")
         
         return errors
     
@@ -247,9 +235,7 @@ class TrimmerConfig:
             first_error = errors[0]
             # 尝试确定错误的配置键
             config_key = "unknown"
-            if "HTTP头" in first_error:
-                config_key = "http_header_max_length"
-            elif "保留字节数" in first_error:
+            if "保留字节数" in first_error:
                 config_key = "default_keep_bytes"
             elif "块大小" in first_error:
                 config_key = "chunk_size"
@@ -265,10 +251,8 @@ class TrimmerConfig:
             )
     
     def to_dict(self) -> Dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式（移除HTTP字段）"""
         return {
-            'http_keep_headers': self.http_keep_headers,
-            'http_header_max_length': self.http_header_max_length,
             'tls_keep_signaling': self.tls_keep_signaling,
             'tls_keep_handshake': self.tls_keep_handshake,
             'tls_keep_alerts': self.tls_keep_alerts,

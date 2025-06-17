@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple, Set
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import gc
 
 try:
@@ -65,6 +65,9 @@ class PacketAnalysis:
     tls_content_type: Optional[int] = None   # 存储原始content_type值
     http_header_length: Optional[int] = None
     tls_record_length: Optional[int] = None
+    # TLS重组相关属性
+    tls_reassembled: bool = False           # 是否是TLS重组包
+    tls_reassembly_info: Dict[str, Any] = field(default_factory=dict)  # TLS重组信息
 
 
 class PySharkAnalyzer(BaseStage):
@@ -87,18 +90,10 @@ class PySharkAnalyzer(BaseStage):
         """
         super().__init__("PyShark分析器", config)
         
-        # 协议配置
-        self._analyze_http = self.get_config_value('analyze_http', True)
+        # 协议配置（移除HTTP分析）
         self._analyze_tls = self.get_config_value('analyze_tls', True)
         self._analyze_tcp = self.get_config_value('analyze_tcp', True)
         self._analyze_udp = self.get_config_value('analyze_udp', True)
-        
-        # HTTP协议配置
-        self._http_keep_headers = self.get_config_value('http_keep_headers', True)
-        self._http_mask_body = self.get_config_value('http_mask_body', True)
-        
-        # Phase 2: HTTP简化配置 - 接收配置参数
-        self._http_full_mask = self.get_config_value('http_full_mask', False)
         
         # TLS协议配置
         self._tls_keep_handshake = self.get_config_value('tls_keep_handshake', True)
@@ -389,9 +384,7 @@ class PySharkAnalyzer(BaseStage):
                     analysis.application_layer = 'DNS'
                     self._logger.debug(f"识别到DNS协议包: {packet.number}")
                 
-                # 现有HTTP/TLS识别逻辑保持不变
-                elif hasattr(packet, 'http'):
-                    self._analyze_http_layer(packet.http, analysis)
+                # 现有TLS识别逻辑保持不变
                 elif hasattr(packet, 'tls'):
                     self._analyze_tls_layer(packet.tls, analysis)
             
@@ -468,16 +461,13 @@ class PySharkAnalyzer(BaseStage):
             
             self._logger.debug(f"数据包{packet_number}: payload_len={payload_length}, has_tls={has_tls}, has_ssl={has_ssl}, has_http={has_http}, port={src_port}->{dst_port}")
             
-            # 检查应用层协议
-            if self._analyze_http and has_http:
-                self._logger.debug(f"数据包{packet_number}: 识别为HTTP")
-                self._analyze_http_layer(packet.http, analysis)
-            elif self._analyze_tls and (has_tls or has_ssl):
+            # 检查应用层协议（移除HTTP支持）
+            if self._analyze_tls and (has_tls or has_ssl):
                 tls_layer = packet.tls if has_tls else packet.ssl
                 self._logger.debug(f"数据包{packet_number}: 识别为TLS/SSL")
                 self._analyze_tls_layer(tls_layer, analysis)
             else:
-                self._logger.debug(f"数据包{packet_number}: 未识别为HTTP/TLS，载荷长度={payload_length}")
+                self._logger.debug(f"数据包{packet_number}: 未识别为TLS，载荷长度={payload_length}")
             
             return analysis
             
@@ -686,87 +676,6 @@ class PySharkAnalyzer(BaseStage):
         except Exception as e:
             self._logger.debug(f"分析DNS数据包时出错: {e}")
             return None
-    
-    def _analyze_http_layer(self, http_layer, analysis: PacketAnalysis) -> None:
-        """分析HTTP层
-        
-        Args:
-            http_layer: PyShark HTTP层对象
-            analysis: 数据包分析结果对象
-        """
-        try:
-            analysis.application_layer = 'HTTP'
-            
-            # 检查是否为HTTP请求
-            if hasattr(http_layer, 'request_method'):
-                analysis.is_http_request = True
-                
-                # 计算HTTP头长度
-                if hasattr(http_layer, 'request_full_uri'):
-                    # 这是一个粗略的估算，实际实现可能需要更精确的计算
-                    header_lines = []
-                    if hasattr(http_layer, 'request_line'):
-                        header_lines.append(http_layer.request_line)
-                    
-                    # 添加其他HTTP头字段
-                    for field_name, field_value in http_layer._all_fields.items():
-                        if field_name.startswith('http.'):
-                            header_lines.append(f"{field_name}: {field_value}")
-                    
-                    # 估算头长度 (包括CRLF)
-                    analysis.http_header_length = sum(len(line) + 2 for line in header_lines) + 2
-            
-            # 检查是否为HTTP响应
-            elif hasattr(http_layer, 'response_code'):
-                analysis.is_http_response = True
-                
-                # 计算HTTP响应头长度
-                header_lines = []
-                if hasattr(http_layer, 'response_line'):
-                    header_lines.append(http_layer.response_line)
-                
-                # 添加响应头字段
-                for field_name, field_value in http_layer._all_fields.items():
-                    if field_name.startswith('http.'):
-                        header_lines.append(f"{field_name}: {field_value}")
-                
-                analysis.http_header_length = sum(len(line) + 2 for line in header_lines) + 2
-            
-            # 关键修复: 如果检测到HTTP层但没有明确的请求/响应标识符，
-            # 根据端口号或其他启发式方法设置合理的默认值
-            elif not analysis.is_http_request and not analysis.is_http_response:
-                self._logger.debug(f"数据包{analysis.packet_number}: HTTP层存在但缺少request_method和response_code")
-                
-                # 启发式分析: 检查HTTP头字段
-                all_fields = getattr(http_layer, '_all_fields', {})
-                
-                # 查找常见的HTTP请求方法字段
-                request_indicators = ['http.request.method', 'http.request.uri', 'http.request']
-                response_indicators = ['http.response.code', 'http.response', 'http.response.phrase']
-                
-                has_request_indicators = any(field in all_fields for field in request_indicators)
-                has_response_indicators = any(field in all_fields for field in response_indicators)
-                
-                if has_request_indicators:
-                    analysis.is_http_request = True
-                    self._logger.debug(f"数据包{analysis.packet_number}: 基于字段启发式判断为HTTP请求")
-                elif has_response_indicators:
-                    analysis.is_http_response = True
-                    self._logger.debug(f"数据包{analysis.packet_number}: 基于字段启发式判断为HTTP响应")
-                else:
-                    # 最后的备选: 如果检测到HTTP层但无法确定类型，默认为请求
-                    # 这确保HTTP包不会被完全跳过
-                    analysis.is_http_request = True
-                    self._logger.debug(f"数据包{analysis.packet_number}: HTTP层存在，默认设置为请求以确保处理")
-                
-                # 设置默认头长度估算
-                if analysis.http_header_length is None:
-                    # 使用保守的默认头长度估算
-                    analysis.http_header_length = min(200, analysis.payload_length // 4)
-                    self._logger.debug(f"数据包{analysis.packet_number}: 设置默认HTTP头长度为{analysis.http_header_length}字节")
-                
-        except Exception as e:
-            self._logger.debug(f"分析HTTP层时出错: {e}")
     
     def _analyze_tls_layer(self, tls_layer, analysis: PacketAnalysis) -> None:
         """分析TLS层
@@ -1012,7 +921,7 @@ class PySharkAnalyzer(BaseStage):
         for analysis in self._packet_analyses:
             stream_packets[analysis.stream_id].append(analysis)
         
-        # 为每个流生成掩码条目
+        # 为每个流生成掩码条目（移除HTTP支持）
         for stream_id, packets in stream_packets.items():
             stream_info = self._streams.get(stream_id)
             if not stream_info:
@@ -1021,11 +930,8 @@ class PySharkAnalyzer(BaseStage):
             
             self._logger.info(f"处理流{stream_id}: 协议={stream_info.application_protocol}, 包数={len(packets)}")
             
-            # 根据应用层协议生成不同的掩码策略
-            if stream_info.application_protocol == 'HTTP':
-                self._logger.info(f"使用HTTP掩码策略处理流{stream_id}")
-                self._generate_http_masks(mask_table, stream_id, packets)
-            elif stream_info.application_protocol == 'TLS':
+            # 根据应用层协议生成不同的掩码策略（移除HTTP）
+            if stream_info.application_protocol == 'TLS':
                 self._logger.info(f"使用TLS掩码策略处理流{stream_id}")
                 self._generate_tls_masks(mask_table, stream_id, packets)
             elif stream_info.application_protocol in ['ICMP', 'DNS']:
@@ -1033,7 +939,7 @@ class PySharkAnalyzer(BaseStage):
                 self._logger.info(f"使用完全保留策略处理{stream_info.application_protocol}流{stream_id}")
                 self._generate_preserve_all_masks(mask_table, stream_id, packets)
             else:
-                # 对于其他协议，使用通用策略
+                # 对于其他协议（包括原来的HTTP），使用通用策略
                 self._logger.info(f"使用通用掩码策略处理流{stream_id}，协议={stream_info.application_protocol}")
                 self._generate_generic_masks(mask_table, stream_id, packets)
         
@@ -1042,51 +948,6 @@ class PySharkAnalyzer(BaseStage):
         
         self._logger.info(f"掩码表生成完成，包含{mask_table.get_total_entry_count()}个条目")
         return mask_table
-    
-    def _generate_http_masks(self, mask_table: StreamMaskTable, stream_id: str, packets: List[PacketAnalysis]) -> None:
-        """为HTTP流生成掩码
-        
-        Args:
-            mask_table: 掩码表
-            stream_id: 流ID
-            packets: 该流的数据包分析结果列表
-        """
-        for packet in packets:
-            if not packet.is_http_request and not packet.is_http_response:
-                continue
-            
-            if packet.seq_number is None or packet.payload_length == 0:
-                continue
-            
-            seq_start = packet.seq_number
-            seq_end = seq_start + packet.payload_length
-            
-            # Phase 2: HTTP策略选择 - 新增全部置零选项
-            if self._http_full_mask:
-                # 新增简化策略：HTTP全部置零（等同于通用协议处理）
-                mask_spec = MaskAfter(0)
-                self._logger.info(f"HTTP包{packet.packet_number}: 全部掩码{packet.payload_length}字节 (简化策略)")
-            elif self._http_keep_headers and packet.http_header_length:
-                # 保留原有：保留HTTP头，掩码消息体
-                if packet.http_header_length < packet.payload_length:
-                    mask_spec = MaskAfter(packet.http_header_length)
-                    self._logger.debug(f"HTTP包{packet.packet_number}: 保留头部{packet.http_header_length}字节，掩码{packet.payload_length - packet.http_header_length}字节")
-                else:
-                    mask_spec = KeepAll()
-                    self._logger.debug(f"HTTP包{packet.packet_number}: 完全保留{packet.payload_length}字节")
-            elif self._http_mask_body:
-                # 保留原有：完全掩码HTTP载荷
-                mask_spec = MaskAfter(0)
-                self._logger.debug(f"HTTP包{packet.packet_number}: 全部掩码{packet.payload_length}字节")
-            else:
-                # 保留原有：保留全部
-                mask_spec = KeepAll()
-                self._logger.debug(f"HTTP包{packet.packet_number}: 完全保留{packet.payload_length}字节")
-            
-            try:
-                mask_table.add_mask_range(stream_id, seq_start, seq_end, mask_spec)
-            except StreamMaskTableError as e:
-                self._logger.warning(f"添加HTTP掩码条目失败: {e}")
     
     def _generate_tls_masks(self, mask_table: StreamMaskTable, stream_id: str, packets: List[PacketAnalysis]) -> None:
         """为TLS流生成掩码 - 简化版本

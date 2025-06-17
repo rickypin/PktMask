@@ -168,10 +168,12 @@ class UIManager:
         self.main_window.dedup_packet_cb = QCheckBox("Remove Dupes")
         self.main_window.mask_ip_cb = QCheckBox("Mask IPs")
         self.main_window.trim_packet_cb = QCheckBox("Trim Payloads (Preserve TLS Handshake)")
-        self.main_window.web_focused_cb = QCheckBox("Web-Focused Traffic Only (Coming Soon)")
+        self.main_window.web_focused_cb = QCheckBox("Web-Focused Traffic Only (功能已移除)")
         
         self.main_window.trim_packet_cb.setToolTip("Intelligently trims packet payloads while preserving TLS handshake data.")
-        self.main_window.web_focused_cb.setToolTip("Filter and process only web-related traffic (HTTP/HTTPS). This feature is under development.")
+        self.main_window.web_focused_cb.setToolTip(
+            "HTTP协议处理功能已从本版本中移除。仅支持TLS、IP匿名化和去重功能。"
+        )
         
         # 设置手型光标
         for cb in [self.main_window.dedup_packet_cb, self.main_window.mask_ip_cb, 
@@ -366,10 +368,10 @@ class UIManager:
                 "   • Removes sensitive payload data while preserving headers\n"
                 "   • Keeps TLS handshakes intact for protocol analysis\n"
                 "   • Reduces file size without losing network behavior insights\n\n"
-                "🌐 Web-Focused Traffic Only (Coming Soon)\n"
-                "   • Filter and analyze only web-related traffic\n"
-                "   • Focus on HTTP/HTTPS communications\n"
-                "   • Streamline web security analysis workflows\n\n"
+                "🌐 Web-Focused Traffic Only (功能已移除)\n"
+                "   • HTTP协议处理功能已从本版本移除\n"
+                "   • 仅支持TLS、IP匿名化和去重功能\n"
+                "   • 建议使用通用处理模式\n\n"
                 "🎯 Use Cases: Security research, network troubleshooting,\n"
                 "   compliance reporting, and safe data sharing."
             )

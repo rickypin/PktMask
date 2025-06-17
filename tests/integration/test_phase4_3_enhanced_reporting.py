@@ -65,8 +65,8 @@ class TestEnhancedReporting:
         # 测试Enhanced Trimmer数据
         enhanced_data = {
             'processing_mode': 'Enhanced Intelligent Mode',
-            'protocol_stats': {'http_packets': 100, 'tls_packets': 50},
-            'strategies_applied': ['HTTPTrimStrategy', 'TLSTrimStrategy'],
+            'protocol_stats': {'tls_packets': 50, 'other_packets': 100},
+            'strategies_applied': ['TLSTrimStrategy', 'DefaultStrategy'],
             'enhancement_level': '4x accuracy improvement',
             'stage_performance': {'tshark': 1.2, 'pyshark': 2.3}
         }
@@ -84,7 +84,7 @@ class TestEnhancedReporting:
         # 测试部分Enhanced特征
         partial_enhanced_data = {
             'total_packets': 500,
-            'protocol_stats': {'http_packets': 100}
+            'protocol_stats': {'tls_packets': 100}
         }
         
         assert self.report_manager._is_enhanced_trimming(partial_enhanced_data) is True
@@ -95,9 +95,8 @@ class TestEnhancedReporting:
             'total_packets': 1000,
             'trimmed_packets': 300,
             'protocol_stats': {
-                'http_packets': 400,
-                'tls_packets': 300,
-                'other_packets': 300
+                'tls_packets': 400,
+                'other_packets': 600
             }
         }
         
@@ -125,11 +124,10 @@ class TestEnhancedReporting:
                             'processing_mode': 'Enhanced Intelligent Mode',
                             'total_packets': 1500,
                             'protocol_stats': {
-                                'http_packets': 800,
-                                'tls_packets': 500,
-                                'other_packets': 200
+                                'tls_packets': 800,
+                                'other_packets': 700
                             },
-                            'strategies_applied': ['HTTPTrimStrategy', 'TLSTrimStrategy', 'DefaultStrategy'],
+                            'strategies_applied': ['TLSTrimStrategy', 'DefaultStrategy'],
                             'enhancement_level': '4x accuracy improvement'
                         }
                     }
@@ -142,10 +140,9 @@ class TestEnhancedReporting:
         # 验证报告内容
         assert report is not None
         assert f"Enhanced Trimming Details for {filename}" in report
-        assert "HTTP: 800 packets (53.3%) - Headers preserved" in report
-        assert "TLS: 500 packets (33.3%) - Handshake preserved" in report
-        assert "Other: 200 packets (13.3%) - Generic strategy" in report
-        assert "HTTPTrimStrategy, TLSTrimStrategy, DefaultStrategy" in report
+        assert "TLS: 800 packets (53.3%) - Handshake preserved" in report
+        assert "Other: 700 packets (46.7%) - Generic strategy" in report
+        assert "TLSTrimStrategy, DefaultStrategy" in report
         assert "4x accuracy improvement" in report
     
     def test_generate_enhanced_trimming_total_report(self):
@@ -160,11 +157,10 @@ class TestEnhancedReporting:
                             'processing_mode': 'Enhanced Intelligent Mode',
                             'total_packets': 1000,
                             'protocol_stats': {
-                                'http_packets': 600,
-                                'tls_packets': 300,
-                                'other_packets': 100
+                                'tls_packets': 600,
+                                'other_packets': 400
                             },
-                            'strategies_applied': ['HTTPTrimStrategy', 'TLSTrimStrategy']
+                            'strategies_applied': ['TLSTrimStrategy', 'DefaultStrategy']
                         }
                     }
                 }
@@ -177,11 +173,10 @@ class TestEnhancedReporting:
                             'processing_mode': 'Enhanced Intelligent Mode',
                             'total_packets': 500,
                             'protocol_stats': {
-                                'http_packets': 200,
-                                'tls_packets': 200,
-                                'other_packets': 100
+                                'tls_packets': 300,
+                                'other_packets': 200
                             },
-                            'strategies_applied': ['HTTPTrimStrategy', 'TLSTrimStrategy', 'DefaultStrategy']
+                            'strategies_applied': ['TLSTrimStrategy', 'DefaultStrategy']
                         }
                     }
                 }
@@ -198,13 +193,11 @@ class TestEnhancedReporting:
         assert "Enhanced Files: 2/2" in report
         
         # 验证协议统计
-        assert "HTTP packets: 800" in report  # 600 + 200
-        assert "TLS packets: 500" in report   # 300 + 200
-        assert "Other packets: 200" in report # 100 + 100
+        assert "TLS packets: 900" in report   # 600 + 300
+        assert "Other packets: 600" in report # 400 + 200
         assert "Total processed: 1,500 packets in 4 stages" in report
         
         # 验证策略列表
-        assert "HTTPTrimStrategy" in report
         assert "TLSTrimStrategy" in report
         assert "DefaultStrategy" in report
     
@@ -223,11 +216,10 @@ class TestEnhancedReporting:
                             'total_packets': 800,
                             'trimmed_packets': 300,
                             'protocol_stats': {
-                                'http_packets': 400,
-                                'tls_packets': 300,
-                                'other_packets': 100
+                                'tls_packets': 500,
+                                'other_packets': 300
                             },
-                            'strategies_applied': ['HTTPTrimStrategy', 'TLSTrimStrategy'],
+                            'strategies_applied': ['TLSTrimStrategy', 'DefaultStrategy'],
                             'enhancement_level': '4x accuracy improvement'
                         }
                     }
@@ -265,9 +257,8 @@ class TestEnhancedReporting:
                             'processing_mode': 'Enhanced Intelligent Mode',
                             'total_packets': 800,
                             'protocol_stats': {
-                                'http_packets': 500,
-                                'tls_packets': 200,
-                                'other_packets': 100
+                                'tls_packets': 600,
+                                'other_packets': 200
                             }
                         }
                     }
@@ -281,9 +272,8 @@ class TestEnhancedReporting:
                             'processing_mode': 'Enhanced Intelligent Mode',
                             'total_packets': 700,
                             'protocol_stats': {
-                                'http_packets': 400,
-                                'tls_packets': 200,
-                                'other_packets': 100
+                                'tls_packets': 500,
+                                'other_packets': 200
                             }
                         }
                     }
@@ -314,7 +304,7 @@ class TestEnhancedReporting:
                         'data': {
                             'processing_mode': 'Enhanced Intelligent Mode',
                             'total_packets': 500,
-                            'protocol_stats': {'http_packets': 300, 'tls_packets': 200}
+                            'protocol_stats': {'tls_packets': 300, 'other_packets': 200}
                         }
                     }
                 }

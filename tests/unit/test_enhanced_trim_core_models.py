@@ -106,11 +106,6 @@ class TestMaskSpec(unittest.TestCase):
     
     def test_mask_spec_factory_functions(self):
         """测试掩码规范工厂函数"""
-        # HTTP头掩码
-        http_mask = create_http_header_mask(50)
-        self.assertIsInstance(http_mask, MaskAfter)
-        self.assertEqual(http_mask.keep_bytes, 50)
-        
         # TLS记录头掩码
         tls_mask = create_tls_record_mask()
         self.assertIsInstance(tls_mask, MaskAfter)
@@ -258,7 +253,6 @@ class TestTrimmerConfig(unittest.TestCase):
         config = TrimmerConfig()
         
         # 验证默认值
-        self.assertTrue(config.http_keep_headers)
         self.assertTrue(config.tls_keep_signaling)
         self.assertEqual(config.processing_mode, "preserve_length")
         self.assertTrue(config.validation_enabled)
@@ -270,7 +264,7 @@ class TestTrimmerConfig(unittest.TestCase):
             # 设置一个兼容的默认配置，避免交叉验证警告
             tls_keep_signaling=True,
             tls_keep_handshake=True,
-            default_trim_strategy="keep_all",  # 与http_keep_headers兼容
+            default_trim_strategy="keep_all",
             pyshark_keep_packets=True  # 避免TShark配置建议
         )
         
@@ -279,26 +273,22 @@ class TestTrimmerConfig(unittest.TestCase):
         self.assertEqual(len(errors), 0)
         
         # 测试无效配置
-        config.http_header_max_length = -1
         config.default_keep_bytes = -5
         config.processing_mode = "invalid_mode"
         
         errors = config.validate()
         self.assertGreater(len(errors), 0)
-        self.assertTrue(any("HTTP头最大长度" in error for error in errors))
         self.assertTrue(any("默认保留字节数" in error for error in errors))
         self.assertTrue(any("处理模式必须是" in error for error in errors))
     
     def test_config_to_dict(self):
         """测试配置转换为字典"""
         config = TrimmerConfig(
-            http_keep_headers=False,
             tls_keep_signaling=False,
             chunk_size=2000
         )
         
         config_dict = config.to_dict()
-        self.assertFalse(config_dict['http_keep_headers'])
         self.assertFalse(config_dict['tls_keep_signaling'])
         self.assertEqual(config_dict['chunk_size'], 2000)
 

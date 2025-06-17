@@ -1,52 +1,25 @@
 """
-HTTP载荷扫描算法模块
+载荷分析算法模块
 
-提供高效、可靠的HTTP协议分析算法，支持：
-- 头部边界检测算法
-- 内容长度解析算法
-- Chunked编码处理算法
-- 多消息边界识别算法
+提供通用协议分析算法，支持：
+1. 通用协议识别和分析
+2. TLS协议特化处理
+3. TCP/UDP流分析
 
 作者: PktMask Team
-版本: 1.0.0
+版本: 2.0.0 (移除HTTP支持)
 创建时间: 2025-01-16
+更新时间: 2025-01-XX
 """
 
-from .boundary_detection import (
-    BoundaryDetector,
-    BoundaryDetectionResult,
-    HeaderBoundaryPattern,
-    detect_header_boundary,
-    detect_multiple_message_boundaries
-)
-
-from .content_length_parser import (
-    ContentLengthParser,
-    ContentLengthResult,
-    ChunkedEncoder,
-    ChunkedAnalysisResult,
-    parse_content_length,
-    analyze_chunked_structure
-)
+# 当前版本暂无特定算法导入
+# 所有算法逻辑已集成到相应的策略类中
 
 __all__ = [
-    # 边界检测算法
-    'BoundaryDetector',
-    'BoundaryDetectionResult',
-    'HeaderBoundaryPattern',
-    'detect_header_boundary',
-    'detect_multiple_message_boundaries',
-    
-    # 内容长度解析算法
-    'ContentLengthParser',
-    'ContentLengthResult',
-    'ChunkedEncoder',
-    'ChunkedAnalysisResult',
-    'parse_content_length',
-    'analyze_chunked_structure',
+    # 通用算法将在未来版本中添加
 ]
 
 # 模块版本信息
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 __author__ = "PktMask Team"
-__description__ = "HTTP载荷扫描算法模块" 
+__description__ = "通用载荷分析算法模块 (已移除HTTP支持)" 
