@@ -275,11 +275,12 @@ def run_validation_tests():
     print("="*50)
     
     # 创建测试套件
+    loader = unittest.TestLoader()
     suite = unittest.TestSuite()
     
     # 添加验证测试
-    suite.addTest(unittest.makeSuite(LegacyCleanupValidationTest))
-    suite.addTest(unittest.makeSuite(PerformanceRegressionTest))
+    suite.addTest(loader.loadTestsFromTestCase(LegacyCleanupValidationTest))
+    suite.addTest(loader.loadTestsFromTestCase(PerformanceRegressionTest))
     
     # 运行测试
     runner = unittest.TextTestRunner(verbosity=2)

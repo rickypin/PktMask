@@ -1,42 +1,32 @@
 """
 裁切处理器
 
-简化版的裁切处理器，直接使用Enhanced Trimmer实现。
+简化版的裁切处理器，包装现有的IntelligentTrimmingStep实现。
 """
 import os
 from typing import Optional
 
 from .base_processor import BaseProcessor, ProcessorConfig, ProcessorResult
-from .enhanced_trimmer import EnhancedTrimmer
+from ...steps.trimming import IntelligentTrimmingStep
 from ...infrastructure.logging import get_logger
 
 
 class Trimmer(BaseProcessor):
     """裁切处理器
     
-    直接使用Enhanced Trimmer实现载荷裁切功能。
+    使用现有的IntelligentTrimmingStep实现，
+    但通过简化的处理器接口暴露功能。
     """
     
     def __init__(self, config: ProcessorConfig):
         super().__init__(config)
         self._logger = get_logger('trimmer')
-        self._enhanced_trimmer: Optional[EnhancedTrimmer] = None
+        self._step: Optional[IntelligentTrimmingStep] = None
         
     def _initialize_impl(self):
         """初始化裁切组件"""
         try:
-            # 创建Enhanced Trimmer实例
-            enhanced_config = ProcessorConfig(
-                enabled=True,
-                name='enhanced_trim',
-                priority=self.config.priority
-            )
-            self._enhanced_trimmer = EnhancedTrimmer(enhanced_config)
-            
-            # 初始化Enhanced Trimmer
-            if not self._enhanced_trimmer.initialize():
-                raise RuntimeError("Enhanced Trimmer初始化失败")
-            
+            self._step = IntelligentTrimmingStep()
             self._logger.info("裁切处理器初始化成功")
             
         except Exception as e:
@@ -61,17 +51,14 @@ class Trimmer(BaseProcessor):
             
             self._logger.info(f"开始裁切处理: {input_path} -> {output_path}")
             
-            # 委托给Enhanced Trimmer处理
-            result = self._enhanced_trimmer.process_file(input_path, output_path)
+            # 处理文件
+            result_data = self._step.process_file(input_path, output_path)
             
-            if not result.success:
+            if result_data is None:
                 return ProcessorResult(
                     success=False,
-                    error=f"Enhanced Trimmer处理失败: {result.error}"
+                    error="裁切处理失败，未返回结果"
                 )
-            
-            # 从Enhanced Trimmer结果提取数据
-            result_data = result.data or {}
             
             # 更新统计信息
             self.stats.update({

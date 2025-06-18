@@ -19,7 +19,7 @@ from conftest import PerformanceTestSuite, BasePcapProcessingTest, ErrorHandling
 
 # 导入需要测试的模块
 try:
-    from src.pktmask.steps.trimming import IntelligentTrimmingStep, _process_pcap_data_enhanced, _process_pcap_data
+    from src.pktmask.core.processors import EnhancedTrimmer, _process_pcap_data_enhanced, _process_pcap_data
     from src.pktmask.core.encapsulation.adapter import ProcessingAdapter
     from src.pktmask.infrastructure.logging import log_performance
 except ImportError as e:

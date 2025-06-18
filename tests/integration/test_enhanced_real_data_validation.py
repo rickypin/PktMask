@@ -431,7 +431,7 @@ class PayloadTrimmingValidator:
     """载荷裁切功能验证器"""
     
     def __init__(self):
-        from src.pktmask.steps.trimming import IntelligentTrimmingStep
+        from src.pktmask.core.processors import EnhancedTrimmer
         from src.pktmask.core.encapsulation.adapter import ProcessingAdapter
         
         self.trimming_step = IntelligentTrimmingStep()

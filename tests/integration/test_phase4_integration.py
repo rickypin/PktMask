@@ -13,7 +13,7 @@ from src.pktmask.core.encapsulation.detector import EncapsulationDetector
 from src.pktmask.core.encapsulation.parser import ProtocolStackParser
 from src.pktmask.core.encapsulation.adapter import ProcessingAdapter
 from src.pktmask.core.strategy import HierarchicalAnonymizationStrategy
-from src.pktmask.steps.trimming import IntelligentTrimmingStep
+from src.pktmask.core.processors import EnhancedTrimmer
 
 
 class TestPhase4Integration:

@@ -1,40 +1,32 @@
 """
 去重处理器
 
-直接实现去重功能，不依赖Legacy Steps。
+简化版的去重处理器，包装现有的DeduplicationStep实现。
 """
 import os
-from typing import Optional, Set, Dict
-import hashlib
-import time
+from typing import Optional
 
 from .base_processor import BaseProcessor, ProcessorConfig, ProcessorResult
+from ...steps.deduplication import DeduplicationStep
 from ...infrastructure.logging import get_logger
-
-try:
-    from scapy.all import rdpcap, wrpcap, Packet
-except ImportError:
-    rdpcap = wrpcap = Packet = None
 
 
 class Deduplicator(BaseProcessor):
     """去重处理器
     
-    直接实现数据包去重功能。
+    使用现有的DeduplicationStep实现，
+    但通过简化的处理器接口暴露功能。
     """
     
     def __init__(self, config: ProcessorConfig):
         super().__init__(config)
         self._logger = get_logger('deduplicator')
-        self._packet_hashes: Set[str] = set()
+        self._step: Optional[DeduplicationStep] = None
         
     def _initialize_impl(self):
         """初始化去重组件"""
         try:
-            if rdpcap is None:
-                raise ImportError("Scapy库未安装，无法进行去重处理")
-            
-            self._packet_hashes.clear()
+            self._step = DeduplicationStep()
             self._logger.info("去重处理器初始化成功")
             
         except Exception as e:
@@ -59,42 +51,14 @@ class Deduplicator(BaseProcessor):
             
             self._logger.info(f"开始去重处理: {input_path} -> {output_path}")
             
-            start_time = time.time()
+            # 处理文件
+            result_data = self._step.process_file(input_path, output_path)
             
-            # 读取数据包
-            packets = rdpcap(input_path)
-            total_packets = len(packets)
-            
-            # 去重处理
-            unique_packets = []
-            removed_count = 0
-            
-            for packet in packets:
-                # 生成数据包哈希
-                packet_hash = self._generate_packet_hash(packet)
-                
-                if packet_hash not in self._packet_hashes:
-                    self._packet_hashes.add(packet_hash)
-                    unique_packets.append(packet)
-                else:
-                    removed_count += 1
-            
-            # 保存去重后的数据包
-            if unique_packets:
-                wrpcap(output_path, unique_packets)
-            else:
-                # 如果没有唯一数据包，创建空文件
-                open(output_path, 'a').close()
-            
-            processing_time = time.time() - start_time
-            
-            # 构建结果数据
-            result_data = {
-                'total_packets': total_packets,
-                'unique_packets': len(unique_packets),
-                'removed_count': removed_count,
-                'processing_time': processing_time
-            }
+            if result_data is None:
+                return ProcessorResult(
+                    success=False,
+                    error="去重处理失败，未返回结果"
+                )
             
             # 更新统计信息
             self.stats.update({
@@ -172,15 +136,4 @@ class Deduplicator(BaseProcessor):
             'duplicates_removed': self.stats.get('removed_count', 0),
             'deduplication_rate': self.stats.get('deduplication_rate', 0.0),
             'space_saved': self.stats.get('space_saved', {})
-        }
-    
-    def _generate_packet_hash(self, packet: 'Packet') -> str:
-        """生成数据包的哈希值"""
-        try:
-            # 使用数据包的原始字节生成哈希
-            packet_bytes = bytes(packet)
-            return hashlib.md5(packet_bytes).hexdigest()
-        except Exception as e:
-            self._logger.warning(f"生成数据包哈希失败: {e}")
-            # 备用方案：使用字符串表示
-            return hashlib.md5(str(packet).encode()).hexdigest() 
+        } 

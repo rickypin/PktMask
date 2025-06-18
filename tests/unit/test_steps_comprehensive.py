@@ -9,9 +9,9 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 from scapy.all import IP, TCP, Ether, wrpcap
 
-from src.pktmask.steps.deduplication import DeduplicationStep, process_file_dedup
-from src.pktmask.steps.ip_anonymization import IpAnonymizationStep
-from src.pktmask.steps.trimming import IntelligentTrimmingStep, find_tls_signaling_ranges, trim_packet_payload, get_tcp_session_key, _process_pcap_data
+from src.pktmask.core.processors import Deduplicator, process_file_dedup
+from src.pktmask.core.processors import IPAnonymizer
+from src.pktmask.core.processors import EnhancedTrimmer, find_tls_signaling_ranges, trim_packet_payload, get_tcp_session_key, _process_pcap_data
 from src.pktmask.core.events import PipelineEvents
 from src.pktmask.common.constants import ProcessingConstants
 

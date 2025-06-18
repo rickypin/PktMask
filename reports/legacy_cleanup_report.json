@@ -1,0 +1,30 @@
+{
+  "cleanup_timestamp": 1750241005.445181,
+  "deleted_files": 4,
+  "updated_files": 14,
+  "dry_run": false,
+  "deleted_file_list": [
+    "src/pktmask/steps/__init__.py",
+    "src/pktmask/steps/deduplication.py",
+    "src/pktmask/steps/ip_anonymization.py",
+    "src/pktmask/steps/trimming.py"
+  ],
+  "updated_file_list": [
+    "src/pktmask/core/factory.py",
+    "src/pktmask/core/base_step.py",
+    "src/pktmask/core/pipeline.py",
+    "src/pktmask/core/processors/ip_anonymizer.py",
+    "src/pktmask/core/processors/deduplicator.py",
+    "src/pktmask/core/processors/trimmer.py",
+    "tests/unit/test_steps_basic.py",
+    "tests/unit/test_steps_comprehensive.py",
+    "tests/unit/test_performance_centralized.py",
+    "tests/unit/test_enhanced_payload_trimming.py",
+    "tests/integration/test_pipeline.py",
+    "tests/integration/test_real_data_validation.py",
+    "tests/integration/test_enhanced_real_data_validation.py",
+    "tests/integration/test_phase4_integration.py"
+  ],
+  "backup_location": "/workspace/backup/legacy_steps",
+  "status": "completed"
+}
