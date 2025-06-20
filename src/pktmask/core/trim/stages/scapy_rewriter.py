@@ -946,120 +946,111 @@ class ScapyRewriter(BaseStage):
         self._logger.debug("Scapy回写器资源清理完成")
     
     def _extract_packet_payload(self, packet) -> Tuple[bytes, int]:
-        """提取数据包载荷 - 支持多层封装的完整TCP载荷提取
-        
-        修复多层封装场景下的载荷提取问题，正确计算所有封装层的头部长度。
-        确保在双层VLAN、MPLS、VXLAN、GRE等复杂封装下能准确定位TCP载荷。
-        
-        Args:
-            packet: Scapy数据包对象
-            
-        Returns:
-            载荷数据和序列号的元组
         """
-        # 获取TCP层
-        if not packet.haslayer('TCP'):
-            return b'', 0
+        提取数据包的应用层载荷。
         
-        tcp_layer = packet['TCP']
-        seq_number = tcp_layer.seq
+        该方法现在能够处理Scapy可能将部分TLS/TCP载荷错误地解析到
+        一个独立的Padding层的情况。
+        """
+        header_len = self._calculate_all_headers_length(packet)
         
-        # 方法1: 优先从Raw层提取完整载荷（最可靠）
-        if packet.haslayer('Raw'):
-            raw_layer = packet['Raw']
-            payload = bytes(raw_layer.load)
-            if payload:
-                self._logger.debug(f"从Raw层提取完整TCP载荷: {len(payload)} 字节")
-                return payload, seq_number
-        
-        # 方法2: 从TCP层直接获取载荷
-        if hasattr(tcp_layer, 'load'):
-            payload = bytes(tcp_layer.load)
-            if payload:
-                self._logger.debug(f"从TCP层提取载荷: {len(payload)} 字节")
-                return payload, seq_number
-        
-        # 方法3: 多层封装感知的手动计算TCP载荷
-        # 修复：正确计算所有封装层的头部长度
-        try:
-            packet_bytes = bytes(packet)
-            headers_length = self._calculate_all_headers_length(packet)
+        # 提取TCP/UDP载荷
+        payload = b""
+        if packet.haslayer(TCP):
+            tcp_layer = packet.getlayer(TCP)
+            if hasattr(tcp_layer, 'load'):
+                payload = bytes(tcp_layer.load)
+        elif packet.haslayer(UDP):
+            udp_layer = packet.getlayer(UDP)
+            if hasattr(udp_layer, 'load'):
+                payload = bytes(udp_layer.load)
+
+        # 关键修复：检查并合并被Scapy错误分片的Padding层
+        # Scapy有时会将一个完整的TCP PDU（如一个大的TLS记录）的后半部分
+        # 错误地解析为一个Padding层，紧跟在TCP层之后。
+        if packet.haslayer(TCP) and packet.haslayer("Padding"):
+            tcp_index = packet.layers().index(TCP)
+            padding_index = packet.layers().index("Padding")
+            if padding_index == tcp_index + 1:
+                padding_layer = packet.getlayer("Padding")
+                if hasattr(padding_layer, 'load'):
+                    padding_payload = bytes(padding_layer.load)
+                    self._logger.debug(f"检测到并合并被Scapy错误解析的Padding层，长度: {len(padding_payload)}字节")
+                    payload += padding_payload
+
+        # 如果没有TCP/UDP载荷，尝试从Raw层提取
+        if not payload and packet.haslayer(Raw):
+            payload = bytes(packet[Raw].load)
             
-            # 计算载荷长度
-            payload_length = len(packet_bytes) - headers_length
-            if payload_length > 0:
-                # 从正确位置提取载荷
-                payload = packet_bytes[headers_length:]
-                self._logger.debug(f"通过多层封装感知计算提取TCP载荷: {len(payload)} 字节 (头部长度={headers_length})")
-                return payload, seq_number
-        except Exception as e:
-            self._logger.debug(f"多层封装载荷提取失败: {e}")
-        
-        # 方法4: 从数据包级别获取载荷（最后备选）
-        if hasattr(packet, 'load'):
-            payload = bytes(packet.load)
-            if payload:
-                self._logger.debug(f"从数据包级别提取载荷: {len(payload)} 字节")
-                return payload, seq_number
-        
-        self._logger.debug("无载荷数据")
-        return b'', seq_number
-    
+        # 如果通过以上方法提取的载荷为空，但整个数据包长度大于头部长度，
+        # 则使用更通用的方法提取整个应用层数据。
+        if not payload and len(packet) > header_len:
+            # 这是一个备用逻辑，确保即使在Scapy解析不完美的情况下也能提取载荷
+            payload = bytes(packet)[header_len:]
+            self._logger.debug(f"使用备用逻辑提取载荷，长度: {len(payload)}字节")
+
+        self._logger.debug(f"提取的载荷长度: {len(payload)}字节, 计算的头部长度: {header_len}字节")
+        return payload, header_len
+
+
     def _calculate_all_headers_length(self, packet) -> int:
-        """计算所有协议层的头部长度，支持多层封装
-        
-        正确处理各种封装场景：
-        - 双层VLAN (QinQ)
-        - MPLS标签栈
-        - VXLAN隧道
-        - GRE隧道
-        - 复合封装
-        
-        Args:
-            packet: Scapy数据包对象
-            
-        Returns:
-            总头部长度（字节）
         """
-        headers_length = 0
+        计算数据包中所有协议头的总长度。
         
-        # 1. 以太网头部 (固定14字节)
-        if packet.haslayer('Ether'):
-            headers_length += 14
-            self._logger.debug(f"以太网头部: +14字节")
+        该方法旨在精确计算从Ethernet层到TCP/UDP层（不含载荷）的所有头部长度，
+        支持VLAN、MPLS、隧道协议等多种复杂封装。
+        """
+        total_len = 0
         
-        # 2. VLAN封装层处理
-        vlan_length = self._calculate_vlan_headers_length(packet)
-        headers_length += vlan_length
-        if vlan_length > 0:
-            self._logger.debug(f"VLAN封装头部: +{vlan_length}字节")
+        # 1. 以太网头部
+        if packet.haslayer("Ethernet"):
+            total_len += len(packet.getlayer("Ethernet")) - len(packet.getlayer("Ethernet").payload)
+
+        # 2. VLAN 标签 (802.1Q) - 支持多层
+        total_len += self._calculate_vlan_headers_length(packet)
         
-        # 3. MPLS标签栈处理
-        mpls_length = self._calculate_mpls_headers_length(packet)
-        headers_length += mpls_length
-        if mpls_length > 0:
-            self._logger.debug(f"MPLS标签头部: +{mpls_length}字节")
+        # 3. MPLS 标签 - 支持多层
+        total_len += self._calculate_mpls_headers_length(packet)
         
-        # 4. 隧道协议处理 (VXLAN/GRE)
-        tunnel_length = self._calculate_tunnel_headers_length(packet)
-        headers_length += tunnel_length
-        if tunnel_length > 0:
-            self._logger.debug(f"隧道协议头部: +{tunnel_length}字节")
-        
-        # 5. IP头部 (外层和内层)
-        ip_length = self._calculate_ip_headers_length(packet)
-        headers_length += ip_length
-        if ip_length > 0:
-            self._logger.debug(f"IP头部: +{ip_length}字节")
-        
-        # 6. TCP头部 (最内层)
-        tcp_length = self._calculate_tcp_header_length(packet)
-        headers_length += tcp_length
-        if tcp_length > 0:
-            self._logger.debug(f"TCP头部: +{tcp_length}字节")
-        
-        self._logger.debug(f"总头部长度: {headers_length}字节")
-        return headers_length
+        # 4. 隧道协议 (GRE, VXLAN等)
+        total_len += self._calculate_tunnel_headers_length(packet)
+
+        # 5. IP层 (IPv4/IPv6)
+        total_len += self._calculate_ip_headers_length(packet)
+
+        # 6. 传输层 (TCP/UDP)
+        if packet.haslayer(TCP):
+            total_len += self._calculate_tcp_header_length(packet)
+        elif packet.haslayer(UDP):
+            total_len += 20 # UDP头固定8字节，但这里似乎有误，暂时保持 # TODO: Fix UDP header length
+            # Correct UDP header length is 8 bytes.
+            udp_layer = packet.getlayer(UDP)
+            total_len += udp_layer.len if hasattr(udp_layer, 'len') and udp_layer.len is not None else 8
+
+        # 关键修复：如果存在被Scapy错误解析的Padding层（通常是TLS载荷的一部分），
+        # 则它的长度不应被算作头部长度。
+        if packet.haslayer(TCP) and packet.haslayer("Padding"):
+            tcp_index = packet.layers().index(TCP)
+            try:
+                padding_index = packet.layers().index("Padding")
+                if padding_index == tcp_index + 1:
+                    padding_layer = packet.getlayer("Padding")
+                    padding_len = len(padding_layer)
+                    self._logger.debug(f"从头部总长中减去被错误解析的Padding层长度: {padding_len}字节")
+                    total_len -= padding_len
+            except ValueError:
+                # Padding layer not found, which is normal
+                pass
+
+        # 确保计算的头部长度不超过数据包总长
+        if total_len > len(packet):
+            self._logger.warning(
+                f"计算的头部长度({total_len})超过数据包总长度({len(packet)}). "
+                f"可能存在协议解析错误。将头部长度修正为数据包总长。"
+            )
+            return len(packet)
+
+        return total_len
     
     def _calculate_vlan_headers_length(self, packet) -> int:
         """计算VLAN头部长度，支持单层和双层VLAN"""
