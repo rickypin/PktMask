@@ -246,11 +246,10 @@ class PySharkAnalyzer(BaseStage):
             cap = pyshark.FileCapture(
                 str(pcap_file),
                 keep_packets=False,  # 不在内存中保留数据包以节省内存
-                use_json=True,       # 使用JSON输出以提高性能
+                use_json=False,      # 禁用JSON，避免多记录解析问题
                 include_raw=False    # 不包含原始数据以节省内存
             )
-            
-            self._logger.debug(f"成功打开PCAP文件: {pcap_file}")
+            self._logger.info(f"成功打开PCAP文件: {pcap_file}")
             return cap
             
         except Exception as e:
@@ -678,79 +677,75 @@ class PySharkAnalyzer(BaseStage):
             return None
     
     def _analyze_tls_layer(self, tls_layer, analysis: PacketAnalysis) -> None:
-        """分析TLS层
+        """分析TLS/SSL层，兼容不同协议版本
         
         Args:
-            tls_layer: PyShark TLS层对象
+            tls_layer: PyShark TLS/SSL层对象
             analysis: 数据包分析结果对象
         """
         try:
-            analysis.application_layer = 'TLS'
+            # PyShark可能将单个记录或多个记录作为列表返回
+            records_raw = tls_layer.record if hasattr(tls_layer, 'record') else tls_layer
+            records = records_raw if isinstance(records_raw, list) else [records_raw]
+            self._logger.debug(f"Pkt {analysis.packet_number}: 发现 {len(records)} 个TLS记录")
             
-            self._logger.debug(f"发现TLS包，数据包{analysis.packet_number}")
+            # 用于汇总信息的变量
+            total_length = 0
+            all_content_types: Set[int] = set()
+
+            # 重置所有相关的布尔标志，以确保从干净的状态开始处理多记录包
+            analysis.is_tls_change_cipher_spec = False
+            analysis.is_tls_alert = False
+            analysis.is_tls_handshake = False
+            analysis.is_tls_application_data = False
+            analysis.is_tls_heartbeat = False
             
-            # 检查TLS记录结构
-            # PyShark将TLS信息存储在 tls_layer._all_fields 中
-            all_fields = getattr(tls_layer, '_all_fields', {})
-            
-            # 查找TLS记录信息
-            records_found = 0
-            content_types_found = []
-            
-            # 方法1: 检查 tls.record 字段
-            if 'tls.record' in all_fields:
-                tls_record = all_fields['tls.record']
+            for i, record in enumerate(records):
+                record_dict = record.__dict__.get('_all_fields', {})
+                content_type_str = record_dict.get('tls.record.content_type')
                 
-                # 处理单个记录和记录数组
-                if isinstance(tls_record, list):
-                    # 多个TLS记录
-                    for i, record in enumerate(tls_record):
-                        if isinstance(record, dict) and 'tls.record.content_type' in record:
-                            content_type = int(record['tls.record.content_type'])
-                            content_types_found.append(content_type)
-                            records_found += 1
-                            self._logger.debug(f"TLS记录{i+1}: content_type={content_type}")
-                            
-                            # 分析具体的content type
-                            self._process_tls_content_type(content_type, analysis, record)
-                            
-                elif isinstance(tls_record, dict) and 'tls.record.content_type' in tls_record:
-                    # 单个TLS记录
-                    content_type = int(tls_record['tls.record.content_type'])
-                    content_types_found.append(content_type)
-                    records_found += 1
-                    self._logger.debug(f"TLS记录: content_type={content_type}")
+                if content_type_str is None:
+                    self._logger.debug(f"记录 {i+1}: 未找到 content_type")
+                    continue
+                
+                try:
+                    content_type = int(content_type_str)
+                    all_content_types.add(content_type)
+                    self._logger.debug(f"记录 {i+1}: content_type={content_type}")
                     
-                    # 分析具体的content type
-                    self._process_tls_content_type(content_type, analysis, tls_record)
-            
-            # 方法2: 直接检查各种可能的字段名称
-            if records_found == 0:
-                possible_fields = [
-                    'record_content_type', 'content_type', 
-                    'tls.record.content_type', 'record.content_type'
-                ]
-                
-                for field_name in possible_fields:
-                    if hasattr(tls_layer, field_name):
-                        content_type = int(getattr(tls_layer, field_name))
-                        content_types_found.append(content_type)
-                        records_found += 1
-                        self._logger.debug(f"通过字段{field_name}找到content_type={content_type}")
+                    # 处理不同类型的TLS记录
+                    self._process_tls_content_type(content_type, analysis, record_dict)
+                    
+                    # 累加记录长度
+                    record_length_str = record_dict.get('tls.record.length')
+                    if record_length_str:
+                        total_length += int(record_length_str)
                         
-                        # 分析具体的content type
-                        self._process_tls_content_type(content_type, analysis, {})
-                        break
-            
-            if records_found > 0:
-                self._logger.debug(f"数据包{analysis.packet_number}: 找到{records_found}个TLS记录，content_types={content_types_found}")
+                except (ValueError, TypeError) as e:
+                    self._logger.warning(f"无法解析TLS content_type: '{content_type_str}', 错误: {e}")
+
+            if all_content_types:
+                analysis.tls_record_length = 5 * len(records) + total_length  # 5字节头/记录
+                self._logger.debug(f"总TLS记录长度: {analysis.tls_record_length} (来自 {len(records)} 个记录)")
+
+                # 确定一个最终的 content_type 用于分类
+                # 优先级: Handshake > Change Cipher Spec > Alert > Heartbeat > Application Data
+                # 这个优先级确保任何信令类型的存在都会让整个包被当作信令包处理
+                if 22 in all_content_types:      # Handshake
+                    analysis.tls_content_type = 22
+                elif 20 in all_content_types:    # Change Cipher Spec
+                    analysis.tls_content_type = 20
+                elif 21 in all_content_types:    # Alert
+                    analysis.tls_content_type = 21
+                elif 24 in all_content_types:    # Heartbeat
+                    analysis.tls_content_type = 24
+                elif 23 in all_content_types:    # Application Data (最后考虑)
+                    analysis.tls_content_type = 23
             else:
-                self._logger.debug(f"数据包{analysis.packet_number}: 未找到TLS content type信息")
-                # 如果找不到具体类型，但有TLS层，记录为通用TLS
-                # 这样至少可以应用通用的TLS策略
+                self._logger.debug(f"数据包{analysis.packet_number}: 未找到TLS/SSL content type信息")
                 
         except Exception as e:
-            self._logger.warning(f"分析TLS层时出错: {e}")
+            self._logger.warning(f"分析TLS/SSL层时出错: {e}")
     
     def _process_tls_content_type(self, content_type: int, analysis: PacketAnalysis, record: dict) -> None:
         """处理具体的TLS content type
@@ -760,36 +755,19 @@ class PySharkAnalyzer(BaseStage):
             analysis: 数据包分析结果
             record: TLS记录字典
         """
-        # 存储原始content_type值
-        analysis.tls_content_type = content_type
-        
-        # TLS记录类型识别
+        # 这个方法是累积性的，如果一个包里有多种类型，都会被标记为True
         if content_type == 20:
             analysis.is_tls_change_cipher_spec = True
-            self._logger.debug(f"TLS ChangeCipherSpec包: 数据包{analysis.packet_number}")
         elif content_type == 21:
             analysis.is_tls_alert = True
-            self._logger.debug(f"TLS Alert包: 数据包{analysis.packet_number}")
         elif content_type == 22:
             analysis.is_tls_handshake = True
-            self._logger.debug(f"TLS Handshake包: 数据包{analysis.packet_number}")
         elif content_type == 23:
             analysis.is_tls_application_data = True
-            self._logger.debug(f"TLS ApplicationData包: 数据包{analysis.packet_number}，载荷长度={analysis.payload_length}")
         elif content_type == 24:
             analysis.is_tls_heartbeat = True
-            self._logger.debug(f"TLS Heartbeat包: 数据包{analysis.packet_number}")
         else:
-            self._logger.warning(f"未知的TLS content_type: {content_type}，数据包{analysis.packet_number}")
-            
-        # TLS记录长度 (5字节头 + 记录长度)
-        if 'tls.record.length' in record:
-            try:
-                record_length = int(record['tls.record.length'])
-                analysis.tls_record_length = 5 + record_length
-                self._logger.debug(f"TLS记录长度: 头部5字节 + 数据{record_length}字节 = {analysis.tls_record_length}字节")
-            except (ValueError, TypeError):
-                pass
+            self._logger.debug(f"未知的TLS content_type: {content_type}")
     
     def _generate_stream_id(self, src_ip: str, dst_ip: str, src_port: int, dst_port: int, protocol: str) -> str:
         """生成流ID
@@ -1005,9 +983,12 @@ class PySharkAnalyzer(BaseStage):
                     self._logger.info(f"TLS重组包{packet.packet_number}: 完全保留{packet.payload_length}字节 ({record_type}重组)")
                     
             else:
-                # 其他TLS包或未识别的包：按通用协议处理（全部置零）
-                mask_spec = MaskAfter(0)
-                self._logger.info(f"TLS其他包{packet.packet_number}: 全部掩码{packet.payload_length}字节 (通用处理)")
+                # 其他TLS包或未识别content_type的包：为安全起见，完全保留
+                mask_spec = KeepAll()
+                self._logger.warning(
+                    f"TLS包{packet.packet_number}: 未能识别具体的Content Type或为其他类型。 "
+                    f"为安全起见，将完全保留其载荷({packet.payload_length}字节)。"
+                )
             
             try:
                 mask_table.add_mask_range(stream_id, seq_start, seq_end, mask_spec)
