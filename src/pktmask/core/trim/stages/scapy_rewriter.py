@@ -2,10 +2,16 @@
 # -*- coding: utf-8 -*-
 
 """
-Scapy回写器
+Scapy回写器 - Phase 3 重构版
 
-使用Scapy根据PyShark分析器生成的掩码表，对PCAP文件进行精确的载荷掩码处理。
+使用Scapy根据PyShark分析器生成的基于序列号的掩码表，对PCAP文件进行精确的载荷掩码处理。
 这是Enhanced Trim Payloads处理流程的第三阶段（最终阶段）。
+
+重构特性：
+1. 基于TCP序列号绝对值范围的通用掩码机制
+2. 支持方向性TCP流处理
+3. 精确的序列号匹配算法
+4. 字节级精确置零机制
 """
 
 import logging
@@ -30,7 +36,8 @@ except ImportError:
 from .base_stage import BaseStage, StageContext
 from .stage_result import StageResult, StageStatus, StageMetrics
 from ...processors.base_processor import ProcessorResult
-from ..models.mask_table import StreamMaskTable, StreamMaskEntry
+from ..models.sequence_mask_table import SequenceMaskTable, MaskEntry, SequenceMatchResult
+from ..models.tcp_stream import TCPStreamManager, ConnectionDirection, detect_packet_direction
 from ..models.mask_spec import MaskSpec, MaskAfter, MaskRange, KeepAll
 from ..exceptions import StreamMaskTableError
 
@@ -50,15 +57,15 @@ class PacketRewriteInfo:
 
 
 class ScapyRewriter(BaseStage):
-    """Scapy回写器
+    """Scapy回写器 - Phase 3 重构版
     
     负责使用Scapy执行以下重写任务：
-    1. 掩码应用 - 根据掩码表精确应用载荷掩码
-    2. 时间戳保持 - 保持原始数据包的时间戳
-    3. 校验和重计算 - 重新计算修改后的校验和
-    4. 文件格式保持 - 保持PCAP文件的完整性
+    1. 基于序列号的精确掩码匹配
+    2. 方向性TCP流处理
+    3. 字节级精确置零操作
+    4. 时间戳保持和校验和重计算
     
-    这是多阶段处理流程的第三阶段（最终阶段），接收PyShark分析器的掩码表，
+    这是多阶段处理流程的第三阶段（最终阶段），接收PyShark分析器的序列号掩码表，
     输出经过智能掩码处理的PCAP文件。
     """
     
@@ -69,10 +76,8 @@ class ScapyRewriter(BaseStage):
             config: 配置参数
         """
         super().__init__("Scapy回写器", config)
-        self._mask_table: Optional[StreamMaskTable] = None
-        
-        # 流的初始序列号映射，用于计算相对序列号
-        self._stream_initial_seqs: Dict[str, int] = {}
+        self._mask_table: Optional[SequenceMaskTable] = None
+        self._stream_manager: TCPStreamManager = TCPStreamManager()
         
         # 配置参数
         self._batch_size = self.get_config_value('batch_size', 100)
@@ -88,7 +93,9 @@ class ScapyRewriter(BaseStage):
         self._packets_modified = 0
         self._bytes_masked = 0
         self._checksums_updated = 0
-        
+        self._sequence_matches = 0
+        self._sequence_mismatches = 0
+    
     def _initialize_impl(self) -> None:
         """初始化Scapy回写器"""
         # 检查Scapy是否可用
@@ -105,11 +112,12 @@ class ScapyRewriter(BaseStage):
         
         # 重置内部状态
         self._mask_table = None
+        self._stream_manager.clear()
         self._rewrite_info.clear()
         self._stream_stats.clear()
         self._reset_statistics()
         
-        self._logger.info("Scapy回写器初始化完成")
+        self._logger.info("Scapy回写器初始化完成 - 支持基于序列号的掩码机制")
     
     def validate_inputs(self, context: StageContext) -> bool:
         """验证输入参数
@@ -120,27 +128,31 @@ class ScapyRewriter(BaseStage):
         Returns:
             验证是否成功
         """
-        # 检查原始PCAP文件（Scapy需要使用原始文件进行载荷提取和掩码应用）
-        if context.input_file is None:
-            self._logger.error("缺少原始PCAP文件")
+        # 检查TShark重组文件（修正：Scapy需要处理重组文件以与PyShark保持一致）
+        if context.tshark_output is None:
+            self._logger.error("缺少TShark重组PCAP文件")
             return False
         
-        input_file = Path(context.input_file)
+        input_file = Path(context.tshark_output)
         if not input_file.exists():
-            self._logger.error(f"原始PCAP文件不存在: {input_file}")
+            self._logger.error(f"TShark重组PCAP文件不存在: {input_file}")
             return False
         
         if input_file.stat().st_size == 0:
-            self._logger.error(f"原始PCAP文件为空: {input_file}")
+            self._logger.error(f"TShark重组PCAP文件为空: {input_file}")
             return False
         
-        # 检查掩码表
+        # 检查序列号掩码表
         if context.mask_table is None:
-            self._logger.error("缺少PyShark分析器生成的掩码表")
+            self._logger.error("缺少PyShark分析器生成的序列号掩码表")
+            return False
+        
+        if not isinstance(context.mask_table, SequenceMaskTable):
+            self._logger.error(f"掩码表类型错误: 期待SequenceMaskTable，实际 {type(context.mask_table)}")
             return False
         
         if context.mask_table.get_total_entry_count() == 0:
-            self._logger.warning("掩码表为空，将不会应用任何掩码")
+            self._logger.warning("序列号掩码表为空，将不会应用任何掩码")
         
         # 检查输出路径
         output_dir = context.output_file.parent
@@ -188,8 +200,8 @@ class ScapyRewriter(BaseStage):
             
             # 阶段2: 读取PCAP文件 (从原始文件读取以保持Raw层结构)
             progress_callback(0.1)
-            input_file = Path(context.input_file)  # 读取原始PCAP文件
-            self._logger.info(f"读取原始PCAP文件: {input_file}")
+            input_file = Path(context.tshark_output)  # 读取TShark重组PCAP文件
+            self._logger.info(f"读取TShark重组PCAP文件: {input_file}")
             packets = self._read_pcap_file(input_file)
             
             # 特别调试数据包14和15的详细信息
@@ -338,12 +350,13 @@ class ScapyRewriter(BaseStage):
         return modified_packets
     
     def _apply_mask_to_packet(self, packet: Packet, packet_number: int) -> Packet:
-        """对单个数据包应用掩码
+        """对单个数据包应用基于序列号的掩码
         
-        修复大量连续TCP Segment的掩码应用问题：
-        1. 改进序列号计算和验证
-        2. 增强掩码查找的容错性
-        3. 处理Scapy TCP重组导致的序列号冲突
+        Phase 3重构：实现基于序列号绝对值范围的通用掩码机制
+        1. 提取TCP流信息和序列号
+        2. 生成方向性流ID
+        3. 使用SequenceMaskTable进行精确序列号匹配
+        4. 应用字节级精确置零
         
         Args:
             packet: 待处理的数据包
@@ -365,40 +378,31 @@ class ScapyRewriter(BaseStage):
                 self._logger.debug(f"数据包{packet_number}: 无载荷，跳过处理")
                 return packet
             
-            # 查找掩码
-            self._logger.info(f"掩码查找 - 流={stream_id}, 序列号={seq_number}, 载荷长度={len(payload)}")
+            # Phase 3: 使用新的序列号匹配机制
+            self._logger.info(f"【序列号掩码匹配】数据包{packet_number}: 流={stream_id}, 序列号={seq_number}, 载荷长度={len(payload)}")
             
-            # 显示流中的掩码信息
-            if stream_id in self._mask_table.get_stream_ids():
-                stream_entry_count = self._mask_table.get_stream_entry_count(stream_id)
-                self._logger.info(f"流中总掩码条目数: {stream_entry_count}")
-                # 获取流的覆盖范围
-                min_seq, max_seq = self._mask_table.get_stream_coverage(stream_id)
-                self._logger.info(f"流序列号覆盖范围: [{min_seq}:{max_seq})")
+            # 使用SequenceMaskTable进行精确匹配
+            match_results = self._mask_table.match_sequence_range(stream_id, seq_number, len(payload))
             
-            # 修复：处理大量连续TCP段的掩码查找
-            masks = self._lookup_masks_with_tcp_segment_fix(stream_id, seq_number, len(payload))
+            self._logger.info(f"匹配到的掩码: {len(match_results)}个")
+            for i, result in enumerate(match_results):
+                if result.is_match:
+                    self._logger.info(f"  匹配{i+1}: 偏移[{result.mask_start_offset}:{result.mask_end_offset}), "
+                                     f"长度={result.mask_length}, 条目={result.entry.get_description()}")
+                    self._sequence_matches += 1
+                else:
+                    self._sequence_mismatches += 1
             
-            self._logger.info(f"匹配到的掩码: {len(masks)}个")
-            for i, (start, end, spec) in enumerate(masks):
-                self._logger.info(f"  匹配{i+1}: 偏移{start}-{end-1}, 规范={spec.get_description()}")
-            
-            if not masks:
-                self._logger.debug(f"数据包{packet_number}: 未找到匹配的掩码")
+            if not any(result.is_match for result in match_results):
+                self._logger.debug(f"数据包{packet_number}: 未找到匹配的序列号掩码")
                 return packet
             
             # 记录原始载荷
             original_payload_preview = payload[:32].hex() if len(payload) >= 32 else payload.hex()
-            self._logger.info(f"数据包{packet_number}: 流ID={stream_id}, 序列号={seq_number}, 载荷长度={len(payload)}, 找到掩码={len(masks)}个")
             self._logger.info(f"数据包{packet_number}原始载荷前32字节: {original_payload_preview}")
             
-            # 应用掩码
-            for i, (start, end, spec) in enumerate(masks):
-                self._logger.info(f"🎯 将应用掩码{i+1}: [{start}:{end}) {type(spec)} {spec.get_description()}")
-            
-            self._logger.info(f"🚀🚀 即将调用 _apply_masks_to_payload，掩码数量={len(masks)}")
-            modified_payload = self._apply_masks_to_payload(payload, masks, seq_number)
-            self._logger.info(f"✅✅ _apply_masks_to_payload 调用完成")
+            # 应用序列号匹配的掩码
+            modified_payload = self._apply_sequence_based_masks(payload, match_results, seq_number)
             
             # 记录修改后的载荷
             modified_payload_preview = modified_payload[:32].hex() if len(modified_payload) >= 32 else modified_payload.hex()
@@ -408,25 +412,26 @@ class ScapyRewriter(BaseStage):
             payload_changed = payload != modified_payload
             self._logger.info(f"数据包{packet_number}载荷是否改变: {payload_changed}")
             
-            if not payload_changed:
-                # 分析为什么没有改变
-                all_keep_all = all(isinstance(spec, KeepAll) for _, _, spec in masks)
-                if all_keep_all:
-                    self._logger.info(f"数据包{packet_number}载荷未发生实际改变 - 所有掩码都是保留 规范")
-                else:
-                    self._logger.warning(f"数据包{packet_number}载荷未改变但存在非保留掩码 - 可能存在问题")
-                    for i, (start, end, spec) in enumerate(masks):
-                        self._logger.warning(f"  掩码{i+1}: [{start}:{end}) {type(spec).__name__} {spec.get_description()}")
-            
-            # 更新数据包载荷
-            self._update_packet_payload(packet, modified_payload)
-            
-            # 重新计算校验和
-            self._recalculate_packet_checksums(packet)
-            
-            # 统计
             if payload_changed:
+                # 更新数据包载荷
+                self._update_packet_payload(packet, modified_payload)
+                
+                # 重新计算校验和
+                self._recalculate_packet_checksums(packet)
+                
+                # 统计
                 self._packets_modified += 1
+                masked_bytes = sum(result.mask_length for result in match_results if result.is_match)
+                self._bytes_masked += masked_bytes
+                
+                self._logger.info(f"✅ 数据包{packet_number}掩码完成: 掩码字节数={masked_bytes}")
+            else:
+                # 分析为什么没有改变
+                all_keep_all = all(isinstance(result.entry.mask_spec, KeepAll) for result in match_results if result.is_match)
+                if all_keep_all:
+                    self._logger.info(f"数据包{packet_number}载荷未发生实际改变 - 所有掩码都是保留规范")
+                else:
+                    self._logger.warning(f"数据包{packet_number}载荷未改变但存在非保留掩码 - 需要检查掩码应用逻辑")
             
             return packet
             
@@ -436,70 +441,27 @@ class ScapyRewriter(BaseStage):
             traceback.print_exc()
             return packet
     
-    def _lookup_masks_with_tcp_segment_fix(self, stream_id: str, seq_number: int, payload_length: int) -> List[Tuple[int, int, MaskSpec]]:
-        """查找掩码，修复大量连续TCP段的序列号重复问题
+    def _generate_udp_stream_id(self, src_ip: str, dst_ip: str, src_port: int, dst_port: int) -> str:
+        """生成UDP流ID
         
         Args:
-            stream_id: 流标识符
-            seq_number: 序列号
-            payload_length: 载荷长度
+            src_ip: 源IP
+            dst_ip: 目标IP
+            src_port: 源端口
+            dst_port: 目标端口
             
         Returns:
-            掩码列表 [(start_offset, end_offset, mask_spec), ...]
+            流ID
         """
-        # 首先尝试正常查找
-        normal_masks = self._mask_table.lookup_multiple(stream_id, seq_number, payload_length)
-        
-        if normal_masks:
-            return normal_masks
-        
-        # 如果正常查找失败，尝试模糊匹配
-        # 这种情况常见于Scapy TCP重组导致的序列号偏移
-        self._logger.debug(f"正常掩码查找失败，尝试模糊匹配 - 流={stream_id}, 序列号={seq_number}")
-        
-        # 尝试在序列号附近搜索
-        search_ranges = [
-            seq_number - 5,   # 往前搜索
-            seq_number - 10,
-            seq_number + 5,   # 往后搜索
-            seq_number + 10,
-            1,                # 尝试使用序列号1（常见的重组起始点）
-            2,                # 尝试使用序列号2
-        ]
-        
-        for search_seq in search_ranges:
-            if search_seq <= 0:
-                continue
-                
-            fuzzy_masks = self._mask_table.lookup_multiple(stream_id, search_seq, payload_length)
-            if fuzzy_masks:
-                self._logger.info(f"模糊匹配成功: 原序列号={seq_number}, 匹配序列号={search_seq}, 找到{len(fuzzy_masks)}个掩码")
-                return fuzzy_masks
-        
-        # 如果还是找不到，尝试范围匹配
-        # 通过遍历不同的序列号范围来查找可能的掩码
-        if stream_id in self._mask_table.get_stream_ids():
-            # 获取流的序列号覆盖范围
-            try:
-                min_seq, max_seq = self._mask_table.get_stream_coverage(stream_id)
-                
-                # 尝试在整个范围内查找覆盖当前载荷的掩码
-                range_start = max(1, min_seq)
-                range_end = min(max_seq, seq_number + payload_length + 100)  # 适当扩展范围
-                
-                for test_seq in range(range_start, range_end, 10):  # 每10个序列号测试一次
-                    range_masks = self._mask_table.lookup_multiple(stream_id, test_seq, payload_length)
-                    if range_masks:
-                        self._logger.info(f"范围匹配成功: 原序列号={seq_number}, 匹配序列号={test_seq}, 找到{len(range_masks)}个掩码")
-                        return range_masks
-            except Exception as e:
-                self._logger.debug(f"范围匹配出错: {e}")
-        
-        self._logger.debug(f"所有匹配方法都失败 - 流={stream_id}, 序列号={seq_number}, 载荷长度={payload_length}")
-        return []
+        return f"UDP_{src_ip}:{src_port}_{dst_ip}:{dst_port}"
     
     def _extract_stream_info(self, packet: Packet, packet_number: int = 1) -> Optional[Tuple[str, int, bytes]]:
-        """从数据包中提取流信息和载荷
+        """从数据包中提取流信息和载荷 - Phase 3重构版
+        
+        重构特性：
+        1. 支持方向性流ID生成
+        2. 与PyShark分析器保持一致的流ID格式
+        3. 正确的序列号提取和计算
         
         Args:
             packet: 数据包
@@ -519,33 +481,48 @@ class ScapyRewriter(BaseStage):
         # 获取IP和端口
         src_ip = ip_layer.src
         dst_ip = ip_layer.dst
+        
         if tcp_layer:
             src_port = tcp_layer.sport
             dst_port = tcp_layer.dport
             protocol = "TCP"
             seq_number = tcp_layer.seq
-            self._logger.debug(f"数据包{packet_number}: {protocol} {src_ip}:{src_port} -> {dst_ip}:{dst_port}, 序列号={seq_number}")
+            payload = self._extract_tcp_payload(packet)
+            
+            # 生成方向性流ID，与PyShark分析器保持一致
+            stream_id = self._generate_directional_stream_id(src_ip, dst_ip, src_port, dst_port, protocol)
+            
+            self._logger.debug(f"数据包{packet_number}: {protocol} {src_ip}:{src_port} -> {dst_ip}:{dst_port}, "
+                              f"序列号={seq_number}, 流ID={stream_id}")
+            
+            # 注册或更新流信息到stream_manager
+            direction = self._determine_packet_direction(src_ip, dst_ip, src_port, dst_port)
+            tcp_stream = self._stream_manager.get_or_create_stream(src_ip, src_port, dst_ip, dst_port, direction)
+            
+            # 设置初始序列号（如果是第一次遇到）
+            if tcp_stream.initial_seq is None:
+                tcp_stream.set_initial_seq(seq_number)
+            
+            # 更新序列号状态
+            tcp_stream.update_last_seq(seq_number, len(payload))
+            
+            return (stream_id, seq_number, payload)
+            
         elif udp_layer:
             src_port = udp_layer.sport
             dst_port = udp_layer.dport
             protocol = "UDP"
-            seq_number = None
-        else:
-            return None
+            payload = self._extract_udp_payload(packet)
+            
+            # UDP使用简化的流ID（无方向性）
+            stream_id = self._generate_udp_stream_id(src_ip, dst_ip, src_port, dst_port)
+            
+            self._logger.debug(f"数据包{packet_number}: {protocol} {src_ip}:{src_port} -> {dst_ip}:{dst_port}, "
+                              f"流ID={stream_id}")
+            
+            return (stream_id, None, payload)  # UDP无序列号
         
-        # 生成方向性流ID（包含数据包的实际方向）
-        stream_id = self._generate_directional_stream_id(src_ip, dst_ip, src_port, dst_port, protocol)
-        
-        # 对于TCP，转换为相对序列号以匹配PyShark分析器
-        if tcp_layer and seq_number is not None:
-            absolute_seq = int(seq_number)
-            seq_number = self._get_relative_seq_number(stream_id, absolute_seq)
-            self._logger.info(f"数据包序列号转换: 绝对={absolute_seq} -> 相对={seq_number}")
-        
-        # 使用统一的完整TCP载荷提取方法
-        payload_data, _ = self._extract_packet_payload(packet)
-        
-        return stream_id, seq_number, payload_data
+        return None
     
     def _generate_directional_stream_id(self, src_ip: str, dst_ip: str, src_port: int, dst_port: int, protocol: str) -> str:
         """生成包含方向的流ID
@@ -574,39 +551,7 @@ class ScapyRewriter(BaseStage):
         # 添加方向后缀以区分双向TCP流
         return f"{base_stream_id}_{direction}"
     
-    def _get_relative_seq_number(self, stream_id: str, absolute_seq: int) -> int:
-        """计算相对序列号，与PyShark/TShark保持一致
-        
-        修复大量连续TCP Segment的序列号处理问题：
-        1. 区分方向性流的初始序列号
-        2. 处理Scapy TCP重组导致的序列号重复问题
-        
-        Args:
-            stream_id: 流标识符（包含方向）
-            absolute_seq: 绝对序列号
-            
-        Returns:
-            相对序列号（从0或1开始）
-        """
-        # 为每个方向性流独立维护初始序列号
-        if stream_id not in self._stream_initial_seqs:
-            # 第一次遇到这个流，记录初始序列号
-            self._stream_initial_seqs[stream_id] = absolute_seq
-            self._logger.debug(f"流{stream_id}: 初始序列号={absolute_seq}")
-            return 1  # TShark/PyShark通常从1开始相对序列号
-        else:
-            # 计算相对序列号
-            initial_seq = self._stream_initial_seqs[stream_id]
-            relative_seq = absolute_seq - initial_seq + 1
-            
-            # 处理序列号异常情况：如果相对序列号<=0，说明可能是Scapy重组问题
-            if relative_seq <= 0:
-                self._logger.warning(f"流{stream_id}: 序列号异常 - 绝对={absolute_seq}, 初始={initial_seq}, 相对={relative_seq}")
-                # 对于异常序列号，使用绝对序列号的最后几位作为相对序列号
-                relative_seq = (absolute_seq % 1000000) + 1
-                self._logger.info(f"修正异常序列号: {absolute_seq} -> {relative_seq}")
-            
-            return relative_seq
+    # 该方法已被删除，序列号处理现在由TCPStreamManager处理
     
     def _extract_tcp_payload(self, packet: Packet) -> bytes:
         """提取TCP载荷"""
@@ -620,140 +565,163 @@ class ScapyRewriter(BaseStage):
             return bytes(packet[Raw])
         return b''
     
-    def _apply_masks_to_payload(self, payload: bytes, masks: List[Tuple[int, int, MaskSpec]], seq_number: int) -> bytes:
-        """对载荷应用掩码
+    def _apply_sequence_based_masks(self, payload: bytes, match_results: List[SequenceMatchResult], seq_number: int) -> bytes:
+        """应用基于序列号匹配的掩码
+        
+        Phase 3核心方法：根据SequenceMatchResult列表应用字节级精确掩码
         
         Args:
             payload: 原始载荷
-            masks: 掩码规范列表 [(start, end, mask_spec), ...]
+            match_results: 序列号匹配结果列表
             seq_number: 序列号
             
         Returns:
             修改后的载荷
         """
-        if not masks or not payload:
+        if not match_results or not payload:
+            return payload
+        
+        # 过滤出匹配的结果
+        valid_matches = [result for result in match_results if result.is_match]
+        if not valid_matches:
             return payload
         
         # 转换为可修改的字节数组
         modified_payload = bytearray(payload)
         
-        self._logger.info(f"🔧 开始处理 {len(masks)} 个掩码，载荷长度={len(payload)}")
+        self._logger.info(f"🔧 开始应用基于序列号的掩码，匹配数量={len(valid_matches)}, 载荷长度={len(payload)}")
         
-        for i, (start, end, mask_spec) in enumerate(masks):
-            self._logger.info(f"🎯 处理掩码{i+1}: 载荷偏移=[{start}:{end}), spec={mask_spec.get_description()}")
+        for i, match_result in enumerate(valid_matches):
+            start_offset = match_result.mask_start_offset
+            end_offset = match_result.mask_end_offset
+            mask_spec = match_result.entry.mask_spec
             
-            # masks中的start, end已经是相对于载荷的偏移，直接使用
-            # 无需重新计算重叠，因为lookup_multiple已经处理了重叠逻辑
+            self._logger.info(f"🎯 处理掩码{i+1}: 载荷偏移=[{start_offset}:{end_offset}), "
+                             f"spec={mask_spec.get_description()}, 长度={match_result.mask_length}")
             
             # 验证偏移范围
-            if start < 0 or end > len(payload) or start >= end:
-                self._logger.warning(f"跳过掩码{i+1}: 无效偏移范围[{start}:{end}), 载荷长度={len(payload)}")
+            if start_offset < 0 or end_offset > len(payload) or start_offset >= end_offset:
+                self._logger.warning(f"跳过掩码{i+1}: 无效偏移范围[{start_offset}:{end_offset}), 载荷长度={len(payload)}")
                 continue
             
-            # 直接应用掩码规范到指定的载荷偏移
-            self._apply_mask_spec(modified_payload, start, end, mask_spec)
+            # 应用掩码规范到指定的载荷偏移
+            self._apply_mask_spec_to_range(modified_payload, start_offset, end_offset, mask_spec)
+            
+            # 应用头部保留规则（如果有）
+            if match_result.entry.preserve_headers:
+                self._apply_preserve_headers(modified_payload, match_result.entry.preserve_headers, 
+                                           start_offset, end_offset)
         
-        self._logger.info(f"✅ 完成所有掩码处理")
+        self._logger.info(f"✅ 完成基于序列号的掩码处理")
         return bytes(modified_payload)
     
-    def _apply_mask_spec(self, payload: bytearray, start: int, end: int, mask_spec: MaskSpec) -> None:
-        """应用掩码规范
+    def _apply_mask_spec_to_range(self, payload: bytearray, start: int, end: int, mask_spec: MaskSpec) -> None:
+        """应用掩码规范到指定范围
         
         Args:
             payload: 载荷字节数组
-            start: 起始位置
-            end: 结束位置
+            start: 起始位置（载荷内偏移）
+            end: 结束位置（载荷内偏移）
             mask_spec: 掩码规范
         """
-        self._logger.info(f"🔧 _apply_mask_spec 开始: start={start}, end={end}, 载荷长度={len(payload)}, 掩码类型={type(mask_spec).__name__}")
+        self._logger.info(f"🔧 应用掩码规范: start={start}, end={end}, 载荷长度={len(payload)}, "
+                         f"掩码类型={type(mask_spec).__name__}")
         
         if isinstance(mask_spec, KeepAll):
             # 保留所有字节，不做修改
-            self._logger.info(f"✅ KeepAll: 不修改载荷")
+            self._logger.info(f"✅ KeepAll: 保留范围[{start}:{end})，不修改载荷")
             return
         
         elif isinstance(mask_spec, MaskAfter):
             # 保留前N个字节，掩码其余部分
             keep_bytes = mask_spec.keep_bytes
             
-            # 新的逻辑：处理小载荷情况
-            payload_size = end - start
-            if payload_size <= keep_bytes:
-                # 小载荷情况：载荷长度小于等于keep_bytes
-                # 根据策略决定：如果keep_bytes=0则全掩码，否则完全保留小载荷
+            # 计算在当前范围内的实际保留字节数
+            range_size = end - start
+            if range_size <= keep_bytes:
                 if keep_bytes == 0:
                     # MaskAfter(0) - 全部掩码
                     mask_start = start
                     mask_end = end
-                    self._logger.info(f"🎯 MaskAfter({keep_bytes}) 小载荷全掩码: 范围[{mask_start}:{mask_end})")
+                    self._logger.info(f"🎯 MaskAfter({keep_bytes}) 小范围全掩码: [{mask_start}:{mask_end})")
                 else:
-                    # MaskAfter(>0) - 小载荷完全保留
-                    self._logger.info(f"🎯 MaskAfter({keep_bytes}) 小载荷完全保留: 载荷长度{payload_size} <= keep_bytes{keep_bytes}")
+                    # MaskAfter(>0) - 小范围完全保留
+                    self._logger.info(f"🎯 MaskAfter({keep_bytes}) 小范围完全保留: 范围长度{range_size} <= keep_bytes{keep_bytes}")
                     return
             else:
-                # 正常情况：载荷长度大于keep_bytes
+                # 正常情况：范围长度大于keep_bytes
                 mask_start = start + keep_bytes
                 mask_end = end
-                self._logger.info(f"🎯 MaskAfter({keep_bytes}) 正常掩码: 范围[{mask_start}:{mask_end})")
+                self._logger.info(f"🎯 MaskAfter({keep_bytes}) 正常掩码: 保留[{start}:{mask_start}), 掩码[{mask_start}:{mask_end})")
             
             # 执行掩码操作
             if 'mask_start' in locals() and 'mask_end' in locals() and mask_start < mask_end:
-                bytes_to_mask = mask_end - mask_start
-                self._logger.info(f"📝 准备掩码: 范围[{mask_start}:{mask_end}) {bytes_to_mask}字节")
+                self._apply_zero_mask(payload, mask_start, mask_end)
                 
-                # 记录掩码前的载荷样本
-                sample_before = payload[mask_start:min(mask_start+8, mask_end)].hex() if mask_start < len(payload) else "无数据"
-                self._logger.info(f"📋 掩码前载荷样本[{mask_start}:{min(mask_start+8, mask_end)}): {sample_before}")
-                
-                # 实际进行掩码操作
-                mask_byte = self.get_config_value('mask_byte_value', 0x00)
-                self._logger.info(f"🎨 使用掩码字节值: 0x{mask_byte:02x}")
-                
-                # 检查是否为全零载荷掩码
-                is_zero_masking = mask_byte == 0x00
-                original_bytes = payload[mask_start:mask_end] if mask_start < len(payload) else b''
-                is_already_zero = all(b == 0x00 for b in original_bytes)
-                
-                for i in range(mask_start, mask_end):
-                    if i < len(payload):
-                        old_byte = payload[i]
-                        payload[i] = mask_byte
-                        if i < mask_start + 3:  # 只记录前几个字节的详细变化
-                            self._logger.info(f"🔄 位置{i}: 0x{old_byte:02x} -> 0x{mask_byte:02x}")
-                
-                # 记录掩码后的载荷样本
-                sample_after = payload[mask_start:min(mask_start+8, mask_end)].hex() if mask_start < len(payload) else "无数据"
-                self._logger.info(f"📋 掩码后载荷样本[{mask_start}:{min(mask_start+8, mask_end)}): {sample_after}")
-                
-                if is_zero_masking and is_already_zero:
-                    self._logger.info(f"✅ 掩码 {bytes_to_mask} 个字节完成 (全零载荷，视觉无变化但逻辑已处理)")
-                else:
-                    self._logger.info(f"✅ 成功掩码了 {bytes_to_mask} 个字节，掩码值=0x{mask_byte:02x}")
-            else:
-                self._logger.info(f"ℹ️ MaskAfter({keep_bytes}): 无需掩码操作")
-        
         elif isinstance(mask_spec, MaskRange):
             # 掩码指定范围
-            self._logger.info(f"🎯 MaskRange: 范围={mask_spec.ranges}")
+            self._logger.info(f"🎯 MaskRange: 应用范围={mask_spec.ranges}")
             for range_start, range_end in mask_spec.ranges:
-                mask_start = start + range_start
-                mask_end = min(end, start + range_end)
-                if mask_start < mask_end:
-                    mask_byte = self.get_config_value('mask_byte_value', 0x00)
-                    for i in range(mask_start, mask_end):
-                        if i < len(payload):
-                            payload[i] = mask_byte
-                    self._logger.info(f"✅ MaskRange掩码范围[{mask_start}:{mask_end})")
+                # 计算绝对偏移
+                abs_mask_start = start + range_start
+                abs_mask_end = min(end, start + range_end)
+                
+                if abs_mask_start < abs_mask_end and abs_mask_start < len(payload):
+                    self._apply_zero_mask(payload, abs_mask_start, abs_mask_end)
+                    self._logger.info(f"✅ MaskRange掩码子范围[{abs_mask_start}:{abs_mask_end})")
         
         else:
             # 未知掩码类型，全部掩码
-            self._logger.warning(f"⚠️ 未知掩码类型: {type(mask_spec)}，执行全掩码")
-            mask_byte = self.get_config_value('mask_byte_value', 0x00)
-            for i in range(start, end):
-                if i < len(payload):
-                    payload[i] = mask_byte
+            self._logger.warning(f"未知掩码类型 {type(mask_spec)}，执行全部掩码")
+            self._apply_zero_mask(payload, start, end)
+    
+    def _apply_zero_mask(self, payload: bytearray, start: int, end: int) -> None:
+        """应用零字节掩码
         
-        self._logger.info(f"🔧 _apply_mask_spec 完成")
+        Args:
+            payload: 载荷字节数组
+            start: 起始位置
+            end: 结束位置
+        """
+        if start >= end or start >= len(payload):
+            return
+        
+        bytes_to_mask = min(end, len(payload)) - start
+        mask_byte = self.get_config_value('mask_byte_value', 0x00)
+        
+        # 记录掩码前的载荷样本
+        sample_before = payload[start:min(start+8, end)].hex() if start < len(payload) else "无数据"
+        self._logger.info(f"📋 掩码前载荷样本[{start}:{min(start+8, end)}): {sample_before}")
+        
+        # 实际进行掩码操作
+        for i in range(start, min(end, len(payload))):
+            old_byte = payload[i]
+            payload[i] = mask_byte
+            if i < start + 3:  # 只记录前几个字节的详细变化
+                self._logger.info(f"🔄 位置{i}: 0x{old_byte:02x} -> 0x{mask_byte:02x}")
+        
+        # 记录掩码后的载荷样本
+        sample_after = payload[start:min(start+8, end)].hex() if start < len(payload) else "无数据"
+        self._logger.info(f"📋 掩码后载荷样本[{start}:{min(start+8, end)}): {sample_after}")
+        self._logger.info(f"✅ 成功掩码了 {bytes_to_mask} 个字节，掩码值=0x{mask_byte:02x}")
+    
+    def _apply_preserve_headers(self, payload: bytearray, preserve_headers: List[Tuple[int, int]], 
+                               range_start: int, range_end: int) -> None:
+        """应用头部保留规则
+        
+        Args:
+            payload: 载荷字节数组
+            preserve_headers: 需要保留的头部范围列表（相对于条目序列号范围）
+            range_start: 当前处理范围的起始位置（载荷内偏移）
+            range_end: 当前处理范围的结束位置（载荷内偏移）
+        """
+        self._logger.info(f"🛡️ 应用头部保留规则: {len(preserve_headers)}个保留范围")
+        
+        for header_start, header_end in preserve_headers:
+            # TODO: 实现头部保留逻辑
+            # 这需要根据具体的头部保留需求来实现
+            # 例如：恢复被掩码的头部字节到原始值
+            self._logger.info(f"📝 保留头部范围: [{header_start}:{header_end}) (暂未实现)")
     
     def _update_packet_payload(self, packet: Packet, new_payload: bytes) -> None:
         """更新数据包载荷
@@ -885,7 +853,11 @@ class ScapyRewriter(BaseStage):
             'modification_rate': self._packets_modified / self._total_packets if self._total_packets > 0 else 0,
             'bytes_masked': self._bytes_masked,
             'checksums_updated': self._checksums_updated,
+            'sequence_matches': self._sequence_matches,
+            'sequence_mismatches': self._sequence_mismatches,
+            'sequence_match_rate': self._sequence_matches / max(self._sequence_matches + self._sequence_mismatches, 1) * 100,
             'streams_processed': len(self._stream_stats),
+            'managed_streams': self._stream_manager.get_stream_count() if self._stream_manager else 0,
             'mask_table_entries': self._mask_table.get_total_entry_count() if self._mask_table else 0
         }
     
@@ -908,6 +880,8 @@ class ScapyRewriter(BaseStage):
         self._packets_modified = 0
         self._bytes_masked = 0
         self._checksums_updated = 0
+        self._sequence_matches = 0
+        self._sequence_mismatches = 0
     
     def get_estimated_duration(self, context: StageContext) -> float:
         """估算处理时间"""
@@ -931,7 +905,7 @@ class ScapyRewriter(BaseStage):
     
     def get_description(self) -> str:
         """获取Stage描述"""
-        return "使用Scapy根据掩码表对PCAP文件进行精确的载荷掩码处理"
+        return "使用Scapy根据序列号掩码表对PCAP文件进行精确的载荷掩码处理"
     
     def _cleanup_impl(self, context: StageContext) -> None:
         """清理资源"""
@@ -1194,4 +1168,24 @@ class ScapyRewriter(BaseStage):
                 return tcp_length
         return 0
     
- 
+    def _determine_packet_direction(self, src_ip: str, dst_ip: str, src_port: int, dst_port: int) -> ConnectionDirection:
+        """确定数据包方向
+        
+        Args:
+            src_ip: 源IP
+            dst_ip: 目标IP
+            src_port: 源端口
+            dst_port: 目标端口
+            
+        Returns:
+            连接方向
+        """
+        # 使用与PyShark分析器相同的逻辑
+        if (src_ip, src_port) <= (dst_ip, dst_port):
+            return ConnectionDirection.FORWARD
+        else:
+            return ConnectionDirection.REVERSE
+
+
+     
+   

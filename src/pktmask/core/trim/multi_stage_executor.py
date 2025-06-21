@@ -86,8 +86,14 @@ class MultiStageExecutor:
         Args:
             stage: 要注册的Stage
         """
+        # 确保Stage已经初始化
+        if not stage.is_initialized:
+            success = stage.initialize()
+            if not success:
+                raise RuntimeError(f"Stage '{stage.name}' 初始化失败")
+        
         self.stages.append(stage)
-        self._logger.debug(f"注册Stage: {stage.name}")
+        self._logger.debug(f"注册Stage: {stage.name} (已初始化)")
     
     def clear_stages(self) -> None:
         """清除所有注册的Stage"""

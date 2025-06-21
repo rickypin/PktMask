@@ -2,11 +2,17 @@
 # -*- coding: utf-8 -*-
 
 """
-PyShark分析器
+PyShark分析器 - Phase 2重构版本
 
 使用PyShark对经过TShark预处理的PCAP文件进行深度协议分析，
-识别HTTP、TLS等应用层协议，提取流信息，并生成掩码表。
+基于TCP序列号绝对值范围生成掩码表，支持方向性TCP流处理。
 这是Enhanced Trim Payloads处理流程的第二阶段。
+
+重构要点：
+1. 支持方向性TCP流ID生成
+2. 基于序列号范围的掩码表生成
+3. 重构TLS协议处理逻辑
+4. 建立多协议掩码策略框架
 """
 
 import logging
@@ -25,77 +31,81 @@ except ImportError:
 from .base_stage import BaseStage, StageContext
 from .stage_result import StageResult, StageStatus, StageMetrics
 from ...processors.base_processor import ProcessorResult
-from ..models.mask_table import StreamMaskTable, StreamMaskEntry
+# Phase 2: 使用新的序列号掩码表
+from ..models.sequence_mask_table import SequenceMaskTable, MaskEntry
+from ..models.tcp_stream import TCPStreamManager, ConnectionDirection, detect_packet_direction
 from ..models.mask_spec import MaskAfter, MaskRange, KeepAll, create_http_header_mask, create_tls_record_mask
 from ..exceptions import StreamMaskTableError
 
 
 @dataclass
 class StreamInfo:
-    """TCP/UDP流信息"""
+    """TCP/UDP流信息 - Phase 2增强版本"""
     stream_id: str
     src_ip: str
     dst_ip: str
     src_port: int
     dst_port: int
     protocol: str  # 'TCP' or 'UDP'
+    direction: Optional[ConnectionDirection] = None  # Phase 2: 添加方向信息
     application_protocol: Optional[str] = None  # 'HTTP', 'TLS', etc.
     packet_count: int = 0
     total_bytes: int = 0
     first_seen: Optional[float] = None
     last_seen: Optional[float] = None
+    # Phase 2: 添加序列号跟踪
+    initial_seq: Optional[int] = None
+    last_seq: Optional[int] = None
 
 
 @dataclass
 class PacketAnalysis:
-    """数据包分析结果"""
+    """数据包分析结果 - Phase 2增强版本"""
     packet_number: int
     timestamp: float
     stream_id: str
     seq_number: Optional[int] = None
     payload_length: int = 0
     application_layer: Optional[str] = None
-    is_http_request: bool = False
-    is_http_response: bool = False
+    # Phase 2: 增强TLS分析结果
     is_tls_handshake: bool = False
     is_tls_application_data: bool = False
     is_tls_change_cipher_spec: bool = False  # content_type = 20
     is_tls_alert: bool = False               # content_type = 21  
     is_tls_heartbeat: bool = False           # content_type = 24
     tls_content_type: Optional[int] = None   # 存储原始content_type值
-    http_header_length: Optional[int] = None
     tls_record_length: Optional[int] = None
-    # TLS重组相关属性
+    # Phase 2: TLS重组相关属性
     tls_reassembled: bool = False           # 是否是TLS重组包
     tls_reassembly_info: Dict[str, Any] = field(default_factory=dict)  # TLS重组信息
+    # Phase 2: 序列号范围计算
+    absolute_seq_start: Optional[int] = None
+    absolute_seq_end: Optional[int] = None
+    relative_seq_start: Optional[int] = None
+    relative_seq_end: Optional[int] = None
 
 
 class PySharkAnalyzer(BaseStage):
-    """PyShark分析器
+    """PyShark分析器 - Phase 2重构版本
     
-    负责使用PyShark执行以下分析任务：
-    1. 协议识别 - 识别HTTP、TLS等应用层协议
-    2. 流信息提取 - 提取TCP/UDP流的详细信息
-    3. 掩码表生成 - 根据协议分析结果生成掩码表
-    
-    这是多阶段处理流程的第二阶段，接收TShark预处理器的输出，
-    为Scapy回写器提供详细的掩码规范。
+    Phase 2重构要点：
+    1. 支持方向性TCP流ID生成（含_forward/_reverse后缀）
+    2. 基于序列号绝对值范围生成掩码表
+    3. 重构TLS协议处理，精确识别不同content type
+    4. 建立多协议掩码策略框架
+    5. 实现序列号范围计算和映射算法
     """
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """初始化PyShark分析器
-        
-        Args:
-            config: 配置参数字典，包含协议分析相关设置
-        """
+        """初始化PyShark分析器"""
         super().__init__("PyShark分析器", config)
         
-        # 协议配置（移除HTTP分析）
+        # 协议配置
         self._analyze_tls = self.get_config_value('analyze_tls', True)
         self._analyze_tcp = self.get_config_value('analyze_tcp', True)
         self._analyze_udp = self.get_config_value('analyze_udp', True)
         
-        # TLS协议配置
+        # TLS协议配置  
         self._tls_keep_handshake = self.get_config_value('tls_keep_handshake', True)
         self._tls_mask_application_data = self.get_config_value('tls_mask_application_data', True)
         
@@ -104,10 +114,11 @@ class PySharkAnalyzer(BaseStage):
         self._memory_cleanup_interval = self.get_config_value('memory_cleanup_interval', 5000)
         self._timeout_seconds = self.get_config_value('analysis_timeout_seconds', 600)
         
-        # 内部状态
+        # Phase 2: 使用新的核心组件
+        self._tcp_stream_manager = TCPStreamManager()
         self._streams: Dict[str, StreamInfo] = {}
         self._packet_analyses: List[PacketAnalysis] = []
-        self._mask_table: Optional[StreamMaskTable] = None
+        self._sequence_mask_table: Optional[SequenceMaskTable] = None
         
     def _initialize_impl(self) -> None:
         """初始化PyShark分析器"""
@@ -123,21 +134,15 @@ class PySharkAnalyzer(BaseStage):
             self._logger.warning("无法获取PyShark版本信息")
         
         # 重置内部状态
+        self._tcp_stream_manager.clear()
         self._streams.clear()
         self._packet_analyses.clear()
-        self._mask_table = None
+        self._sequence_mask_table = None
         
-        self._logger.info("PyShark分析器初始化完成")
+        self._logger.info("PyShark分析器初始化完成 - Phase 2重构版本")
     
     def validate_inputs(self, context: StageContext) -> bool:
-        """验证输入参数
-        
-        Args:
-            context: 阶段执行上下文
-            
-        Returns:
-            验证是否成功
-        """
+        """验证输入参数"""
         # 检查输入文件（应该是TShark预处理器的输出）
         if context.tshark_output is None:
             self._logger.error("缺少TShark预处理器输出文件")
@@ -160,25 +165,14 @@ class PySharkAnalyzer(BaseStage):
         return True
     
     def execute(self, context: StageContext) -> ProcessorResult:
-        """执行PyShark分析
-        
-        Args:
-            context: 阶段执行上下文
-            
-        Returns:
-            处理结果
-        """
+        """执行PyShark分析"""
         context.current_stage = self.name
         progress_callback = self.get_progress_callback(context)
         
         start_time = time.time()
         
         try:
-            self._logger.info("开始PyShark协议分析...")
-            
-            # 临时启用DEBUG级别日志以便调试
-            original_level = self._logger.level
-            self._logger.setLevel(logging.DEBUG)
+            self._logger.info("开始PyShark协议分析... (Phase 2重构版本)")
             
             # 阶段1: 打开PCAP文件
             progress_callback(0.0)
@@ -189,48 +183,52 @@ class PySharkAnalyzer(BaseStage):
             progress_callback(0.1)
             packet_count = self._analyze_packets(cap, progress_callback)
             
-            # 阶段3: 生成掩码表
-            progress_callback(0.8)
-            self._mask_table = self._generate_mask_table()
+            # 阶段3: 计算序列号范围
+            progress_callback(0.7)
+            self._calculate_sequence_ranges()
             
-            # 阶段4: 保存结果到上下文
+            # 阶段4: 生成序列号掩码表
+            progress_callback(0.8)
+            self._sequence_mask_table = self._generate_sequence_mask_table()
+            
+            # 阶段5: 保存结果到上下文
             progress_callback(0.9)
-            context.mask_table = self._mask_table
+            context.mask_table = self._sequence_mask_table  # Phase 2: 使用新的掩码表
             context.pyshark_results = {
                 'streams': self._streams,
                 'packet_analyses': self._packet_analyses,
-                'statistics': self._generate_statistics()
+                'tcp_streams': self._tcp_stream_manager.get_all_stream_ids()
             }
             
-            # 生成处理结果
+            # 生成统计信息
             duration = time.time() - start_time
-            self.record_execution_time(duration)
-            
-            # 更新统计信息
+            stats = self._generate_statistics()
             self._update_stats(context, packet_count, duration)
             
             progress_callback(1.0)
-            
-            result = ProcessorResult(
-                success=True,
-                data=f"PyShark分析完成，处理{packet_count}个数据包，识别{len(self._streams)}个流",
-                stats=self.get_stats()
-            )
-            
-            self._logger.info(f"PyShark分析完成: {packet_count}个数据包, {len(self._streams)}个流, 耗时{duration:.2f}秒")
-            return result
-            
-        except Exception as e:
-            duration = time.time() - start_time
-            self._logger.error(f"PyShark分析失败: {e}")
+            self._logger.info(f"PyShark分析完成，耗时 {duration:.2f} 秒，处理 {packet_count} 个数据包")
             
             return ProcessorResult(
+                success=True,
+                data={
+                    'message': f"PyShark分析完成，处理 {packet_count} 个数据包",
+                    'packet_count': packet_count,
+                    'stream_count': len(self._streams),
+                    'mask_entries': self._sequence_mask_table.get_total_entry_count() if self._sequence_mask_table else 0,
+                    'processing_time': duration,
+                    'statistics': stats
+                },
+                stats=stats
+            )
+            
+        except Exception as e:
+            self._logger.error(f"PyShark分析失败: {e}", exc_info=True)
+            return ProcessorResult(
                 success=False,
-                error=f"PyShark分析失败: {str(e)}",
-                stats=self.get_stats()
+                data={'error': str(e)},
+                error=f"PyShark分析失败: {str(e)}"
             )
         finally:
-            # 清理内存
             self._cleanup_memory()
     
     def _open_pcap_file(self, pcap_file: Path) -> pyshark.FileCapture:
@@ -770,7 +768,7 @@ class PySharkAnalyzer(BaseStage):
             self._logger.debug(f"未知的TLS content_type: {content_type}")
     
     def _generate_stream_id(self, src_ip: str, dst_ip: str, src_port: int, dst_port: int, protocol: str) -> str:
-        """生成流ID
+        """生成流ID - Phase 2重构版本，支持方向性
         
         Args:
             src_ip: 源IP地址
@@ -780,20 +778,17 @@ class PySharkAnalyzer(BaseStage):
             protocol: 协议类型
             
         Returns:
-            流ID字符串
+            流ID字符串（TCP协议包含方向性）
         """
-        # 对于TCP协议，需要区分方向以避免序列号冲突
         if protocol == 'TCP':
-            # 生成基础流ID（标准化端点顺序）
-            if (src_ip, src_port) <= (dst_ip, dst_port):
-                base_stream_id = f"{protocol}_{src_ip}:{src_port}_{dst_ip}:{dst_port}"
-                direction = "forward"  # 数据包方向与标准流方向一致
-            else:
-                base_stream_id = f"{protocol}_{dst_ip}:{dst_port}_{src_ip}:{src_port}"
-                direction = "reverse"  # 数据包方向与标准流方向相反
-            
-            # 添加方向后缀以区分双向TCP流的序列号空间
-            return f"{base_stream_id}_{direction}"
+            # Phase 2: 使用TCPStreamManager生成方向性流ID
+            direction = detect_packet_direction(
+                src_ip, src_port, dst_ip, dst_port,
+                src_ip, src_port, dst_ip, dst_port  # 基础连接就是当前包的方向
+            )
+            return self._tcp_stream_manager.generate_stream_id(
+                src_ip, src_port, dst_ip, dst_port, direction
+            )
         else:
             # 对于UDP等无连接协议，仍使用无方向的流ID
             if (src_ip, src_port) <= (dst_ip, dst_port):
@@ -802,7 +797,7 @@ class PySharkAnalyzer(BaseStage):
                 return f"{protocol}_{dst_ip}:{dst_port}_{src_ip}:{src_port}"
     
     def _update_stream_info(self, analysis: PacketAnalysis) -> None:
-        """更新流信息
+        """更新流信息 - Phase 2增强版本，支持方向性和序列号跟踪
         
         Args:
             analysis: 数据包分析结果
@@ -813,6 +808,7 @@ class PySharkAnalyzer(BaseStage):
             # 根据协议类型解析流信息
             parts = stream_id.split('_')
             protocol = parts[0]
+            direction = None
             
             if protocol == 'ICMP':
                 # ICMP流ID格式: ICMP_src_ip_dst_ip_type_code
@@ -853,8 +849,37 @@ class PySharkAnalyzer(BaseStage):
                     first_seen=analysis.timestamp,
                     last_seen=analysis.timestamp
                 )
+            elif protocol == 'TCP':
+                # Phase 2: TCP流ID格式: TCP_src_ip:src_port_dst_ip:dst_port_direction
+                if len(parts) >= 4:
+                    src_endpoint = parts[1]
+                    dst_endpoint = parts[2]
+                    direction_str = parts[3] if len(parts) > 3 else 'forward'
+                    
+                    src_ip, src_port = src_endpoint.rsplit(':', 1)
+                    dst_ip, dst_port = dst_endpoint.rsplit(':', 1)
+                    
+                    # 解析方向
+                    direction = ConnectionDirection.FORWARD if direction_str == 'forward' else ConnectionDirection.REVERSE
+                    
+                    # 创建TCP流信息（包含方向）
+                    self._streams[stream_id] = StreamInfo(
+                        stream_id=stream_id,
+                        src_ip=src_ip,
+                        dst_ip=dst_ip,
+                        src_port=int(src_port),
+                        dst_port=int(dst_port),
+                        protocol=protocol,
+                        direction=direction,  # Phase 2: 添加方向信息
+                        application_protocol=analysis.application_layer,
+                        first_seen=analysis.timestamp,
+                        last_seen=analysis.timestamp,
+                        # Phase 2: 添加序列号跟踪
+                        initial_seq=analysis.seq_number,
+                        last_seq=analysis.seq_number
+                    )
             else:
-                # 标准TCP/UDP流ID格式: PROTOCOL_src_ip:src_port_dst_ip:dst_port
+                # 标准UDP流ID格式: PROTOCOL_src_ip:src_port_dst_ip:dst_port
                 src_endpoint = parts[1]
                 dst_endpoint = parts[2]
                 
@@ -880,19 +905,43 @@ class PySharkAnalyzer(BaseStage):
         stream_info.total_bytes += analysis.payload_length
         stream_info.last_seen = analysis.timestamp
         
+        # Phase 2: 更新序列号跟踪（仅对TCP协议）
+        if stream_info.protocol == 'TCP' and analysis.seq_number is not None:
+            if stream_info.initial_seq is None:
+                stream_info.initial_seq = analysis.seq_number
+                stream_info.last_seq = analysis.seq_number
+            else:
+                # 更新序列号范围
+                stream_info.initial_seq = min(stream_info.initial_seq, analysis.seq_number)
+                if analysis.seq_number + analysis.payload_length > stream_info.last_seq:
+                    stream_info.last_seq = analysis.seq_number + analysis.payload_length
+        
         # 更新应用层协议信息
         if analysis.application_layer and not stream_info.application_protocol:
             stream_info.application_protocol = analysis.application_layer
     
-    def _generate_mask_table(self) -> StreamMaskTable:
-        """生成掩码表
+    def _calculate_sequence_ranges(self) -> None:
+        """计算序列号范围"""
+        for analysis in self._packet_analyses:
+            if analysis.seq_number is not None:
+                stream_id = analysis.stream_id
+                if stream_id not in self._streams:
+                    self._logger.warning(f"流{stream_id}缺少流信息，跳过")
+                    continue
+                
+                stream_info = self._streams[stream_id]
+                if stream_info.initial_seq is None or stream_info.last_seq is None:
+                    stream_info.initial_seq = analysis.seq_number
+                    stream_info.last_seq = analysis.seq_number
+                else:
+                    stream_info.initial_seq = min(stream_info.initial_seq, analysis.seq_number)
+                    stream_info.last_seq = max(stream_info.last_seq, analysis.seq_number)
+    
+    def _generate_sequence_mask_table(self) -> SequenceMaskTable:
+        """生成序列号掩码表"""
+        self._logger.info("开始生成序列号掩码表...")
         
-        Returns:
-            生成的流掩码表
-        """
-        self._logger.info("开始生成掩码表...")
-        
-        mask_table = StreamMaskTable()
+        sequence_mask_table = SequenceMaskTable()
         
         # 按流分组处理数据包分析结果
         stream_packets = defaultdict(list)
@@ -911,27 +960,27 @@ class PySharkAnalyzer(BaseStage):
             # 根据应用层协议生成不同的掩码策略（移除HTTP）
             if stream_info.application_protocol == 'TLS':
                 self._logger.info(f"使用TLS掩码策略处理流{stream_id}")
-                self._generate_tls_masks(mask_table, stream_id, packets)
+                self._generate_tls_masks(sequence_mask_table, stream_id, packets)
             elif stream_info.application_protocol in ['ICMP', 'DNS']:
                 # 新增：对ICMP和DNS协议使用完全保留策略
                 self._logger.info(f"使用完全保留策略处理{stream_info.application_protocol}流{stream_id}")
-                self._generate_preserve_all_masks(mask_table, stream_id, packets)
+                self._generate_preserve_all_masks(sequence_mask_table, stream_id, packets)
             else:
                 # 对于其他协议（包括原来的HTTP），使用通用策略
                 self._logger.info(f"使用通用掩码策略处理流{stream_id}，协议={stream_info.application_protocol}")
-                self._generate_generic_masks(mask_table, stream_id, packets)
+                self._generate_generic_masks(sequence_mask_table, stream_id, packets)
         
-        # 完成掩码表构建
-        mask_table.finalize()
+        # 完成序列号掩码表构建
+        sequence_mask_table.finalize()
         
-        self._logger.info(f"掩码表生成完成，包含{mask_table.get_total_entry_count()}个条目")
-        return mask_table
+        self._logger.info(f"序列号掩码表生成完成，包含{sequence_mask_table.get_total_entry_count()}个条目")
+        return sequence_mask_table
     
-    def _generate_tls_masks(self, mask_table: StreamMaskTable, stream_id: str, packets: List[PacketAnalysis]) -> None:
+    def _generate_tls_masks(self, sequence_mask_table: SequenceMaskTable, stream_id: str, packets: List[PacketAnalysis]) -> None:
         """为TLS流生成掩码 - 简化版本
         
         Args:
-            mask_table: 掩码表
+            sequence_mask_table: 序列号掩码表
             stream_id: 流ID
             packets: 该流的数据包分析结果列表
         """
@@ -990,8 +1039,33 @@ class PySharkAnalyzer(BaseStage):
                     f"为安全起见，将完全保留其载荷({packet.payload_length}字节)。"
                 )
             
+            # Phase 2: 确定掩码类型
+            mask_type = "tls_unknown"
+            if packet.tls_content_type == 22:
+                mask_type = "tls_handshake"
+            elif packet.tls_content_type == 23:
+                mask_type = "tls_application_data"
+            elif packet.tls_content_type in [20, 21, 24]:
+                type_names = {20: "tls_change_cipher_spec", 21: "tls_alert", 24: "tls_heartbeat"}
+                mask_type = type_names[packet.tls_content_type]
+            elif getattr(packet, 'tls_reassembled', False):
+                reassembly_info = getattr(packet, 'tls_reassembly_info', {})
+                record_type = reassembly_info.get('record_type', 'Unknown')
+                if record_type == 'ApplicationData':
+                    mask_type = "tls_application_data_reassembled"
+                else:
+                    mask_type = "tls_reassembled"
+            
             try:
-                mask_table.add_mask_range(stream_id, seq_start, seq_end, mask_spec)
+                # Phase 2: 使用正确的序列号掩码表API
+                sequence_mask_table.add_mask_range(
+                    tcp_stream_id=stream_id,
+                    seq_start=seq_start,
+                    seq_end=seq_end,
+                    mask_type=mask_type,
+                    mask_spec=mask_spec
+                )
+                self._logger.debug(f"成功添加TLS掩码条目: {mask_type} [{seq_start}:{seq_end})")
             except StreamMaskTableError as e:
                 self._logger.warning(f"添加TLS掩码条目失败: {e}")
     
@@ -1079,11 +1153,11 @@ class PySharkAnalyzer(BaseStage):
         self._logger.info(f"TLS流重组完成，标记了{sum(1 for p in sorted_packets if getattr(p, 'tls_reassembled', False))}个重组包")
         return sorted_packets
     
-    def _generate_preserve_all_masks(self, mask_table: StreamMaskTable, stream_id: str, packets: List[PacketAnalysis]) -> None:
+    def _generate_preserve_all_masks(self, sequence_mask_table: SequenceMaskTable, stream_id: str, packets: List[PacketAnalysis]) -> None:
         """为需要完全保留的协议生成掩码（用于ICMP/DNS等）
         
         Args:
-            mask_table: 掩码表
+            sequence_mask_table: 序列号掩码表
             stream_id: 流ID
             packets: 该流的数据包分析结果列表
         """
@@ -1098,13 +1172,13 @@ class PySharkAnalyzer(BaseStage):
             if packet.application_layer == 'ICMP':
                 # ICMP使用特殊的流ID格式，使用包编号作为序列号
                 try:
-                    entry = StreamMaskEntry(
-                        stream_id=stream_id,
+                    sequence_mask_table.add_mask_range(
+                        tcp_stream_id=stream_id,
                         seq_start=packet.packet_number,  # 使用包编号代替序列号
                         seq_end=packet.packet_number + packet.payload_length,
+                        mask_type="icmp_preserve_all",
                         mask_spec=mask_spec
                     )
-                    mask_table.add_entry(entry)
                     self._logger.info(f"ICMP包{packet.packet_number}: 完全保留{packet.payload_length}字节")
                 except StreamMaskTableError as e:
                     self._logger.warning(f"添加ICMP掩码条目失败: {e}")
@@ -1112,13 +1186,13 @@ class PySharkAnalyzer(BaseStage):
             elif packet.application_layer == 'DNS':
                 # DNS也没有序列号概念（基于UDP时），使用包编号作为序列号
                 try:
-                    entry = StreamMaskEntry(
-                        stream_id=stream_id,
+                    sequence_mask_table.add_mask_range(
+                        tcp_stream_id=stream_id,
                         seq_start=packet.packet_number,  # 使用包编号代替序列号
                         seq_end=packet.packet_number + packet.payload_length,
+                        mask_type="dns_preserve_all",
                         mask_spec=mask_spec
                     )
-                    mask_table.add_entry(entry)
                     self._logger.info(f"DNS包{packet.packet_number}: 完全保留{packet.payload_length}字节")
                 except StreamMaskTableError as e:
                     self._logger.warning(f"添加DNS掩码条目失败: {e}")
@@ -1128,16 +1202,22 @@ class PySharkAnalyzer(BaseStage):
                     seq_start = packet.seq_number
                     seq_end = seq_start + packet.payload_length
                     try:
-                        mask_table.add_mask_range(stream_id, seq_start, seq_end, mask_spec)
+                        sequence_mask_table.add_mask_range(
+                            tcp_stream_id=stream_id,
+                            seq_start=seq_start,
+                            seq_end=seq_end,
+                            mask_type=f"{packet.application_layer.lower()}_preserve_all",
+                            mask_spec=mask_spec
+                        )
                         self._logger.info(f"{packet.application_layer}包{packet.packet_number}: 完全保留{packet.payload_length}字节")
                     except StreamMaskTableError as e:
                         self._logger.warning(f"添加{packet.application_layer}掩码条目失败: {e}")
     
-    def _generate_generic_masks(self, mask_table: StreamMaskTable, stream_id: str, packets: List[PacketAnalysis]) -> None:
+    def _generate_generic_masks(self, sequence_mask_table: SequenceMaskTable, stream_id: str, packets: List[PacketAnalysis]) -> None:
         """为通用流生成掩码
         
         Args:
-            mask_table: 掩码表
+            sequence_mask_table: 序列号掩码表
             stream_id: 流ID
             packets: 该流的数据包分析结果列表
         """
@@ -1152,7 +1232,13 @@ class PySharkAnalyzer(BaseStage):
             mask_spec = KeepAll()
             
             try:
-                mask_table.add_mask_range(stream_id, seq_start, seq_end, mask_spec)
+                sequence_mask_table.add_mask_range(
+                    tcp_stream_id=stream_id,
+                    seq_start=seq_start,
+                    seq_end=seq_end,
+                    mask_type="generic_mask_after",
+                    mask_spec=mask_spec
+                )
             except StreamMaskTableError as e:
                 self._logger.warning(f"添加通用掩码条目失败: {e}")
     
@@ -1215,7 +1301,7 @@ class PySharkAnalyzer(BaseStage):
             'streams_identified': len(self._streams),
             'execution_duration_seconds': duration,
             'packets_per_second': packet_count / duration if duration > 0 else 0,
-            'mask_entries_generated': self._mask_table.get_total_entry_count() if self._mask_table else 0,
+            'mask_entries_generated': self._sequence_mask_table.get_total_entry_count() if self._sequence_mask_table else 0,
             'http_packets': sum(1 for a in self._packet_analyses if a.application_layer == 'HTTP'),
             'tls_packets': sum(1 for a in self._packet_analyses if a.application_layer == 'TLS'),
             'tls_change_cipher_spec_packets': tls_change_cipher_spec_count,
@@ -1292,4 +1378,4 @@ class PySharkAnalyzer(BaseStage):
         """
         self._cleanup_memory()
         self._streams.clear()
-        self._mask_table = None 
+        self._sequence_mask_table = None 
