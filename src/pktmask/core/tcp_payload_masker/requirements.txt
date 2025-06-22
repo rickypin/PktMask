@@ -1,0 +1,23 @@
+# 独立PCAP掩码处理器依赖包
+# 
+# 本文件定义了运行独立PCAP掩码处理器所需的Python依赖包
+# 使用方法: pip install -r requirements.txt
+
+# 核心依赖
+scapy>=2.4.0,<3.0.0
+
+# Python版本兼容性
+typing-extensions>=4.0.0;python_version<"3.8"
+
+# 可选性能依赖（用于性能监控和分析）
+# psutil>=5.0.0        # 系统资源监控
+# memory-profiler>=0.60.0  # 内存分析
+
+# 开发依赖（开发环境使用）
+# pytest>=6.0.0           # 测试框架
+# pytest-cov>=2.0.0       # 测试覆盖率
+# pytest-mock>=3.0.0      # Mock测试
+# black>=22.0.0            # 代码格式化
+# flake8>=4.0.0            # 代码检查
+# mypy>=0.950              # 类型检查
+# isort>=5.0.0             # 导入排序 
