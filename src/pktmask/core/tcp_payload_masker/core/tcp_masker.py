@@ -56,6 +56,8 @@ class TcpPayloadMasker:
             'total_packets_processed': 0,
             'total_packets_modified': 0,
             'total_bytes_masked': 0,
+            'total_bytes_kept': 0,
+            'total_tcp_streams_processed': 0,
             'total_processing_time': 0.0
         }
         
@@ -254,10 +256,10 @@ class TcpPayloadMasker:
             
             self.logger.info(f"成功读取 {total_packets} 个数据包")
             
-            # 阶段2: 应用掩码
-            self.logger.info("开始应用掩码...")
-            modified_packets, mask_stats = mask_applier.apply_masks_to_packets(
-                packets, mask_table
+            # 阶段2: 应用TCP保留范围掩码
+            self.logger.info("开始应用TCP保留范围掩码...")
+            modified_packets, keep_range_stats = keep_range_masker.apply_keep_ranges_to_packets(
+                packets, keep_range_table
             )
             
             # 阶段3: 写入输出文件
@@ -268,25 +270,26 @@ class TcpPayloadMasker:
             processing_time = time.time() - start_time
             
             # 生成结果
-            result = MaskingResult(
+            result = TcpMaskingResult(
                 success=True,
                 total_packets=total_packets,
-                modified_packets=mask_stats.get('packets_modified', 0),
-                bytes_masked=mask_stats.get('bytes_masked', 0),
-                processing_time=processing_time,
-                streams_processed=mask_table.get_streams_count()
+                modified_packets=keep_range_stats.get('tcp_packets_modified', 0),
+                bytes_masked=keep_range_stats.get('bytes_masked', 0),
+                bytes_kept=keep_range_stats.get('bytes_kept', 0),
+                tcp_streams_processed=keep_range_stats.get('tcp_streams_processed', 0),
+                processing_time=processing_time
             )
             
-            # 添加详细统计信息
-            result.add_statistic('mask_table_entries', mask_table.get_total_entries())
-            result.add_statistic('mask_table_streams', mask_table.get_streams_count())
-            result.add_statistic('mask_application_stats', mask_stats)
-            result.add_statistic('config_summary', self.config_manager.export_summary())
+            # 添加详细保留范围统计信息
+            result.add_keep_range_statistic('keep_range_table_entries', keep_range_table.get_total_entries())
+            result.add_keep_range_statistic('keep_range_table_streams', keep_range_table.get_streams_count())
+            result.add_keep_range_statistic('keep_ranges_applied', keep_range_stats.get('keep_ranges_applied', 0))
+            result.add_keep_range_statistic('protocol_detections', len(keep_range_stats.get('protocol_detections', {})))
             
             # 验证协议解析禁用效果
             if self.config_manager.should_disable_protocol_parsing():
-                protocol_stats = mask_applier.payload_extractor.verify_raw_layer_dominance(packets)
-                result.add_statistic('protocol_parsing_verification', protocol_stats)
+                protocol_stats = keep_range_masker.payload_extractor.verify_raw_layer_dominance(packets)
+                result.add_keep_range_statistic('protocol_parsing_verification', len(protocol_stats))
                 
                 if not protocol_stats.get('protocol_parsing_disabled', False):
                     self.logger.warning(
@@ -302,13 +305,14 @@ class TcpPayloadMasker:
             
             self.logger.error(f"核心处理失败: {e}")
             
-            return MaskingResult(
+            return TcpMaskingResult(
                 success=False,
                 total_packets=0,
                 modified_packets=0,
                 bytes_masked=0,
+                bytes_kept=0,
+                tcp_streams_processed=0,
                 processing_time=processing_time,
-                streams_processed=0,
                 error_message=str(e)
             )
     
@@ -341,12 +345,14 @@ class TcpPayloadMasker:
         """
         self.logger.info("⚠️  文件一致性验证占位符 - 将在Phase 3实现")
     
-    def _update_global_stats(self, result: MaskingResult) -> None:
+    def _update_global_stats(self, result: TcpMaskingResult) -> None:
         """更新全局统计信息"""
         self._processing_stats['total_files_processed'] += 1
         self._processing_stats['total_packets_processed'] += result.total_packets
         self._processing_stats['total_packets_modified'] += result.modified_packets
         self._processing_stats['total_bytes_masked'] += result.bytes_masked
+        self._processing_stats['total_bytes_kept'] = self._processing_stats.get('total_bytes_kept', 0) + result.bytes_kept
+        self._processing_stats['total_tcp_streams_processed'] = self._processing_stats.get('total_tcp_streams_processed', 0) + result.tcp_streams_processed
         self._processing_stats['total_processing_time'] += result.processing_time
     
     def get_global_statistics(self) -> Dict[str, Any]:
@@ -403,9 +409,10 @@ class TcpPayloadMasker:
         """字符串表示"""
         stats = self.get_global_statistics()
         return (
-            f"IndependentPcapMasker("
+            f"TcpPayloadMasker("
             f"files_processed={stats['total_files_processed']}, "
-            f"packets_processed={stats['total_packets_processed']}, "
+            f"tcp_packets_processed={stats['total_packets_processed']}, "
+            f"bytes_kept={stats.get('total_bytes_kept', 0)}, "
             f"config_hash={hash(str(self.config_manager.get_all()))}"
             f")"
         ) 
