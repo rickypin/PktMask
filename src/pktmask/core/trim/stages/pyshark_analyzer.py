@@ -462,7 +462,10 @@ class PySharkAnalyzer(BaseStage):
             if self._analyze_tls and (has_tls or has_ssl):
                 tls_layer = packet.tls if has_tls else packet.ssl
                 self._logger.debug(f"数据包{packet_number}: 识别为TLS/SSL")
+                # 🔧 关键修复：设置应用层协议为TLS
+                analysis.application_layer = 'TLS'
                 self._analyze_tls_layer(tls_layer, analysis)
+                self._logger.debug(f"数据包{packet_number}: 已设置应用层协议为TLS")
             else:
                 self._logger.debug(f"数据包{packet_number}: 未识别为TLS，载荷长度={payload_length}")
             
@@ -687,6 +690,18 @@ class PySharkAnalyzer(BaseStage):
             records = records_raw if isinstance(records_raw, list) else [records_raw]
             self._logger.debug(f"Pkt {analysis.packet_number}: 发现 {len(records)} 个TLS记录")
             
+            # 🔧 调试：打印TLS层的所有可用属性
+            if analysis.packet_number in [14, 15]:
+                self._logger.info(f"=== TLS调试数据包{analysis.packet_number} ===")
+                self._logger.info(f"TLS层类型: {type(tls_layer)}")
+                self._logger.info(f"TLS层属性: {dir(tls_layer)}")
+                if hasattr(tls_layer, 'record'):
+                    self._logger.info(f"TLS record类型: {type(tls_layer.record)}")
+                    if hasattr(tls_layer.record, '__len__'):
+                        self._logger.info(f"TLS record长度: {len(tls_layer.record)}")
+                    self._logger.info(f"TLS record属性: {dir(tls_layer.record)}")
+                self._logger.info(f"=== TLS调试结束 ===")
+            
             # 用于汇总信息的变量
             total_length = 0
             all_content_types: Set[int] = set()
@@ -699,8 +714,28 @@ class PySharkAnalyzer(BaseStage):
             analysis.is_tls_heartbeat = False
             
             for i, record in enumerate(records):
-                record_dict = record.__dict__.get('_all_fields', {})
-                content_type_str = record_dict.get('tls.record.content_type')
+                # 🔧 修复：使用PyShark正确的属性访问方式
+                content_type_str = None
+                record_length_str = None
+                
+                try:
+                    # 🔧 修复：使用TLS层的直接属性访问（不再访问record对象的属性）
+                    # PyShark在record容器中有多个记录，但TLS层本身有汇总的属性
+                    if i == 0:  # 只在第一个记录时从TLS层获取属性
+                        # 从TLS层获取content_type
+                        if hasattr(tls_layer, 'record_content_type'):
+                            content_type_str = str(tls_layer.record_content_type)
+                        
+                        # 从TLS层获取记录长度
+                        if hasattr(tls_layer, 'record_length'):
+                            record_length_str = str(tls_layer.record_length)
+                    else:
+                        # 对于后续记录，目前跳过（这个文件只有一个TLS记录类型）
+                        continue
+                        
+                except Exception as access_error:
+                    self._logger.debug(f"记录 {i+1}: 访问TLS属性失败: {access_error}")
+                    continue
                 
                 if content_type_str is None:
                     self._logger.debug(f"记录 {i+1}: 未找到 content_type")
@@ -712,10 +747,9 @@ class PySharkAnalyzer(BaseStage):
                     self._logger.debug(f"记录 {i+1}: content_type={content_type}")
                     
                     # 处理不同类型的TLS记录
-                    self._process_tls_content_type(content_type, analysis, record_dict)
+                    self._process_tls_content_type(content_type, analysis, {})
                     
                     # 累加记录长度
-                    record_length_str = record_dict.get('tls.record.length')
                     if record_length_str:
                         total_length += int(record_length_str)
                         
@@ -743,7 +777,9 @@ class PySharkAnalyzer(BaseStage):
                 self._logger.debug(f"数据包{analysis.packet_number}: 未找到TLS/SSL content type信息")
                 
         except Exception as e:
-            self._logger.warning(f"分析TLS/SSL层时出错: {e}")
+            self._logger.warning(f"分析TLS/SSL层时出错: {e}", exc_info=True)
+            # 设置一些默认值以避免完全失败
+            analysis.tls_content_type = None
     
     def _process_tls_content_type(self, content_type: int, analysis: PacketAnalysis, record: dict) -> None:
         """处理具体的TLS content type

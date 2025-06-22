@@ -31,7 +31,6 @@ wheels/
 Thumbs.db
 
 # Project specific
-*.pcap
-*.pcapng
+tests/samples/
 
 .venv/ 

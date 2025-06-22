@@ -379,12 +379,30 @@ class ScapyRewriter(BaseStage):
                 return packet
             
             # Phase 3: 使用新的序列号匹配机制
-            self._logger.info(f"【序列号掩码匹配】数据包{packet_number}: 流={stream_id}, 序列号={seq_number}, 载荷长度={len(payload)}")
+            self._logger.info(f"【序列号掩码匹配】数据包{packet_number}: 流={stream_id}, 绝对序列号={seq_number}, 载荷长度={len(payload)}")
             
-            # 使用SequenceMaskTable进行精确匹配
-            match_results = self._mask_table.match_sequence_range(stream_id, seq_number, len(payload))
+            # 关键修复：将绝对序列号转换为相对序列号以匹配PyShark生成的掩码表
+            # PyShark分析器使用相对序列号生成掩码表，Scapy必须使用相对序列号查找
+            lookup_seq_number = seq_number  # 默认使用原始序列号
             
-            self._logger.info(f"匹配到的掩码: {len(match_results)}个")
+            # 对于TCP流，尝试转换为相对序列号
+            if stream_id.startswith("TCP_"):
+                tcp_stream = self._stream_manager.get_stream_by_id(stream_id)
+                if tcp_stream and tcp_stream.initial_seq is not None:
+                    try:
+                        relative_seq = tcp_stream.get_relative_seq(seq_number)
+                        lookup_seq_number = relative_seq
+                        self._logger.info(f"数据包{packet_number}: 序列号转换 绝对={seq_number} -> 相对={relative_seq}")
+                    except Exception as e:
+                        self._logger.warning(f"数据包{packet_number}: 序列号转换失败，使用绝对序列号: {e}")
+                        lookup_seq_number = seq_number
+                else:
+                    self._logger.warning(f"数据包{packet_number}: 无TCP流信息或初始序列号，使用绝对序列号")
+            
+            # 使用SequenceMaskTable进行精确匹配（使用转换后的序列号）
+            match_results = self._mask_table.match_sequence_range(stream_id, lookup_seq_number, len(payload))
+            
+            self._logger.info(f"匹配到的掩码: {len(match_results)}个 (使用查找序列号={lookup_seq_number})")
             for i, result in enumerate(match_results):
                 if result.is_match:
                     self._logger.info(f"  匹配{i+1}: 偏移[{result.mask_start_offset}:{result.mask_end_offset}), "
