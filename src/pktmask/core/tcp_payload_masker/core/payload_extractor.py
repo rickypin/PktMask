@@ -10,7 +10,7 @@ from typing import Optional, Tuple, Dict, Any
 import logging
 from scapy.all import Packet, Raw, Ether, IP, IPv6, TCP, UDP
 
-from ..exceptions import ValidationError, IndependentMaskerError
+from ..exceptions import ValidationError, TcpPayloadMaskerError
 
 
 class PayloadExtractor:

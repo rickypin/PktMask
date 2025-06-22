@@ -548,7 +548,7 @@ class TcpPayloadMasker:
         
         # 按流ID分组处理
         stream_entries = {}
-        for entry in keep_range_table.entries:
+        for entry in keep_range_table.get_all_entries():
             stream_id = entry.stream_id
             if stream_id not in stream_entries:
                 stream_entries[stream_id] = []

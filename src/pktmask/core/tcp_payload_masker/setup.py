@@ -38,18 +38,18 @@ def get_requirements():
     return requirements
 
 setup(
-    name='independent-pcap-masker',
+    name='tcp-payload-masker',
     version=get_version(),
     author='PktMask开发团队',
     author_email='dev@pktmask.org',
     description='独立的PCAP掩码处理器，基于TCP序列号的精确字节级掩码',
     long_description=get_long_description(),
     long_description_content_type='text/markdown',
-    url='https://github.com/pktmask/independent-pcap-masker',
+    url='https://github.com/pktmask/tcp-payload-masker',
     project_urls={
-        'Bug Reports': 'https://github.com/pktmask/independent-pcap-masker/issues',
-        'Source': 'https://github.com/pktmask/independent-pcap-masker',
-        'Documentation': 'https://github.com/pktmask/independent-pcap-masker/docs',
+        'Bug Reports': 'https://github.com/pktmask/tcp-payload-masker/issues',
+        'Source': 'https://github.com/pktmask/tcp-payload-masker',
+        'Documentation': 'https://github.com/pktmask/tcp-payload-masker/docs',
     },
     packages=find_packages(),
     package_dir={'': '.'},
@@ -96,7 +96,7 @@ setup(
     keywords='pcap masking tcp sequence network security anonymization',
     include_package_data=True,
     package_data={
-        'pktmask.core.independent_pcap_masker': [
+        'pktmask.core.tcp_payload_masker': [
             'README.md',
             'LICENSE',
             '*.txt'
@@ -104,7 +104,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'independent-pcap-masker=pktmask.core.independent_pcap_masker.cli:main',
+            'tcp-payload-masker=pktmask.core.tcp_payload_masker.cli:main',
         ],
     },
     zip_safe=False,

@@ -360,6 +360,14 @@ class TcpKeepRangeTable:
         """获取所有TCP流ID"""
         return list(self._stream_index.keys())
     
+    def get_all_entries(self) -> List[TcpKeepRangeEntry]:
+        """获取所有保留范围条目
+        
+        Returns:
+            所有保留范围条目的副本列表
+        """
+        return self._entries.copy()
+    
     def clear(self) -> None:
         """清空所有保留范围条目"""
         self._entries.clear()
