@@ -96,6 +96,71 @@ class TcpKeepRangeEntry:
     def get_total_keep_bytes(self) -> int:
         """计算总保留字节数"""
         return sum(end - start for start, end in self.keep_ranges)
+    
+    def validate(self) -> bool:
+        """验证条目的有效性
+        
+        Returns:
+            bool: 如果条目有效返回True，否则返回False
+        """
+        try:
+            # 序列号范围验证
+            if self.sequence_start >= self.sequence_end:
+                return False
+            
+            # 保留范围验证
+            for start, end in self.keep_ranges:
+                if start >= end or start < 0:
+                    return False
+            
+            # 流ID格式验证
+            if not self.stream_id or not isinstance(self.stream_id, str):
+                return False
+                
+            return True
+        except Exception:
+            return False
+    
+    def merge_keep_ranges(self) -> 'TcpKeepRangeEntry':
+        """合并重叠的保留范围，返回新的条目
+        
+        Returns:
+            TcpKeepRangeEntry: 合并后的新条目
+        """
+        merged_ranges = self._normalize_keep_ranges(self.keep_ranges.copy())
+        
+        return TcpKeepRangeEntry(
+            stream_id=self.stream_id,
+            sequence_start=self.sequence_start,
+            sequence_end=self.sequence_end,
+            keep_ranges=merged_ranges,
+            protocol_hint=self.protocol_hint
+        )
+    
+    def get_keep_range_summary(self) -> Dict[str, Any]:
+        """获取保留范围摘要信息
+        
+        Returns:
+            Dict[str, Any]: 包含保留范围详细信息的字典
+        """
+        total_bytes = self.get_total_keep_bytes()
+        range_count = len(self.keep_ranges)
+        
+        # 计算范围密度（保留字节数 / 序列号范围长度）
+        seq_length = self.sequence_end - self.sequence_start
+        density = total_bytes / seq_length if seq_length > 0 else 0
+        
+        return {
+            'stream_id': self.stream_id,
+            'sequence_range': (self.sequence_start, self.sequence_end),
+            'sequence_length': seq_length,
+            'keep_ranges': self.keep_ranges.copy(),
+            'range_count': range_count,
+            'total_keep_bytes': total_bytes,
+            'keep_density': density,
+            'protocol_hint': self.protocol_hint,
+            'is_valid': self.validate()
+        }
 
 
 @dataclass
@@ -400,4 +465,58 @@ class TcpKeepRangeTable:
                         "(可能是正常的TCP重组)"
                     )
         
-        return issues 
+        return issues
+    
+    def export_to_dict(self) -> Dict[str, Any]:
+        """导出保留范围表为字典格式
+        
+        Returns:
+            Dict[str, Any]: 包含所有条目的字典
+        """
+        return {
+            'version': '2.0.0',
+            'type': 'TcpKeepRangeTable',
+            'entries': [
+                {
+                    'stream_id': entry.stream_id,
+                    'sequence_start': entry.sequence_start,
+                    'sequence_end': entry.sequence_end,
+                    'keep_ranges': entry.keep_ranges,
+                    'protocol_hint': entry.protocol_hint
+                }
+                for entry in self._entries
+            ],
+            'statistics': self.get_statistics()
+        }
+    
+    def import_from_dict(self, data: Dict[str, Any]) -> None:
+        """从字典格式导入保留范围表
+        
+        Args:
+            data: 包含保留范围条目的字典
+            
+        Raises:
+            ValueError: 数据格式无效时
+        """
+        if data.get('type') != 'TcpKeepRangeTable':
+            raise ValueError(f"数据类型不匹配: 期待TcpKeepRangeTable，得到{data.get('type')}")
+        
+        # 清空现有数据
+        self.clear()
+        
+        # 导入条目
+        entries_data = data.get('entries', [])
+        for entry_data in entries_data:
+            try:
+                entry = TcpKeepRangeEntry(
+                    stream_id=entry_data['stream_id'],
+                    sequence_start=entry_data['sequence_start'],
+                    sequence_end=entry_data['sequence_end'],
+                    keep_ranges=entry_data['keep_ranges'],
+                    protocol_hint=entry_data.get('protocol_hint')
+                )
+                self.add_keep_range_entry(entry)
+            except (KeyError, ValueError) as e:
+                raise ValueError(f"无效的条目数据: {entry_data}, 错误: {e}")
+        
+        self.logger.info(f"成功导入 {len(entries_data)} 个TCP保留范围条目") 

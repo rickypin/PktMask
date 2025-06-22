@@ -1,40 +1,43 @@
 """
-Scapy独立掩码处理器模块
+TCP载荷掩码处理器模块
 
-这是一个完全独立的PCAP掩码处理器，可以脱离PktMask主程序运行。
-提供基于TCP序列号的字节级掩码处理功能。
+这是一个专用于TCP载荷的保留范围掩码处理器。
+采用隐私优先设计理念：默认掩码所有TCP载荷，只保留指定的协议头部范围。
 
 主要特性：
-- 零架构依赖：不依赖BaseStage、StageContext等
-- API驱动：提供标准化的函数调用接口  
-- 功能单一：纯粹的序列号匹配和字节级掩码
-- 完全测试：可独立进行单元测试和集成测试
+- TCP专用：只处理TCP协议，不支持其他协议
+- 保留范围：记录要保留的字节范围，其余全部掩码为0x00
+- 隐私优先：默认掩码所有载荷，最大化隐私保护
+- 协议保留：支持TLS/HTTP/SSH等协议头部自动保留
 """
 
-from .core.masker import IndependentPcapMasker
-from .core.models import MaskEntry, MaskingResult, SequenceMaskTable
+from .core.tcp_masker import TcpPayloadMasker
+from .core.keep_range_models import TcpKeepRangeEntry, TcpMaskingResult, TcpKeepRangeTable
+from .core.keep_range_applier import TcpPayloadKeepRangeMasker, TcpProtocolHintGenerator
 from .exceptions import (
-    IndependentMaskerError,
+    TcpPayloadMaskerError,
     ProtocolBindingError,
     FileConsistencyError,
-    MaskApplicationError,
+    TcpKeepRangeApplicationError,
     ValidationError,
     ConfigurationError
 )
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 __author__ = "PktMask Team"
 
 # 主要API导出
 __all__ = [
-    'IndependentPcapMasker',
-    'MaskEntry', 
-    'MaskingResult',
-    'SequenceMaskTable',
-    'IndependentMaskerError',
+    'TcpPayloadMasker',
+    'TcpKeepRangeEntry', 
+    'TcpMaskingResult',
+    'TcpKeepRangeTable',
+    'TcpPayloadKeepRangeMasker',
+    'TcpProtocolHintGenerator',
+    'TcpPayloadMaskerError',
     'ProtocolBindingError',
     'FileConsistencyError',
-    'MaskApplicationError',
+    'TcpKeepRangeApplicationError',
     'ValidationError',
     'ConfigurationError'
 ] 
