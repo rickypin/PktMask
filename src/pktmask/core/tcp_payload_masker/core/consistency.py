@@ -1,405 +1,437 @@
 """
-一致性验证器
+TCP载荷掩码器 - 一致性验证器
 
-验证掩码处理前后PCAP文件的一致性，确保除掩码字节外完全一致。
+提供输入输出文件一致性验证功能，确保掩码操作的正确性。
+这是Phase 1.4实现的一部分：API封装和文件处理。
 """
 
-import os
 import logging
-import hashlib
-from typing import List, Dict, Any, Optional, Tuple, Set
-from pathlib import Path
-import time
+import os
+from typing import List, Dict, Tuple, Optional
+from scapy.all import PcapReader, rdpcap, raw
 
-try:
-    from scapy.all import Packet, rdpcap
-    from scapy.plist import PacketList
-except ImportError as e:
-    raise ImportError(f"无法导入Scapy: {e}. 请安装: pip install scapy")
+from ..api.types import MaskingRecipe, PacketMaskInstruction
+from ...trim.models.mask_spec import MaskAfter, MaskRange, KeepAll
 
-from ..exceptions import FileConsistencyError, ValidationError
+logger = logging.getLogger(__name__)
 
 
 class ConsistencyVerifier:
     """一致性验证器
     
-    验证掩码处理前后PCAP文件的一致性，确保：
-    1. 文件结构完全一致
-    2. 数据包数量和顺序相同
-    3. 时间戳精度保持不变
-    4. 除掩码字节外的所有字节相同
-    5. 数据包头部完全保持
+    验证输入输出文件在除掩码区域外的其他部分保持完全一致。
     """
     
-    def __init__(self, logger: Optional[logging.Logger] = None):
-        """初始化一致性验证器
-        
-        Args:
-            logger: 可选的日志记录器
-        """
-        self.logger = logger or logging.getLogger(__name__)
-        
-        # 验证配置
-        self.verify_timestamps = True
-        self.verify_packet_order = True
-        self.verify_headers = True
-        self.verify_payload_structure = True
-        
-        # 容错设置
-        self.timestamp_tolerance = 1e-9  # 纳秒级时间戳容差
-        self.checksum_skip = True  # 跳过校验和验证（掩码后会改变）
-        
-        # 统计信息
-        self.last_verification_stats = {}
+    def __init__(self):
+        self.verification_errors: List[str] = []
+        self.statistics = {
+            'total_packets': 0,
+            'verified_packets': 0,
+            'modified_packets': 0,
+            'error_packets': 0,
+            'skipped_packets': 0
+        }
     
-    def verify_file_consistency(
+    def verify_files(
         self,
-        original_path: str,
-        modified_path: str,
-        mask_applied_ranges: List[Tuple[int, int, int]] = None
-    ) -> bool:
-        """验证文件一致性
+        input_file: str,
+        output_file: str,
+        masking_recipe: MaskingRecipe,
+        max_packets: Optional[int] = None
+    ) -> List[str]:
+        """
+        验证输入输出文件的一致性
         
         Args:
-            original_path: 原始文件路径
-            modified_path: 修改后文件路径
-            mask_applied_ranges: 已应用掩码的范围列表 [(packet_idx, start, end), ...]
+            input_file: 输入文件路径
+            output_file: 输出文件路径  
+            masking_recipe: 使用的掩码配方
+            max_packets: 最大验证包数（None表示验证所有包）
             
         Returns:
-            bool: 验证是否通过
-            
-        Raises:
-            ValidationError: 输入参数无效
-            FileConsistencyError: 验证失败
+            List[str]: 发现的不一致错误列表
         """
-        start_time = time.time()
+        logger.info(f"开始验证文件一致性: {input_file} vs {output_file}")
+        
+        self.verification_errors = []
+        self._reset_statistics()
         
         try:
-            self.logger.info(f"🔍 开始文件一致性验证")
-            self.logger.info(f"   📁 原始文件: {original_path}")
-            self.logger.info(f"   📁 修改文件: {modified_path}")
+            # 1. 基础文件检查
+            basic_errors = self._verify_basic_files(input_file, output_file)
+            if basic_errors:
+                self.verification_errors.extend(basic_errors)
+                return self.verification_errors
             
-            # 阶段1: 基础文件验证
-            basic_consistent = self._verify_basic_file_properties(original_path, modified_path)
-            if not basic_consistent:
-                return False
-            
-            # 阶段2: 读取数据包
-            original_packets = self._load_packets_safely(original_path, "原始")
-            modified_packets = self._load_packets_safely(modified_path, "修改")
-            
-            # 阶段3: 数据包级验证
-            packets_consistent = self._verify_packet_consistency(
-                original_packets, modified_packets, mask_applied_ranges
+            # 2. 包级别一致性验证
+            packet_errors = self._verify_packet_consistency(
+                input_file, 
+                output_file, 
+                masking_recipe,
+                max_packets
             )
+            self.verification_errors.extend(packet_errors)
             
-            # 阶段4: 生成验证报告
-            verification_time = time.time() - start_time
-            self._generate_verification_stats(
-                original_packets, modified_packets, 
-                mask_applied_ranges, verification_time
-            )
+            # 3. 记录验证结果
+            self._log_verification_results()
             
-            if packets_consistent:
-                self.logger.info(f"✅ 文件一致性验证通过，耗时 {verification_time:.3f}s")
-                return True
-            else:
-                self.logger.error(f"❌ 文件一致性验证失败，耗时 {verification_time:.3f}s")
-                return False
+            return self.verification_errors
             
         except Exception as e:
-            self.logger.error(f"❌ 一致性验证过程中发生错误: {e}")
-            raise FileConsistencyError(f"一致性验证失败: {e}") from e
+            error_msg = f"一致性验证过程中发生异常: {str(e)}"
+            logger.error(error_msg)
+            self.verification_errors.append(error_msg)
+            return self.verification_errors
     
-    def compare_packet_metadata(
-        self,
-        original: Packet,
-        modified: Packet,
-        packet_index: int,
-        mask_ranges: List[Tuple[int, int]] = None
-    ) -> bool:
-        """比较数据包元数据
+    def get_verification_statistics(self) -> Dict:
+        """获取验证统计信息"""
+        return self.statistics.copy()
+    
+    def _verify_basic_files(self, input_file: str, output_file: str) -> List[str]:
+        """验证文件基础信息"""
+        errors = []
         
-        Args:
-            original: 原始数据包
-            modified: 修改后数据包
-            packet_index: 数据包索引
-            mask_ranges: 该数据包的掩码范围 [(start, end), ...]
-            
-        Returns:
-            bool: 元数据是否一致
-        """
-        try:
-            # 验证时间戳
-            if self.verify_timestamps:
-                if not self._compare_timestamps(original, modified, packet_index):
-                    return False
-            
-            # 验证包大小
-            original_size = len(bytes(original))
-            modified_size = len(bytes(modified))
-            
-            if original_size != modified_size:
-                self.logger.error(
-                    f"包 {packet_index} 大小不一致: {original_size} vs {modified_size}"
-                )
-                return False
-            
-            # 验证头部区域（非载荷部分）
-            if self.verify_headers:
-                if not self._compare_packet_headers(original, modified, packet_index):
-                    return False
-            
-            # 验证载荷区域（考虑掩码范围）
-            if self.verify_payload_structure:
-                if not self._compare_packet_payload(
-                    original, modified, packet_index, mask_ranges or []
-                ):
-                    return False
-            
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"比较包 {packet_index} 元数据时发生错误: {e}")
-            return False
-    
-    def calculate_file_hash(self, file_path: str, exclude_ranges: List[Tuple[int, int]] = None) -> str:
-        """计算文件哈希值（排除指定范围）
+        # 检查输出文件是否存在
+        if not os.path.exists(output_file):
+            errors.append(f"输出文件不存在: {output_file}")
+            return errors
         
-        Args:
-            file_path: 文件路径
-            exclude_ranges: 排除的字节范围
-            
-        Returns:
-            str: SHA256哈希值
-        """
-        try:
-            hasher = hashlib.sha256()
-            
-            with open(file_path, 'rb') as f:
-                content = f.read()
-            
-            if exclude_ranges:
-                # 创建掩码内容的副本
-                masked_content = bytearray(content)
-                for start, end in exclude_ranges:
-                    if 0 <= start < len(masked_content) and start < end:
-                        actual_end = min(end, len(masked_content))
-                        masked_content[start:actual_end] = b'\x00' * (actual_end - start)
-                content = bytes(masked_content)
-            
-            hasher.update(content)
-            return hasher.hexdigest()
-            
-        except Exception as e:
-            self.logger.error(f"计算文件哈希失败: {e}")
-            return ""
-    
-    def _verify_basic_file_properties(self, original_path: str, modified_path: str) -> bool:
-        """验证基础文件属性"""
-        try:
-            # 检查文件存在性
-            if not os.path.exists(original_path):
-                raise ValidationError(f"原始文件不存在: {original_path}")
-            
-            if not os.path.exists(modified_path):
-                raise ValidationError(f"修改文件不存在: {modified_path}")
-            
-            # 获取文件信息
-            original_stat = os.stat(original_path)
-            modified_stat = os.stat(modified_path)
-            
-            # 验证文件大小（应该相同或非常接近）
-            size_diff = abs(original_stat.st_size - modified_stat.st_size)
-            if size_diff > 1024:  # 允许1KB的差异（元数据可能略有不同）
-                self.logger.warning(f"文件大小差异较大: {size_diff} bytes")
-            
-            # 验证文件格式
-            original_ext = Path(original_path).suffix.lower()
-            modified_ext = Path(modified_path).suffix.lower()
-            
-            if original_ext != modified_ext:
-                raise ValidationError(f"文件格式不一致: {original_ext} vs {modified_ext}")
-            
-            self.logger.debug("✅ 基础文件属性验证通过")
-            return True
-            
-        except (ValidationError, FileConsistencyError) as e:
-            self.logger.error(f"基础文件属性验证失败: {e}")
-            # 不要只是重新抛出，而是转换为FileConsistencyError
-            raise FileConsistencyError(f"基础文件属性验证失败: {e}") from e
-        except Exception as e:
-            self.logger.error(f"基础文件属性验证失败: {e}")
-            return False
-    
-    def _load_packets_safely(self, file_path: str, file_type: str) -> List[Packet]:
-        """安全加载数据包"""
-        try:
-            self.logger.debug(f"📖 加载{file_type}文件数据包: {file_path}")
-            
-            packets = rdpcap(file_path)
-            
-            if not isinstance(packets, (list, PacketList)):
-                raise FileConsistencyError(f"{file_type}文件数据格式异常: {type(packets)}")
-            
-            packet_count = len(packets)
-            self.logger.debug(f"✅ 成功加载{file_type}文件 {packet_count} 个数据包")
-            
-            return list(packets)
-            
-        except Exception as e:
-            self.logger.error(f"加载{file_type}文件失败: {e}")
-            raise FileConsistencyError(f"无法加载{file_type}文件: {e}") from e
+        # 检查文件可读性
+        if not os.access(input_file, os.R_OK):
+            errors.append(f"输入文件不可读: {input_file}")
+        
+        if not os.access(output_file, os.R_OK):
+            errors.append(f"输出文件不可读: {output_file}")
+        
+        return errors
     
     def _verify_packet_consistency(
         self,
-        original_packets: List[Packet],
-        modified_packets: List[Packet],
-        mask_applied_ranges: Optional[List[Tuple[int, int, int]]] = None
-    ) -> bool:
-        """验证数据包一致性"""
+        input_file: str,
+        output_file: str,
+        masking_recipe: MaskingRecipe,
+        max_packets: Optional[int]
+    ) -> List[str]:
+        """验证包级别的一致性"""
+        errors = []
+        
         try:
-            # 验证数据包数量
-            if len(original_packets) != len(modified_packets):
-                self.logger.error(
-                    f"数据包数量不一致: 原始 {len(original_packets)} vs 修改 {len(modified_packets)}"
-                )
-                return False
-            
-            packet_count = len(original_packets)
-            self.logger.debug(f"开始验证 {packet_count} 个数据包的一致性")
-            
-            # 建立掩码范围索引
-            mask_ranges_by_packet = {}
-            if mask_applied_ranges:
-                for packet_idx, start, end in mask_applied_ranges:
-                    if packet_idx not in mask_ranges_by_packet:
-                        mask_ranges_by_packet[packet_idx] = []
-                    mask_ranges_by_packet[packet_idx].append((start, end))
-            
-            # 逐包验证
-            inconsistent_packets = []
-            
-            for i, (original, modified) in enumerate(zip(original_packets, modified_packets)):
-                is_consistent = self.compare_packet_metadata(
-                    original, modified, i, mask_ranges_by_packet.get(i, [])
-                )
+            # 使用PcapReader流式读取，避免大文件内存问题
+            with PcapReader(input_file) as input_reader, \
+                 PcapReader(output_file) as output_reader:
                 
-                if not is_consistent:
-                    inconsistent_packets.append(i)
-                    if len(inconsistent_packets) > 10:  # 限制错误报告数量
-                        self.logger.warning(f"发现过多不一致的数据包，停止详细检查")
+                for packet_index, (input_packet, output_packet) in enumerate(zip(input_reader, output_reader)):
+                    # 检查是否达到最大验证数量
+                    if max_packets and packet_index >= max_packets:
+                        logger.info(f"达到最大验证包数限制: {max_packets}")
                         break
-            
-            if inconsistent_packets:
-                self.logger.error(f"发现 {len(inconsistent_packets)} 个不一致的数据包: {inconsistent_packets[:10]}")
-                return False
-            else:
-                self.logger.info(f"✅ 所有 {packet_count} 个数据包验证通过")
-                return True
-            
-        except Exception as e:
-            self.logger.error(f"数据包一致性验证失败: {e}")
-            return False
-    
-    def _compare_timestamps(self, original: Packet, modified: Packet, index: int) -> bool:
-        """比较时间戳"""
-        try:
-            original_time = getattr(original, 'time', None)
-            modified_time = getattr(modified, 'time', None)
-            
-            if original_time is None and modified_time is None:
-                return True  # 都没有时间戳
-            
-            if original_time is None or modified_time is None:
-                self.logger.error(f"包 {index} 时间戳存在性不一致")
-                return False
-            
-            time_diff = abs(float(original_time) - float(modified_time))
-            if time_diff > self.timestamp_tolerance:
-                self.logger.error(
-                    f"包 {index} 时间戳不一致: {original_time} vs {modified_time} (差异: {time_diff})"
+                    
+                    self.statistics['total_packets'] += 1
+                    
+                    try:
+                        # 验证单个包的一致性
+                        packet_errors = self._verify_single_packet(
+                            input_packet,
+                            output_packet,
+                            packet_index,
+                            masking_recipe
+                        )
+                        
+                        if packet_errors:
+                            errors.extend(packet_errors)
+                            self.statistics['error_packets'] += 1
+                        else:
+                            self.statistics['verified_packets'] += 1
+                            
+                    except Exception as e:
+                        error_msg = f"验证包{packet_index}时出错: {str(e)}"
+                        errors.append(error_msg)
+                        self.statistics['error_packets'] += 1
+                        logger.debug(error_msg)
+                
+                # 检查是否有额外的包
+                extra_errors = self._check_extra_packets(
+                    input_reader, output_reader, packet_index + 1
                 )
-                return False
-            
-            return True
-            
+                errors.extend(extra_errors)
+                
         except Exception as e:
-            self.logger.warning(f"比较包 {index} 时间戳时发生警告: {e}")
-            return True  # 时间戳比较失败时不认为是致命错误
+            errors.append(f"读取PCAP文件时出错: {str(e)}")
+        
+        return errors
     
-    def _compare_packet_headers(self, original: Packet, modified: Packet, index: int) -> bool:
-        """比较数据包头部"""
-        try:
-            # 获取原始字节
-            original_bytes = bytes(original)
-            modified_bytes = bytes(modified)
-            
-            # 比较以太网头部（14字节）
-            if len(original_bytes) >= 14 and len(modified_bytes) >= 14:
-                eth_consistent = original_bytes[:14] == modified_bytes[:14]
-                if not eth_consistent:
-                    self.logger.error(f"包 {index} 以太网头部不一致")
-                    return False
-            
-            return True
-            
-        except Exception as e:
-            self.logger.warning(f"比较包 {index} 头部时发生警告: {e}")
-            return True
-    
-    def _compare_packet_payload(
+    def _verify_single_packet(
         self,
-        original: Packet,
-        modified: Packet,
-        index: int,
-        mask_ranges: List[Tuple[int, int]]
-    ) -> bool:
-        """比较数据包载荷"""
+        input_packet,
+        output_packet,
+        packet_index: int,
+        masking_recipe: MaskingRecipe
+    ) -> List[str]:
+        """验证单个包的一致性"""
+        errors = []
+        
         try:
-            # 基础验证 - 简化版本
-            original_bytes = bytes(original)
-            modified_bytes = bytes(modified)
+            # 获取包的时间戳
+            input_timestamp = str(input_packet.time)
+            output_timestamp = str(output_packet.time)
             
-            if len(original_bytes) != len(modified_bytes):
-                return False
+            # 验证时间戳一致性
+            if abs(float(input_timestamp) - float(output_timestamp)) > 0.000001:
+                errors.append(f"包{packet_index}时间戳不一致")
+                return errors
             
-            return True
+            # 检查是否有掩码指令
+            instruction = masking_recipe.get_instruction_for_packet(packet_index, input_timestamp)
             
+            if instruction:
+                # 有掩码的包，验证掩码应用是否正确
+                mask_errors = self._verify_masked_packet(
+                    input_packet,
+                    output_packet,
+                    instruction,
+                    packet_index
+                )
+                errors.extend(mask_errors)
+                if not mask_errors:
+                    self.statistics['modified_packets'] += 1
+            else:
+                # 无掩码的包，应该完全一致
+                if raw(input_packet) != raw(output_packet):
+                    errors.append(f"非掩码包{packet_index}内容不一致")
+                    
         except Exception as e:
-            self.logger.warning(f"比较包 {index} 载荷时发生警告: {e}")
-            return True
+            errors.append(f"包{packet_index}验证过程出错: {str(e)}")
+        
+        return errors
     
-    def _generate_verification_stats(
+    def _verify_masked_packet(
         self,
-        original_packets: List[Packet],
-        modified_packets: List[Packet],
-        mask_applied_ranges: Optional[List[Tuple[int, int, int]]],
-        verification_time: float
-    ) -> None:
-        """生成验证统计信息"""
+        input_packet,
+        output_packet,
+        instruction: PacketMaskInstruction,
+        packet_index: int
+    ) -> List[str]:
+        """验证掩码包的正确性"""
+        errors = []
+        
         try:
-            stats = {
-                'verification_time': verification_time,
-                'original_packet_count': len(original_packets),
-                'modified_packet_count': len(modified_packets),
-                'packet_count_consistent': len(original_packets) == len(modified_packets),
-                'mask_ranges_count': len(mask_applied_ranges) if mask_applied_ranges else 0,
-                'affected_packets': len(set(r[0] for r in mask_applied_ranges)) if mask_applied_ranges else 0,
-                'total_masked_bytes': sum(r[2] - r[1] for r in mask_applied_ranges) if mask_applied_ranges else 0
-            }
+            input_raw = raw(input_packet)
+            output_raw = raw(output_packet)
             
-            self.last_verification_stats = stats
+            # 验证包长度一致性
+            if len(input_raw) != len(output_raw):
+                errors.append(f"掩码包{packet_index}长度不一致: {len(input_raw)} vs {len(output_raw)}")
+                return errors
             
-            self.logger.info("📊 验证统计信息:")
-            self.logger.info(f"   ⏱️ 验证时间: {verification_time:.3f}s")
-            self.logger.info(f"   📦 数据包数量: {stats['original_packet_count']}")
-            self.logger.info(f"   🎯 受影响包数: {stats['affected_packets']}")
-            self.logger.info(f"   🔒 掩码字节数: {stats['total_masked_bytes']:,}")
+            payload_offset = instruction.payload_offset
+            mask_spec = instruction.mask_spec
+            
+            # 验证头部（载荷偏移之前）完全一致
+            if payload_offset > 0:
+                input_header = input_raw[:payload_offset]
+                output_header = output_raw[:payload_offset]
+                
+                if input_header != output_header:
+                    errors.append(f"掩码包{packet_index}头部不一致（偏移{payload_offset}之前）")
+                    return errors
+            
+            # 验证掩码应用的正确性
+            if payload_offset < len(input_raw):
+                mask_errors = self._verify_mask_application(
+                    input_raw[payload_offset:],
+                    output_raw[payload_offset:],
+                    mask_spec,
+                    packet_index
+                )
+                errors.extend(mask_errors)
             
         except Exception as e:
-            self.logger.warning(f"生成验证统计时发生警告: {e}")
+            errors.append(f"掩码包{packet_index}验证过程出错: {str(e)}")
+        
+        return errors
     
-    def get_last_verification_stats(self) -> Dict[str, Any]:
-        """获取最后一次验证的统计信息"""
-        return self.last_verification_stats.copy() 
+    def _verify_mask_application(
+        self,
+        input_payload: bytes,
+        output_payload: bytes,
+        mask_spec,
+        packet_index: int
+    ) -> List[str]:
+        """验证掩码应用的正确性"""
+        errors = []
+        
+        try:
+            if isinstance(mask_spec, KeepAll):
+                # KeepAll：载荷应该完全一致
+                if input_payload != output_payload:
+                    errors.append(f"包{packet_index} KeepAll掩码应用错误：载荷不一致")
+                    
+            elif isinstance(mask_spec, MaskAfter):
+                # MaskAfter：保留前N字节，后续字节应该被置零
+                keep_bytes = mask_spec.keep_bytes
+                
+                if keep_bytes > 0 and len(input_payload) > 0:
+                    # 验证保留部分
+                    keep_end = min(keep_bytes, len(input_payload))
+                    if input_payload[:keep_end] != output_payload[:keep_end]:
+                        errors.append(f"包{packet_index} MaskAfter保留部分不一致")
+                
+                # 验证掩码部分
+                if len(input_payload) > keep_bytes:
+                    mask_start = keep_bytes
+                    expected_mask = b'\x00' * (len(input_payload) - mask_start)
+                    actual_mask = output_payload[mask_start:]
+                    
+                    if expected_mask != actual_mask:
+                        errors.append(f"包{packet_index} MaskAfter掩码部分不正确")
+                        
+            elif isinstance(mask_spec, MaskRange):
+                # MaskRange：指定范围被置零，其他部分保持不变
+                expected_output = bytearray(input_payload)
+                
+                for range_spec in mask_spec.ranges:
+                    start = range_spec.start
+                    length = range_spec.length
+                    end = min(start + length, len(expected_output))
+                    
+                    if start < len(expected_output):
+                        expected_output[start:end] = b'\x00' * (end - start)
+                
+                if bytes(expected_output) != output_payload:
+                    errors.append(f"包{packet_index} MaskRange掩码应用错误")
+            else:
+                errors.append(f"包{packet_index}使用了未知的掩码类型: {type(mask_spec)}")
+                
+        except Exception as e:
+            errors.append(f"包{packet_index}掩码验证过程出错: {str(e)}")
+        
+        return errors
+    
+    def _check_extra_packets(
+        self,
+        input_reader,
+        output_reader,
+        current_index: int
+    ) -> List[str]:
+        """检查是否有额外的包"""
+        errors = []
+        
+        try:
+            # 检查输入文件是否还有额外包
+            input_extra = 0
+            for _ in input_reader:
+                input_extra += 1
+            
+            # 检查输出文件是否还有额外包
+            output_extra = 0
+            for _ in output_reader:
+                output_extra += 1
+            
+            if input_extra > 0:
+                errors.append(f"输入文件在索引{current_index}后还有{input_extra}个额外包")
+            
+            if output_extra > 0:
+                errors.append(f"输出文件在索引{current_index}后还有{output_extra}个额外包")
+                
+        except Exception as e:
+            errors.append(f"检查额外包时出错: {str(e)}")
+        
+        return errors
+    
+    def _reset_statistics(self):
+        """重置统计信息"""
+        self.statistics = {
+            'total_packets': 0,
+            'verified_packets': 0,
+            'modified_packets': 0,
+            'error_packets': 0,
+            'skipped_packets': 0
+        }
+    
+    def _log_verification_results(self):
+        """记录验证结果"""
+        total = self.statistics['total_packets']
+        verified = self.statistics['verified_packets']
+        modified = self.statistics['modified_packets']
+        errors = self.statistics['error_packets']
+        
+        if not self.verification_errors:
+            logger.info(f"一致性验证通过: 总计{total}包，验证{verified}包，修改{modified}包")
+        else:
+            logger.warning(
+                f"一致性验证发现{len(self.verification_errors)}个问题: "
+                f"总计{total}包，验证{verified}包，修改{modified}包，错误{errors}包"
+            )
+
+
+def verify_file_consistency(
+    input_file: str,
+    output_file: str,
+    masking_recipe: MaskingRecipe,
+    max_packets: Optional[int] = None
+) -> List[str]:
+    """
+    验证输入输出文件的一致性（便捷函数）
+    
+    Args:
+        input_file: 输入文件路径
+        output_file: 输出文件路径
+        masking_recipe: 使用的掩码配方
+        max_packets: 最大验证包数
+        
+    Returns:
+        List[str]: 发现的不一致错误列表
+    """
+    verifier = ConsistencyVerifier()
+    return verifier.verify_files(input_file, output_file, masking_recipe, max_packets)
+
+
+def quick_consistency_check(
+    input_file: str,
+    output_file: str,
+    sample_size: int = 100
+) -> Dict[str, any]:
+    """
+    快速一致性检查（采样验证）
+    
+    Args:
+        input_file: 输入文件路径
+        output_file: 输出文件路径
+        sample_size: 采样大小
+        
+    Returns:
+        Dict: 快速检查结果
+    """
+    result = {
+        'consistent': True,
+        'total_packets': 0,
+        'sampled_packets': 0,
+        'differences': 0,
+        'errors': []
+    }
+    
+    try:
+        with PcapReader(input_file) as input_reader, \
+             PcapReader(output_file) as output_reader:
+            
+            for index, (input_packet, output_packet) in enumerate(zip(input_reader, output_reader)):
+                result['total_packets'] += 1
+                
+                # 采样检查
+                if index % (max(1, result['total_packets'] // sample_size)) == 0:
+                    result['sampled_packets'] += 1
+                    
+                    if raw(input_packet) != raw(output_packet):
+                        result['differences'] += 1
+                        
+                    # 限制采样数量
+                    if result['sampled_packets'] >= sample_size:
+                        break
+        
+        result['consistent'] = result['differences'] == 0
+        
+    except Exception as e:
+        result['consistent'] = False
+        result['errors'].append(f"快速检查失败: {str(e)}")
+    
+    return result 

@@ -41,6 +41,10 @@ from .consistency import ConsistencyVerifier
 from .payload_extractor import PayloadExtractor, create_payload_extractor
 from .keep_range_applier import MaskApplier, create_mask_applier
 
+# 新架构核心组件 (Phase 1.2)
+from .blind_masker import BlindPacketMasker
+from .packet_processor import PacketProcessor
+
 __all__ = [
     # 主要API
     'TcpPayloadMasker',
@@ -67,5 +71,9 @@ __all__ = [
     'PayloadExtractor',
     'create_payload_extractor',
     'MaskApplier',
-    'create_mask_applier'
+    'create_mask_applier',
+    
+    # 新架构核心组件 (Phase 1.2)
+    'BlindPacketMasker',
+    'PacketProcessor'
 ] 
