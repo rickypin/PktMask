@@ -1,0 +1,235 @@
+{
+  "total_packets": 22,
+  "metadata": {
+    "recipe_name": "TLS协议专用掩码配方",
+    "protocol_focus": "TLS/SSL",
+    "description": "专门为TLS流量设计的掩码策略，保护敏感数据同时保留协议结构",
+    "security_level": "high",
+    "use_case": "企业网络流量脱敏"
+  },
+  "instructions": [
+    {
+      "packet_index": 0,
+      "packet_timestamp": "1739953296.645501",
+      "payload_offset": 54,
+      "mask_spec_type": "KeepAll",
+      "mask_spec_params": {},
+      "comment": "TCP SYN - 连接建立，完全保留"
+    },
+    {
+      "packet_index": 1,
+      "packet_timestamp": "1739953296.941416",
+      "payload_offset": 74,
+      "mask_spec_type": "KeepAll",
+      "mask_spec_params": {},
+      "comment": "TCP SYN-ACK - 连接响应，完全保留"
+    },
+    {
+      "packet_index": 2,
+      "packet_timestamp": "1739953296.941416",
+      "payload_offset": 54,
+      "mask_spec_type": "KeepAll",
+      "mask_spec_params": {},
+      "comment": "TCP ACK - 连接确认，完全保留"
+    },
+    {
+      "packet_index": 3,
+      "packet_timestamp": "1739953296.941416",
+      "payload_offset": 54,
+      "mask_spec_type": "KeepAll",
+      "mask_spec_params": {},
+      "comment": "TLS Client Hello - 握手开始，完全保留"
+    },
+    {
+      "packet_index": 4,
+      "packet_timestamp": "1739953297.020306",
+      "payload_offset": 54,
+      "mask_spec_type": "KeepAll",
+      "mask_spec_params": {},
+      "comment": "TLS Server Hello - 服务器响应，完全保留"
+    },
+    {
+      "packet_index": 5,
+      "packet_timestamp": "1739953297.024065",
+      "payload_offset": 54,
+      "mask_spec_type": "KeepAll",
+      "mask_spec_params": {},
+      "comment": "TLS Certificate - 证书交换，完全保留"
+    },
+    {
+      "packet_index": 6,
+      "packet_timestamp": "1739953297.024296",
+      "payload_offset": 54,
+      "mask_spec_type": "KeepAll",
+      "mask_spec_params": {},
+      "comment": "TLS Server Hello Done - 握手完成信号，完全保留"
+    },
+    {
+      "packet_index": 7,
+      "packet_timestamp": "1739953297.025396",
+      "payload_offset": 54,
+      "mask_spec_type": "KeepAll",
+      "mask_spec_params": {},
+      "comment": "TLS Client Key Exchange - 密钥交换，完全保留"
+    },
+    {
+      "packet_index": 8,
+      "packet_timestamp": "1739953297.026958",
+      "payload_offset": 54,
+      "mask_spec_type": "KeepAll",
+      "mask_spec_params": {},
+      "comment": "TLS Change Cipher Spec - 加密参数变更，完全保留"
+    },
+    {
+      "packet_index": 9,
+      "packet_timestamp": "1739953297.101993",
+      "payload_offset": 54,
+      "mask_spec_type": "KeepAll",
+      "mask_spec_params": {},
+      "comment": "TLS Finished (Client) - 客户端握手完成，完全保留"
+    },
+    {
+      "packet_index": 10,
+      "packet_timestamp": "1739953297.142473",
+      "payload_offset": 54,
+      "mask_spec_type": "KeepAll",
+      "mask_spec_params": {},
+      "comment": "TLS Change Cipher Spec (Server) - 服务器加密变更，完全保留"
+    },
+    {
+      "packet_index": 11,
+      "packet_timestamp": "1739953297.206658",
+      "payload_offset": 54,
+      "mask_spec_type": "KeepAll",
+      "mask_spec_params": {},
+      "comment": "TLS Finished (Server) - 服务器握手完成，完全保留"
+    },
+    {
+      "packet_index": 12,
+      "packet_timestamp": "1739953297.206658",
+      "payload_offset": 54,
+      "mask_spec_type": "MaskAfter",
+      "mask_spec_params": {
+        "keep_bytes": 5
+      },
+      "comment": "TLS Application Data - 保留TLS记录头(5字节)，掩码应用数据"
+    },
+    {
+      "packet_index": 13,
+      "packet_timestamp": "1739953297.206658",
+      "payload_offset": 54,
+      "mask_spec_type": "MaskAfter",
+      "mask_spec_params": {
+        "keep_bytes": 5
+      },
+      "comment": "TLS Application Data - 保留TLS记录头(5字节)，掩码应用数据"
+    },
+    {
+      "packet_index": 14,
+      "packet_timestamp": "1739953297.260583",
+      "payload_offset": 54,
+      "mask_spec_type": "MaskAfter",
+      "mask_spec_params": {
+        "keep_bytes": 5
+      },
+      "comment": "TLS Application Data - 保留TLS记录头(5字节)，掩码应用数据"
+    },
+    {
+      "packet_index": 15,
+      "packet_timestamp": "1739953297.262132",
+      "payload_offset": 54,
+      "mask_spec_type": "MaskAfter",
+      "mask_spec_params": {
+        "keep_bytes": 5
+      },
+      "comment": "TLS Application Data - 保留TLS记录头(5字节)，掩码应用数据"
+    },
+    {
+      "packet_index": 16,
+      "packet_timestamp": "1739953297.262361",
+      "payload_offset": 54,
+      "mask_spec_type": "MaskAfter",
+      "mask_spec_params": {
+        "keep_bytes": 5
+      },
+      "comment": "TLS Application Data - 保留TLS记录头(5字节)，掩码应用数据"
+    },
+    {
+      "packet_index": 17,
+      "packet_timestamp": "1739953297.326384",
+      "payload_offset": 54,
+      "mask_spec_type": "MaskAfter",
+      "mask_spec_params": {
+        "keep_bytes": 5
+      },
+      "comment": "TLS Application Data - 保留TLS记录头(5字节)，掩码应用数据"
+    },
+    {
+      "packet_index": 18,
+      "packet_timestamp": "1739953297.327140",
+      "payload_offset": 54,
+      "mask_spec_type": "MaskAfter",
+      "mask_spec_params": {
+        "keep_bytes": 5
+      },
+      "comment": "TLS Application Data - 保留TLS记录头(5字节)，掩码应用数据"
+    },
+    {
+      "packet_index": 19,
+      "packet_timestamp": "1739953297.400123",
+      "payload_offset": 54,
+      "mask_spec_type": "MaskAfter",
+      "mask_spec_params": {
+        "keep_bytes": 5
+      },
+      "comment": "TLS Application Data - 保留TLS记录头(5字节)，掩码应用数据"
+    },
+    {
+      "packet_index": 20,
+      "packet_timestamp": "1739953297.450234",
+      "payload_offset": 54,
+      "mask_spec_type": "KeepAll",
+      "mask_spec_params": {},
+      "comment": "TLS Alert - 连接关闭警告，完全保留"
+    },
+    {
+      "packet_index": 21,
+      "packet_timestamp": "1739953298.100456",
+      "payload_offset": 54,
+      "mask_spec_type": "KeepAll",
+      "mask_spec_params": {},
+      "comment": "TCP FIN - 连接终止，完全保留"
+    }
+  ],
+  "tls_masking_strategy": {
+    "handshake_phase": {
+      "policy": "完全保留",
+      "reason": "TLS握手对协议正常工作至关重要",
+      "packets": ["Client Hello", "Server Hello", "Certificate", "Key Exchange", "Finished"]
+    },
+    "application_data_phase": {
+      "policy": "保留TLS记录头，掩码应用数据",
+      "tls_record_header": 5,
+      "reason": "保护用户数据隐私，保留协议结构",
+      "header_format": "content_type(1) + version(2) + length(2)"
+    },
+    "alert_phase": {
+      "policy": "完全保留",
+      "reason": "TLS Alert消息对诊断连接问题很重要"
+    }
+  },
+  "security_considerations": {
+    "preserved_information": [
+      "TLS版本信息",
+      "握手消息类型",
+      "记录层结构",
+      "连接状态变化"
+    ],
+    "masked_information": [
+      "应用层数据内容",
+      "用户敏感信息",
+      "传输的实际数据"
+    ],
+    "privacy_level": "高度保护用户数据，保留协议可分析性"
+  }
+} 

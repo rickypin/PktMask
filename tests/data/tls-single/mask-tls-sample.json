@@ -1,0 +1,48 @@
+{
+  "total_packets": 22,
+  "metadata": {
+    "test_type": "custom",
+    "mask_type": "mask_after",
+    "keep_bytes": 5,
+    "payload_offset": 54,
+    "packet_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+    ],
+    "source_file": "tests/data/tls-single/tls_sample.pcap"
+  },
+  "instructions": [
+    {
+      "packet_index": 13,
+      "packet_timestamp": "1739953297.206658",
+      "payload_offset": 66,
+      "mask_spec_type": "MaskRange",
+      "mask_spec_params": {
+        "ranges": [
+          {"start": 5, "end": 174},
+          {"start": 179, "end": 205}
+        ]
+      }
+    }
+  ]
+}

@@ -1,31 +1,40 @@
-#!/usr/bin/env python3
-"""
-自定义TCP载荷掩码器测试脚本
-支持用户自定义输入文件、输出文件和掩码配置
-
-使用方法:
-    python3 run_tcp_masker_test.py --input input.pcap --output output.pcap [选项]
-
-示例:
-    # 基础测试
-    python3 run_tcp_masker_test.py --input tests/data/tls-single/tls_sample.pcap --output masked_output.pcap
-    
-    # 指定掩码类型和参数
-    python3 run_tcp_masker_test.py --input input.pcap --output output.pcap --mask-type mask_after --keep-bytes 10
-    
-    # 批量处理多个包
-    python3 run_tcp_masker_test.py --input input.pcap --output output.pcap --packet-range 0-5
-"""
-
-import os
-import sys
-import argparse
-import time
-import json
-from pathlib import Path
-
-# 添加项目路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+import argparseimport jsonimport osimport sysfrom pathlib import Pathfrom typing import Dict# 将src目录添加到Python路径sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, PacketMaskInstructionfrom pktmask.core.tcp_payload_masker.core.blind_masker import (    MaskAfter, MaskRange, KeepAll)
+# 正确的方式
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
 
 def parse_packet_range(range_str):
     """解析包范围字符串，如 '0-5' 或 '1,3,5' 或 'all'"""
@@ -107,8 +116,16 @@ def create_masking_recipe(input_file, mask_type, keep_bytes, packet_range, paylo
     print(f"✅ 掩码配方创建完成，包含 {len(instructions)} 个指令")
     return recipe
 
-def run_masking_test(input_file, output_file, recipe, verify_consistency=False):
-    """运行掩码测试"""
+def run_masking_test(
+    input_file: str, 
+    output_file: str, 
+    recipe: MaskingRecipe,
+    verify_consistency: bool,
+    ignore_timestamps: bool = False
+) -> Dict:
+    """
+    运行掩码测试的核心函数
+    """
     from pktmask.core.tcp_payload_masker import mask_pcap_with_instructions
     from scapy.all import rdpcap
     
@@ -129,7 +146,9 @@ def run_masking_test(input_file, output_file, recipe, verify_consistency=False):
         input_file=input_file,
         output_file=output_file,
         masking_recipe=recipe,
-        verify_consistency=verify_consistency
+        verify_consistency=verify_consistency,
+        progress_callback=progress_bar.update,
+        ignore_timestamp_validation=ignore_timestamps
     )
     
     processing_time = time.time() - start_time
@@ -408,15 +427,17 @@ def main():
     parser.add_argument('--packet-range', default='all',
                        help='处理包范围，如 "0-5" 或 "1,3,5" 或 "all" (默认: all)')
     parser.add_argument('--verify-consistency', action='store_true',
-                       help='启用一致性验证')
+                       help='执行输入输出文件的一致性验证')
     parser.add_argument('--save-recipe', 
-                       help='保存掩码配方到JSON文件')
+                       help='将生成的掩码配方保存到JSON文件')
     parser.add_argument('--load-recipe', 
                        help='从JSON文件加载掩码配方')
     parser.add_argument('--analyze-recipe', action='store_true',
                        help='分析掩码配方的详细信息')
     parser.add_argument('--interactive', action='store_true',
                        help='交互式创建自定义掩码配方')
+    parser.add_argument('--ignore-timestamps', action='store_true',
+                       help='验证配方时忽略时间戳(降低安全性)')
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='详细输出')
     
@@ -476,7 +497,8 @@ def main():
             input_file=args.input,
             output_file=args.output,
             recipe=recipe,
-            verify_consistency=args.verify_consistency
+            verify_consistency=args.verify_consistency,
+            ignore_timestamps=args.ignore_timestamps
         )
         
         if result.success:

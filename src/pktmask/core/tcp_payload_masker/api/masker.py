@@ -269,14 +269,16 @@ def _process_packets(
                     if is_modified and processed_bytes is not None:
                         # 包被修改了，需要重新构造
                         modified_packet = Ether(processed_bytes)
+                        # 关键修复：从原始包中复制高精度时间戳
+                        modified_packet.time = packet.time
                         modified_packets.append(modified_packet)
-                        masker.stats.modified_packets += 1
+                        # 注意：不在这里计数，BlindPacketMasker内部已经计数了
                         logger.debug(f"包 {packet_index} 已被修改")
                     else:
                         # 包未修改
                         modified_packets.append(packet)
                     
-                    masker.stats.processed_packets += 1
+                    # 注意：不在这里计数，BlindPacketMasker内部已经计数了
                     processed_count += 1
                     
                     # 进度回调
@@ -287,8 +289,9 @@ def _process_packets(
                     logger.warning(f"处理包 {packet_index} 时出错: {e}")
                     # 保留原包
                     modified_packets.append(packet)
-                    masker.stats.processed_packets += 1
-                    masker.stats.error_packets += 1
+                    # 错误包计数仍然需要在BlindPacketMasker内部处理
+                    # 这里只需要增加本地计数用于进度回调
+                    processed_count += 1
         
         # 写入输出文件
         logger.info(f"写入输出文件: {output_file}")

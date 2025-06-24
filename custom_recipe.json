@@ -1,0 +1,56 @@
+{
+  "total_packets": 22,
+  "metadata": {
+    "test_type": "custom_advanced",
+    "description": "演示高级掩码配方：不同包使用不同掩码策略",
+    "created_by": "user_demo"
+  },
+  "instructions": [
+    {
+      "packet_index": 0,
+      "packet_timestamp": "1739953296.645501",
+      "payload_offset": 54,
+      "mask_spec_type": "KeepAll",
+      "mask_spec_params": {}
+    },
+    {
+      "packet_index": 1,
+      "packet_timestamp": "1739953296.941416", 
+      "payload_offset": 54,
+      "mask_spec_type": "MaskAfter",
+      "mask_spec_params": {
+        "keep_bytes": 10
+      }
+    },
+    {
+      "packet_index": 2,
+      "packet_timestamp": "1739953296.941416",
+      "payload_offset": 54,
+      "mask_spec_type": "MaskRange",
+      "mask_spec_params": {
+        "ranges": [
+          {"start": 5, "end": 15},
+          {"start": 25, "end": 35}
+        ]
+      }
+    },
+    {
+      "packet_index": 6,
+      "packet_timestamp": "1739953297.024296",
+      "payload_offset": 54,
+      "mask_spec_type": "MaskAfter",
+      "mask_spec_params": {
+        "keep_bytes": 20
+      }
+    },
+    {
+      "packet_index": 14,
+      "packet_timestamp": "1739953297.260583",
+      "payload_offset": 54,
+      "mask_spec_type": "MaskAfter",
+      "mask_spec_params": {
+        "keep_bytes": 15
+      }
+    }
+  ]
+} 
