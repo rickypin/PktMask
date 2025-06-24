@@ -19,6 +19,8 @@ from ..exceptions import (
     FileConsistencyError,
     ValidationError
 )
+from .file_handler import PcapFileHandler
+from .keep_range_applier import MaskApplier
 
 
 class TcpPayloadMasker:
@@ -238,12 +240,9 @@ class TcpPayloadMasker:
         Returns:
             TcpMaskingResult: 处理结果
         """
-        from .file_handler import PcapFileHandler
-        from .keep_range_applier import TcpPayloadKeepRangeMasker
-        
         # 初始化组件
         file_handler = PcapFileHandler(self.logger)
-        keep_range_masker = TcpPayloadKeepRangeMasker(
+        keep_range_masker = MaskApplier(
             mask_byte_value=self.config_manager.get('mask_byte_value', 0x00),
             logger=self.logger
         )

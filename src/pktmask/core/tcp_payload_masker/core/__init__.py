@@ -39,7 +39,7 @@ from .consistency import ConsistencyVerifier
 
 # 核心掩码处理 (Phase 4)
 from .payload_extractor import PayloadExtractor, create_payload_extractor
-from .keep_range_applier import TcpPayloadKeepRangeMasker, TcpProtocolHintGenerator
+from .keep_range_applier import MaskApplier, create_mask_applier
 
 __all__ = [
     # 主要API
@@ -66,6 +66,6 @@ __all__ = [
     # 核心掩码处理 (Phase 4)
     'PayloadExtractor',
     'create_payload_extractor',
-    'TcpPayloadKeepRangeMasker',
-    'TcpProtocolHintGenerator'
+    'MaskApplier',
+    'create_mask_applier'
 ] 

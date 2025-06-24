@@ -37,16 +37,23 @@ class TcpKeepRangeEntry:
         if not isinstance(self.keep_ranges, list):
             raise ValueError("keep_ranges必须是列表类型")
         
-        for i, (start, end) in enumerate(self.keep_ranges):
-            if not isinstance(start, int) or not isinstance(end, int):
-                raise ValueError(f"保留范围[{i}]必须是整数元组: ({start}, {end})")
-            if start >= end:
-                raise ValueError(f"保留范围[{i}]无效: start={start} >= end={end}")
-            if start < 0:
-                raise ValueError(f"保留范围[{i}]起始位置不能为负数: {start}")
+        # 转换嵌套列表为元组列表（兼容YAML加载）
+        converted_ranges = []
+        for i, range_item in enumerate(self.keep_ranges):
+            if isinstance(range_item, (list, tuple)) and len(range_item) == 2:
+                start, end = range_item
+                if not isinstance(start, int) or not isinstance(end, int):
+                    raise ValueError(f"保留范围[{i}]必须是整数元组: ({start}, {end})")
+                if start >= end:
+                    raise ValueError(f"保留范围[{i}]无效: start={start} >= end={end}")
+                if start < 0:
+                    raise ValueError(f"保留范围[{i}]起始位置不能为负数: {start}")
+                converted_ranges.append((start, end))
+            else:
+                raise ValueError(f"保留范围[{i}]格式错误，必须是长度为2的列表或元组: {range_item}")
         
         # 对保留范围排序并验证无重叠
-        self.keep_ranges = self._normalize_keep_ranges(self.keep_ranges)
+        self.keep_ranges = self._normalize_keep_ranges(converted_ranges)
     
     def _normalize_keep_ranges(self, ranges: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         """标准化保留范围：排序并合并重叠的范围"""

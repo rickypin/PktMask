@@ -1,0 +1,26 @@
+# 这是一个用于 run_tcp_masker_test.py 脚本的示例掩码配置文件。
+#
+# 结构说明:
+# keep_range_rules: 规则列表的根键。
+#
+# 每个规则条目包含以下字段:
+#   - stream_id: 目标TCP流的唯一标识符。
+#     格式: "TCP_源IP:源端口_目标IP:目标端口_方向"
+#     方向可以是 'forward' 或 'reverse'。
+#   - sequence_start: TCP序列号的起始值（包含）。
+#   - sequence_end: TCP序列号的结束值（不包含）。
+#   - keep_ranges: 一个列表，定义了在上述序列号范围内需要保留的载荷字节范围。
+#     格式: [[start1, end1], [start2, end2], ...]
+#     范围是相对于每个数据包载荷的起始位置。
+#   - protocol_hint (可选): 协议提示，如 "TLS", "HTTP" 等，用于记录和调试。
+
+keep_range_rules:
+  - stream_id: "TCP_10.171.250.80:33492_10.50.50.161:443_forward"
+    sequence_start: 2422049782
+    sequence_end: 2422050299  # frame 4
+    keep_ranges:
+      - [0, 5]  # 保留TLS/SSL记录的前5个字节 (Content Type, Version, Length)
+
+  # 您可以根据需要在这里添加更多规则
+  # - stream_id: "..."
+  #   ... 

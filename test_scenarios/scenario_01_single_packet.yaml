@@ -1,0 +1,27 @@
+# 场景1：单包精确匹配测试
+# 目标：验证对单个TLS ClientHello包的精确序列号匹配和掩码应用
+
+metadata:
+  name: "单包精确匹配测试"
+  description: "验证对单个TLS ClientHello包(包4)的精确序列号匹配，保留TLS记录头部信息"
+  expected_modified_packets: 1
+  expected_masked_bytes: 512  # 517 - 5 (TLS记录头)
+  expected_kept_bytes: 5
+  test_type: "single_packet_exact_match"
+
+keep_range_rules:
+  # TLS ClientHello包 - 保留TLS记录头（Content Type + Version + Length）
+  - stream_id: "TCP_10.171.250.80:33492_10.50.50.161:443_forward"
+    sequence_start: 2422049782
+    sequence_end: 2422050299    # 2422049782 + 517 (载荷长度)
+    keep_ranges:
+      - [0, 5]   # TLS记录头 (Content Type + Version + Length)
+    protocol_hint: "TLS"
+
+verification:
+  target_packets: [4]  # 只有包4应该被修改
+  unchanged_packets: [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+  modified_payload_check:
+    packet_4:
+      bytes_0_to_4: "unchanged"  # TLS记录头保持不变
+      bytes_5_to_516: "masked"   # 载荷数据被掩码 

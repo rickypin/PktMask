@@ -13,7 +13,7 @@ TCP载荷掩码处理器模块
 
 from .core.tcp_masker import TcpPayloadMasker
 from .core.keep_range_models import TcpKeepRangeEntry, TcpMaskingResult, TcpKeepRangeTable
-from .core.keep_range_applier import TcpPayloadKeepRangeMasker, TcpProtocolHintGenerator
+from .core.keep_range_applier import MaskApplier, create_mask_applier
 from .exceptions import (
     TcpPayloadMaskerError,
     ProtocolBindingError,
@@ -32,8 +32,8 @@ __all__ = [
     'TcpKeepRangeEntry', 
     'TcpMaskingResult',
     'TcpKeepRangeTable',
-    'TcpPayloadKeepRangeMasker',
-    'TcpProtocolHintGenerator',
+    'MaskApplier',
+    'create_mask_applier',
     'TcpPayloadMaskerError',
     'ProtocolBindingError',
     'FileConsistencyError',

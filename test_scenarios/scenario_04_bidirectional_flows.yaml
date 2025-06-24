@@ -1,0 +1,77 @@
+# 场景4：双向流测试
+# 目标：验证TCP双向流的独立处理能力
+
+metadata:
+  name: "双向流测试"
+  description: "验证正向流和反向流的独立处理，确保流方向正确识别和独立掩码"
+  expected_modified_packets: 4
+  expected_masked_bytes: 1826  # (517-5) + (1342-5) + (205-5) + (111-5) = 512 + 1337 + 200 + 106
+  expected_kept_bytes: 20      # 5 * 4
+  test_type: "bidirectional_flows"
+
+keep_range_rules:
+  # 正向流（客户端 -> 服务器）
+  - stream_id: "TCP_10.171.250.80:33492_10.50.50.161:443_forward"
+    sequence_start: 2422049782
+    sequence_end: 2422050299
+    keep_ranges:
+      - [0, 5]   # TLS记录头
+    protocol_hint: "TLS"
+  
+  - stream_id: "TCP_10.171.250.80:33492_10.50.50.161:443_forward"
+    sequence_start: 2422050425
+    sequence_end: 2422050630
+    keep_ranges:
+      - [0, 5]   # TLS记录头
+    protocol_hint: "TLS"
+  
+  # 反向流（服务器 -> 客户端）
+  - stream_id: "TCP_10.171.250.80:33492_10.50.50.161:443_reverse"
+    sequence_start: 3913402951
+    sequence_end: 3913404293
+    keep_ranges:
+      - [0, 5]   # TLS记录头
+    protocol_hint: "TLS"
+  
+  - stream_id: "TCP_10.171.250.80:33492_10.50.50.161:443_reverse"
+    sequence_start: 3913404815
+    sequence_end: 3913404926
+    keep_ranges:
+      - [0, 5]   # TLS记录头
+    protocol_hint: "TLS"
+
+verification:
+  target_packets: [4, 6, 14, 15]  # 两个流方向各2个包
+  unchanged_packets: [1, 2, 3, 5, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 21, 22]
+  
+  flow_independence_check:
+    forward_flow:
+      stream_id: "TCP_10.171.250.80:33492_10.50.50.161:443_forward"
+      modified_packets: [4, 14]
+      sequence_ranges: 
+        - [2422049782, 2422050299]
+        - [2422050425, 2422050630]
+    reverse_flow:
+      stream_id: "TCP_10.171.250.80:33492_10.50.50.161:443_reverse" 
+      modified_packets: [6, 15]
+      sequence_ranges:
+        - [3913402951, 3913404293]
+        - [3913404815, 3913404926]
+  
+  modified_payload_check:
+    packet_4:  # 正向流
+      bytes_0_to_4: "unchanged"
+      bytes_5_to_516: "masked"
+    packet_6:  # 反向流
+      bytes_0_to_4: "unchanged"
+      bytes_5_to_1341: "masked"
+    packet_14: # 正向流
+      bytes_0_to_4: "unchanged"
+      bytes_5_to_204: "masked"
+    packet_15: # 反向流
+      bytes_0_to_4: "unchanged"
+      bytes_5_to_110: "masked"
+
+critical_test:
+  importance: "MEDIUM"
+  reason: "验证双向流的独立序列号空间和正确的流方向识别" 
