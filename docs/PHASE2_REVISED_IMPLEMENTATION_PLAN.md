@@ -119,6 +119,12 @@ class EnhancedPySharkAnalyzer(BaseStage):
    - 旧代码标记为归档状态
    - 文档更新和发布准备
 
+### 3.3 进度追踪 (2025-06-25)
+
+- [x] Phase 2-A 核心处理器实现（EnhancedPySharkAnalyzer 已实现并提交，初步单元测试与代码审查通过）
+- [x] Phase 2-B 系统集成和验证（已完成，代码已集成并通过初步测试）
+- [x] Phase 2-C 核心功能与TLS样本验收（所有验收测试通过，文档和测试用例已合并）
+
 ---
 
 ## 四、关键风险与缓解
@@ -135,28 +141,28 @@ class EnhancedPySharkAnalyzer(BaseStage):
 ## 五、验收标准
 
 ### 5.1 核心功能验收
-- [ ] 输出文件与原始文件完全一致（包数、时间戳、顺序、非掩码字节）
-- [ ] Plain IP和VLAN封装类型处理正确
-- [ ] 包映射关系满足质量要求
-- [ ] GUI界面、交互、功能100%保持不变
+- [x] 输出文件与原始文件完全一致（包数、时间戳、顺序、非掩码字节）
+- [x] Plain IP和VLAN封装类型处理正确
+- [x] 包映射关系满足质量要求
+- [x] GUI界面、交互、功能100%保持不变
 
 ### 5.2 TLS样本专项验收
 **Plain IP + TLS样本** (`tests/data/tls/tls_plainip.pcap`)：
-- [ ] TLS Handshake/Alert报文完全保留
-- [ ] TLS Application Data：保留5字节header，置零Application Data
-- [ ] 文件整体一致性验证通过
+- [x] TLS Handshake/Alert报文完全保留
+- [x] TLS Application Data：保留5字节header，置零Application Data
+- [x] 文件整体一致性验证通过
 
 **VLAN + TLS样本** (`tests/data/tls/tls_vlan.pcap`)：
-- [ ] VLAN标签正确识别和保留
-- [ ] VLAN封装下偏移量计算准确
-- [ ] TLS处理逻辑与Plain IP样本一致
-- [ ] 文件整体一致性验证通过
+- [x] VLAN标签正确识别和保留
+- [x] VLAN封装下偏移量计算准确
+- [x] TLS处理逻辑与Plain IP样本一致
+- [x] 文件整体一致性验证通过
 
 ### 5.3 系统集成验收
-- [ ] EnhancedPySharkAnalyzer完全替换旧PySharkAnalyzer
-- [ ] TcpPayloadMaskerAdapter正常处理新生成的MaskingRecipe
-- [ ] 现有事件系统和统计报告兼容
-- [ ] 所有现有功能保持不变
+- [x] EnhancedPySharkAnalyzer完全替换旧PySharkAnalyzer
+- [x] TcpPayloadMaskerAdapter正常处理新生成的MaskingRecipe
+- [x] 现有事件系统和统计报告兼容
+- [x] 所有现有功能保持不变
 
 ---
 
@@ -174,8 +180,6 @@ class EnhancedPySharkAnalyzer(BaseStage):
 - GUI零变化是用户体验保证
 - 专注Plain IP+VLAN，避免过度复杂化
 - 双文件映射确保输出准确性
-
----
 
 ---
 

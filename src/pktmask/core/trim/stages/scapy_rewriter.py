@@ -41,6 +41,11 @@ from ..models.tcp_stream import TCPStreamManager, ConnectionDirection, detect_pa
 from ..models.mask_spec import MaskSpec, MaskAfter, MaskRange, KeepAll
 from ..exceptions import StreamMaskTableError
 
+# ---- Phase 2-B 系统集成：重定义 ScapyRewriter 为 TcpPayloadMaskerAdapter ----
+from .tcp_payload_masker_adapter import TcpPayloadMaskerAdapter as _TPMAdapter
+ScapyRewriter = _TPMAdapter  # type: ignore
+
+__all__ = ['ScapyRewriter']
 
 @dataclass
 class PacketRewriteInfo:

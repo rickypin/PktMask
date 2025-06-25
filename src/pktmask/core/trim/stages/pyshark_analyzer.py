@@ -37,6 +37,8 @@ from ..models.tcp_stream import TCPStreamManager, ConnectionDirection, detect_pa
 from ..models.mask_spec import MaskAfter, MaskRange, KeepAll, create_http_header_mask, create_tls_record_mask
 from ..exceptions import StreamMaskTableError
 
+# ---- Phase 2 Revised Implementation: alias PySharkAnalyzer to EnhancedPySharkAnalyzer ----
+
 
 @dataclass
 class StreamInfo:
@@ -1415,3 +1417,8 @@ class PySharkAnalyzer(BaseStage):
         self._cleanup_memory()
         self._streams.clear()
         self._sequence_mask_table = None 
+
+# ---- Phase 2 Revised Implementation(系统集成)：将旧 PySharkAnalyzer 别名到 EnhancedPySharkAnalyzer ----
+from .enhanced_pyshark_analyzer import EnhancedPySharkAnalyzer as _EnhancedPySharkAnalyzer
+PySharkAnalyzer = _EnhancedPySharkAnalyzer  # type: ignore
+__all__ = ['PySharkAnalyzer'] 

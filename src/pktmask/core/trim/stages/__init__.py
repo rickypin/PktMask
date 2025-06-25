@@ -12,9 +12,14 @@ from .stage_result import (
     StageResult, StageStatus, StageMetrics, StageResultCollection
 )
 from .tshark_preprocessor import TSharkPreprocessor
+from .enhanced_pyshark_analyzer import EnhancedPySharkAnalyzer, EnhancedPySharkAnalyzer as PySharkAnalyzer
+from .tcp_payload_masker_adapter import TcpPayloadMaskerAdapter
 
 __all__ = [
     'BaseStage', 'StageContext',
     'StageResult', 'StageStatus', 'StageMetrics', 'StageResultCollection',
-    'TSharkPreprocessor'
+    'TSharkPreprocessor',
+    'EnhancedPySharkAnalyzer',
+    'PySharkAnalyzer',
+    'TcpPayloadMaskerAdapter'
 ] 

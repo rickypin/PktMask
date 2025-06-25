@@ -135,9 +135,9 @@ class EnhancedTrimmer(BaseProcessor):
         """注册处理阶段"""
         # 延迟导入阶段组件
         from ..trim.stages.tshark_preprocessor import TSharkPreprocessor
-        from ..trim.stages.pyshark_analyzer import PySharkAnalyzer  
-        from ..trim.stages.scapy_rewriter import ScapyRewriter
-        
+        from ..trim.stages.enhanced_pyshark_analyzer import EnhancedPySharkAnalyzer
+        from ..trim.stages.tcp_payload_masker_adapter import TcpPayloadMaskerAdapter
+
         # Stage 0: TShark预处理器
         if self.enhanced_config.enable_tshark_preprocessing:
             tshark_stage = TSharkPreprocessor(self._create_stage_config("tshark"))
@@ -145,17 +145,17 @@ class EnhancedTrimmer(BaseProcessor):
                 raise RuntimeError("TShark预处理器初始化失败")
             self._executor.register_stage(tshark_stage)
             
-        # Stage 1: PyShark分析器
-        pyshark_stage = PySharkAnalyzer(self._create_stage_config("pyshark"))
+        # Stage 1: EnhancedPyShark分析器
+        pyshark_stage = EnhancedPySharkAnalyzer(self._create_stage_config("pyshark"))
         if not pyshark_stage.initialize():
-            raise RuntimeError("PyShark分析器初始化失败")
+            raise RuntimeError("EnhancedPySharkAnalyzer初始化失败")
         self._executor.register_stage(pyshark_stage)
         
-        # Stage 2: Scapy回写器
-        scapy_stage = ScapyRewriter(self._create_stage_config("scapy"))
-        if not scapy_stage.initialize():
-            raise RuntimeError("Scapy回写器初始化失败")
-        self._executor.register_stage(scapy_stage)
+        # Stage 2: TcpPayloadMaskerAdapter
+        adapter_stage = TcpPayloadMaskerAdapter(self._create_stage_config("scapy"))
+        if not adapter_stage.initialize():
+            raise RuntimeError("TcpPayloadMaskerAdapter初始化失败")
+        self._executor.register_stage(adapter_stage)
         
         self._logger.debug(f"已注册 {len(self._executor.stages)} 个处理阶段")
         
