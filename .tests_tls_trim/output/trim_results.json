@@ -5,7 +5,7 @@
     "success": true,
     "message": "Pipeline completed successfully.",
     "total_packets": 0,
-    "modified_packets": 0,
+    "modified_packets": 5,
     "stats": {
       "TShark\u9884\u5904\u7406\u5668": {
         "packets_processed": 0,
@@ -13,7 +13,7 @@
         "defragmented_packets": 0,
         "warnings": 0,
         "errors": 0,
-        "execution_time": 0.10679388046264648,
+        "execution_time": 0.23118996620178223,
         "return_code": 0
       },
       "TcpPayloadMaskerAdapter": {
@@ -23,7 +23,7 @@
         "error_packets": 0,
         "total_bytes_processed": 4253,
         "total_bytes_masked": 4201,
-        "processing_time_seconds": 0.0004439353942871094,
+        "processing_time_seconds": 0.0017247200012207031,
         "modification_rate": 4.9504950495049505
       }
     }
@@ -34,7 +34,7 @@
     "success": true,
     "message": "Pipeline completed successfully.",
     "total_packets": 0,
-    "modified_packets": 0,
+    "modified_packets": 29,
     "stats": {
       "TShark\u9884\u5904\u7406\u5668": {
         "packets_processed": 0,
@@ -42,7 +42,7 @@
         "defragmented_packets": 0,
         "warnings": 0,
         "errors": 0,
-        "execution_time": 0.10926103591918945,
+        "execution_time": 0.24222898483276367,
         "return_code": 0
       },
       "TcpPayloadMaskerAdapter": {
@@ -52,7 +52,7 @@
         "error_packets": 0,
         "total_bytes_processed": 24957,
         "total_bytes_masked": 22340,
-        "processing_time_seconds": 0.0023310184478759766,
+        "processing_time_seconds": 0.00951385498046875,
         "modification_rate": 2.408637873754153
       }
     }
@@ -63,7 +63,7 @@
     "success": true,
     "message": "Pipeline completed successfully.",
     "total_packets": 0,
-    "modified_packets": 0,
+    "modified_packets": 1,
     "stats": {
       "TShark\u9884\u5904\u7406\u5668": {
         "packets_processed": 0,
@@ -71,7 +71,7 @@
         "defragmented_packets": 0,
         "warnings": 0,
         "errors": 0,
-        "execution_time": 0.11098098754882812,
+        "execution_time": 0.22556209564208984,
         "return_code": 0
       },
       "TcpPayloadMaskerAdapter": {
@@ -81,7 +81,7 @@
         "error_packets": 0,
         "total_bytes_processed": 41,
         "total_bytes_masked": 36,
-        "processing_time_seconds": 4.291534423828125e-05,
+        "processing_time_seconds": 0.00020503997802734375,
         "modification_rate": 7.142857142857142
       }
     }
@@ -92,7 +92,7 @@
     "success": true,
     "message": "Pipeline completed successfully.",
     "total_packets": 0,
-    "modified_packets": 0,
+    "modified_packets": 66,
     "stats": {
       "TShark\u9884\u5904\u7406\u5668": {
         "packets_processed": 0,
@@ -100,7 +100,7 @@
         "defragmented_packets": 0,
         "warnings": 0,
         "errors": 0,
-        "execution_time": 0.10866093635559082,
+        "execution_time": 0.2318572998046875,
         "return_code": 0
       },
       "TcpPayloadMaskerAdapter": {
@@ -110,7 +110,7 @@
         "error_packets": 0,
         "total_bytes_processed": 35519,
         "total_bytes_masked": 34890,
-        "processing_time_seconds": 0.004830121994018555,
+        "processing_time_seconds": 0.020108938217163086,
         "modification_rate": 7.728337236533958
       }
     }
@@ -121,7 +121,7 @@
     "success": true,
     "message": "Pipeline completed successfully.",
     "total_packets": 0,
-    "modified_packets": 0,
+    "modified_packets": 2,
     "stats": {
       "TShark\u9884\u5904\u7406\u5668": {
         "packets_processed": 0,
@@ -129,7 +129,7 @@
         "defragmented_packets": 0,
         "warnings": 0,
         "errors": 0,
-        "execution_time": 0.11190915107727051,
+        "execution_time": 0.233551025390625,
         "return_code": 0
       },
       "TcpPayloadMaskerAdapter": {
@@ -139,7 +139,7 @@
         "error_packets": 0,
         "total_bytes_processed": 316,
         "total_bytes_masked": 293,
-        "processing_time_seconds": 0.00012683868408203125,
+        "processing_time_seconds": 0.0004878044128417969,
         "modification_rate": 9.090909090909092
       }
     }
@@ -150,7 +150,7 @@
     "success": true,
     "message": "Pipeline completed successfully.",
     "total_packets": 0,
-    "modified_packets": 0,
+    "modified_packets": 4,
     "stats": {
       "TShark\u9884\u5904\u7406\u5668": {
         "packets_processed": 0,
@@ -158,7 +158,7 @@
         "defragmented_packets": 0,
         "warnings": 0,
         "errors": 0,
-        "execution_time": 0.10927200317382812,
+        "execution_time": 0.22827696800231934,
         "return_code": 0
       },
       "TcpPayloadMaskerAdapter": {
@@ -168,7 +168,7 @@
         "error_packets": 0,
         "total_bytes_processed": 292,
         "total_bytes_masked": 268,
-        "processing_time_seconds": 0.00012111663818359375,
+        "processing_time_seconds": 0.0005428791046142578,
         "modification_rate": 10.526315789473683
       }
     }
@@ -179,7 +179,7 @@
     "success": true,
     "message": "Pipeline completed successfully.",
     "total_packets": 0,
-    "modified_packets": 0,
+    "modified_packets": 494,
     "stats": {
       "TShark\u9884\u5904\u7406\u5668": {
         "packets_processed": 0,
@@ -187,7 +187,7 @@
         "defragmented_packets": 0,
         "warnings": 0,
         "errors": 0,
-        "execution_time": 0.1124880313873291,
+        "execution_time": 0.23438692092895508,
         "return_code": 0
       },
       "TcpPayloadMaskerAdapter": {
@@ -197,7 +197,7 @@
         "error_packets": 0,
         "total_bytes_processed": 226607,
         "total_bytes_masked": 221400,
-        "processing_time_seconds": 0.018690109252929688,
+        "processing_time_seconds": 0.07159924507141113,
         "modification_rate": 23.401231643770725
       }
     }
@@ -208,7 +208,7 @@
     "success": true,
     "message": "Pipeline completed successfully.",
     "total_packets": 0,
-    "modified_packets": 0,
+    "modified_packets": 5,
     "stats": {
       "TShark\u9884\u5904\u7406\u5668": {
         "packets_processed": 0,
@@ -216,7 +216,7 @@
         "defragmented_packets": 0,
         "warnings": 0,
         "errors": 0,
-        "execution_time": 0.10898494720458984,
+        "execution_time": 0.2276158332824707,
         "return_code": 0
       },
       "TcpPayloadMaskerAdapter": {
@@ -226,7 +226,7 @@
         "error_packets": 0,
         "total_bytes_processed": 1017,
         "total_bytes_masked": 987,
-        "processing_time_seconds": 0.0001900196075439453,
+        "processing_time_seconds": 0.0006515979766845703,
         "modification_rate": 13.157894736842104
       }
     }
@@ -237,7 +237,7 @@
     "success": true,
     "message": "Pipeline completed successfully.",
     "total_packets": 0,
-    "modified_packets": 0,
+    "modified_packets": 10,
     "stats": {
       "TShark\u9884\u5904\u7406\u5668": {
         "packets_processed": 0,
@@ -245,7 +245,7 @@
         "defragmented_packets": 0,
         "warnings": 0,
         "errors": 0,
-        "execution_time": 0.10863780975341797,
+        "execution_time": 0.22644305229187012,
         "return_code": 0
       },
       "TcpPayloadMaskerAdapter": {
@@ -255,7 +255,7 @@
         "error_packets": 0,
         "total_bytes_processed": 2997,
         "total_bytes_masked": 2099,
-        "processing_time_seconds": 0.00030303001403808594,
+        "processing_time_seconds": 0.0010852813720703125,
         "modification_rate": 32.25806451612903
       }
     }

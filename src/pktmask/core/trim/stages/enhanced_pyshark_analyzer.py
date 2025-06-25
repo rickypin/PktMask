@@ -41,6 +41,8 @@ from ...tcp_payload_masker.api.types import (
     PacketMaskInstruction,
     MaskingRecipe,
     SkippedPacketInfo,
+    MaskRange,
+    # MaskAfter 被精确 MaskRange 替代，不再使用
 )
 
 __all__ = ["EnhancedPySharkAnalyzer"]
@@ -164,12 +166,11 @@ class EnhancedPySharkAnalyzer(BaseStage):
         """
         使用Scapy对TCP载荷进行深度TLS记录分析。
 
-        该方法遍历重组文件中的每个数据包，解析TCP载荷以识别
-        单个TLS记录，并为每个Application Data记录生成精确的
-        MaskRange指令。
+        该方法遍历重组文件中的每个数据包，按 TLS Record 解析
+        TCP 载荷: 只要遇到 `content_type == 23` (Application-Data)，
+        就为该记录 **数据部分** 生成一条精确的 `MaskRange` 指令
+        `[header_end, record_end)`，从而避免误将握手记录负载一起掩码。
         """
-        from ...tcp_payload_masker.api.types import MaskRange
-
         reassembled_packets = rdpcap(str(reassembled_file))
         instructions: Dict[int, List[PacketMaskInstruction]] = {}
         skipped_packets: List[SkippedPacketInfo] = []
@@ -191,36 +192,30 @@ class EnhancedPySharkAnalyzer(BaseStage):
 
             payload = bytes(pkt[TCP].payload)
             ptr = 0
-            packet_instructions: List[PacketMaskInstruction] = []
-
+            
             try:
+                app_data_ranges: List[MaskRange] = []
                 while ptr + 5 <= len(payload):
                     content_type = payload[ptr]
                     length = int.from_bytes(payload[ptr + 3 : ptr + 5], "big")
+                    header_end = ptr + 5
+                    record_end = header_end + length
 
-                    if ptr + 5 + length > len(payload):
+                    if record_end > len(payload):
                         self._logger.warning(
-                            f"包 {orig_idx}: 检测到残缺的TLS记录，"
-                            f"声明长度 {length} 超出载荷边界。已停止解析该包。"
+                            f"包 {orig_idx}: TLS 记录声明长度{length}超出载荷边界，停止解析此包。"
                         )
                         break
 
                     if content_type == 23:  # TLS Application Data
-                        # 掩码载荷，保留5字节TLS记录头
-                        # MaskRange的偏移是相对于TCP载荷起点的
-                        mask_start = ptr + 5
-                        mask_end = ptr + 5 + length
-                        if mask_start < mask_end:
-                            packet_instructions.append(
-                                MaskRange(start=mask_start, end=mask_end)
-                            )
+                        app_data_ranges.append(MaskRange(start=header_end, end=record_end))
 
-                    # 移动到下一个TLS记录的起点
-                    ptr += 5 + length
+                    # 继续解析下一个 TLS 记录
+                    ptr = record_end
 
-                if packet_instructions:
-                    # 使用 setdefault 优雅地处理首次添加
-                    instructions.setdefault(orig_idx, []).extend(packet_instructions)
+                # 若发现任何 Application-Data 记录，为该包加入精确指令
+                if app_data_ranges:
+                    instructions[orig_idx] = app_data_ranges
 
             except IndexError:
                 # 载荷可能已损坏，停止解析该包

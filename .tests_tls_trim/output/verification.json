@@ -24,7 +24,7 @@
             "trimmed_pcap_file": "/Users/ricky/Downloads/PktMask/.tests_tls_trim/output/ssl_3-TRIMMED.pcapng",
             "app_records_after": 12,
             "app_packets_after": 12,
-            "scapy_masked_bytes_validated": -1
+            "scapy_masked_bytes_validated": 2267
         }
     },
     "tls_1_0_multi_segment_google-https.pcap": {
@@ -87,7 +87,7 @@
             "trimmed_pcap_file": "/Users/ricky/Downloads/PktMask/.tests_tls_trim/output/tls_1_0_multi_segment_google-https-TRIMMED.pcap",
             "app_records_after": 47,
             "app_packets_after": 47,
-            "scapy_masked_bytes_validated": -1
+            "scapy_masked_bytes_validated": 22424
         }
     },
     "tls_1_2-2.pcapng": {
@@ -202,7 +202,7 @@
             "trimmed_pcap_file": "/Users/ricky/Downloads/PktMask/.tests_tls_trim/output/tls_1_2_plainip-TRIMMED.pcap",
             "app_records_after": 2,
             "app_packets_after": 2,
-            "scapy_masked_bytes_validated": -1
+            "scapy_masked_bytes_validated": 301
         }
     },
     "tls_1_2_pop_mix.pcapng": {

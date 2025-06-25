@@ -14,7 +14,7 @@ try:
     from pktmask.core.trim.multi_stage_executor import MultiStageExecutor
     from pktmask.core.trim.stages.tshark_preprocessor import TSharkPreprocessor
     from pktmask.core.trim.stages.enhanced_pyshark_analyzer import EnhancedPySharkAnalyzer
-    from pktmask.core.trim.stages.scapy_rewriter import ScapyRewriter
+    from pktmask.core.trim.stages.tcp_payload_masker_adapter import TcpPayloadMaskerAdapter
     from pktmask.core.trim.models.simple_execution_result import SimpleExecutionResult
 except ImportError as e:
     print(f"Error: Failed to import PktMask components. Make sure the src directory is in your PYTHONPATH. Details: {e}")
@@ -41,11 +41,11 @@ def create_trim_pipeline(config: Dict[str, Any]) -> MultiStageExecutor:
     trimming_config = config.get('payload_trimming', {})
     tshark_stage = TSharkPreprocessor(config=trimming_config.get('tshark_preprocessor', {}))
     pyshark_stage = EnhancedPySharkAnalyzer(config=trimming_config.get('pyshark_analyzer', {}))
-    scapy_stage = ScapyRewriter(config=trimming_config.get('scapy_rewriter', {}))
+    masker_stage = TcpPayloadMaskerAdapter(config=trimming_config.get('tcp_payload_masker_adapter', {}))
 
     executor.register_stage(tshark_stage)
     executor.register_stage(pyshark_stage)
-    executor.register_stage(scapy_stage)
+    executor.register_stage(masker_stage)
     
     return executor
 
@@ -68,6 +68,7 @@ def run_trimming_process(sample_files: List[Path]) -> Dict[str, Any]:
             "enabled": True, 
             "mode": "enhanced", 
             "pyshark_analyzer": {"use_json": True, "default_mask_spec": "MaskAfter(5)"},
+            "tcp_payload_masker_adapter": {},
         }
     }
 
@@ -88,7 +89,7 @@ def run_trimming_process(sample_files: List[Path]) -> Dict[str, Any]:
                 output_file=output_path
             )
             
-            final_stage_stats = result.stats.get("Scapy回写器", {})
+            final_stage_stats = result.stats.get("TcpPayloadMaskerAdapter", {})
             total_packets = final_stage_stats.get("total_packets", 0)
             modified_packets = final_stage_stats.get("modified_packets", 0)
             
@@ -126,7 +127,7 @@ def main():
     OUTPUT_DIR.mkdir(exist_ok=True)
     (OUTPUT_DIR / "temp").mkdir(exist_ok=True)
     logging.info(f"Output will be saved to: {OUTPUT_DIR}")
-
+    
     sample_files = sorted(
         list(SAMPLES_DIR.glob("*.pcap")) + list(SAMPLES_DIR.glob("*.pcapng"))
     )
@@ -135,7 +136,7 @@ def main():
         logging.warning(f"No sample files found in {SAMPLES_DIR}")
         return
 
-    logging.info(f"Found {len(sample_files)} sample files to trim.")
+    logging.info(f"Found {len(sample_files)} sample file(s) to trim.")
     
     trim_results = run_trimming_process(sample_files)
 

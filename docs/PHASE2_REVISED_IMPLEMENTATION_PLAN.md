@@ -5,7 +5,7 @@
 ### 1.1 核心目标
 **数据流重构**：实现从基于TCP序列号的掩码表到基于包索引的指令集的完整转换
 ```
-旧数据流: PyShark分析 → SequenceMaskTable → ScapyRewriter
+旧数据流: PyShark分析 → SequenceMaskTable → TcpPayloadMaskerAdapter
 新数据流: PyShark分析 → MaskingRecipe → BlindPacketMasker
 ```
 
@@ -134,7 +134,7 @@ class EnhancedPySharkAnalyzer(BaseStage):
 | **文件一致性** | 输出文件与原始文件不一致 | 时间戳映射+严格验证+双TLS样本测试 |
 | **包映射准确性** | 原始文件与重组文件映射错误 | 时间戳匹配+协议特征验证+降级策略 |
 | **GUI兼容性** | 新系统影响现有GUI功能 | 保持BaseStage接口+事件系统一致性 |
-| **偏移量一致性** | PyShark和Scapy偏移量不一致 | 统一计算方法+强制一致性测试 |
+| **偏移量一致性** | PyShark和TcpPayloadMaskerAdapter偏移量不一致 | 统一计算方法+强制一致性测试 |
 
 ---
 

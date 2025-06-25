@@ -176,23 +176,33 @@ def verify_trimmed_packets_scapy(pcap_path: pathlib.Path, baseline_frames: List[
                 return -1
 
             payload = bytes(packet["TCP"].payload)
-            payload_len = len(payload)
-            
-            # 我们期望应用数据 (Application Data) 至少有 5 字节的头部
-            if payload_len < 5:
-                logging.warning(f"Scapy 验证 (帧 {frame_num}): TCP 载荷长度 ({payload_len}) 小于 5 字节，可能不是标准的 TLS 记录。")
-                continue
+            ptr = 0
 
-            # 验证第 6 字节及之后是否全部为 0x00
-            mask_start_index = 5
-            masked_part = payload[mask_start_index:]
-            
-            if any(byte != 0 for byte in masked_part):
-                logging.error(f"Scapy 验证失败 (帧 {frame_num}): 偏移量 5 之后的数据未被置零。")
-                logging.error(f"  - 实际载荷 (前20字节): {masked_part[:20].hex()}")
-                return -1
-            
-            total_masked_bytes += len(masked_part)
+            while ptr + 5 <= len(payload):
+                content_type = payload[ptr]
+                length = int.from_bytes(payload[ptr+3:ptr+5], "big")
+                header_end = ptr + 5
+                record_end = header_end + length
+
+                # 边界检查
+                if record_end > len(payload):
+                    logging.warning(
+                        f"Scapy 验证 (帧 {frame_num}): TLS 记录超出边界 length={length}, payload_len={len(payload)}"
+                    )
+                    break
+
+                if content_type == 23:  # Application Data
+                    record_payload = payload[header_end:record_end]
+                    if any(b != 0 for b in record_payload):
+                        logging.error(
+                            f"Scapy 验证失败 (帧 {frame_num}): Application Data 区段未被完全置零。"
+                        )
+                        logging.error(f"  - 非零前20字节: {record_payload[:20].hex()}")
+                        return -1
+                    total_masked_bytes += len(record_payload)
+
+                # 继续解析下一个记录
+                ptr = record_end
 
     return total_masked_bytes
 
@@ -233,6 +243,9 @@ def generate_markdown_report(verification_data: Dict[str, Any]):
         # 如果原始文件有包，但裁切后文件不存在，则为失败
         elif app_packets_before > 0 and not pathlib.Path(verification.get("trimmed_pcap_file", "")).exists():
             status = "❌ 失败"
+
+        if status == "❌ 失败":
+            overall_success = False
 
         # 写入表格行
         md_content += (
