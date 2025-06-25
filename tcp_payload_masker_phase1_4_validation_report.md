@@ -1,6 +1,6 @@
 # TCP载荷掩码器 Phase 1.4 验证报告
 
-生成时间: 2025-06-24 15:52:47
+生成时间: 2025-06-25 03:51:16
 
 
 ============================================================
@@ -9,36 +9,33 @@
 
 📊 总体结果:
    测试总数: 3
-   通过测试: 0
-   失败测试: 3
-   通过率: 0.0%
+   通过测试: 3
+   失败测试: 0
+   通过率: 100.0%
 
 ⚡ 性能指标:
-   平均吞吐量: 0.00 pps
+   平均吞吐量: 227.52 pps
 
 🔍 测试详情:
-   1. basic_api_functionality - ❌ FAIL
-      处理包数: 0
+   1. basic_api_functionality - ✅ PASS
+      处理包数: 1
       修改包数: 0
-      处理时间: 0.006s
-      吞吐量: 0.00 pps
-      错误: 处理异常: 'MaskingStatistics' object has no attribute 'processed_count'
-   2. tls_sample_processing - ❌ FAIL
-      处理包数: 0
+      处理时间: 0.015s
+      吞吐量: 65.66 pps
+   2. tls_sample_processing - ✅ PASS
+      处理包数: 22
       修改包数: 0
-      处理时间: 0.069s
-      吞吐量: 0.00 pps
-      错误: 处理异常: 'MaskingStatistics' object has no attribute 'processed_count'
-   3. performance_benchmark - ❌ FAIL
-      处理包数: 0
-      修改包数: 0
-      处理时间: 0.058s
-      吞吐量: 0.00 pps
-      错误: 性能测试异常: 'list' object has no attribute 'time'
+      处理时间: 0.098s
+      吞吐量: 225.23 pps
+   3. performance_benchmark - ✅ PASS
+      处理包数: 50
+      修改包数: 50
+      处理时间: 0.128s
+      吞吐量: 391.68 pps
 
 ✅ Phase 1.4 验收标准检查:
-   1. API基础功能正常: ❌ 否
-   2. 能处理真实PCAP: ❌ 否
-   3. 性能达到要求: ❌ 否
+   1. API基础功能正常: ✅ 是
+   2. 能处理真实PCAP: ✅ 是
+   3. 性能达到要求: ✅ 是
 
-⚠️  Phase 1.4 验证存在问题，建议修复后重新验证
+🎉 Phase 1.4 验证基本成功! API可以进入Phase 2集成阶段

@@ -324,10 +324,16 @@ class SimplePhase1Validator:
             # 创建50个测试包（适中的数量，既能测试性能又不会太慢）
             packets = []
             for i in range(50):
-                packet = (Ether(dst="00:11:22:33:44:55", src="aa:bb:cc:dd:ee:ff") /
-                         IP(src=f"192.168.1.{i%254+1}", dst="192.168.1.100") /
-                         TCP(sport=12345+i, dport=80) /
-                         f"Performance test packet {i:02d} - " * 5)  # 约100字节载荷
+                packet = (
+                    Ether(dst="00:11:22:33:44:55", src="aa:bb:cc:dd:ee:ff")
+                    / IP(src=f"192.168.1.{i % 254 + 1}", dst="192.168.1.100")
+                    / TCP(sport=12345 + i, dport=80)
+                    / (f"Performance test packet {i:02d} - " * 5)
+                )  # 约100字节载荷
+
+                # 显式设置时间戳，确保 packet.time 可用
+                packet.time = time.time()
+
                 packets.append(packet)
             
             test_file = os.path.join(self.temp_dir, "performance_test.pcap")
@@ -336,18 +342,21 @@ class SimplePhase1Validator:
             wrpcap(test_file, packets)
             print(f"  📝 创建性能测试文件: {len(packets)}个包")
             
-            # 创建掩码配方 - 为每个包创建指令
+            # 创建掩码配方 - 写入文件后重新读取一次，使用PCAP中的实际时间戳，避免时间精度差异
+            from scapy.all import PcapReader
+
             instructions = {}
             payload_offset = 54  # Eth + IP + TCP
-            
-            for i, packet in enumerate(packets):
-                timestamp = str(packet.time)
-                instructions[(i, timestamp)] = PacketMaskInstruction(
-                    packet_index=i,
-                    packet_timestamp=timestamp,
-                    payload_offset=payload_offset,
-                    mask_spec=MaskAfter(keep_bytes=10)
-                )
+
+            with PcapReader(test_file) as reader:
+                for i, pkt in enumerate(reader):
+                    ts_str = str(pkt.time)
+                    instructions[(i, ts_str)] = PacketMaskInstruction(
+                        packet_index=i,
+                        packet_timestamp=ts_str,
+                        payload_offset=payload_offset,
+                        mask_spec=MaskAfter(keep_bytes=10),
+                    )
             
             recipe = MaskingRecipe(
                 instructions=instructions,
