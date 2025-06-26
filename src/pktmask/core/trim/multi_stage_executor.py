@@ -4,7 +4,7 @@
 """
 多阶段执行器框架
 
-协调TShark预处理、PyShark分析、Scapy回写的三阶段处理流程。
+协调TShark预处理、PyShark分析、TcpPayloadMaskerAdapter 回写的三阶段处理流程。
 集成现有的事件系统，提供进度报告和错误处理。
 """
 

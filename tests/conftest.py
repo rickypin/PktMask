@@ -24,17 +24,17 @@ if str(src_path) not in sys.path:
 
 # 导入本地模块
 try:
-    from src.pktmask.config.settings import AppConfig
-    from src.pktmask.core.encapsulation.types import EncapsulationType, LayerInfo
-    from src.pktmask.infrastructure.logging.logger import get_logger
+    from pktmask.config.settings import AppConfig
+    from pktmask.core.encapsulation.types import EncapsulationType, LayerInfo
+    from pktmask.infrastructure.logging.logger import get_logger
 except ImportError:
     # 如果直接导入失败，尝试从pktmask导入
     try:
         from pktmask.config.settings import AppConfig
         from pktmask.core.encapsulation.types import EncapsulationType, LayerInfo
-        from src.pktmask.infrastructure.logging.logger import get_logger
+        from pktmask.infrastructure.logging.logger import get_logger
     except ImportError as e:
-        # 重新抛出异常，以便我们能看到根本原因
+        # 重新抛出异常，以便显示根本原因
         raise e
 
 

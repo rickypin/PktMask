@@ -129,4 +129,9 @@ class TcpPayloadMaskerAdapter(BaseStage):
         # 掩码配方校验
         if context.masking_recipe is None:
             self.logger.warning("未在上下文中找到掩码配方，将按原样复制文件")
-        return True 
+        return True
+
+# ------------------------------------------------------------------
+# 兼容性别名（临时）: ScapyRewriter -> TcpPayloadMaskerAdapter
+# ------------------------------------------------------------------
+ScapyRewriter = TcpPayloadMaskerAdapter 

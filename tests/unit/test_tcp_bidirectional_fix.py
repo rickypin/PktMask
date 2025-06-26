@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 from typing import List, Dict, Any
 
 from src.pktmask.core.trim.stages.pyshark_analyzer import PySharkAnalyzer, PacketAnalysis, StreamInfo
-from src.pktmask.core.trim.stages.scapy_rewriter import ScapyRewriter
+from src.pktmask.core.trim.stages.tcp_payload_masker_adapter import TcpPayloadMaskerAdapter as ScapyRewriter
 from src.pktmask.core.trim.models.mask_table import StreamMaskTable
 from src.pktmask.core.trim.models.mask_spec import KeepAll, MaskAfter
 
