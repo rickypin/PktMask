@@ -33,7 +33,7 @@ try:
     from pktmask.core.trim.multi_stage_executor import MultiStageExecutor
     from pktmask.core.trim.stages.tshark_preprocessor import TSharkPreprocessor
     from pktmask.core.trim.stages.pyshark_analyzer import PySharkAnalyzer
-    from pktmask.core.trim.stages.tcp_payload_masker_adapter import TcpPayloadMaskerAdapter as ScapyRewriter
+    from pktmask.core.trim.stages.tcp_payload_masker_adapter import TcpPayloadMaskerAdapter
     from pktmask.core.trim.stages.base_stage import StageContext
     MODULES_AVAILABLE = True
 except ImportError as e:
@@ -147,7 +147,7 @@ class TLSSampleValidator:
                 # 注册处理阶段
                 executor.register_stage(TSharkPreprocessor())
                 executor.register_stage(PySharkAnalyzer())
-                executor.register_stage(ScapyRewriter())
+                executor.register_stage(TcpPayloadMaskerAdapter())
                 
                 # 执行流水线
                 start = time.time()

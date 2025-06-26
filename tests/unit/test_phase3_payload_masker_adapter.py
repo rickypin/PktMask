@@ -22,7 +22,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 # 导入被测试的模块
-from src.pktmask.core.trim.stages.scapy_rewriter import ScapyRewriter
+from src.pktmask.core.trim.stages.tcp_payload_masker_adapter import TcpPayloadMaskerAdapter
 from src.pktmask.core.trim.stages.base_stage import StageContext
 from src.pktmask.core.trim.models.sequence_mask_table import SequenceMaskTable, MaskEntry, SequenceMatchResult
 from src.pktmask.core.trim.models.tcp_stream import ConnectionDirection
@@ -43,7 +43,7 @@ class TestScapyRewriterPhase3:
         
         # 创建测试对象
         self.mask_table = SequenceMaskTable()
-        self.rewriter = ScapyRewriter({
+        self.rewriter = TcpPayloadMaskerAdapter({
             'preserve_timestamps': True,
             'recalculate_checksums': True,
             'mask_byte_value': 0x00
@@ -99,7 +99,7 @@ class TestScapyRewriterPhase3:
     def test_initialization_with_sequence_support(self):
         """测试初始化是否支持序列号机制"""
         # 测试基本属性
-        assert self.rewriter.name == "Scapy回写器"
+        assert self.rewriter.name == "TcpPayloadMaskerAdapter"
         assert hasattr(self.rewriter, '_stream_manager')
         assert hasattr(self.rewriter, '_sequence_matches')
         assert hasattr(self.rewriter, '_sequence_mismatches')
@@ -273,8 +273,8 @@ class TestScapyRewriterPhase3:
         assert stats['modification_rate'] == 8 / 20  # 0.4
         assert stats['bytes_masked'] == 1024
     
-    @patch('src.pktmask.core.trim.stages.scapy_rewriter.rdpcap')
-    @patch('src.pktmask.core.trim.stages.scapy_rewriter.wrpcap')
+    @patch('src.pktmask.core.trim.stages.tcp_payload_masker_adapter.rdpcap')
+    @patch('src.pktmask.core.trim.stages.tcp_payload_masker_adapter.wrpcap')
     def test_mock_packet_processing(self, mock_wrpcap, mock_rdpcap):
         """测试模拟数据包处理"""
         # 创建模拟的TCP数据包
@@ -364,7 +364,7 @@ class TestSequenceMatchingIntegration:
     def setup_method(self):
         """设置测试方法"""
         self.mask_table = SequenceMaskTable()
-        self.rewriter = ScapyRewriter()
+        self.rewriter = TcpPayloadMaskerAdapter()
         
         # 创建测试掩码条目
         self.mask_table.add_entry(MaskEntry(

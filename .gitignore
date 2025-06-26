@@ -33,4 +33,10 @@ Thumbs.db
 # Project specific
 tests/samples/
 
+# Coverage / report artifacts
+htmlcov/
+demo_test_reports/htmlcov/
+output/reports/coverage/
+reports/coverage/
+
 .venv/ 

@@ -26,7 +26,7 @@ from src.pktmask.core.trim.models.tcp_stream import (
     ConnectionDirection, detect_packet_direction
 )
 from src.pktmask.core.trim.stages.pyshark_analyzer import PySharkAnalyzer
-from src.pktmask.core.trim.stages.scapy_rewriter import ScapyRewriter
+from src.pktmask.core.trim.stages.tcp_payload_masker_adapter import TcpPayloadMaskerAdapter
 from src.pktmask.core.trim.stages.tshark_preprocessor import TSharkPreprocessor
 from src.pktmask.core.trim.multi_stage_executor import MultiStageExecutor
 from src.pktmask.core.trim.stages.base_stage import StageContext
@@ -244,7 +244,7 @@ class TestPhase3ScapyRewriter:
             pytest.skip(f"TLS样本文件不存在: {TLS_SAMPLE_FILE}")
         
         # 创建Scapy回写器
-        rewriter = ScapyRewriter()
+        rewriter = TcpPayloadMaskerAdapter()
         rewriter.initialize({})
         
         # 验证回写器能够正确初始化
@@ -327,7 +327,7 @@ class TestPhase5EndToEndIntegration:
                 # 注册处理阶段
                 executor.register_stage("tshark", TSharkPreprocessor())
                 executor.register_stage("pyshark", PySharkAnalyzer())
-                executor.register_stage("scapy", ScapyRewriter())
+                executor.register_stage("scapy", TcpPayloadMaskerAdapter())
                 
                 # 创建执行上下文
                 context = StageContext(

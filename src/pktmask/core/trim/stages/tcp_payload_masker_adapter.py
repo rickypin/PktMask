@@ -132,6 +132,5 @@ class TcpPayloadMaskerAdapter(BaseStage):
         return True
 
 # ------------------------------------------------------------------
-# 兼容性别名（临时）: ScapyRewriter -> TcpPayloadMaskerAdapter
-# ------------------------------------------------------------------
-ScapyRewriter = TcpPayloadMaskerAdapter 
+# (已移除 ScapyRewriter 兼容别名)
+# ------------------------------------------------------------------ 

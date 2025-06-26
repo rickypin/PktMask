@@ -35,7 +35,7 @@ from pktmask.core.trim.models.simple_execution_result import SimpleExecutionResu
 # 导入Phase 2组件
 from pktmask.core.trim.stages.tshark_preprocessor import TSharkPreprocessor
 from pktmask.core.trim.stages.pyshark_analyzer import PySharkAnalyzer
-from pktmask.core.trim.stages.scapy_rewriter import ScapyRewriter
+from pktmask.core.trim.stages.tcp_payload_masker_adapter import TcpPayloadMaskerAdapter
 
 # 导入现有系统组件
 from pktmask.config import get_app_config
@@ -116,14 +116,14 @@ class TestPhase12IntegrationFixed:
         # 设置全局Mock
         with patch('subprocess.run') as mock_subprocess, \
              patch('pktmask.core.trim.stages.pyshark_analyzer.pyshark') as mock_pyshark, \
-             patch('pktmask.core.trim.stages.scapy_rewriter.rdpcap') as mock_rdpcap, \
-             patch('pktmask.core.trim.stages.scapy_rewriter.wrpcap') as mock_wrpcap, \
+             patch('pktmask.core.trim.stages.tcp_payload_masker_adapter.rdpcap') as mock_rdpcap, \
+             patch('pktmask.core.trim.stages.tcp_payload_masker_adapter.wrpcap') as mock_wrpcap, \
              patch('shutil.which', return_value='/usr/bin/tshark'):
             
             # 创建和注册三个Stage
             tshark_stage = TSharkPreprocessor(self.config)
             pyshark_stage = PySharkAnalyzer(self.config) 
-            scapy_stage = ScapyRewriter(self.config)
+            scapy_stage = TcpPayloadMaskerAdapter(self.config)
             
             executor.register_stage(tshark_stage)
             executor.register_stage(pyshark_stage)
@@ -237,8 +237,8 @@ class TestPhase12IntegrationFixed:
             print("✅ PyShark分析器 → Scapy回写器 数据传递正常")
         
         # Stage 3: Scapy回写器
-        with patch('pktmask.core.trim.stages.scapy_rewriter.rdpcap') as mock_rdpcap, \
-             patch('pktmask.core.trim.stages.scapy_rewriter.wrpcap') as mock_wrpcap:
+        with patch('pktmask.core.trim.stages.tcp_payload_masker_adapter.rdpcap') as mock_rdpcap, \
+             patch('pktmask.core.trim.stages.tcp_payload_masker_adapter.wrpcap') as mock_wrpcap:
             
             mock_scapy_packets = [Mock() for _ in range(5)]
             for i, pkt in enumerate(mock_scapy_packets):
@@ -247,7 +247,7 @@ class TestPhase12IntegrationFixed:
             mock_rdpcap.return_value = mock_scapy_packets
             mock_wrpcap.return_value = None
             
-            scapy_stage = ScapyRewriter(self.config)
+            scapy_stage = TcpPayloadMaskerAdapter(self.config)
             scapy_stage.initialize()
             scapy_result = scapy_stage.execute(context)
             
@@ -291,7 +291,7 @@ class TestPhase12IntegrationFixed:
             # 创建各Stage并验证配置读取
             tshark_stage = TSharkPreprocessor(config)
             pyshark_stage = PySharkAnalyzer(config)
-            scapy_stage = ScapyRewriter(config)
+            scapy_stage = TcpPayloadMaskerAdapter(config)
             
             # 验证配置值读取
             assert tshark_stage.get_config_value('enable_tcp_reassembly', True) == config.get('enable_tcp_reassembly', True)
@@ -421,8 +421,8 @@ class TestPhase12IntegrationFixed:
         
         with patch('subprocess.run') as mock_subprocess, \
              patch('pktmask.core.trim.stages.pyshark_analyzer.pyshark') as mock_pyshark, \
-             patch('pktmask.core.trim.stages.scapy_rewriter.rdpcap') as mock_rdpcap, \
-             patch('pktmask.core.trim.stages.scapy_rewriter.wrpcap') as mock_wrpcap, \
+             patch('pktmask.core.trim.stages.tcp_payload_masker_adapter.rdpcap') as mock_rdpcap, \
+             patch('pktmask.core.trim.stages.tcp_payload_masker_adapter.wrpcap') as mock_wrpcap, \
              patch('shutil.which', return_value='/usr/bin/tshark'):
             
             # Mock设置
@@ -453,7 +453,7 @@ class TestPhase12IntegrationFixed:
             # 注册所有Stage
             executor.register_stage(TSharkPreprocessor(self.config))
             executor.register_stage(PySharkAnalyzer(self.config))
-            executor.register_stage(ScapyRewriter(self.config))
+            executor.register_stage(TcpPayloadMaskerAdapter(self.config))
             
             # 执行管道
             result = executor.execute_pipeline(self.input_file, self.output_file)

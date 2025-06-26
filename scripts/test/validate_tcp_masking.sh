@@ -27,9 +27,9 @@ echo "----------------------------"
 pytest tests/unit/test_tcp_sequence_masking_validation_framework.py::TestPhase2PySharkAnalyzerValidation -v --tb=short
 
 echo ""
-echo "Phase 3: Scapy回写器验证..."
-echo "--------------------------"  
-pytest tests/unit/test_tcp_sequence_masking_validation_framework.py::TestPhase3ScapyRewriterValidation -v --tb=short
+echo "Phase 3: TcpPayloadMaskerAdapter验证..."
+echo "---------------------------------------"  
+pytest tests/unit/test_phase3_payload_masker_adapter.py -v --tb=short
 
 echo ""
 echo "Phase 4: 协议策略验证..."
@@ -68,9 +68,10 @@ if [ -f "tests/unit/test_phase2_pyshark_analyzer.py" ]; then
     pytest tests/unit/test_phase2_pyshark_analyzer.py -v --tb=short
 fi
 
-if [ -f "tests/unit/test_phase3_scapy_rewriter.py" ]; then
-    echo "运行Scapy回写器测试..."
-    pytest tests/unit/test_phase3_scapy_rewriter.py -v --tb=short
+# 新文件名已更改，直接运行
+if [ -f "tests/unit/test_phase3_payload_masker_adapter.py" ]; then
+    echo "运行TcpPayloadMaskerAdapter测试..."
+    pytest tests/unit/test_phase3_payload_masker_adapter.py -v --tb=short
 fi
 
 if [ -f "tests/unit/test_phase4_protocol_strategy.py" ]; then

@@ -27,12 +27,13 @@ __all__ = [
 ]
 
 # ------------------------------------------------------------------
+# ScapyRewriter 兼容别名已在2025-06-26 移除
+# ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
 # 兼容性别名（临时保留）
 # ------------------------------------------------------------------
-# 为了避免旧测试或脚本仍然出现 "pktmask.core.trim.stages.scapy_rewriter"
-# 的导入路径报错，这里将其映射到新的 TcpPayloadMaskerAdapter 模块。
-# ✅ 生产代码请直接使用 TcpPayloadMaskerAdapter，并尽快删除对旧路径的引用。
-
-_scapy_alias = _import_module('.tcp_payload_masker_adapter', package=__name__)
-_sys.modules[f'{__name__}.scapy_rewriter'] = _scapy_alias
-_sys.modules['src.pktmask.core.trim.stages.scapy_rewriter'] = _scapy_alias 
+# 以下代码已弃用，仅保留注释记录。
+# _scapy_alias = _import_module('.tcp_payload_masker_adapter', package=__name__)
+# _sys.modules[f'{__name__}.scapy_rewriter'] = _scapy_alias
+# _sys.modules['src.pktmask.core.trim.stages.scapy_rewriter'] = _scapy_alias 

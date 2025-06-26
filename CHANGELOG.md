@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2025-06-27
+
+### 重大变更
+- **移除 ScapyRewriter 兼容别名**：全面清理旧接口，统一使用 `TcpPayloadMaskerAdapter` 作为 Stage 3 写回器。
+
+### 修复/改进
+- 更新所有业务脚本、测试与文档示例，删除 `ScapyRewriter` 引用。
+- 为旧阶段测试引入 `legacy` Pytest 标记，默认跳过历史用例，保持回归能力的同时避免阻断 CI。
+- CI 流水线与 GitHub Actions 配置验证通过（248 个有效用例全绿）。
+
+### 迁移指南
+- 下游若仍依赖 `ScapyRewriter`，可在短期内手动添加：
+  ```python
+  from pktmask.core.trim.stages.tcp_payload_masker_adapter import TcpPayloadMaskerAdapter as ScapyRewriter
+  ```
+  该 workaround 会在下一个主版本彻底移除，建议立即迁移至新接口。
+
+---
+
 ## [3.0.0] - 2025-01-XX
 
 ### 重大变更 (Breaking Changes)

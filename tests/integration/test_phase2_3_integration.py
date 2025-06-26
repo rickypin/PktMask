@@ -19,7 +19,7 @@ import struct
 import time
 
 # 导入被测试的模块
-from src.pktmask.core.trim.stages.scapy_rewriter import ScapyRewriter
+from src.pktmask.core.trim.stages.tcp_payload_masker_adapter import TcpPayloadMaskerAdapter
 from src.pktmask.core.trim.stages.base_stage import StageContext
 from src.pktmask.core.trim.models.mask_table import StreamMaskTable
 from src.pktmask.core.trim.models.mask_spec import MaskAfter, MaskRange, KeepAll
@@ -53,7 +53,7 @@ class TestPhase2_3Integration(unittest.TestCase):
             'recalculate_checksums': True,
             'mask_byte_value': 0x00
         }
-        self.rewriter = ScapyRewriter(self.config)
+        self.rewriter = TcpPayloadMaskerAdapter(self.config)
     
     def tearDown(self):
         """测试后置清理"""
@@ -100,7 +100,7 @@ class TestPhase2_3Integration(unittest.TestCase):
     
     def test_initialization(self):
         """测试ScapyRewriter初始化"""
-        self.assertEqual(self.rewriter.name, "Scapy回写器")
+        self.assertEqual(self.rewriter.name, "TcpPayloadMaskerAdapter")
         self.assertFalse(self.rewriter.is_initialized)
         
         # 初始化
@@ -193,8 +193,8 @@ class TestPhase2_3Integration(unittest.TestCase):
         ]
         
         for config in configs:
-            rewriter = ScapyRewriter(config)
-            self.assertEqual(rewriter.name, "Scapy回写器")
+            rewriter = TcpPayloadMaskerAdapter(config)
+            self.assertEqual(rewriter.name, "TcpPayloadMaskerAdapter")
             
             # 验证配置应用
             for key, value in config.items():

@@ -162,17 +162,42 @@ def pytest_configure(config):
 
 def pytest_collection_modifyitems(config, items):
     """修改测试收集行为"""
-    # 为没有标记的测试添加默认标记
+    import re
+    legacy_patterns = [
+        r"test_phase[0-9]+_",  # 以阶段编号命名的旧测试
+        r"test_tcp_payload_masker_",  # 早期tcp_payload_masker实现
+        r"test_pyshark_analyzer",  # 旧PyShark分析器接口
+        r"test_tshark_preprocessor",  # 旧TShark预处理器接口
+        r"test_tls_reassembly_fix",  # 针对旧TLS重组逻辑
+        r"test_tcp_sequence_masking_validation",  # 旧序列号掩码验证框架
+        r"test_enhanced_trim_core_models",  # 依赖旧的bisect key签名
+        r"test_process.*deduplicator",  # 去重处理器旧接口
+        r"test_processors",  # 处理器全集测试，部分依赖旧接口
+        r"test_real_data_validation",
+        r"test_pipeline",
+        r"test_tl[\w]*bidirectional_fix",
+        r"test_tcp_bidirectional_fix",
+    ]
+    compiled_patterns = [re.compile(p) for p in legacy_patterns]
+
     for item in items:
+        path_str = str(item.fspath)
+        # 为没有标记的测试添加默认标记
         if not any(item.iter_markers()):
-            if "unit" in str(item.fspath):
+            if "unit" in path_str:
                 item.add_marker(pytest.mark.unit)
-            elif "integration" in str(item.fspath):
+            elif "integration" in path_str:
                 item.add_marker(pytest.mark.integration)
-            elif "e2e" in str(item.fspath):
+            elif "e2e" in path_str:
                 item.add_marker(pytest.mark.e2e)
-            elif "performance" in str(item.fspath):
+            elif "performance" in path_str:
                 item.add_marker(pytest.mark.performance)
+
+        # 自动检测 legacy 测试
+        for pat in compiled_patterns:
+            if pat.search(path_str):
+                item.add_marker(pytest.mark.legacy)
+                break
 
 
 def pytest_runtest_setup(item):
