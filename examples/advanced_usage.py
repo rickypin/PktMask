@@ -454,7 +454,7 @@ def example_2_performance_optimization():
         print(f"\n测试配置: {config_name}")
         
         # 确保输出目录存在
-        output_file = f"examples/output/perf_test_{config_name.replace(' ', '_').lower()}.pcap"
+        output_file = f"examples/output/processed/perf_test_{config_name.replace(' ', '_').lower()}.pcap"
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         
         try:
@@ -557,7 +557,7 @@ def example_3_batch_processing():
     
     # 设置输入输出目录
     input_dir = Path("tests/samples")
-    output_dir = Path("examples/output/batch_results")
+    output_dir = Path("examples/output/processed/batch_results")
     
     if not input_dir.exists():
         print(f"⚠️  输入目录不存在: {input_dir}")
@@ -599,7 +599,7 @@ def example_4_parallel_batch_processing():
         group_results = []
         
         for file_path in file_list:
-            output_file = Path(f"examples/output/parallel/{group_name}_{file_path.name}")
+            output_file = Path(f"examples/output/processed/parallel/{group_name}_{file_path.name}")
             output_file.parent.mkdir(parents=True, exist_ok=True)
             
             try:
@@ -734,7 +734,7 @@ def example_5_protocol_parsing_control():
         try:
             masker = IndependentPcapMasker(config)
             
-            output_file = f"examples/output/protocol_test_{config_name.replace(' ', '_')}.pcap"
+            output_file = f"examples/output/processed/protocol_test_{config_name.replace(' ', '_')}.pcap"
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
             
             start_time = time.time()
@@ -860,7 +860,7 @@ def example_6_context_manager_usage():
     ))
     
     test_file = "tests/samples/tls-single/tls_sample.pcap"
-    output_file = "examples/output/context_manager_test.pcap"
+    output_file = "examples/output/processed/context_manager_test.pcap"
     
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     
@@ -906,8 +906,8 @@ def main():
     # 创建输出目录
     output_dirs = [
         "examples/output",
-        "examples/output/batch_results",
-        "examples/output/parallel"
+        "examples/output/processed/batch_results",
+        "examples/output/processed/parallel"
     ]
     
     for output_dir in output_dirs:

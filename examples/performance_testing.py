@@ -408,7 +408,7 @@ class BenchmarkSuite:
             
             for config_name, config in configs:
                 test_name = f"文件处理-{file_name}-{config_name}"
-                output_file = f"examples/output/benchmark_{file_name}_{config_name.replace(' ', '_')}.pcap"
+                output_file = f"examples/output/processed/benchmark_{file_name}_{config_name.replace(' ', '_')}.pcap"
                 
                 # 确保输出目录存在
                 os.makedirs(os.path.dirname(output_file), exist_ok=True)
@@ -463,7 +463,7 @@ class BenchmarkSuite:
             total_bytes_masked = 0
             
             for i in range(iterations):
-                output_file = f"examples/output/stress_test_{i}.pcap"
+                output_file = f"examples/output/processed/stress_test_{i}.pcap"
                 
                 iteration_start = time.time()
                 result = masker.mask_pcap_with_sequences(test_file, mask_table, output_file)

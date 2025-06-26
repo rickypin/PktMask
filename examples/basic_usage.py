@@ -67,7 +67,7 @@ def example_1_basic_tls_masking():
     # 示例文件路径（请根据实际情况修改）
     base_dir = Path(__file__).parent.parent
     input_pcap = base_dir / "tests/samples/tls-single/tls_sample.pcap"
-    output_pcap = Path(__file__).parent / "output/tls_masked_basic.pcap"
+    output_pcap = Path(__file__).parent / "output/processed/tls_masked_basic.pcap"
     
     # 确保输出目录存在
     output_pcap.parent.mkdir(parents=True, exist_ok=True)
@@ -165,7 +165,7 @@ def example_2_http_post_data_masking():
     # 示例文件路径
     base_dir = Path(__file__).parent.parent
     input_pcap = base_dir / "tests/samples/http/http_sample.pcap"
-    output_pcap = Path(__file__).parent / "output/http_masked_basic.pcap"
+    output_pcap = Path(__file__).parent / "output/processed/http_masked_basic.pcap"
     
     # 确保输出目录存在
     output_pcap.parent.mkdir(parents=True, exist_ok=True)
@@ -246,7 +246,7 @@ def example_3_configuration_usage():
     
     # 使用默认示例文件（如果存在）
     input_pcap = "tests/samples/tls-single/tls_sample.pcap"
-    output_pcap = "examples/output/performance_test.pcap"
+    output_pcap = "examples/output/processed/performance_test.pcap"
     
     os.makedirs(os.path.dirname(output_pcap), exist_ok=True)
     
@@ -454,7 +454,7 @@ def example_6_statistics_monitoring():
     
     # 使用示例文件（如果存在）
     input_pcap = "tests/samples/tls-single/tls_sample.pcap"
-    output_pcap = "examples/output/statistics_test.pcap"
+    output_pcap = "examples/output/processed/statistics_test.pcap"
     
     os.makedirs(os.path.dirname(output_pcap), exist_ok=True)
     

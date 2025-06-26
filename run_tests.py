@@ -54,14 +54,14 @@ class TestRunner:
         if coverage:
             cmd.extend([
                 "--cov=src/pktmask",
-                "--cov-report=html:reports/coverage",
+                "--cov-report=html:output/reports/coverage",
                 "--cov-report=term-missing"
             ])
             
         # 添加HTML报告
         if html_report:
             cmd.extend([
-                "--html=reports/test_report.html",
+                "--html=output/reports/test_report.html",
                 "--self-contained-html"
             ])
             
@@ -201,7 +201,7 @@ def main():
     pytest_args = ["python", "-m", "pytest"]
     
     # 添加JUnit XML报告
-    pytest_args.extend(["--junit-xml=reports/junit/results.xml"])
+    pytest_args.extend(["--junit-xml=output/reports/junit/results.xml"])
     
     if args.quick:
         print("🔥 快速测试模式 - 仅运行基础测试")
@@ -210,9 +210,9 @@ def main():
         print("🔥 完整测试模式 - 所有测试 + 完整报告")
         pytest_args.extend([
             "--cov=src/pktmask",
-            "--cov-report=html:reports/coverage",
+            "--cov-report=html:output/reports/coverage",
             "--cov-report=term-missing",
-            "--html=reports/test_report.html",
+            "--html=output/reports/test_report.html",
             "--self-contained-html"
         ])
         if args.parallel:
@@ -221,7 +221,7 @@ def main():
         # 默认模式：带覆盖率但无HTML
         pytest_args.extend([
             "--cov=src/pktmask",
-            "--cov-report=html:reports/coverage",
+            "--cov-report=html:output/reports/coverage",
             "--cov-report=term-missing"
         ])
     
@@ -236,7 +236,7 @@ def main():
     # 其他选项
     if args.html and not args.full:
         pytest_args.extend([
-            "--html=reports/test_report.html",
+            "--html=output/reports/test_report.html",
             "--self-contained-html"
         ])
     
