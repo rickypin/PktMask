@@ -232,7 +232,7 @@ class AppConfig:
         return [
             config_dir / "config.json",
             config_dir / "app_config.yaml",
-            config_dir / "pktmask_config.yaml"
+            config_dir / "pktconfig/default/mask_config.yaml"
         ]
     
     def validate(self) -> tuple[bool, list]:
