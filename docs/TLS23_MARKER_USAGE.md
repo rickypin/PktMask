@@ -1,6 +1,6 @@
 # TLS23 Marker 使用指南
 
-> 版本：v1.2.0 · 适用范围：PktMask ≥ 3.0 · 作者：AI 设计助手
+> 版本：v1.3.0 · 适用范围：PktMask ≥ 3.0 · 作者：AI 设计助手
 
 本指南介绍了如何在命令行、CI/CD 及 PktMask 工作流中使用 **tls23_marker** 工具，以及如何利用 **validate_tls23_frames.py** 脚本对多文件批量验证。
 
@@ -34,12 +34,21 @@ sudo apt-get update && sudo apt-get install wireshark
 
 > 注：依旧支持 `--legacy` 兼容模式（关闭多记录统计 & 仅 2 列 TSV）。
 
+自 v1.3.0 起新增 **零字节统计** 功能，可用于快速判断 TLS 23 记录是否已被完全 Payload Trim 置零。
+
+新增/改进列表：
+
+1. **零字节统计 (`zero_bytes`)**：对每个命中的 TLS23 数据包，统计其 TLS 23 **消息体** 中值为 `0x00` 的字节数量。若该值恰等于 `lengths` 字段所有长度之和，即可判定其已被完全置零掩码。
+
+2. 其余 v1.2.0 两项增强保持不变：TLS 1.3 字段兼容、混合类型帧检测。
+
 升级后默认输出字段（相对 v1.0 新增）：
 
 | 字段 | 含义 |
 |------|------|
 | `num_records` | 当前帧命中的 TLS23 Record 数量，≥1 |
 | `lengths` | 可选，命中 Record 的长度列表 (byte) |
+| `zero_bytes` | 可选，本帧 TLS 23 消息体中值为 `0x00` 的字节数 |
 
 若仅需保持 v1.0 行为（每帧视作 1 条记录、TSV 仅 2 列），可通过 `--legacy` 关闭多记录统计。
 
@@ -58,8 +67,8 @@ python -m pktmask.tools.tls23_marker \
 ```
 
 * **输出文件**（与输入文件同目录）：
-  * `tls_1_2_plainip_tls23_frames.json` – 命中帧列表 + **汇总统计** (English)，含 `total_records`/`num_records` 字段
-  * `tls_1_2_plainip_tls23_frames.tsv`  – 命中帧列表 + **汇总统计** (English)，TSV 第 3/4 列为 `num_records`/`lengths`
+  * `tls_1_2_plainip_tls23_frames.json` – 命中帧列表 + **汇总统计** (English)，含 `total_records`/`num_records`/`zero_bytes` 字段
+  * `tls_1_2_plainip_tls23_frames.tsv`  – 命中帧列表 + **汇总统计** (English)，TSV 第 3/4/5 列依次为 `num_records`、`lengths`、`zero_bytes`
   * `tls_1_2_plainip_annotated.pcapng`  – 已写入注释的 PCAPNG（含 **文件级汇总注释**，English）
 
 ### 2.2 禁用注释写回
