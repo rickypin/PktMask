@@ -1,66 +1,67 @@
-# total_matches	64
+# total_frames	64
+# total_records	64
 # eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	64
-1	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-2	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-30	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-32	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-71	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-73	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-74	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-108	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-110	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-142	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-144	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-180	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-182	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-218	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-220	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-221	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-256	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-258	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-259	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-283	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-285	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-286	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-316	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-318	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-345	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-347	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-348	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-415	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-418	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-421	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-422	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-424	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-425	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-460	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-462	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-463	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-490	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-492	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-493	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-521	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-523	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-524	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-571	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-573	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-602	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-606	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-607	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-639	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-641	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-671	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-673	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-712	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-714	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-742	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-744	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-745	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-779	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-781	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-782	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-820	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-822	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-850	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-852	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
-853	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls
+1	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	308
+2	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	268
+30	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	772
+32	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	552
+71	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	772
+73	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	545
+74	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	31
+108	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	772
+110	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	552
+142	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	772
+144	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	268
+180	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	772
+182	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	552
+218	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	772
+220	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	545
+221	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	31
+256	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	772
+258	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	308
+259	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	268
+283	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	772
+285	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	547
+286	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	29
+316	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	786
+318	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	787
+345	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	787
+347	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	770
+348	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	29
+415	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	772
+418	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	772
+421	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	547
+422	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	29
+424	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	545
+425	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	31
+460	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	772
+462	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	308
+463	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	268
+490	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	787
+492	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	770
+493	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	29
+521	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	782
+523	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	770
+524	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	29
+571	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	791
+573	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	789
+602	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	797
+606	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	307
+607	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	446
+639	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	791
+641	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	785
+671	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	786
+673	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	789
+712	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	786
+714	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	789
+742	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	772
+744	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	308
+745	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	268
+779	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	772
+781	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	545
+782	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	31
+820	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	772
+822	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	551
+850	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	772
+852	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	308
+853	eth:ethertype:vlan:ethertype:vlan:ethertype:ip:tcp:tls	1	268

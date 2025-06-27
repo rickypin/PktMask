@@ -25,17 +25,34 @@ sudo apt-get update && sudo apt-get install wireshark
 
 ## 2. 快速开始
 
+### 2.0 版本升级提示（v1.1.0+）
+
+自 v1.1.0 起，**tls23_marker** 默认会在输出中新增以下字段，用于表示"同一帧包含多条 TLS Application Data Record"的情况：
+
+| 字段 | 含义 |
+|------|------|
+| `num_records` | 当前帧命中的 TLS23 Record 数量，≥1 |
+| `lengths` | 可选，命中 Record 的长度列表 (byte) |
+
+如果只需保持旧版行为（即每帧仅视作 1 条记录、TSV 仅 2 列），可通过 `--legacy` 开关禁用多 Record 统计。
+
 ### 2.1 单文件扫描
 
 ```bash
+# 默认行为（统计多 Record）
 python -m pktmask.tools.tls23_marker \
   --pcap tests/data/tls/tls_1_2_plainip.pcap \
   --formats json,tsv          # 同时输出 JSON + TSV
+
+# 旧版兼容模式（不统计多 Record）
+python -m pktmask.tools.tls23_marker \
+  --pcap tests/data/tls/tls_1_2_plainip.pcap \
+  --legacy --formats json
 ```
 
 * **输出文件**（与输入文件同目录）：
-  * `tls_1_2_plainip_tls23_frames.json` – 命中帧列表 + **汇总统计** (English)
-  * `tls_1_2_plainip_tls23_frames.tsv`  – 命中帧列表 + **汇总统计** (English)
+  * `tls_1_2_plainip_tls23_frames.json` – 命中帧列表 + **汇总统计** (English)，含 `total_records`/`num_records` 字段
+  * `tls_1_2_plainip_tls23_frames.tsv`  – 命中帧列表 + **汇总统计** (English)，TSV 第 3/4 列为 `num_records`/`lengths`
   * `tls_1_2_plainip_annotated.pcapng`  – 已写入注释的 PCAPNG（含 **文件级汇总注释**，English）
 
 ### 2.2 禁用注释写回

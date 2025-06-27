@@ -1,4 +1,5 @@
-# total_matches	2
-# eth:ethertype:ip:tcp:tls	2
-14	eth:ethertype:ip:tcp:tls
-15	eth:ethertype:ip:tcp:tls
+# total_frames	2
+# total_records	3
+# eth:ethertype:ip:tcp:tls	3
+14	eth:ethertype:ip:tcp:tls	2	169,26
+15	eth:ethertype:ip:tcp:tls	1	106

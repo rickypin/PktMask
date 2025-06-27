@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 from typing import Tuple
 from collections import Counter
+from collections import defaultdict
 
 MIN_TSHARK_VERSION: Tuple[int, int, int] = (4, 2, 0)
 
@@ -116,6 +117,11 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--verbose", action="store_true", help="输出调试信息"
     )
+    parser.add_argument(
+        "--legacy",
+        action="store_true",
+        help="启用旧版兼容模式（不输出 num_records / lengths 等新增字段）",
+    )
 
     return parser
 
@@ -155,6 +161,8 @@ def main(argv: list[str] | None = None) -> None:
         "-e",
         "tls.record.content_type",
         "-e",
+        "tls.record.length",
+        "-e",
         "tcp.stream",
         "-E",
         "occurrence=a",  # 展开所有出现
@@ -191,6 +199,7 @@ def main(argv: list[str] | None = None) -> None:
 
     hits: list[dict[str, str | int]] = []
     hits_by_stream: dict[int, set[int]] = {}
+    frame_record_counts: dict[int, int] = defaultdict(int)
 
     for pkt in packets:
         layers = pkt.get("_source", {}).get("layers", {})  # type: ignore[arg-type]
@@ -209,8 +218,22 @@ def main(argv: list[str] | None = None) -> None:
         def _is_23(value: str) -> bool:
             return value.strip() in {"23", "0x17", "17"}
 
-        if not any(_is_23(v) for v in content_types):
+        indices_23 = [idx for idx, v in enumerate(content_types) if _is_23(v)]
+        if not indices_23:
             continue
+
+        # 记录长度字段，同样可能是 str / list[str]
+        rec_lengths_raw = layers.get("tls.record.length")
+        if isinstance(rec_lengths_raw, str):
+            rec_lengths_raw = [rec_lengths_raw]
+
+        rec_lengths: list[int] = []
+        for idx in indices_23:
+            try:
+                length_val = rec_lengths_raw[idx] if rec_lengths_raw else None  # type: ignore[index]
+                rec_lengths.append(int(length_val) if length_val is not None else -1)
+            except (IndexError, ValueError, TypeError):
+                rec_lengths.append(-1)
 
         frame_no = layers.get("frame.number")
         protocols = layers.get("frame.protocols")
@@ -230,27 +253,20 @@ def main(argv: list[str] | None = None) -> None:
         except (TypeError, ValueError):
             continue
 
-        hits.append({"frame": frame_no_int, "path": str(protocols)})
+        num_records = len(indices_23)
+
+        hit: dict[str, str | int] = {"frame": frame_no_int, "path": str(protocols)}
+        if not args.legacy:
+            hit["num_records"] = num_records
+            hit["lengths"] = rec_lengths
+
+        hits.append(hit)
+        frame_record_counts[frame_no_int] = num_records
         if stream_int >= 0:
             hits_by_stream.setdefault(stream_int, set()).add(frame_no_int)
 
     if args.verbose:
         sys.stdout.write(f"[tls23-marker] 显式扫描命中 {len(hits)} 帧。\n")
-
-    # ----- NEW: Summary statistics -----
-    total_matches = len(hits)
-    path_counter: Counter[str] = Counter(item["path"] for item in hits)
-
-    # Build summary dict in English
-    summary_info = {
-        "total_matches": total_matches,
-        "by_path": dict(sorted(path_counter.items(), key=lambda kv: (-kv[1], kv[0])))
-    }
-
-    if args.verbose:
-        sys.stdout.write(
-            f"[tls23-marker] Matched {total_matches} frames across {len(summary_info['by_path'])} unique protocol paths.\n"
-        )
 
     # -------------------- 阶段 3：缺头补标实现 -------------------- #
 
@@ -387,6 +403,8 @@ def main(argv: list[str] | None = None) -> None:
                     if frame_map[i] != -1
                 }
                 supplemented_frames[stream_id].update(frames_set)
+                for _f in frames_set:
+                    frame_record_counts[_f] += 1
 
             cursor += total_rec_len
 
@@ -398,16 +416,49 @@ def main(argv: list[str] | None = None) -> None:
         for frame_no in frames_set:
             if frame_no in existing_frames:
                 continue
-            # 重新获取路径，如果之前记录过 proto_map
-            # 确保 path 信息可用
+
             path_str = "eth:ip:tcp:tls"  # fallback
-            # stream loop above created proto_map variable scoped there; we cannot access here
-            # 简化处理：先不包含 path，后续阶段完善
-            hits.append({"frame": frame_no, "path": path_str})
+
+            new_hit: dict[str, str | int] = {"frame": frame_no, "path": path_str}
+            if not args.legacy:
+                new_hit["num_records"] = frame_record_counts.get(frame_no, 1)
+            hits.append(new_hit)
+
+    # 先根据最终统计结果同步每帧的 num_records 字段（非 legacy 模式）
+    if not args.legacy:
+        frame_to_hit = {h["frame"]: h for h in hits}
+        for _f, _cnt in frame_record_counts.items():
+            if _f in frame_to_hit:
+                frame_to_hit[_f]["num_records"] = _cnt
+
+    total_frames = len(hits)
+
+    # -------------------- 汇总统计 (Stage 5) -------------------- #
+    total_records = 0
+    path_counter: Counter[str] = Counter()
+
+    for item in hits:
+        num_rec = item.get("num_records", 1) if not args.legacy else 1
+        if not isinstance(num_rec, int):
+            try:
+                num_rec = int(num_rec)
+            except Exception:
+                num_rec = 1
+        total_records += num_rec
+        path_counter[item["path"]] += num_rec
+
+    summary_info = {
+        "total_frames": total_frames,
+        "total_records": total_records,
+        "by_path": dict(sorted(path_counter.items(), key=lambda kv: (-kv[1], kv[0]))),
+        # 兼容旧字段
+        "total_matches": total_frames,
+    }
 
     if args.verbose:
-        total_frames = len(hits)
-        sys.stdout.write(f"[tls23-marker] 补标后总命中 {total_frames} 帧。\n")
+        sys.stdout.write(
+            f"[tls23-marker] 补标后共 {total_records} 条记录分布于 {total_frames} 帧，{len(path_counter)} 个协议路径。\n"
+        )
 
     # -------------------- 输出结果 -------------------- #
     output_dir = Path(args.output_dir) if args.output_dir else Path(args.pcap).parent
@@ -427,14 +478,20 @@ def main(argv: list[str] | None = None) -> None:
         tsv_path = output_dir / f"{stem}_tls23_frames.tsv"
         with tsv_path.open("w", encoding="utf-8") as fp:
             # Header lines with summary
-            fp.write(f"# total_matches\t{total_matches}\n")
+            fp.write(f"# total_frames\t{total_frames}\n")
+            fp.write(f"# total_records\t{total_records}\n")
             for path, cnt in summary_info["by_path"].items():
                 fp.write(f"# {path}\t{cnt}\n")
+
             # Detail rows
             for item in hits:
-                fp.write(f"{item['frame']}\t{item['path']}\n")
-        if args.verbose:
-            sys.stdout.write(f"[tls23-marker] Wrote TSV: {tsv_path}\n")
+                base_cols = f"{item['frame']}\t{item['path']}"
+                if not args.legacy:
+                    num_rec = item.get("num_records", 1)
+                    lengths_txt = ",".join(map(str, item.get("lengths", []))) if item.get("lengths") else ""
+                    fp.write(f"{base_cols}\t{num_rec}\t{lengths_txt}\n")
+                else:
+                    fp.write(f"{base_cols}\n")
 
     # -------------------- Annotation (Stage 4) -------------------- #
 
@@ -449,7 +506,7 @@ def main(argv: list[str] | None = None) -> None:
 
             # Build file-level capture comment summarizing statistics in English
             capture_comment_parts = [
-                f"TLS23 Marker: {total_matches} Application Data packets total",
+                f"TLS23 Marker: {total_records} records in {total_frames} packets",
             ]
             capture_comment_parts += [f"{path}={cnt}" for path, cnt in summary_info["by_path"].items()]
             capture_comment = "; ".join(capture_comment_parts)
@@ -458,7 +515,11 @@ def main(argv: list[str] | None = None) -> None:
 
             # Per-frame comments
             for item in sorted(hits, key=lambda x: int(x["frame"])):
-                editcap_cmd += ["-a", f"{item['frame']}:TLS23 Application Data"]
+                if not args.legacy and item.get("num_records", 1) > 1:
+                    comment_text = f"TLS23 Application Data ({item['num_records']} records)"
+                else:
+                    comment_text = "TLS23 Application Data"
+                editcap_cmd += ["-a", f"{item['frame']}:{comment_text}"]
 
             editcap_cmd += [str(args.pcap), str(annotated_path)]
 
