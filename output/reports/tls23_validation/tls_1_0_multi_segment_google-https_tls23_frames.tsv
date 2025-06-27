@@ -1,50 +1,50 @@
 # total_frames	47
 # total_records	55
 # eth:ethertype:ip:tcp:tls	55
-14	eth:ethertype:ip:tcp:tls	1	1166
-15	eth:ethertype:ip:tcp:tls	1	256
-16	eth:ethertype:ip:tcp:tls	1	2068
-18	eth:ethertype:ip:tcp:tls	1	1662
-21	eth:ethertype:ip:tcp:tls	1	1543
-51	eth:ethertype:ip:tcp:tls	1	955
-63	eth:ethertype:ip:tcp:tls	1	1096
-67	eth:ethertype:ip:tcp:tls	1	246
-68	eth:ethertype:ip:tcp:tls	1	2068
-70	eth:ethertype:ip:tcp:tls	1	1678
-73	eth:ethertype:ip:tcp:tls	1	1391
-80	eth:ethertype:ip:tcp:tls	1	235
-85	eth:ethertype:ip:tcp:tls	1	939
-86	eth:ethertype:ip:tcp:tls	1	145
-88	eth:ethertype:ip:tcp:tls	1	1019
-90	eth:ethertype:ip:tcp:tls	2	313,224
-91	eth:ethertype:ip:tcp:tls	1	1020
-93	eth:ethertype:ip:tcp:tls	2	313,207
-94	eth:ethertype:ip:tcp:tls	1	1021
-100	eth:ethertype:ip:tcp:tls	2	313,198
-104	eth:ethertype:ip:tcp:tls	1	1022
-107	eth:ethertype:ip:tcp:tls	2	313,186
-109	eth:ethertype:ip:tcp:tls	1	1023
-111	eth:ethertype:ip:tcp:tls	2	313,204
-113	eth:ethertype:ip:tcp:tls	1	1024
-115	eth:ethertype:ip:tcp:tls	2	291,202
-117	eth:ethertype:ip:tcp:tls	1	1312
-119	eth:ethertype:ip:tcp:tls	2	257,860
-122	eth:ethertype:ip:tcp:tls	1	2068
-125	eth:ethertype:ip:tcp:tls	1	2068
-128	eth:ethertype:ip:tcp:tls	1	2068
-131	eth:ethertype:ip:tcp:tls	1	2068
-132	eth:ethertype:ip:tcp:tls	1	2068
-135	eth:ethertype:ip:tcp:tls	1	2068
-137	eth:ethertype:ip:tcp:tls	1	1912
-140	eth:ethertype:ip:tcp:tls	1	2068
-143	eth:ethertype:ip:tcp:tls	1	2068
-146	eth:ethertype:ip:tcp:tls	1	2068
-149	eth:ethertype:ip:tcp:tls	1	2068
-150	eth:ethertype:ip:tcp:tls	1	1178
-152	eth:ethertype:ip:tcp:tls	1	1092
-154	eth:ethertype:ip:tcp:tls	1	1059
-156	eth:ethertype:ip:tcp:tls	1	235
-157	eth:ethertype:ip:tcp:tls	1	939
-159	eth:ethertype:ip:tcp:tls	1	145
-162	eth:ethertype:ip:tcp:tls	1	1412
-164	eth:ethertype:ip:tcp:tls	2	307,263
+14	eth:ethertype:ip:tcp:tls	1	1166	0
+15	eth:ethertype:ip:tcp:tls	1	256	0
+16	eth:ethertype:ip:tcp:tls	1	2068	0
+18	eth:ethertype:ip:tcp:tls	1	1662	0
+21	eth:ethertype:ip:tcp:tls	1	1543	0
+51	eth:ethertype:ip:tcp:tls	1	955	0
+63	eth:ethertype:ip:tcp:tls	1	1096	0
+67	eth:ethertype:ip:tcp:tls	1	246	0
+68	eth:ethertype:ip:tcp:tls	1	2068	0
+70	eth:ethertype:ip:tcp:tls	1	1678	0
+73	eth:ethertype:ip:tcp:tls	1	1391	0
+80	eth:ethertype:ip:tcp:tls	1	235	0
+85	eth:ethertype:ip:tcp:tls	1	939	0
+86	eth:ethertype:ip:tcp:tls	1	145	0
+88	eth:ethertype:ip:tcp:tls	1	1019	0
+90	eth:ethertype:ip:tcp:tls	2	313,224	0
+91	eth:ethertype:ip:tcp:tls	1	1020	0
+93	eth:ethertype:ip:tcp:tls	2	313,207	0
+94	eth:ethertype:ip:tcp:tls	1	1021	0
+100	eth:ethertype:ip:tcp:tls	2	313,198	0
+104	eth:ethertype:ip:tcp:tls	1	1022	0
+107	eth:ethertype:ip:tcp:tls	2	313,186	0
+109	eth:ethertype:ip:tcp:tls	1	1023	0
+111	eth:ethertype:ip:tcp:tls	2	313,204	0
+113	eth:ethertype:ip:tcp:tls	1	1024	0
+115	eth:ethertype:ip:tcp:tls	2	291,202	0
+117	eth:ethertype:ip:tcp:tls	1	1312	0
+119	eth:ethertype:ip:tcp:tls	2	257,860	0
+122	eth:ethertype:ip:tcp:tls	1	2068	0
+125	eth:ethertype:ip:tcp:tls	1	2068	0
+128	eth:ethertype:ip:tcp:tls	1	2068	0
+131	eth:ethertype:ip:tcp:tls	1	2068	0
+132	eth:ethertype:ip:tcp:tls	1	2068	0
+135	eth:ethertype:ip:tcp:tls	1	2068	0
+137	eth:ethertype:ip:tcp:tls	1	1912	0
+140	eth:ethertype:ip:tcp:tls	1	2068	0
+143	eth:ethertype:ip:tcp:tls	1	2068	0
+146	eth:ethertype:ip:tcp:tls	1	2068	0
+149	eth:ethertype:ip:tcp:tls	1	2068	0
+150	eth:ethertype:ip:tcp:tls	1	1178	0
+152	eth:ethertype:ip:tcp:tls	1	1092	0
+154	eth:ethertype:ip:tcp:tls	1	1059	0
+156	eth:ethertype:ip:tcp:tls	1	235	0
+157	eth:ethertype:ip:tcp:tls	1	939	0
+159	eth:ethertype:ip:tcp:tls	1	145	0
+162	eth:ethertype:ip:tcp:tls	1	1412	0
+164	eth:ethertype:ip:tcp:tls	2	307,263	0

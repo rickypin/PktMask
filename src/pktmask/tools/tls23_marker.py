@@ -202,6 +202,7 @@ def main(argv: list[str] | None = None) -> None:
     hits: list[dict[str, str | int]] = []
     hits_by_stream: dict[int, set[int]] = {}
     frame_record_counts: dict[int, int] = defaultdict(int)
+    zero_bytes_count: dict[int, int] = defaultdict(int)
 
     for pkt in packets:
         layers = pkt.get("_source", {}).get("layers", {})  # type: ignore[arg-type]
@@ -409,6 +410,15 @@ def main(argv: list[str] | None = None) -> None:
                 break  # 余下数据不足，结束
 
             if content_type == 0x17:
+                # 计算该 TLS Application Data 记录中值为 0x00 的字节数量，并按 frame 归档
+                payload_start = cursor + 5  # 跳过 TLS 记录头 (type+version+length)
+                payload_end = cursor + total_rec_len
+                for pos in range(payload_start, payload_end):
+                    if data[pos] == 0:
+                        _frame_idx = frame_map[pos]
+                        if _frame_idx != -1:
+                            zero_bytes_count[_frame_idx] += 1
+
                 frames_set = {
                     frame_map[i]
                     for i in range(cursor, cursor + total_rec_len)
@@ -442,6 +452,16 @@ def main(argv: list[str] | None = None) -> None:
         for _f, _cnt in frame_record_counts.items():
             if _f in frame_to_hit:
                 frame_to_hit[_f]["num_records"] = _cnt
+
+        # 合并零字节统计信息
+        for _f, _z in zero_bytes_count.items():
+            if _f in frame_to_hit:
+                frame_to_hit[_f]["zero_bytes"] = _z
+
+        # 对于未统计到零字节的帧，默认填充 0
+        for h in hits:
+            if "zero_bytes" not in h:
+                h["zero_bytes"] = 0
 
     total_frames = len(hits)
 
@@ -501,7 +521,8 @@ def main(argv: list[str] | None = None) -> None:
                 if not args.legacy:
                     num_rec = item.get("num_records", 1)
                     lengths_txt = ",".join(map(str, item.get("lengths", []))) if item.get("lengths") else ""
-                    fp.write(f"{base_cols}\t{num_rec}\t{lengths_txt}\n")
+                    zero_bytes = item.get("zero_bytes", 0)
+                    fp.write(f"{base_cols}\t{num_rec}\t{lengths_txt}\t{zero_bytes}\n")
                 else:
                     fp.write(f"{base_cols}\n")
 
