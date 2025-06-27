@@ -1,2 +1,13 @@
-# total_frames	0
-# total_records	0
+# total_frames	10
+# total_records	15
+# eth:ethertype:ip:tcp:tls	15
+6	eth:ethertype:ip:tcp:tls	4	23,675,153,69
+8	eth:ethertype:ip:tcp:tls	1	69
+9	eth:ethertype:ip:tcp:tls	1	274
+10	eth:ethertype:ip:tcp:tls	1	274
+12	eth:ethertype:ip:tcp:tls	1	19
+21	eth:ethertype:ip:tcp:tls	1	73
+23	eth:ethertype:ip:tcp:tls	2	27,69
+25	eth:ethertype:ip:tcp:tls	2	21,69
+26	eth:ethertype:ip:tcp:tls	1	274
+28	eth:ethertype:ip:tcp:tls	1	19

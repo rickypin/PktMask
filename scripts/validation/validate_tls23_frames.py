@@ -153,31 +153,82 @@ def main(argv: List[str] | None = None) -> None:  # noqa: C901 – 保持单函�
             overall_success = False
             continue
 
-        # 验证 JSON 输出存在且可解析
-        json_path = output_dir / f"{pcap.stem}_tls23_frames.json"
+        # ------------------------------------------------------------
+        # 根据 --formats 参数决定验证逻辑
+        # ------------------------------------------------------------
+        requested_formats = {fmt.strip().lower() for fmt in args.formats.split(',') if fmt.strip()}
+
         file_entry: Dict[str, Any] = {
             "file": str(pcap.name),
-            "json": str(json_path.name),
             "frames_detected": 0,
             "status": "ok",
         }
 
-        if not json_path.exists():
-            sys.stderr.write(f"[validate-tls23] 缺少预期输出文件: {json_path}\n")
-            file_entry["status"] = "missing_json"
-            overall_success = False
-        else:
-            try:
-                frames = json.loads(json_path.read_text(encoding="utf-8"))
-                if isinstance(frames, list):
-                    # Legacy schema
-                    file_entry["frames_detected"] = len(frames)
-                else:
-                    file_entry["frames_detected"] = frames.get("summary", {}).get("total_matches", 0)
-            except Exception as e:  # pragma: no cover – 理论上不会发生
-                sys.stderr.write(f"[validate-tls23] 解析 {json_path.name} 失败: {e}\n")
-                file_entry["status"] = "parse_error"
+        # ---- Prefer JSON when存在 ----
+        if "json" in requested_formats:
+            json_path = output_dir / f"{pcap.stem}_tls23_frames.json"
+            file_entry["json"] = str(json_path.name)
+
+            if not json_path.exists():
+                sys.stderr.write(f"[validate-tls23] 缺少预期输出文件: {json_path}\n")
+                file_entry["status"] = "missing_json"
                 overall_success = False
+            else:
+                try:
+                    frames_data = json.loads(json_path.read_text(encoding="utf-8"))
+                    if isinstance(frames_data, list):
+                        # legacy schema
+                        file_entry["frames_detected"] = len(frames_data)
+                    else:
+                        file_entry["frames_detected"] = (
+                            frames_data.get("summary", {}).get("total_matches", 0)
+                        )
+                except Exception as e:  # pragma: no cover
+                    sys.stderr.write(f"[validate-tls23] 解析 {json_path.name} 失败: {e}\n")
+                    file_entry["status"] = "parse_error"
+                    overall_success = False
+
+        # ---- Fallback to TSV when仅请求 TSV ----
+        elif "tsv" in requested_formats:
+            tsv_path = output_dir / f"{pcap.stem}_tls23_frames.tsv"
+            file_entry["tsv"] = str(tsv_path.name)
+
+            if not tsv_path.exists():
+                sys.stderr.write(f"[validate-tls23] 缺少预期输出文件: {tsv_path}\n")
+                file_entry["status"] = "missing_tsv"
+                overall_success = False
+            else:
+                try:
+                    total_frames = None
+                    detail_rows = 0
+                    with tsv_path.open("r", encoding="utf-8") as fp:
+                        for line in fp:
+                            line = line.rstrip("\n")
+                            if not line:
+                                continue
+                            if line.startswith("#"):
+                                # Header lines like: "# total_frames\t42"
+                                parts = line[1:].split("\t", 1)
+                                if len(parts) == 2 and parts[0].strip() == "total_frames":
+                                    try:
+                                        total_frames = int(parts[1].strip())
+                                    except ValueError:
+                                        total_frames = None
+                                continue
+                            # non-header detail row
+                            detail_rows += 1
+                    file_entry["frames_detected"] = total_frames if total_frames is not None else detail_rows
+                except Exception as e:  # pragma: no cover
+                    sys.stderr.write(f"[validate-tls23] 解析 {tsv_path.name} 失败: {e}\n")
+                    file_entry["status"] = "parse_error"
+                    overall_success = False
+        else:
+            # 既不包含 json 也不包含 tsv —— 无法判定结果
+            sys.stderr.write(
+                "[validate-tls23] 无法验证输出，未包含 json/tsv 任一格式。请至少启用其中一种。\n"
+            )
+            file_entry["status"] = "unsupported_format"
+            overall_success = False
 
         summary["files"].append(file_entry)
 

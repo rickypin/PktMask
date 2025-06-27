@@ -1,61 +1,61 @@
 {
-  "timestamp": "2025-06-27T09:37:47.093604Z",
+  "timestamp": "2025-06-27T16:14:40.118097Z",
   "input_dir": "/Users/ricky/Downloads/PktMask/tests/data/tls",
   "output_dir": "/Users/ricky/Downloads/PktMask/output/reports/tls23_validation",
   "files": [
     {
       "file": "ssl_3.pcapng",
-      "json": "ssl_3_tls23_frames.json",
-      "frames_detected": 0,
-      "status": "missing_json"
+      "frames_detected": 12,
+      "status": "ok",
+      "tsv": "ssl_3_tls23_frames.tsv"
     },
     {
       "file": "tls_1_0_multi_segment_google-https.pcap",
-      "json": "tls_1_0_multi_segment_google-https_tls23_frames.json",
-      "frames_detected": 0,
-      "status": "missing_json"
+      "frames_detected": 47,
+      "status": "ok",
+      "tsv": "tls_1_0_multi_segment_google-https_tls23_frames.tsv"
     },
     {
       "file": "tls_1_2-2.pcapng",
-      "json": "tls_1_2-2_tls23_frames.json",
-      "frames_detected": 0,
-      "status": "missing_json"
+      "frames_detected": 1,
+      "status": "ok",
+      "tsv": "tls_1_2-2_tls23_frames.tsv"
     },
     {
       "file": "tls_1_2_double_vlan.pcap",
-      "json": "tls_1_2_double_vlan_tls23_frames.json",
-      "frames_detected": 0,
-      "status": "missing_json"
+      "frames_detected": 64,
+      "status": "ok",
+      "tsv": "tls_1_2_double_vlan_tls23_frames.tsv"
     },
     {
       "file": "tls_1_2_plainip.pcap",
-      "json": "tls_1_2_plainip_tls23_frames.json",
-      "frames_detected": 0,
-      "status": "missing_json"
+      "frames_detected": 2,
+      "status": "ok",
+      "tsv": "tls_1_2_plainip_tls23_frames.tsv"
     },
     {
       "file": "tls_1_2_pop_mix.pcapng",
-      "json": "tls_1_2_pop_mix_tls23_frames.json",
-      "frames_detected": 0,
-      "status": "missing_json"
+      "frames_detected": 4,
+      "status": "ok",
+      "tsv": "tls_1_2_pop_mix_tls23_frames.tsv"
     },
     {
       "file": "tls_1_2_single_vlan.pcap",
-      "json": "tls_1_2_single_vlan_tls23_frames.json",
-      "frames_detected": 0,
-      "status": "missing_json"
+      "frames_detected": 607,
+      "status": "ok",
+      "tsv": "tls_1_2_single_vlan_tls23_frames.tsv"
     },
     {
       "file": "tls_1_2_smtp_mix.pcapng",
-      "json": "tls_1_2_smtp_mix_tls23_frames.json",
-      "frames_detected": 0,
-      "status": "missing_json"
+      "frames_detected": 5,
+      "status": "ok",
+      "tsv": "tls_1_2_smtp_mix_tls23_frames.tsv"
     },
     {
       "file": "tls_1_3_0-RTT-2_22_23_mix.pcapng",
-      "json": "tls_1_3_0-RTT-2_22_23_mix_tls23_frames.json",
-      "frames_detected": 0,
-      "status": "missing_json"
+      "frames_detected": 10,
+      "status": "ok",
+      "tsv": "tls_1_3_0-RTT-2_22_23_mix_tls23_frames.tsv"
     }
   ]
 }

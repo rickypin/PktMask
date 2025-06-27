@@ -161,6 +161,8 @@ def main(argv: list[str] | None = None) -> None:
         "-e",
         "tls.record.content_type",
         "-e",
+        "tls.record.opaque_type",
+        "-e",
         "tls.record.length",
         "-e",
         "tcp.stream",
@@ -206,19 +208,29 @@ def main(argv: list[str] | None = None) -> None:
         if not layers:
             continue
 
-        content_types = layers.get("tls.record.content_type")
-        if content_types is None:
-            continue
+        # TLS 1.3 起字段改名为 tls.record.opaque_type；旧版为 content_type
+        content_types_raw = layers.get("tls.record.content_type")
+        opaque_types_raw = layers.get("tls.record.opaque_type")
 
-        # tshark -E occurrence=a 会总是返回 list[str]
-        if isinstance(content_types, str):
-            content_types = [content_types]
+        def _to_list(val):
+            if val is None:
+                return []
+            return val if isinstance(val, list) else [val]
+
+        content_types_list = _to_list(content_types_raw)
+        opaque_types_list = _to_list(opaque_types_raw)
+
+        # 合并两类字段，保持原顺序，确保同时检测含混合记录的帧
+        # Wireshark 对于同一条记录仅会输出其中一个字段，因此简单拼接即可
+        type_fields = content_types_list + [v for v in opaque_types_list if v not in content_types_list]
+        if not type_fields:
+            continue
 
         # 判断是否包含 23 (十进制) 或 0x17 (十六进制)
         def _is_23(value: str) -> bool:
             return value.strip() in {"23", "0x17", "17"}
 
-        indices_23 = [idx for idx, v in enumerate(content_types) if _is_23(v)]
+        indices_23 = [idx for idx, v in enumerate(type_fields) if _is_23(v)]
         if not indices_23:
             continue
 
