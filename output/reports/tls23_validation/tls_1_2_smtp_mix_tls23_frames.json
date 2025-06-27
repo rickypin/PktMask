@@ -1,0 +1,22 @@
+[
+  {
+    "frame": 22,
+    "path": "eth:ethertype:ip:tcp:tls"
+  },
+  {
+    "frame": 24,
+    "path": "eth:ethertype:ip:tcp:tls"
+  },
+  {
+    "frame": 26,
+    "path": "eth:ethertype:ip:tcp:tls"
+  },
+  {
+    "frame": 28,
+    "path": "eth:ethertype:ip:tcp:tls"
+  },
+  {
+    "frame": 32,
+    "path": "eth:ethertype:ip:tcp:tls"
+  }
+]

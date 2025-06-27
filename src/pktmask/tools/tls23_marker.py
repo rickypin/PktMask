@@ -1,0 +1,481 @@
+"""TLS23 Marker Tool (Stage 1: CLI Skeleton & Environment Detection)
+
+本模块实现了 tls23_marker 工具的 CLI 参数解析和基础环境探测功能，
+后续阶段将逐步补充扫描、补标和输出逻辑。
+
+使用示例：
+    python -m pktmask.tools.tls23_marker --pcap input.pcapng
+"""
+
+from __future__ import annotations
+
+import argparse
+import re
+import subprocess
+import sys
+from pathlib import Path
+from typing import Tuple
+from collections import Counter
+
+MIN_TSHARK_VERSION: Tuple[int, int, int] = (4, 2, 0)
+
+
+def _parse_tshark_version(output: str) -> Tuple[int, int, int] | None:
+    """从 `tshark -v` 输出解析版本号。
+
+    预期格式示例::
+        TShark (Wireshark) 4.2.1 (Git commit 111222)
+    """
+    m = re.search(r"(\d+)\.(\d+)\.(\d+)", output)
+    if not m:
+        return None
+    return tuple(map(int, m.groups()))  # type: ignore [return-value]
+
+
+def _check_tshark_version(tshark_path: str | None, verbose: bool = False) -> str:
+    """验证本地 tshark 可用且版本足够，返回实际可执行路径。
+
+    如果 `tshark_path` 为空，则假设可直接在 PATH 中调用。
+    版本不足或不可执行时退出并返回非零码 1。
+    """
+    executable = tshark_path or "tshark"
+
+    try:
+        completed = subprocess.run(
+            [executable, "-v"], check=True, text=True, capture_output=True
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+        sys.stderr.write(
+            f"[tls23-marker] 错误: 无法执行 '{executable}': {exc}\n"
+        )
+        sys.exit(1)
+
+    version = _parse_tshark_version(completed.stdout + completed.stderr)
+    if version is None:
+        sys.stderr.write("[tls23-marker] 错误: 无法解析 tshark 版本号。\n")
+        sys.exit(1)
+
+    if version < MIN_TSHARK_VERSION:
+        ver_str = ".".join(map(str, version))
+        min_str = ".".join(map(str, MIN_TSHARK_VERSION))
+        sys.stderr.write(
+            f"[tls23-marker] 错误: tshark 版本过低 ({ver_str})，需要 ≥ {min_str}.\n"
+        )
+        sys.exit(1)
+
+    if verbose:
+        sys.stdout.write(
+            f"[tls23-marker] 检测到 tshark {'.'.join(map(str, version))} 于 {executable}\n"
+        )
+
+    return executable
+
+
+def _build_arg_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="tls23_marker",
+        description="标记 TLS Application Data 帧 (content-type=23) 的工具 – Stage 1 CLI",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+
+    parser.add_argument("--pcap", required=True, help="待分析的 pcap/pcapng 文件路径")
+    parser.add_argument(
+        "--decode-as",
+        action="append",
+        dest="decode_as",
+        metavar="PORT,PROTO",
+        help="额外端口解码，格式如 8443,tls，可多次指定",
+    )
+    parser.add_argument(
+        "--no-annotate",
+        action="store_true",
+        help="仅输出列表，不写回注释",
+    )
+    parser.add_argument(
+        "--formats",
+        default="json,tsv",
+        help="输出格式，逗号分隔，可选 json,tsv",
+    )
+    parser.add_argument(
+        "--tshark-path",
+        help="自定义 tshark 可执行文件路径 (默认从 PATH 搜索)",
+    )
+    parser.add_argument(
+        "--memory",
+        type=int,
+        default=256,
+        metavar="MiB",
+        help="TCP 重组内存上限 (MiB)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="结果文件输出目录 (默认与输入文件同目录)",
+    )
+    parser.add_argument(
+        "--verbose", action="store_true", help="输出调试信息"
+    )
+
+    return parser
+
+
+def main(argv: list[str] | None = None) -> None:
+    argv = argv if argv is not None else sys.argv[1:]
+    parser = _build_arg_parser()
+    args = parser.parse_args(argv)
+
+    # 环境检测
+    tshark_exec = _check_tshark_version(args.tshark_path, args.verbose)
+
+    if args.verbose:
+        sys.stdout.write(
+            f"[tls23-marker] 输入文件: {args.pcap}\n"
+            f"[tls23-marker] 输出目录: {args.output_dir or Path(args.pcap).parent}\n"
+            f"[tls23-marker] 输出格式: {args.formats}\n"
+            f"[tls23-marker] 注释写回: {'关闭' if args.no_annotate else '开启'}\n"
+            f"[tls23-marker] tshark 可执行: {tshark_exec}\n"
+        )
+
+    # -------------------- 阶段 2：显式扫描实现 -------------------- #
+
+    # 构造 tshark 命令
+    tshark_cmd: list[str] = [
+        tshark_exec,
+        "-2",  # 两遍分析，启用重组
+        "-r",
+        str(args.pcap),
+        "-T",
+        "json",
+        # 仅输出必要字段，减少 JSON 体积
+        "-e",
+        "frame.number",
+        "-e",
+        "frame.protocols",
+        "-e",
+        "tls.record.content_type",
+        "-e",
+        "tcp.stream",
+        "-E",
+        "occurrence=a",  # 展开所有出现
+        "-o",
+        "tcp.desegment_tcp_streams:TRUE",
+    ]
+
+    # 处理 decode-as
+    if args.decode_as:
+        for spec in args.decode_as:
+            tshark_cmd += ["-d", spec]
+
+    if args.verbose:
+        sys.stdout.write(f"[tls23-marker] 运行命令: {' '.join(tshark_cmd)}\n")
+
+    try:
+        completed = subprocess.run(
+            tshark_cmd,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        sys.stderr.write(f"[tls23-marker] 错误: tshark 执行失败: {exc}\n")
+        sys.exit(3)
+
+    import json  # 延迟导入
+
+    try:
+        packets = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        sys.stderr.write(f"[tls23-marker] 错误: tshark JSON 解析失败: {exc}\n")
+        sys.exit(3)
+
+    hits: list[dict[str, str | int]] = []
+    hits_by_stream: dict[int, set[int]] = {}
+
+    for pkt in packets:
+        layers = pkt.get("_source", {}).get("layers", {})  # type: ignore[arg-type]
+        if not layers:
+            continue
+
+        content_types = layers.get("tls.record.content_type")
+        if content_types is None:
+            continue
+
+        # tshark -E occurrence=a 会总是返回 list[str]
+        if isinstance(content_types, str):
+            content_types = [content_types]
+
+        # 判断是否包含 23 (十进制) 或 0x17 (十六进制)
+        def _is_23(value: str) -> bool:
+            return value.strip() in {"23", "0x17", "17"}
+
+        if not any(_is_23(v) for v in content_types):
+            continue
+
+        frame_no = layers.get("frame.number")
+        protocols = layers.get("frame.protocols")
+        stream_id = layers.get("tcp.stream")
+
+        # 这两个字段来自 -e 同样为 str 或 list[str]
+        if isinstance(frame_no, list):
+            frame_no = frame_no[0]
+        if isinstance(protocols, list):
+            protocols = protocols[0]
+        if isinstance(stream_id, list):
+            stream_id = stream_id[0]
+
+        try:
+            frame_no_int = int(frame_no)  # type: ignore[arg-type]
+            stream_int = int(stream_id) if stream_id is not None else -1
+        except (TypeError, ValueError):
+            continue
+
+        hits.append({"frame": frame_no_int, "path": str(protocols)})
+        if stream_int >= 0:
+            hits_by_stream.setdefault(stream_int, set()).add(frame_no_int)
+
+    if args.verbose:
+        sys.stdout.write(f"[tls23-marker] 显式扫描命中 {len(hits)} 帧。\n")
+
+    # ----- NEW: Summary statistics -----
+    total_matches = len(hits)
+    path_counter: Counter[str] = Counter(item["path"] for item in hits)
+
+    # Build summary dict in English
+    summary_info = {
+        "total_matches": total_matches,
+        "by_path": dict(sorted(path_counter.items(), key=lambda kv: (-kv[1], kv[0])))
+    }
+
+    if args.verbose:
+        sys.stdout.write(
+            f"[tls23-marker] Matched {total_matches} frames across {len(summary_info['by_path'])} unique protocol paths.\n"
+        )
+
+    # -------------------- 阶段 3：缺头补标实现 -------------------- #
+
+    def _hex_to_bytes(h: str) -> bytes:
+        """将 tshark tcp.payload 字段(hex string 或带 : 分隔) 转成 bytes."""
+        h = h.replace(":", "").replace(" ", "").strip()
+        if not h:
+            return b""
+        import binascii
+
+        try:
+            return binascii.unhexlify(h)
+        except binascii.Error:
+            return b""
+
+    # 以 streamID -> set(frame_no) 形式补充 hits
+    supplemented_frames: dict[int, set[int]] = {k: set(v) for k, v in hits_by_stream.items()}
+
+    for stream_id in hits_by_stream.keys():
+        stream_cmd = [
+            tshark_exec,
+            "-2",
+            "-r",
+            str(args.pcap),
+            "-Y",
+            f"tcp.stream == {stream_id}",
+            "-T",
+            "json",
+            "-e",
+            "frame.number",
+            "-e",
+            "frame.protocols",
+            "-e",
+            "tcp.seq_relative",
+            "-e",
+            "tcp.len",
+            "-e",
+            "tcp.payload",
+            "-E",
+            "occurrence=a",
+            "-o",
+            "tcp.desegment_tcp_streams:TRUE",
+        ]
+
+        try:
+            completed_stream = subprocess.run(
+                stream_cmd, check=True, text=True, capture_output=True
+            )
+        except subprocess.CalledProcessError:
+            continue  # 跳过无法解析的流
+
+        import json as _json  # 避免与外层 json 混淆
+
+        try:
+            pkt_list = _json.loads(completed_stream.stdout)
+        except _json.JSONDecodeError:
+            continue
+
+        segments: list[tuple[int, bytes, int, str]] = []
+        min_seq = None
+
+        for p in pkt_list:
+            layers2 = p.get("_source", {}).get("layers", {})  # type: ignore[arg-type]
+            frame_no_raw = layers2.get("frame.number")
+            protocols2 = layers2.get("frame.protocols")
+            seq_raw = layers2.get("tcp.seq_relative") or layers2.get("tcp.seq")
+            payload_raw = layers2.get("tcp.payload")
+
+            if isinstance(frame_no_raw, list):
+                frame_no_raw = frame_no_raw[0]
+            if isinstance(protocols2, list):
+                protocols2 = protocols2[0]
+            if isinstance(seq_raw, list):
+                seq_raw = seq_raw[0]
+            if isinstance(payload_raw, list):
+                payload_raw = payload_raw[0]
+
+            try:
+                frame_no_i = int(frame_no_raw)  # type: ignore[arg-type]
+                seq_i = int(seq_raw)
+            except (TypeError, ValueError):
+                continue
+
+            payload_bytes = _hex_to_bytes(str(payload_raw or ""))
+
+            if not payload_bytes:
+                continue
+
+            segments.append((seq_i, payload_bytes, frame_no_i, str(protocols2)))
+            if min_seq is None or seq_i < min_seq:
+                min_seq = seq_i
+
+        if not segments or min_seq is None:
+            continue
+
+        # 按 seq 排序
+        segments.sort(key=lambda x: x[0])
+
+        # 计算总长度
+        max_end = max(s[0] + len(s[1]) for s in segments)
+        total_len = max_end - min_seq
+
+        data = bytearray(total_len)
+        frame_map: list[int] = [-1] * total_len
+        proto_map: dict[int, str] = {}
+
+        for seq_i, payload_bytes, frame_no_i, proto_str in segments:
+            offset = seq_i - min_seq
+            for idx, b in enumerate(payload_bytes):
+                pos = offset + idx
+                if 0 <= pos < total_len and frame_map[pos] == -1:
+                    data[pos] = b
+                    frame_map[pos] = frame_no_i
+            proto_map[frame_no_i] = proto_str
+
+        # 扫描 TLS 记录
+        cursor = 0
+        while cursor + 5 <= total_len:
+            content_type = data[cursor]
+            rec_len = int.from_bytes(data[cursor + 3 : cursor + 5], "big")
+            total_rec_len = 5 + rec_len
+
+            if total_rec_len <= 0:
+                cursor += 1
+                continue
+
+            if cursor + total_rec_len > total_len:
+                break  # 余下数据不足，结束
+
+            if content_type == 0x17:
+                frames_set = {
+                    frame_map[i]
+                    for i in range(cursor, cursor + total_rec_len)
+                    if frame_map[i] != -1
+                }
+                supplemented_frames[stream_id].update(frames_set)
+
+            cursor += total_rec_len
+
+        # end stream loop
+
+    # 合并补标结果到 hits
+    existing_frames = {item["frame"] for item in hits}
+    for stream_id, frames_set in supplemented_frames.items():
+        for frame_no in frames_set:
+            if frame_no in existing_frames:
+                continue
+            # 重新获取路径，如果之前记录过 proto_map
+            # 确保 path 信息可用
+            path_str = "eth:ip:tcp:tls"  # fallback
+            # stream loop above created proto_map variable scoped there; we cannot access here
+            # 简化处理：先不包含 path，后续阶段完善
+            hits.append({"frame": frame_no, "path": path_str})
+
+    if args.verbose:
+        total_frames = len(hits)
+        sys.stdout.write(f"[tls23-marker] 补标后总命中 {total_frames} 帧。\n")
+
+    # -------------------- 输出结果 -------------------- #
+    output_dir = Path(args.output_dir) if args.output_dir else Path(args.pcap).parent
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    formats = [fmt.strip().lower() for fmt in args.formats.split(",") if fmt.strip()]
+
+    stem = Path(args.pcap).stem
+    if "json" in formats:
+        json_path = output_dir / f"{stem}_tls23_frames.json"
+        with json_path.open("w", encoding="utf-8") as fp:
+            json.dump({"summary": summary_info, "matches": hits}, fp, ensure_ascii=False, indent=2)
+        if args.verbose:
+            sys.stdout.write(f"[tls23-marker] Wrote JSON: {json_path}\n")
+
+    if "tsv" in formats:
+        tsv_path = output_dir / f"{stem}_tls23_frames.tsv"
+        with tsv_path.open("w", encoding="utf-8") as fp:
+            # Header lines with summary
+            fp.write(f"# total_matches\t{total_matches}\n")
+            for path, cnt in summary_info["by_path"].items():
+                fp.write(f"# {path}\t{cnt}\n")
+            # Detail rows
+            for item in hits:
+                fp.write(f"{item['frame']}\t{item['path']}\n")
+        if args.verbose:
+            sys.stdout.write(f"[tls23-marker] Wrote TSV: {tsv_path}\n")
+
+    # -------------------- Annotation (Stage 4) -------------------- #
+
+    if not args.no_annotate:
+        import shutil
+
+        editcap_exec = shutil.which("editcap")
+        if editcap_exec is None:
+            sys.stderr.write("[tls23-marker] Warning: 'editcap' not found. Skip annotation.\n")
+        else:
+            annotated_path = output_dir / f"{stem}_annotated.pcapng"
+
+            # Build file-level capture comment summarizing statistics in English
+            capture_comment_parts = [
+                f"TLS23 Marker: {total_matches} Application Data packets total",
+            ]
+            capture_comment_parts += [f"{path}={cnt}" for path, cnt in summary_info["by_path"].items()]
+            capture_comment = "; ".join(capture_comment_parts)
+
+            editcap_cmd: list[str] = [editcap_exec, "--capture-comment", capture_comment]
+
+            # Per-frame comments
+            for item in sorted(hits, key=lambda x: int(x["frame"])):
+                editcap_cmd += ["-a", f"{item['frame']}:TLS23 Application Data"]
+
+            editcap_cmd += [str(args.pcap), str(annotated_path)]
+
+            if args.verbose:
+                short_preview = " ".join(editcap_cmd[:15]) + (" ..." if len(editcap_cmd) > 15 else "")
+                sys.stdout.write(f"[tls23-marker] Calling editcap for annotation: {short_preview}\n")
+
+            try:
+                subprocess.run(editcap_cmd, check=True)
+                if args.verbose:
+                    sys.stdout.write(f"[tls23-marker] Generated annotated file: {annotated_path}\n")
+            except subprocess.CalledProcessError as exc:
+                sys.stderr.write(f"[tls23-marker] Warning: editcap annotation failed: {exc}\n")
+
+    # Success exit
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main() 

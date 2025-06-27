@@ -25,7 +25,6 @@
 -o tcp.desegment_tcp_streams:true
 -o ip.defragment:true  
 -o tls.desegment_ssl_records:true
--o tcp.reassembly_memory_limit:268435456  # 256 MiB
 ```
 
 ## 3. 架构设计
@@ -133,7 +132,6 @@ tshark_cmd = [
     "-o", "tcp.desegment_tcp_streams:true",
     "-o", "ip.defragment:true", 
     "-o", "tls.desegment_ssl_records:true",
-    "-o", "tcp.reassembly_memory_limit:268435456",
     "-T", "json",
     "-e", "frame.number",
     "-e", "frame.protocols", 
