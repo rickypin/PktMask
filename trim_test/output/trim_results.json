@@ -1,0 +1,263 @@
+{
+  "ssl_3.pcapng": {
+    "input_file": "tests/data/tls/ssl_3.pcapng",
+    "output_file": ".tests_tls_trim/output/ssl_3-TRIMMED.pcapng",
+    "success": true,
+    "message": "Pipeline completed successfully.",
+    "total_packets": 0,
+    "modified_packets": 5,
+    "stats": {
+      "TShark\u9884\u5904\u7406\u5668": {
+        "packets_processed": 0,
+        "reassembled_streams": 0,
+        "defragmented_packets": 0,
+        "warnings": 0,
+        "errors": 0,
+        "execution_time": 0.23118996620178223,
+        "return_code": 0
+      },
+      "TcpPayloadMaskerAdapter": {
+        "processed_packets": 101,
+        "modified_packets": 5,
+        "skipped_packets": 96,
+        "error_packets": 0,
+        "total_bytes_processed": 4253,
+        "total_bytes_masked": 4201,
+        "processing_time_seconds": 0.0017247200012207031,
+        "modification_rate": 4.9504950495049505
+      }
+    }
+  },
+  "tls_1_0_multi_segment_google-https.pcap": {
+    "input_file": "tests/data/tls/tls_1_0_multi_segment_google-https.pcap",
+    "output_file": ".tests_tls_trim/output/tls_1_0_multi_segment_google-https-TRIMMED.pcap",
+    "success": true,
+    "message": "Pipeline completed successfully.",
+    "total_packets": 0,
+    "modified_packets": 29,
+    "stats": {
+      "TShark\u9884\u5904\u7406\u5668": {
+        "packets_processed": 0,
+        "reassembled_streams": 0,
+        "defragmented_packets": 0,
+        "warnings": 0,
+        "errors": 0,
+        "execution_time": 0.24222898483276367,
+        "return_code": 0
+      },
+      "TcpPayloadMaskerAdapter": {
+        "processed_packets": 1204,
+        "modified_packets": 29,
+        "skipped_packets": 1175,
+        "error_packets": 0,
+        "total_bytes_processed": 24957,
+        "total_bytes_masked": 22340,
+        "processing_time_seconds": 0.00951385498046875,
+        "modification_rate": 2.408637873754153
+      }
+    }
+  },
+  "tls_1_2-2.pcapng": {
+    "input_file": "tests/data/tls/tls_1_2-2.pcapng",
+    "output_file": ".tests_tls_trim/output/tls_1_2-2-TRIMMED.pcapng",
+    "success": true,
+    "message": "Pipeline completed successfully.",
+    "total_packets": 0,
+    "modified_packets": 1,
+    "stats": {
+      "TShark\u9884\u5904\u7406\u5668": {
+        "packets_processed": 0,
+        "reassembled_streams": 0,
+        "defragmented_packets": 0,
+        "warnings": 0,
+        "errors": 0,
+        "execution_time": 0.22556209564208984,
+        "return_code": 0
+      },
+      "TcpPayloadMaskerAdapter": {
+        "processed_packets": 14,
+        "modified_packets": 1,
+        "skipped_packets": 13,
+        "error_packets": 0,
+        "total_bytes_processed": 41,
+        "total_bytes_masked": 36,
+        "processing_time_seconds": 0.00020503997802734375,
+        "modification_rate": 7.142857142857142
+      }
+    }
+  },
+  "tls_1_2_double_vlan.pcap": {
+    "input_file": "tests/data/tls/tls_1_2_double_vlan.pcap",
+    "output_file": ".tests_tls_trim/output/tls_1_2_double_vlan-TRIMMED.pcap",
+    "success": true,
+    "message": "Pipeline completed successfully.",
+    "total_packets": 0,
+    "modified_packets": 66,
+    "stats": {
+      "TShark\u9884\u5904\u7406\u5668": {
+        "packets_processed": 0,
+        "reassembled_streams": 0,
+        "defragmented_packets": 0,
+        "warnings": 0,
+        "errors": 0,
+        "execution_time": 0.2318572998046875,
+        "return_code": 0
+      },
+      "TcpPayloadMaskerAdapter": {
+        "processed_packets": 854,
+        "modified_packets": 66,
+        "skipped_packets": 788,
+        "error_packets": 0,
+        "total_bytes_processed": 35519,
+        "total_bytes_masked": 34890,
+        "processing_time_seconds": 0.020108938217163086,
+        "modification_rate": 7.728337236533958
+      }
+    }
+  },
+  "tls_1_2_plainip.pcap": {
+    "input_file": "tests/data/tls/tls_1_2_plainip.pcap",
+    "output_file": ".tests_tls_trim/output/tls_1_2_plainip-TRIMMED.pcap",
+    "success": true,
+    "message": "Pipeline completed successfully.",
+    "total_packets": 0,
+    "modified_packets": 2,
+    "stats": {
+      "TShark\u9884\u5904\u7406\u5668": {
+        "packets_processed": 0,
+        "reassembled_streams": 0,
+        "defragmented_packets": 0,
+        "warnings": 0,
+        "errors": 0,
+        "execution_time": 0.233551025390625,
+        "return_code": 0
+      },
+      "TcpPayloadMaskerAdapter": {
+        "processed_packets": 22,
+        "modified_packets": 2,
+        "skipped_packets": 20,
+        "error_packets": 0,
+        "total_bytes_processed": 316,
+        "total_bytes_masked": 293,
+        "processing_time_seconds": 0.0004878044128417969,
+        "modification_rate": 9.090909090909092
+      }
+    }
+  },
+  "tls_1_2_pop_mix.pcapng": {
+    "input_file": "tests/data/tls/tls_1_2_pop_mix.pcapng",
+    "output_file": ".tests_tls_trim/output/tls_1_2_pop_mix-TRIMMED.pcapng",
+    "success": true,
+    "message": "Pipeline completed successfully.",
+    "total_packets": 0,
+    "modified_packets": 4,
+    "stats": {
+      "TShark\u9884\u5904\u7406\u5668": {
+        "packets_processed": 0,
+        "reassembled_streams": 0,
+        "defragmented_packets": 0,
+        "warnings": 0,
+        "errors": 0,
+        "execution_time": 0.22827696800231934,
+        "return_code": 0
+      },
+      "TcpPayloadMaskerAdapter": {
+        "processed_packets": 38,
+        "modified_packets": 4,
+        "skipped_packets": 34,
+        "error_packets": 0,
+        "total_bytes_processed": 292,
+        "total_bytes_masked": 268,
+        "processing_time_seconds": 0.0005428791046142578,
+        "modification_rate": 10.526315789473683
+      }
+    }
+  },
+  "tls_1_2_single_vlan.pcap": {
+    "input_file": "tests/data/tls/tls_1_2_single_vlan.pcap",
+    "output_file": ".tests_tls_trim/output/tls_1_2_single_vlan-TRIMMED.pcap",
+    "success": true,
+    "message": "Pipeline completed successfully.",
+    "total_packets": 0,
+    "modified_packets": 494,
+    "stats": {
+      "TShark\u9884\u5904\u7406\u5668": {
+        "packets_processed": 0,
+        "reassembled_streams": 0,
+        "defragmented_packets": 0,
+        "warnings": 0,
+        "errors": 0,
+        "execution_time": 0.23438692092895508,
+        "return_code": 0
+      },
+      "TcpPayloadMaskerAdapter": {
+        "processed_packets": 2111,
+        "modified_packets": 494,
+        "skipped_packets": 1617,
+        "error_packets": 0,
+        "total_bytes_processed": 226607,
+        "total_bytes_masked": 221400,
+        "processing_time_seconds": 0.07159924507141113,
+        "modification_rate": 23.401231643770725
+      }
+    }
+  },
+  "tls_1_2_smtp_mix.pcapng": {
+    "input_file": "tests/data/tls/tls_1_2_smtp_mix.pcapng",
+    "output_file": ".tests_tls_trim/output/tls_1_2_smtp_mix-TRIMMED.pcapng",
+    "success": true,
+    "message": "Pipeline completed successfully.",
+    "total_packets": 0,
+    "modified_packets": 5,
+    "stats": {
+      "TShark\u9884\u5904\u7406\u5668": {
+        "packets_processed": 0,
+        "reassembled_streams": 0,
+        "defragmented_packets": 0,
+        "warnings": 0,
+        "errors": 0,
+        "execution_time": 0.2276158332824707,
+        "return_code": 0
+      },
+      "TcpPayloadMaskerAdapter": {
+        "processed_packets": 38,
+        "modified_packets": 5,
+        "skipped_packets": 33,
+        "error_packets": 0,
+        "total_bytes_processed": 1017,
+        "total_bytes_masked": 987,
+        "processing_time_seconds": 0.0006515979766845703,
+        "modification_rate": 13.157894736842104
+      }
+    }
+  },
+  "tls_1_3_0-RTT-2_22_23_mix.pcapng": {
+    "input_file": "tests/data/tls/tls_1_3_0-RTT-2_22_23_mix.pcapng",
+    "output_file": ".tests_tls_trim/output/tls_1_3_0-RTT-2_22_23_mix-TRIMMED.pcapng",
+    "success": true,
+    "message": "Pipeline completed successfully.",
+    "total_packets": 0,
+    "modified_packets": 10,
+    "stats": {
+      "TShark\u9884\u5904\u7406\u5668": {
+        "packets_processed": 0,
+        "reassembled_streams": 0,
+        "defragmented_packets": 0,
+        "warnings": 0,
+        "errors": 0,
+        "execution_time": 0.22644305229187012,
+        "return_code": 0
+      },
+      "TcpPayloadMaskerAdapter": {
+        "processed_packets": 31,
+        "modified_packets": 10,
+        "skipped_packets": 21,
+        "error_packets": 0,
+        "total_bytes_processed": 2997,
+        "total_bytes_masked": 2099,
+        "processing_time_seconds": 0.0010852813720703125,
+        "modification_rate": 32.25806451612903
+      }
+    }
+  }
+}

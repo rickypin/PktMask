@@ -1,0 +1,79 @@
+---
+description: Rules to follow when creating new files or directories
+globs: 
+alwaysApply: false
+---
+# PktMask 目录与文件结构规范（Agent 版）
+
+本文档为 **Agent** 在开发/重构时读取的参考规则，专注于"目录层级、命名、用途"三要素，已去除历史变更与示例快照。
+
+---
+
+## 1. 顶层目录规则
+| 路径 | 用途 | 版本控制 |
+|------|------|---------|
+| assets/ | 静态资源（图标、样式） | ✅ |
+| config/ | 所有 YAML/JSON 配置，子目录见 2.1 | ✅ |
+| docs/ | 项目文档，子目录见 2.2 | ✅ |
+| examples/ | 使用示例 | ✅ |
+| output/ | 程序运行生成文件（processed/reports/temp） | **忽略** |
+| scripts/ | 构建、测试、迁移等脚本 | ✅ |
+| src/ | 项目源码根包 | ✅ |
+| tests/ | pytest 测试代码 | ✅ |
+| *.md / *.py (根级) | 说明文档与入口脚本 | ✅ |
+
+> 任何其他文件或目录需经评审后才能添加至根目录。
+
+---
+
+## 2. 子目录规范
+### 2.1 config/
+- default/    默认运行配置。
+- samples/    示例配置。
+- production/ 生产环境配置（受控发布）。
+- test/       测试用配置。
+
+### 2.2 docs/
+```
+docs/
+├─ api/             # API 参考
+├─ development/     # 开发文档（architecture/implementation/migration）
+├─ reports/         # 技术报告
+└─ user/            # 用户指南
+```
+### 2.3 scripts/
+- build/       打包、CI/CD 脚本。
+- test/        人工测试/演示脚本。
+- validation/  样本分析、结果验证脚本。
+- migration/   一次性迁移工具。
+- hooks/       Git 钩子脚本。
+
+### 2.4 output/
+- processed/ 文件处理结果。
+- reports/    运行报告。
+- temp/       临时文件（可清理）。
+
+---
+
+## 3. 命名规范
+| 类型 | 规则示例 |
+|------|----------|
+| Python 模块 | `ip_anonymizer.py`, `tcp_masker.py` |
+| 测试模块 | `test_ip_anonymizer.py` |
+| Shell 脚本 | `build_app.sh` |
+| Markdown | `PHASE1_DATA_STRUCTURES.md` |
+| 配置 | `mask_config.yaml` |
+| 临时/输出 | `20250627_XXXX.tmp` 或 UUID，放 output/temp/ |
+
+---
+
+## 4. 开发提交原则
+1. 新增目录/文件必须符合本规范；若无合适位置需先提出结构变更。
+2. 禁止提交个人临时文件；请置于 `output/temp/` 或私有分支。
+3. 配置变更需保持向后兼容并通过审计。
+4. 跨模块引用通过公共包接口，避免相对路径跳层导入。
+5. CI 将校验规范，违规 PR 会被拒绝。
+
+---
+
+如需调整规范，请更新本文档并在 PR 描述中说明原因。 
