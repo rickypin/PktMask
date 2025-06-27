@@ -38,5 +38,6 @@ htmlcov/
 demo_test_reports/htmlcov/
 output/reports/coverage/
 reports/coverage/
+output/
 
 .venv/ 
