@@ -219,6 +219,10 @@ def main() -> None:
     glob_pattern: str = args.glob_pattern
     verbose: bool = args.verbose
 
+    # 专用目录保存掩码后的 PCAP，以避免污染原始目录，便于后续清理
+    masked_dir: Path = output_dir / "masked_pcaps"
+    masked_dir.mkdir(parents=True, exist_ok=True)
+
     files = discover_files(input_dir, glob_pattern)
     if not files:
         logger.error("输入目录无匹配文件: %s", input_dir)
@@ -256,7 +260,7 @@ def main() -> None:
                 shutil.move(tmp_json, orig_json)
 
             # ---------- 调用 PktMask 进行掩码 ----------
-            masked_file = pcap_path.with_name(f"{stem}_masked{suffix}")
+            masked_file = masked_dir / f"{stem}_masked{suffix}"
             run_pktmask_trim_internal(pcap_path, masked_file, verbose)
 
             # ---------- 第二次扫描 ----------
@@ -309,6 +313,9 @@ def main() -> None:
     }
     write_json(output_dir / "validation_summary.json", summary)
 
+    # 生成 HTML 报告
+    write_html_report(summary, output_dir / "validation_summary.html")
+
     logger.info("📊 Overall Pass Rate: %.2f%%", overall_pass_rate)
 
     # 退出码
@@ -316,6 +323,59 @@ def main() -> None:
         sys.exit(0)
     else:
         sys.exit(1)
+
+
+def write_html_report(summary: Dict[str, Any], output_path: Path) -> None:
+    """根据 summary 生成人类可读的 HTML 报告"""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # 简单内联样式，避免外部依赖
+    style = (
+        "body{font-family:Arial,Helvetica,sans-serif;margin:20px;}"
+        "h1{font-size:24px;} table{border-collapse:collapse;width:100%;}"
+        "th,td{border:1px solid #ddd;padding:8px;} th{background:#f4f4f4;}"
+        "tr.pass{background:#e8f7e4;} tr.fail{background:#fdecea;}"
+        "code{background:#f4f4f4;padding:2px 4px;border-radius:4px;}"
+    )
+
+    rows_html = []
+    for f in summary.get("files", []):
+        status = f.get("status")
+        cls = "pass" if status == "pass" else "fail"
+        rows_html.append(
+            f"<tr class='{cls}'>"
+            f"<td>{f.get('file')}</td>"
+            f"<td>{status}</td>"
+            f"<td>{f.get('total_records','-')}</td>"
+            f"<td>{f.get('masked_records','-')}</td>"
+            f"<td>{f.get('unmasked_records','-')}</td>"
+            f"</tr>"
+        )
+        # 若失败则添加详情行，可折叠 <details>
+        if status != "pass" and f.get("failed_frame_details"):
+            detail_lines = []
+            for d in f["failed_frame_details"]:
+                frame = d.get("frame")
+                path = d.get("path")
+                zero = d.get("zero_bytes")
+                lens = d.get("lengths")
+                preview = (d.get("payload_preview") or "").replace("<", "&lt;")
+                detail_lines.append(
+                    f"<li>帧 <code>{frame}</code> | path=<code>{path}</code> | lengths={lens} | zero_bytes={zero} | payload_preview=<code>{preview}</code></li>"
+                )
+            details_html = "<details><summary>失败帧详情</summary><ul>" + "\n".join(detail_lines) + "</ul></details>"
+            rows_html.append(f"<tr class='{cls}'><td colspan='5'>" + details_html + "</td></tr>")
+
+    html = (
+        "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+        f"<title>TLS23 Validation Report</title><style>{style}</style></head><body>"
+        f"<h1>TLS23 Validation Report</h1>"
+        f"<p>Overall Pass Rate: <strong>{summary.get('overall_pass_rate')}%</strong></p>"
+        "<table><thead><tr><th>File</th><th>Status</th><th>Total Records</th><th>Masked</th><th>Unmasked</th></tr></thead><tbody>"
+        + "\n".join(rows_html) + "</tbody></table>" "</body></html>"
+    )
+
+    output_path.write_text(html, encoding="utf-8")
 
 
 if __name__ == "__main__":
