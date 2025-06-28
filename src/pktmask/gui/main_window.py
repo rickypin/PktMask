@@ -83,6 +83,111 @@ class PipelineThread(QThread):
         self.progress_signal.emit(PipelineEvents.LOG, {'message': '--- Pipeline Stopped by User ---'})
         self.progress_signal.emit(PipelineEvents.PIPELINE_END, {})
 
+class NewPipelineThread(QThread):
+    """
+    使用新的 PipelineExecutor 的处理线程。
+    它处理目录遍历并为每个文件调用 executor。
+    """
+    progress_signal = pyqtSignal(PipelineEvents, dict)
+
+    def __init__(self, executor, base_dir: str, output_dir: str):
+        super().__init__()
+        self._executor = executor
+        self._base_dir = base_dir
+        self._output_dir = output_dir
+        self.is_running = True
+
+    def run(self):
+        try:
+            self._run_directory_processing()
+        except Exception as e:
+            self.progress_signal.emit(PipelineEvents.ERROR, {'message': str(e)})
+
+    def _run_directory_processing(self):
+        """运行目录处理逻辑"""
+        import os
+        import time
+        
+        # 发送管道开始事件
+        self.progress_signal.emit(PipelineEvents.PIPELINE_START, {'total_subdirs': 1})
+        
+        # 扫描目录中的PCAP文件
+        pcap_files = []
+        for file in os.scandir(self._base_dir):
+            if file.name.endswith(('.pcap', '.pcapng')):
+                pcap_files.append(file.path)
+        
+        if not pcap_files:
+            self.progress_signal.emit(PipelineEvents.LOG, {'message': '目录中未找到PCAP文件'})
+            self.progress_signal.emit(PipelineEvents.PIPELINE_END, {})
+            return
+        
+        # 发送子目录开始事件
+        rel_subdir = os.path.relpath(self._base_dir, self._base_dir)
+        self.progress_signal.emit(PipelineEvents.SUBDIR_START, {
+            'name': rel_subdir,
+            'current': 1,
+            'total': 1,
+            'file_count': len(pcap_files)
+        })
+        
+        # 处理每个文件
+        for input_path in pcap_files:
+            if not self.is_running:
+                break
+                
+            # 发送文件开始事件
+            self.progress_signal.emit(PipelineEvents.FILE_START, {'path': input_path})
+            
+            try:
+                # 构造输出文件名
+                base_name, ext = os.path.splitext(os.path.basename(input_path))
+                output_path = os.path.join(self._output_dir, f"{base_name}_processed{ext}")
+                
+                # 使用新的 executor 处理文件
+                result = self._executor.run(input_path, output_path, progress_cb=self._handle_stage_progress)
+                
+                # 发送步骤摘要事件
+                for stage_stats in result.stage_stats:
+                    self.progress_signal.emit(PipelineEvents.STEP_SUMMARY, {
+                        'step_name': stage_stats.stage_name,
+                        'filename': os.path.basename(input_path),
+                        'packets_processed': stage_stats.packets_processed,
+                        'packets_modified': stage_stats.packets_modified,
+                        'duration_ms': stage_stats.duration_ms,
+                        **stage_stats.extra_metrics
+                    })
+                
+            except Exception as e:
+                self.progress_signal.emit(PipelineEvents.ERROR, {
+                    'message': f"处理文件 {os.path.basename(input_path)} 时出错: {str(e)}"
+                })
+            
+            # 发送文件完成事件
+            self.progress_signal.emit(PipelineEvents.FILE_END, {'path': input_path})
+        
+        # 发送子目录结束事件
+        self.progress_signal.emit(PipelineEvents.SUBDIR_END, {'name': rel_subdir})
+        
+        # 发送管道结束事件
+        self.progress_signal.emit(PipelineEvents.PIPELINE_END, {})
+
+    def _handle_stage_progress(self, stage, stats):
+        """处理阶段进度回调"""
+        if not self.is_running:
+            return
+        
+        # 可以在这里添加更详细的阶段进度报告
+        self.progress_signal.emit(PipelineEvents.LOG, {
+            'message': f"    - {stage.name}: 处理了 {stats.packets_processed} 个包，修改了 {stats.packets_modified} 个包"
+        })
+
+    def stop(self):
+        self.is_running = False
+        # 发送停止日志和结束事件来触发 UI 恢复
+        self.progress_signal.emit(PipelineEvents.LOG, {'message': '--- Pipeline Stopped by User ---'})
+        self.progress_signal.emit(PipelineEvents.PIPELINE_END, {})
+
 class MainWindow(QMainWindow):
     """主窗口"""
     
@@ -399,6 +504,8 @@ class MainWindow(QMainWindow):
         self.user_stopped = False            # 重置停止标志
         if hasattr(self, '_current_file_ips'):
             self._current_file_ips.clear()    # 清空文件IP映射
+        if hasattr(self, '_counted_files'):
+            self._counted_files.clear()      # 清空包计数缓存
         
         # 停止计时器
         if self.timer and self.timer.isActive():
@@ -486,6 +593,9 @@ class MainWindow(QMainWindow):
 
         elif event_type == PipelineEvents.FILE_END:
             if self.current_processing_file:
+                # **修复**: 增加处理完成的文件计数
+                self.processed_files_count += 1
+                
                 # 获取输出文件名信息
                 output_files = []
                 if self.current_processing_file in self.file_processing_results:
@@ -515,6 +625,20 @@ class MainWindow(QMainWindow):
             self.update_log(data['message'])
 
         elif event_type == PipelineEvents.STEP_SUMMARY:
+            # **修复**: 只从第一个Stage获取包计数，避免重复计算
+            step_name = data.get('step_name', '')
+            packets_processed = data.get('packets_processed', 0)
+            
+            # 只有当这是文件的第一个Stage时才计算包数
+            if step_name in ['DedupStage', 'AnonStage'] and packets_processed > 0:
+                # 检查这个文件是否已经计算过包数
+                current_file = data.get('filename', '')
+                if current_file not in getattr(self, '_counted_files', set()):
+                    if not hasattr(self, '_counted_files'):
+                        self._counted_files = set()
+                    self._counted_files.add(current_file)
+                    self.packets_processed_count += packets_processed
+            
             self.collect_step_result(data)
 
         elif event_type == PipelineEvents.PIPELINE_END:

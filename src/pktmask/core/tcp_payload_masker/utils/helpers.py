@@ -4,70 +4,137 @@ TCP载荷掩码器辅助函数
 提供数据转换、格式化等辅助功能。
 """
 
-from typing import Dict, Any
-from ..api.types import MaskingRecipe, PacketMaskInstruction
-from ...trim.models.mask_spec import MaskSpec, MaskAfter, MaskRange, KeepAll
+from typing import Dict, Any, List
+from ..api.types import MaskingRecipe, PacketMaskInstruction, KeepAll, MaskAfter, MaskRange
+
+# 兼容旧工具函数的类型检查（避免 NameError）
+try:
+    from ...trim.models.mask_spec import MaskSpec as _LegacyMaskSpec  # type: ignore
+except Exception:  # pragma: no cover
+    _LegacyMaskSpec = object  # Fallback placeholder
+
+# 无论导入是否成功，都暴露 `MaskSpec` 名称供类型注解解析
+MaskSpec = _LegacyMaskSpec  # type: ignore  # noqa: N816
 
 
 def create_masking_recipe_from_dict(data: Dict[str, Any]) -> MaskingRecipe:
-    """
-    从字典格式创建掩码配方
-    
+    """根据 JSON 字典创建 ``MaskingRecipe`` 实例。
+
+    该实现支持两种主流格式：
+
+    1. **列表格式** （推荐，见 ``config/samples/*.json``）：
+
+       ```json
+       {
+         "total_packets": 10,
+         "instructions": [
+           {"packet_index": 1, "mask_spec_type": "MaskAfter", ...},
+           {"packet_index": 1, "mask_spec_type": "MaskRange", ...}
+         ]
+       }
+       ```
+
+    2. **旧版字典格式** （键为 "index,timestamp" 的字符串或元组）。
+
     Args:
-        data: 包含配方数据的字典
-        
+        data: 解析后的 JSON / YAML 字典。
+
     Returns:
-        创建的掩码配方对象
-        
-    Raises:
-        ValueError: 数据格式不正确时
+        MaskingRecipe 对象，可直接被 ``BlindPacketMasker`` 使用。
     """
+
     if not isinstance(data, dict):
-        raise ValueError("输入数据必须是字典格式")
-    
-    # 提取基础信息
-    total_packets = data.get("total_packets", 0)
-    metadata = data.get("metadata", {})
-    instructions_data = data.get("instructions", {})
-    
-    # 转换指令
-    instructions = {}
-    for key, instruction_data in instructions_data.items():
-        # 解析键（可能是字符串格式的元组）
-        if isinstance(key, str):
-            # 假设格式为 "index,timestamp"
-            parts = key.split(",", 1)
-            if len(parts) != 2:
-                raise ValueError(f"无效的指令键格式: {key}")
-            try:
-                index = int(parts[0])
-                timestamp = parts[1]
-            except ValueError:
-                raise ValueError(f"无法解析指令键: {key}")
-        elif isinstance(key, (list, tuple)) and len(key) == 2:
-            index, timestamp = key
-        else:
-            raise ValueError(f"无效的指令键类型: {type(key)}")
-        
-        # 创建掩码规范
-        mask_spec = _create_mask_spec_from_dict(instruction_data.get("mask_spec", {}))
-        
-        # 创建指令
-        instruction = PacketMaskInstruction(
-            packet_index=instruction_data.get("packet_index", index),
-            packet_timestamp=instruction_data.get("packet_timestamp", str(timestamp)),
-            payload_offset=instruction_data.get("payload_offset", 0),
-            mask_spec=mask_spec,
-            metadata=instruction_data.get("metadata", {})
-        )
-        
-        instructions[(index, str(timestamp))] = instruction
-    
+        raise ValueError("配方数据必须是字典格式")
+
+    total_packets: int = int(data.get("total_packets", 0))
+    metadata: Dict[str, Any] = data.get("metadata", {})
+
+    packet_instructions: Dict[int, List[PacketMaskInstruction]] = {}
+
+    raw_instructions = data.get("instructions", [])
+
+    # ------------------------------------------------------------------
+    # 新版格式：列表
+    # ------------------------------------------------------------------
+    if isinstance(raw_instructions, list):
+        for instr_data in raw_instructions:
+            if not isinstance(instr_data, dict):
+                raise ValueError("指令必须是字典对象")
+
+            pkt_idx = int(instr_data.get("packet_index", -1))
+            if pkt_idx < 0:
+                raise ValueError("packet_index 缺失或非法")
+
+            mask_spec_type = instr_data.get("mask_spec_type")
+            mask_params = instr_data.get("mask_spec_params", {}) or {}
+
+            instruction_obj = _create_instruction(mask_spec_type, mask_params)
+
+            packet_instructions.setdefault(pkt_idx, []).append(instruction_obj)
+
+    # ------------------------------------------------------------------
+    # 旧版格式：字典（键为 index,timestamp）
+    # ------------------------------------------------------------------
+    elif isinstance(raw_instructions, dict):
+        for key, instr_data in raw_instructions.items():
+            # 解析键格式 "index,timestamp" → index
+            if isinstance(key, str):
+                try:
+                    pkt_idx = int(key.split(",", 1)[0])
+                except Exception as exc:  # pylint: disable=broad-except
+                    raise ValueError(f"无法解析指令键 '{key}': {exc}") from exc
+            elif isinstance(key, (list, tuple)) and len(key) >= 1:
+                pkt_idx = int(key[0])
+            else:
+                raise ValueError(f"未知的指令键类型: {type(key)}")
+
+            mask_spec_type = instr_data.get("mask_spec_type") or instr_data.get("mask_type")
+            mask_params = (
+                instr_data.get("mask_spec_params")
+                or instr_data.get("mask_params")
+                or {}
+            )
+
+            instruction_obj = _create_instruction(mask_spec_type, mask_params)
+
+            packet_instructions.setdefault(pkt_idx, []).append(instruction_obj)
+    else:
+        raise ValueError("'instructions' 字段必须为列表或字典")
+
     return MaskingRecipe(
-        instructions=instructions,
         total_packets=total_packets,
-        metadata=metadata
+        packet_instructions=packet_instructions,
+        metadata=metadata,
     )
+
+
+def _create_instruction(mask_spec_type: str, params: Dict[str, Any]) -> PacketMaskInstruction:
+    """根据类型字符串和参数创建具体的掩码指令对象。"""
+
+    if mask_spec_type == "KeepAll":
+        return KeepAll()
+    if mask_spec_type == "MaskAll":
+        return MaskAfter(keep_bytes=0)  # MaskAll 等价于 keep_bytes=0
+    if mask_spec_type == "MaskAfter":
+        keep_bytes = int(params.get("keep_bytes", 0))
+        return MaskAfter(keep_bytes=keep_bytes)
+    if mask_spec_type == "MaskRange":
+        ranges = params.get("ranges", [])
+        if not ranges:
+            raise ValueError("MaskRange 指令需要提供 'ranges'")
+
+        # MaskRange (api.types) 只支持单区间，若给多个区间则拆成多个指令
+        first_range = ranges[0]
+        if isinstance(first_range, dict):
+            start = int(first_range.get("start", 0))
+            end = int(first_range.get("end", 0))
+        else:
+            # 假设为列表/元组
+            start, end = int(first_range[0]), int(first_range[1])
+
+        return MaskRange(start=start, end=end)
+
+    raise ValueError(f"未知的 mask_spec_type: {mask_spec_type}")
 
 
 def _create_mask_spec_from_dict(data: Dict[str, Any]) -> MaskSpec:

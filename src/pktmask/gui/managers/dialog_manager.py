@@ -7,7 +7,10 @@
 
 import markdown
 from typing import TYPE_CHECKING
-from PyQt6.QtWidgets import *
+from PyQt6.QtWidgets import (
+    QDialog, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton, 
+    QMessageBox, QProgressDialog, QFileDialog
+)
 from PyQt6.QtCore import Qt, QTime
 from PyQt6.QtGui import QFont
 import os

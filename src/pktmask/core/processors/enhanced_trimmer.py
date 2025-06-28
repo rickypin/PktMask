@@ -28,6 +28,7 @@ from dataclasses import dataclass
 from typing import Optional, Dict, Any
 from pathlib import Path
 import tempfile
+import warnings
 
 from .base_processor import BaseProcessor, ProcessorConfig, ProcessorResult
 from ...infrastructure.logging import get_logger
@@ -93,6 +94,8 @@ class EnhancedTrimmer(BaseProcessor):
             'stage_durations': {},
             'enhancement_level': '4x accuracy improvement'
         }
+        
+        warnings.warn("EnhancedTrimmer 已废弃，请使用 MaskingProcessor", DeprecationWarning, stacklevel=2)
         
     def _initialize_impl(self):
         """初始化增强版裁切组件"""

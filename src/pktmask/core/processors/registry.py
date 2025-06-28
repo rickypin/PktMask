@@ -30,13 +30,17 @@ class ProcessorRegistry:
             from .ip_anonymizer import IPAnonymizer
             from .deduplicator import Deduplicator  
             from .trimmer import Trimmer
-            from .enhanced_trimmer import EnhancedTrimmer  # Phase 4.2: 导入智能处理器
+            from .masking_processor import MaskingProcessor
             
             cls._processors.update({
-                'mask_ip': IPAnonymizer,
+                # 新正式键 (见 REFACTOR_PLAN §3)
+                'anon_ip': IPAnonymizer,
                 'dedup_packet': Deduplicator,
-                'trim_packet': EnhancedTrimmer,  # Phase 4.2: 零GUI改动 - 智能替换
-                # 'trim_packet': Trimmer,  # Phase 4.2: 保留原实现作为备选
+                'mask_payload': MaskingProcessor,
+
+                # 旧键 → 别名，保持向后兼容并抛出 DeprecationWarning
+                'mask_ip': IPAnonymizer,
+                'trim_packet': MaskingProcessor,
             })
             cls._loaded = True
             
@@ -55,6 +59,21 @@ class ProcessorRegistry:
         """获取处理器实例"""
         cls._load_builtin_processors()
         
+        # 别名映射，保持向后兼容
+        alias_map = {
+            'mask_ip': 'anon_ip',
+            'trim_packet': 'mask_payload',
+        }
+
+        if name not in cls._processors and name in alias_map:
+            import warnings
+
+            new_name = alias_map[name]
+            warnings.warn(
+                f"处理器键 '{name}' 已废弃，请使用 '{new_name}'", DeprecationWarning, stacklevel=2
+            )
+            name = new_name
+
         if name not in cls._processors:
             available = list(cls._processors.keys())
             raise ValueError(f"未知处理器: {name}。可用处理器: {available}")

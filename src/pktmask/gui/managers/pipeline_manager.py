@@ -104,17 +104,18 @@ class PipelineManager:
             for cb in [self.main_window.mask_ip_cb, self.main_window.dedup_packet_cb, self.main_window.trim_packet_cb]:
                 cb.setEnabled(False)
 
-        # 创建并配置管道
-        steps = self._build_pipeline_steps()
-        if not steps:
+        # 创建并配置新的 PipelineExecutor
+        config = self._build_pipeline_config()
+        if not config:
             self._logger.warning("未选择任何处理步骤")
             return
 
-        pipeline = Pipeline(steps)
-        self._logger.info(f"构建了 {len(steps)} 个处理步骤")
+        from pktmask.core.pipeline.executor import PipelineExecutor
+        executor = PipelineExecutor(config)
+        self._logger.info(f"构建了包含 {len(config)} 个Stage的 PipelineExecutor")
 
         # 开始处理
-        self.start_processing(pipeline)
+        self.start_processing(executor)
     
     def stop_pipeline_processing(self):
         """停止处理流程"""
@@ -148,14 +149,14 @@ class PipelineManager:
             self.main_window.start_proc_btn.setEnabled(True)
             self.main_window.start_proc_btn.setText("Start")
     
-    def start_processing(self, pipeline: Pipeline):
+    def start_processing(self, executor):
         """启动处理线程"""
-        # 导入PipelineThread（避免循环导入）
-        from ..main_window import PipelineThread
+        # 导入新的PipelineThread（避免循环导入）
+        from ..main_window import NewPipelineThread
         
         # 创建处理线程
-        self.processing_thread = PipelineThread(
-            pipeline, 
+        self.processing_thread = NewPipelineThread(
+            executor, 
             self.main_window.base_dir, 
             self.main_window.current_output_dir
         )
@@ -355,35 +356,26 @@ class PipelineManager:
         except Exception as e:
             self._logger.error(f"生成最终报告时发生错误: {e}")
     
-    def _build_pipeline_steps(self) -> list:
-        """构建处理步骤列表 - 使用新的处理器系统"""
-        from ...core.processors import ProcessorRegistry, ProcessorConfig, adapt_processors_to_pipeline
+    def _build_pipeline_config(self) -> dict:
+        """构建新的 PipelineExecutor 配置"""
+        config = {}
         
-        processors = []
-        
-        # 根据复选框状态添加处理器
+        # 根据复选框状态构建配置
         if self.main_window.mask_ip_cb.isChecked():
-            config = ProcessorConfig(enabled=True, name='mask_ip', priority=1)
-            processor = ProcessorRegistry.get_processor('mask_ip', config)
-            processors.append(processor)
-            self._logger.debug("添加IP匿名化处理器")
+            config["anon"] = {"enabled": True}
+            self._logger.debug("启用IP匿名化Stage")
         
         if self.main_window.dedup_packet_cb.isChecked():
-            config = ProcessorConfig(enabled=True, name='dedup_packet', priority=2)
-            processor = ProcessorRegistry.get_processor('dedup_packet', config)
-            processors.append(processor)
-            self._logger.debug("添加去重处理器")
+            config["dedup"] = {"enabled": True}
+            self._logger.debug("启用去重Stage")
         
         if self.main_window.trim_packet_cb.isChecked():
-            config = ProcessorConfig(enabled=True, name='trim_packet', priority=3)
-            processor = ProcessorRegistry.get_processor('trim_packet', config)
-            processors.append(processor)
-            self._logger.debug("添加裁切处理器")
+            # 使用默认的掩码配方
+            config["mask"] = {
+                "enabled": True,
+                "recipe_path": "config/samples/simple_mask_recipe.json"
+            }
+            self._logger.debug("启用载荷掩码Stage")
         
-        # 注意：web_focused暂未实现
-        
-        # 将处理器转换为管道步骤（通过适配器）
-        steps = adapt_processors_to_pipeline(processors)
-        self._logger.info(f"成功适配 {len(steps)} 个处理器为管道步骤")
-        
-        return steps 
+        self._logger.info(f"构建了包含 {len(config)} 个启用Stage的配置")
+        return config 

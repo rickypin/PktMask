@@ -6,7 +6,6 @@ TCP载荷掩码器API数据类型定义
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Any, Optional, Union
-from ...trim.models.mask_spec import MaskSpec
 
 
 # ------------------------------------------------------------------

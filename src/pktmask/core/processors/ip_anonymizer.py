@@ -56,9 +56,6 @@ class IPAnonymizer(BaseProcessor):
             
             self._logger.info(f"开始IP匿名化: {input_path} -> {output_path}")
             
-            # 直接使用策略处理文件
-            self._logger.info("开始匿名化数据包")
-            
             # 使用Scapy处理PCAP文件
             from scapy.all import rdpcap, wrpcap
             import time
@@ -68,6 +65,15 @@ class IPAnonymizer(BaseProcessor):
             # 读取数据包
             packets = rdpcap(input_path)
             total_packets = len(packets)
+            
+            # **关键修复**: 先建立IP映射表
+            self._logger.info("分析文件中的IP地址并建立映射表...")
+            self._strategy.build_mapping_from_directory([input_path])
+            ip_mappings = self._strategy.get_ip_map()
+            self._logger.info(f"建立IP映射完成: {len(ip_mappings)} 个IP地址")
+            
+            # 开始匿名化数据包
+            self._logger.info("开始匿名化数据包")
             anonymized_packets = 0
             
             # 处理每个数据包

@@ -39,7 +39,10 @@ dependencies = [
     "watchdog>=3.0.0",
     "toml>=0.10.2",
     "networkx>=3.0.0",
-    "pyshark>=0.6"
+    "pyshark>=0.6",
+    "typer>=0.9.0",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.27.0"
 ]
 
 [project.optional-dependencies]
@@ -71,6 +74,9 @@ Homepage = "https://github.com/yourusername/pktmask"
 Documentation = "https://github.com/yourusername/pktmask#readme"
 Repository = "https://github.com/yourusername/pktmask.git"
 Issues = "https://github.com/yourusername/pktmask/issues"
+
+[project.scripts]
+pktmask = "pktmask.cli:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pktmask"]

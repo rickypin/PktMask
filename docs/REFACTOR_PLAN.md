@@ -90,14 +90,14 @@
 ## 5. 任务拆分 & 里程碑
 | Phase | 目标 & 交付 | 预计 | Owner |
 |-------|-------------|------|-------|
-| 0 | 文档评审、冻结契约 (`ProcessResult`, Stage 接口) | 0.5 d | ALL |
-| 1 | 抽出 **MaskStage** (`engine.blind_masker.py`)→`stages/mask_payload/`<br/>编译通过 & 单测绿 | 1 d | Dev-A |
-| 2 | 新建 **pipeline.executor / stage_base**<br/>实现 `DedupStage`、`AnonStage` wrap 现有算法；同步替换 ProcessorRegistry 键 | 1.5 d | Dev-B |
-| 3 | **Thin-Alias 层**：EnhancedTrimmer→MaskingProcessor；ProcessorRegistry 映射更新；确保 GUI 运行无感 | 1 d | Dev-C |
-| 4 | **CLI Adapter**：`pktmask trim …` with Typer；在 CI 跑单测+TLS23 E2E（new pipeline） | 0.5 d | Dev-D |
-| 5 | **MCP Adapter**：FastAPI 20 行 Demo；文档 `docs/mcp_api.md` | 0.5 d | Dev-E |
-| 6 | **GUI 调用迁移**：内部改用 executor，外观/交互零变化；手工 & 自动 UI 回归 | 1 d | Dev-A+B |
-| 7 | **E2E 验证**：使用 TLS-23 Validator 验证新 Pipeline 产物；CI Gate | 0.5 d | QA |
+| 0 | 文档评审、冻结契约 (`ProcessResult`, Stage 接口) | 0.5 d ✅ (完成于 2025-06-28) | ALL |
+| 1 | 抽出 **MaskStage** (`engine.blind_masker.py`)→`stages/mask_payload/`<br/>编译通过 & 单测绿 ✅ (完成于 2025-06-28) | 1 d | Dev-A |
+| 2 | 新建 **pipeline.executor / stage_base**<br/>实现 `DedupStage`、`AnonStage` 包装现有算法；同步替换 ProcessorRegistry 键 **✅ (完成于 2025-06-29，实际耗时 0.5 d)** | 1.5 d | Dev-B |
+| 3 | **Thin-Alias 层**：EnhancedTrimmer→MaskingProcessor；ProcessorRegistry 映射更新；确保 GUI 运行无感 **✅ (完成于 2025-06-30，实际耗时 0.5 d)** | 1 d | Dev-C |
+| 4 | **CLI Adapter**：`pktmask trim …` with Typer；在 CI 跑单测+TLS23 E2E（new pipeline） **✅ (完成于 2025-07-01，实际耗时 0.4 d)** | 0.5 d | Dev-D |
+| 5 | **MCP Adapter**：FastAPI 20 行 Demo；文档 `docs/mcp_api.md` **✅ (完成于 2025-07-02，实际耗时 0.4 d)** | 0.5 d | Dev-E |
+| 6 | **GUI 调用迁移**：内部改用 executor，外观/交互零变化；手工 & 自动 UI 回归 **✅ (完成于 2025-06-29，实际耗时 0.5 d)** | 1 d | Dev-A+B |
+| 7 | **E2E 验证**：使用 TLS-23 Validator 验证新 Pipeline 产物；CI Gate **✅ (完成于 2025-07-03，实际耗时 0.3 d)** | 0.5 d | QA |
 | 8 | 清理旧 tcp_payload_masker 目录（留 shim + DeprecationWarning） | 0.5 d | Dev-C |
 | **总计** | **7.5 人日**（以 5d Sprint 计算 ≈ 1.5 周） |  |  |
 

@@ -731,6 +731,21 @@ class ReportManager:
             return
             
         step_type = data.get('type')
+        step_name_raw = data.get('step_name', '')
+        
+        # **修复**: 支持新Pipeline系统的步骤名称
+        # 从step_name推断步骤类型，而不是仅依赖type字段
+        if not step_type:
+            # 新Pipeline系统没有type字段，从step_name推断
+            if step_name_raw == 'AnonStage':
+                step_type = 'mask_ip'  # 统一使用mask_ip作为IP匿名化的类型
+            elif step_name_raw == 'DedupStage':
+                step_type = 'remove_dupes'
+            elif step_name_raw == 'MaskStage':
+                step_type = 'trim_payloads'
+            else:
+                step_type = step_name_raw.lower()
+        
         if not step_type or step_type.endswith('_final'):
             if step_type and step_type.endswith('_final'):
                 # 处理最终报告，提取IP映射信息
@@ -756,13 +771,32 @@ class ReportManager:
             'data': data
         }
         
-        # 如果是IP匿名化步骤，提取文件级别的IP映射
-        if step_type in ['mask_ip', 'mask_ips'] and 'file_ip_mappings' in data:
-            if not hasattr(self.main_window, '_current_file_ips'):
-                self.main_window._current_file_ips = {}
-            self.main_window._current_file_ips[self.main_window.current_processing_file] = data['file_ip_mappings']
-            # 将IP映射添加到全局映射中
-            self.main_window.global_ip_mappings.update(data['file_ip_mappings']) 
+        # **修复**: 如果是IP匿名化步骤，提取文件级别的IP映射
+        # 支持新Pipeline系统直接在data中包含IP映射信息
+        is_ip_anonymization = (
+            step_type in ['mask_ip', 'mask_ips'] or 
+            step_name_raw == 'AnonStage' or
+            'ip_mappings' in data or 
+            'file_ip_mappings' in data
+        )
+        
+        if is_ip_anonymization:
+            # 尝试从不同的字段中提取IP映射
+            ip_mappings = None
+            if 'file_ip_mappings' in data:
+                ip_mappings = data['file_ip_mappings']
+            elif 'ip_mappings' in data:
+                ip_mappings = data['ip_mappings']
+            
+            if ip_mappings:
+                if not hasattr(self.main_window, '_current_file_ips'):
+                    self.main_window._current_file_ips = {}
+                self.main_window._current_file_ips[self.main_window.current_processing_file] = ip_mappings
+                # 将IP映射添加到全局映射中
+                self.main_window.global_ip_mappings.update(ip_mappings)
+                self._logger.info(f"收集IP映射: {len(ip_mappings)} 个映射添加到全局映射表")
+            else:
+                self._logger.warning(f"IP匿名化步骤中未找到IP映射信息: {list(data.keys())}")
 
     def _is_enhanced_trimming(self, data: Dict[str, Any]) -> bool:
         """检查是否是Enhanced Trimmer的智能处理结果"""
