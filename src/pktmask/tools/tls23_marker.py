@@ -126,6 +126,18 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _hex_to_bytes(h: str) -> bytes:
+    """把 Wireshark 提供的十六进制字段(可含冒号/空格)转换成 bytes."""
+    h = h.replace(":", "").replace(" ", "").strip()
+    if not h:
+        return b""
+    import binascii
+    try:
+        return binascii.unhexlify(h)
+    except binascii.Error:
+        return b""
+
+
 def main(argv: list[str] | None = None) -> None:
     argv = argv if argv is not None else sys.argv[1:]
     parser = _build_arg_parser()
@@ -164,6 +176,8 @@ def main(argv: list[str] | None = None) -> None:
         "tls.record.opaque_type",
         "-e",
         "tls.record.length",
+        "-e",
+        "tls.app_data",  # 直接抓取应用数据 hex
         "-e",
         "tcp.stream",
         "-E",
@@ -237,8 +251,11 @@ def main(argv: list[str] | None = None) -> None:
 
         # 记录长度字段，同样可能是 str / list[str]
         rec_lengths_raw = layers.get("tls.record.length")
-        if isinstance(rec_lengths_raw, str):
-            rec_lengths_raw = [rec_lengths_raw]
+        app_data_raw = layers.get("tls.app_data")
+
+        # app_data 可能是 str / list[str]，保持与 type_fields 对齐
+        if isinstance(app_data_raw, str):
+            app_data_raw = [app_data_raw]
 
         rec_lengths: list[int] = []
         for idx in indices_23:
@@ -273,27 +290,28 @@ def main(argv: list[str] | None = None) -> None:
             hit["num_records"] = num_records
             hit["lengths"] = rec_lengths
 
+        # 统计零字节数量（仅针对已提取到 app_data 的 Record）
+        zero_cnt = 0
+        for idx in indices_23:
+            try:
+                ad_hex = app_data_raw[idx] if app_data_raw else None  # type: ignore[index]
+                if ad_hex:
+                    payload_bytes = _hex_to_bytes(str(ad_hex))
+                    zero_cnt += payload_bytes.count(0)
+            except (IndexError, TypeError):
+                pass
+
         hits.append(hit)
         frame_record_counts[frame_no_int] = num_records
         if stream_int >= 0:
             hits_by_stream.setdefault(stream_int, set()).add(frame_no_int)
+        if zero_cnt:
+            zero_bytes_count[frame_no_int] = zero_cnt
 
     if args.verbose:
         sys.stdout.write(f"[tls23-marker] 显式扫描命中 {len(hits)} 帧。\n")
 
     # -------------------- 阶段 3：缺头补标实现 -------------------- #
-
-    def _hex_to_bytes(h: str) -> bytes:
-        """将 tshark tcp.payload 字段(hex string 或带 : 分隔) 转成 bytes."""
-        h = h.replace(":", "").replace(" ", "").strip()
-        if not h:
-            return b""
-        import binascii
-
-        try:
-            return binascii.unhexlify(h)
-        except binascii.Error:
-            return b""
 
     # 以 streamID -> set(frame_no) 形式补充 hits
     supplemented_frames: dict[int, set[int]] = {k: set(v) for k, v in hits_by_stream.items()}
@@ -402,12 +420,10 @@ def main(argv: list[str] | None = None) -> None:
             rec_len = int.from_bytes(data[cursor + 3 : cursor + 5], "big")
             total_rec_len = 5 + rec_len
 
-            if total_rec_len <= 0:
+            # 若解析到异常长度 / 剩余数据不足，则滑动 1 字节重新同步，而非直接结束
+            if total_rec_len <= 0 or cursor + total_rec_len > total_len:
                 cursor += 1
                 continue
-
-            if cursor + total_rec_len > total_len:
-                break  # 余下数据不足，结束
 
             if content_type == 0x17:
                 # 计算该 TLS Application Data 记录中值为 0x00 的字节数量，并按 frame 归档
@@ -572,4 +588,22 @@ def main(argv: list[str] | None = None) -> None:
 
 
 if __name__ == "__main__":
-    main() 
+    main()
+
+
+# ---------------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------------
+
+
+def _hex_to_bytes(h: str) -> bytes:
+    """将 Wireshark 十六进制字段(支持冒号/空格分隔)转换为 bytes。"""
+    h = h.replace(":", "").replace(" ", "").strip()
+    if not h:
+        return b""
+    import binascii
+
+    try:
+        return binascii.unhexlify(h)
+    except binascii.Error:
+        return b"" 

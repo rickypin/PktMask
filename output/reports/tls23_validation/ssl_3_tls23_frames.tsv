@@ -2,14 +2,14 @@
 # total_records	12
 # eth:ethertype:ip:tcp:tls	12
 11	eth:ethertype:ip:tcp:tls	1	969	0
-16	eth:ethertype:ip:tcp:tls	1	435	0
-25	eth:ethertype:ip:tcp:tls	1	8208	0
-34	eth:ethertype:ip:tcp:tls	1	8208	0
-43	eth:ethertype:ip:tcp:tls	1	8208	0
-52	eth:ethertype:ip:tcp:tls	1	8208	0
-61	eth:ethertype:ip:tcp:tls	1	8208	0
-70	eth:ethertype:ip:tcp:tls	1	8208	0
-79	eth:ethertype:ip:tcp:tls	1	8208	0
-88	eth:ethertype:ip:tcp:tls	1	8208	0
-97	eth:ethertype:ip:tcp:tls	1	8208	0
-98	eth:ethertype:ip:tcp:tls	1	863	0
+16	eth:ethertype:ip:tcp:tls	1	435	3
+25	eth:ethertype:ip:tcp:tls	1	8208	25
+34	eth:ethertype:ip:tcp:tls	1	8208	30
+43	eth:ethertype:ip:tcp:tls	1	8208	37
+52	eth:ethertype:ip:tcp:tls	1	8208	29
+61	eth:ethertype:ip:tcp:tls	1	8208	27
+70	eth:ethertype:ip:tcp:tls	1	8208	38
+79	eth:ethertype:ip:tcp:tls	1	8208	24
+88	eth:ethertype:ip:tcp:tls	1	8208	44
+97	eth:ethertype:ip:tcp:tls	1	8208	12
+98	eth:ethertype:ip:tcp:tls	1	863	1

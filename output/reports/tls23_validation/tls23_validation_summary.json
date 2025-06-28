@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-06-27T17:32:14.990152Z",
+  "timestamp": "2025-06-27T18:51:01.657377Z",
   "input_dir": "/Users/ricky/Downloads/PktMask/tests/data/tls",
   "output_dir": "/Users/ricky/Downloads/PktMask/output/reports/tls23_validation",
   "files": [
@@ -32,6 +32,12 @@
       "frames_detected": 2,
       "status": "ok",
       "tsv": "tls_1_2_plainip_tls23_frames.tsv"
+    },
+    {
+      "file": "tls_1_2_plainip_masked.pcap",
+      "frames_detected": 2,
+      "status": "ok",
+      "tsv": "tls_1_2_plainip_masked_tls23_frames.tsv"
     },
     {
       "file": "tls_1_2_pop_mix.pcapng",
