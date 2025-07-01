@@ -172,12 +172,13 @@ class PipelineExecutor:
             stages.append(stage)
 
         # ------------------------------------------------------------------
-        # Mask Stage (BlindPacketMasker)
+        # Mask Stage - Enhanced MaskStage (Phase 2完整实现)
         # ------------------------------------------------------------------
         mask_cfg = config.get("mask", {})
         if mask_cfg.get("enabled", False):
             from pktmask.core.pipeline.stages.mask_payload.stage import MaskStage
-
+            
+            # 创建 Enhanced MaskStage 实例
             stage = MaskStage(mask_cfg)
             stage.initialize()
             stages.append(stage)

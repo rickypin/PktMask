@@ -253,36 +253,17 @@ def main(argv: list[str] | None = None) -> None:
         rec_lengths_raw = layers.get("tls.record.length")
         app_data_raw = layers.get("tls.app_data")
 
-        # 修正"索引错配"问题的关键：
-        # tshark 的 app_data 字段只包含23类型的载荷，其列表长度可能小于 content_type 列表。
-        # 因此，我们为 app_data 创建一个迭代器，每遇到一个23类型记录，就从中消耗一个值。
-        app_data_iter = iter(_to_list(app_data_raw))
+        # app_data 可能是 str / list[str]，保持与 type_fields 对齐
+        if isinstance(app_data_raw, str):
+            app_data_raw = [app_data_raw]
 
         rec_lengths: list[int] = []
-        zero_cnt_for_frame = 0
-
-        # 不再使用 `indices_23`，而是完整遍历所有记录类型，
-        # 这样可以正确处理长度和 `app_data` 的对应关系。
-        for idx, type_val in enumerate(type_fields):
-            if not _is_23(type_val):
-                continue
-
-            # 处理长度
+        for idx in indices_23:
             try:
-                length_val = rec_lengths_raw[idx] if rec_lengths_raw else None
+                length_val = rec_lengths_raw[idx] if rec_lengths_raw else None  # type: ignore[index]
                 rec_lengths.append(int(length_val) if length_val is not None else -1)
             except (IndexError, ValueError, TypeError):
                 rec_lengths.append(-1)
-
-            # 从迭代器安全地获取下一个 app_data
-            try:
-                ad_hex = next(app_data_iter)
-                if ad_hex:
-                    payload_bytes = _hex_to_bytes(str(ad_hex))
-                    zero_cnt_for_frame += payload_bytes.count(0)
-            except StopIteration:
-                # app_data 已经用完，说明 tshark JSON 输出存在不一致，跳过后续统计
-                pass
 
         frame_no = layers.get("frame.number")
         protocols = layers.get("frame.protocols")
@@ -309,12 +290,23 @@ def main(argv: list[str] | None = None) -> None:
             hit["num_records"] = num_records
             hit["lengths"] = rec_lengths
 
+        # 统计零字节数量（仅针对已提取到 app_data 的 Record）
+        zero_cnt = 0
+        for idx in indices_23:
+            try:
+                ad_hex = app_data_raw[idx] if app_data_raw else None  # type: ignore[index]
+                if ad_hex:
+                    payload_bytes = _hex_to_bytes(str(ad_hex))
+                    zero_cnt += payload_bytes.count(0)
+            except (IndexError, TypeError):
+                pass
+
         hits.append(hit)
         frame_record_counts[frame_no_int] = num_records
         if stream_int >= 0:
             hits_by_stream.setdefault(stream_int, set()).add(frame_no_int)
-        if zero_cnt_for_frame > 0:
-            zero_bytes_count[frame_no_int] = zero_cnt_for_frame
+        if zero_cnt:
+            zero_bytes_count[frame_no_int] = zero_cnt
 
     if args.verbose:
         sys.stdout.write(f"[tls23-marker] 显式扫描命中 {len(hits)} 帧。\n")
@@ -437,13 +429,11 @@ def main(argv: list[str] | None = None) -> None:
                 # 计算该 TLS Application Data 记录中值为 0x00 的字节数量，并按 frame 归档
                 payload_start = cursor + 5  # 跳过 TLS 记录头 (type+version+length)
                 payload_end = cursor + total_rec_len
-
-                # Phase 3 的零字节统计逻辑存在缺陷且与Phase 2重复，予以禁用，统一依赖Phase 2的结果
-                # for pos in range(payload_start, payload_end):
-                #     if data[pos] == 0:
-                #         _frame_idx = frame_map[pos]
-                #         if _frame_idx != -1:
-                #             zero_bytes_count[_frame_idx] += 1
+                for pos in range(payload_start, payload_end):
+                    if data[pos] == 0:
+                        _frame_idx = frame_map[pos]
+                        if _frame_idx != -1:
+                            zero_bytes_count[_frame_idx] += 1
 
                 frames_set = {
                     frame_map[i]
