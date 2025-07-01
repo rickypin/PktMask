@@ -335,13 +335,10 @@ class MultiStageExecutor:
             context: 执行上下文
         """
         try:
-            # 清理临时文件
-            if context.tshark_output and context.tshark_output.exists():
-                context.tshark_output.unlink()
-                self._logger.debug(f"清理临时文件: {context.tshark_output}")
-            
+            # 清理所有注册的临时文件
+            context.cleanup_temp_files()
+            self._logger.debug("清理所有临时文件完成")
             # 其他清理操作...
-            
         except Exception as e:
             self._logger.warning(f"清理执行环境时发生异常: {e}")
     

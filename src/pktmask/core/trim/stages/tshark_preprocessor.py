@@ -198,88 +198,17 @@ class TSharkPreprocessor(BaseStage):
         """
         context.current_stage = self.name
         progress_callback = self.get_progress_callback(context)
-        
-        # 创建阶段结果
-        stage_result = StageResult(
-            stage_name=self.name,
-            status=StageStatus.RUNNING
+        # 临时屏蔽TShark预处理，直接使用原始输入文件作为后续阶段输入
+        self._logger.info("临时屏蔽TShark预处理，使用原始输入文件作为后续阶段输入")
+        context.tshark_output = context.input_file
+        return ProcessorResult(
+            success=True,
+            data={
+                'tshark_output': str(context.input_file),
+                'message': "TShark预处理已屏蔽，直接使用原始文件"
+            },
+            stats={}
         )
-        
-        try:
-            # 验证输入
-            if not self.validate_inputs(context):
-                return ProcessorResult(
-                    success=False,
-                    error="输入验证失败",
-                    stats=self.get_stats()
-                )
-            
-            progress_callback(0.0)
-            
-            # 生成临时输出文件
-            temp_output = self._create_temp_file(context, "tshark_output", ".pcap")
-            
-            progress_callback(0.1)
-            
-            # 构建TShark命令
-            tshark_cmd = self._build_tshark_command(context.input_file, temp_output)
-            
-            progress_callback(0.2)
-            
-            # 执行TShark处理
-            execution_stats = self._execute_tshark(tshark_cmd, progress_callback)
-            
-            progress_callback(0.8)
-            
-            # 验证输出
-            self._verify_output(temp_output)
-            
-            progress_callback(0.9)
-            
-            # 不移动临时文件，让后续Stage使用
-            # TShark的输出应该作为中间文件供PyShark和Scapy使用
-            if not temp_output.exists():
-                raise RuntimeError("TShark未生成输出文件")
-            
-            # 更新上下文，指向TShark的临时输出文件
-            context.tshark_output = temp_output
-            
-            # 更新统计信息
-            self._update_stats(context, execution_stats)
-            
-            progress_callback(1.0)
-            
-            # 标记成功完成
-            stage_result.mark_completed(
-                success=True,
-                data={'output_file': str(context.output_file)}
-            )
-            
-            # 更新指标
-            stage_result.update_metrics(
-                input_size_bytes=context.input_file.stat().st_size,
-                output_size_bytes=temp_output.stat().st_size,
-                processed_packets=execution_stats.get('packets_processed', 0)
-            )
-            
-            return ProcessorResult(
-                success=True,
-                data={
-                    'tshark_output': str(temp_output),
-                    'message': "TShark预处理完成"
-                },
-                stats=execution_stats
-            )
-            
-        except Exception as e:
-            self._logger.error(f"TShark预处理失败: {e}")
-            stage_result.mark_failed(str(e))
-            
-            return ProcessorResult(
-                success=False,
-                error=f"TShark预处理失败: {e}",
-                stats=self.get_stats()
-            )
     
     def _create_temp_file(self, context: StageContext, prefix: str, suffix: str) -> Path:
         """创建临时文件
