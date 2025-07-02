@@ -23,6 +23,18 @@ from .sequence_mask_table import (
     SequenceMaskTable
 )
 
+# MaskStage重构：TLS协议处理模型
+from .tls_models import (
+    TLSProcessingStrategy,
+    MaskAction,
+    TLSRecordInfo,
+    MaskRule,
+    TLSAnalysisResult,
+    create_mask_rule_for_tls_record,
+    validate_tls_record_boundary,
+    get_tls_processing_strategy
+)
+
 __all__ = [
     # 原有掩码规范
     'MaskSpec', 'MaskAfter', 'MaskRange', 'KeepAll',
@@ -38,5 +50,9 @@ __all__ = [
     'detect_packet_direction',
     
     # 新增：序列号掩码表
-    'MaskEntry', 'SequenceMatchResult', 'SequenceMaskTable'
+    'MaskEntry', 'SequenceMatchResult', 'SequenceMaskTable',
+    
+    # MaskStage重构：TLS协议处理模型
+    'TLSProcessingStrategy', 'MaskAction', 'TLSRecordInfo', 'MaskRule', 'TLSAnalysisResult',
+    'create_mask_rule_for_tls_record', 'validate_tls_record_boundary', 'get_tls_processing_strategy'
 ] 
