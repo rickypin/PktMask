@@ -106,10 +106,59 @@ class TSharkSettings:
     quiet_mode: bool = True
 
 
+@dataclass
+class FallbackConfig:
+    """TShark增强处理器降级机制配置"""
+    enable_fallback: bool = True
+    max_retries: int = 2
+    retry_delay_seconds: float = 1.0
+    tshark_check_timeout: float = 5.0
+    fallback_on_tshark_unavailable: bool = True
+    fallback_on_parse_error: bool = True
+    fallback_on_other_errors: bool = True
+    preferred_fallback_order: list = field(default_factory=lambda: [
+        "enhanced_trimmer",
+        "mask_stage"
+    ])
+
+
+@dataclass
+class TSharkEnhancedSettings:
+    """TShark增强掩码处理器配置"""
+    
+    # 核心功能配置
+    enable_tls_processing: bool = True
+    enable_cross_segment_detection: bool = True
+    enable_boundary_safety: bool = True
+    
+    # TLS协议类型处理配置
+    tls_20_strategy: str = "keep_all"      # ChangeCipherSpec: 完全保留
+    tls_21_strategy: str = "keep_all"      # Alert: 完全保留  
+    tls_22_strategy: str = "keep_all"      # Handshake: 完全保留
+    tls_23_strategy: str = "mask_payload"  # ApplicationData: 智能掩码
+    tls_24_strategy: str = "keep_all"      # Heartbeat: 完全保留
+    tls_23_header_preserve_bytes: int = 5  # TLS-23头部保留字节数
+    
+    # 性能配置
+    temp_dir: Optional[str] = None
+    cleanup_temp_files: bool = True
+    enable_parallel_processing: bool = False
+    chunk_size: int = 1000
+    
+    # 调试配置
+    enable_detailed_logging: bool = False
+    keep_intermediate_files: bool = False
+    enable_stage_timing: bool = True
+    
+    # 降级机制配置
+    fallback_config: FallbackConfig = field(default_factory=FallbackConfig)
+
+
 @dataclass 
 class ToolsSettings:
     """外部工具设置"""
     tshark: TSharkSettings = field(default_factory=TSharkSettings)
+    tshark_enhanced: TSharkEnhancedSettings = field(default_factory=TSharkEnhancedSettings)
     
     
 @dataclass 
@@ -165,6 +214,17 @@ class AppConfig:
                 tshark_data = tools_data.get('tshark', {})
                 if tshark_data:
                     tools_settings.tshark = TSharkSettings(**tshark_data)
+                
+                # 处理TShark增强配置
+                tshark_enhanced_data = tools_data.get('tshark_enhanced', {})
+                if tshark_enhanced_data:
+                    # 处理降级配置的嵌套结构
+                    fallback_data = tshark_enhanced_data.get('fallback_config', {})
+                    if fallback_data:
+                        fallback_config = FallbackConfig(**fallback_data)
+                        tshark_enhanced_data['fallback_config'] = fallback_config
+                    
+                    tools_settings.tshark_enhanced = TSharkEnhancedSettings(**tshark_enhanced_data)
             
             return cls(
                 ui=UISettings(**ui_data) if ui_data else UISettings(),
@@ -306,6 +366,45 @@ class AppConfig:
             'tshark_timeout_seconds': self.tools.tshark.timeout_seconds,
             'tshark_max_memory_mb': self.tools.tshark.max_memory_mb,
             'tshark_quiet_mode': self.tools.tshark.quiet_mode
+        }
+    
+    def get_tshark_enhanced_config(self) -> Dict[str, Any]:
+        """获取TShark增强配置字典"""
+        enhanced = self.tools.tshark_enhanced
+        return {
+            # 核心功能配置
+            'enable_tls_processing': enhanced.enable_tls_processing,
+            'enable_cross_segment_detection': enhanced.enable_cross_segment_detection,
+            'enable_boundary_safety': enhanced.enable_boundary_safety,
+            
+            # TLS协议类型处理配置
+            'tls_20_strategy': enhanced.tls_20_strategy,
+            'tls_21_strategy': enhanced.tls_21_strategy,
+            'tls_22_strategy': enhanced.tls_22_strategy,
+            'tls_23_strategy': enhanced.tls_23_strategy,
+            'tls_24_strategy': enhanced.tls_24_strategy,
+            'tls_23_header_preserve_bytes': enhanced.tls_23_header_preserve_bytes,
+            
+            # 性能配置
+            'temp_dir': enhanced.temp_dir,
+            'cleanup_temp_files': enhanced.cleanup_temp_files,
+            'enable_parallel_processing': enhanced.enable_parallel_processing,
+            'chunk_size': enhanced.chunk_size,
+            
+            # 调试配置
+            'enable_detailed_logging': enhanced.enable_detailed_logging,
+            'keep_intermediate_files': enhanced.keep_intermediate_files,
+            'enable_stage_timing': enhanced.enable_stage_timing,
+            
+            # 降级机制配置
+            'fallback_enable_fallback': enhanced.fallback_config.enable_fallback,
+            'fallback_max_retries': enhanced.fallback_config.max_retries,
+            'fallback_retry_delay_seconds': enhanced.fallback_config.retry_delay_seconds,
+            'fallback_tshark_check_timeout': enhanced.fallback_config.tshark_check_timeout,
+            'fallback_on_tshark_unavailable': enhanced.fallback_config.fallback_on_tshark_unavailable,
+            'fallback_on_parse_error': enhanced.fallback_config.fallback_on_parse_error,
+            'fallback_on_other_errors': enhanced.fallback_config.fallback_on_other_errors,
+            'fallback_preferred_fallback_order': enhanced.fallback_config.preferred_fallback_order
         }
     
     def update_last_directories(self, input_dir: Optional[str] = None, 

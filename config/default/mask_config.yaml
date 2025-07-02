@@ -24,3 +24,94 @@ keep_range_rules:
   # 您可以根据需要在这里添加更多规则
   # - stream_id: "..."
   #   ... 
+
+# ==========================================
+# TShark增强掩码处理器配置 (Phase 2 新增)
+# ==========================================
+#
+# 以下配置支持新的TShark增强掩码处理器功能，
+# 提供基于深度协议解析的智能TLS掩码处理。
+
+# 工具配置
+tools:
+  # 标准TShark工具配置
+  tshark:
+    executable_paths:
+      - '/usr/bin/tshark'
+      - '/usr/local/bin/tshark'
+      - '/opt/wireshark/bin/tshark'
+      - 'C:\Program Files\Wireshark\tshark.exe'
+      - 'C:\Program Files (x86)\Wireshark\tshark.exe'
+      - '/Applications/Wireshark.app/Contents/MacOS/tshark'
+    custom_executable: null  # 自定义TShark路径（可选）
+    enable_reassembly: true
+    enable_defragmentation: true
+    timeout_seconds: 300
+    max_memory_mb: 1024
+    quiet_mode: true
+
+  # TShark增强掩码处理器配置
+  tshark_enhanced:
+    # 核心功能配置
+    enable_tls_processing: true              # 启用TLS协议处理
+    enable_cross_segment_detection: true     # 启用跨TCP段检测
+    enable_boundary_safety: true            # 启用边界安全处理
+    
+    # TLS协议类型处理策略配置
+    tls_20_strategy: "keep_all"      # TLS-20 (ChangeCipherSpec): 完全保留
+    tls_21_strategy: "keep_all"      # TLS-21 (Alert): 完全保留  
+    tls_22_strategy: "keep_all"      # TLS-22 (Handshake): 完全保留
+    tls_23_strategy: "mask_payload"  # TLS-23 (ApplicationData): 智能掩码
+    tls_24_strategy: "keep_all"      # TLS-24 (Heartbeat): 完全保留
+    tls_23_header_preserve_bytes: 5  # TLS-23头部保留字节数（5字节头部）
+    
+    # 性能配置
+    temp_dir: null                   # 临时目录（null=自动生成）
+    cleanup_temp_files: true         # 清理临时文件
+    enable_parallel_processing: false # 启用并行处理（实验性）
+    chunk_size: 1000                 # 批处理块大小
+    
+    # 调试和诊断配置
+    enable_detailed_logging: false   # 启用详细日志记录
+    keep_intermediate_files: false   # 保留中间处理文件（调试用）
+    enable_stage_timing: true        # 启用阶段性能计时
+    
+    # 降级机制配置
+    fallback_config:
+      enable_fallback: true                    # 启用降级机制
+      max_retries: 2                          # 最大重试次数
+      retry_delay_seconds: 1.0                # 重试延迟（秒）
+      tshark_check_timeout: 5.0               # TShark检查超时（秒）
+      fallback_on_tshark_unavailable: true    # TShark不可用时降级
+      fallback_on_parse_error: true           # 解析错误时降级
+      fallback_on_other_errors: true          # 其他错误时降级
+      preferred_fallback_order:               # 降级优先级顺序
+        - "enhanced_trimmer"                   # 优先降级到EnhancedTrimmer
+        - "mask_stage"                         # 再降级到标准MaskStage
+
+# ==========================================
+# 配置使用说明
+# ==========================================
+#
+# 1. TLS协议策略说明:
+#    - "keep_all": 完全保留该类型的TLS记录
+#    - "mask_payload": 保留头部信息，掩码载荷部分
+#    - "mask_all": 完全掩码整个记录（通常不推荐）
+#
+# 2. 降级机制说明:
+#    当TShark增强处理器遇到问题时，会按以下顺序降级：
+#    - TShark不可用 → EnhancedTrimmer → 标准MaskStage
+#    - 协议解析失败 → EnhancedTrimmer → 标准MaskStage
+#    - 其他错误 → 重试 → EnhancedTrimmer → 标准MaskStage
+#
+# 3. 性能调优建议:
+#    - 小文件 (<100MB): chunk_size: 500-1000
+#    - 大文件 (>1GB): chunk_size: 2000-5000
+#    - 内存受限环境: max_memory_mb: 512
+#    - 高性能环境: enable_parallel_processing: true
+#
+# 4. 调试模式:
+#    启用以下选项进行问题诊断：
+#    - enable_detailed_logging: true
+#    - keep_intermediate_files: true
+#    - enable_stage_timing: true 

@@ -24,16 +24,17 @@ class MaskStage(StageBase):
     - 智能协议识别和策略应用
     - 完整统计和事件集成
 
-    支持两种处理模式：
+    支持三种处理模式：
     1. Enhanced Mode (默认): 使用 MultiStageExecutor 进行智能协议处理
-    2. Basic Mode (降级): 使用原有 BlindPacketMasker 进行基础掩码
+    2. Processor Adapter Mode: 使用 TSharkEnhancedMaskProcessor + ProcessorStageAdapter
+    3. Basic Mode (降级): 使用原有 BlindPacketMasker 进行基础掩码
 
     配置 ``config`` 字典支持以下键：
 
     1. ``recipe``: 直接传入 :class:`MaskingRecipe` 实例。
     2. ``recipe_dict``: 传入兼容 ``create_masking_recipe_from_dict`` 的字典。
     3. ``recipe_path``: 指向 JSON 文件路径；文件内容必须为配方字典格式。
-    4. ``mode``: 处理模式 - "enhanced" (默认) 或 "basic"
+    4. ``mode``: 处理模式 - "enhanced" (默认), "processor_adapter", 或 "basic"
 
     当三个键均不存在或解析失败时，Enhanced Mode 会进行智能协议分析；
     Basic Mode 会回退为 *透传模式*。
@@ -48,10 +49,15 @@ class MaskStage(StageBase):
         self._config: Dict[str, Any] = config or {}
         
         # 处理模式选择
-        self._use_enhanced_mode = self._config.get("mode", "enhanced") == "enhanced"
+        mode = self._config.get("mode", "enhanced")
+        self._use_enhanced_mode = mode == "enhanced"
+        self._use_processor_adapter_mode = mode == "processor_adapter"
         
         # Enhanced Mode 组件
         self._executor: Optional[Any] = None  # MultiStageExecutor，延迟导入
+        
+        # Processor Adapter Mode 组件
+        self._processor_adapter: Optional[Any] = None  # ProcessorStageAdapter，延迟导入
         
         # Basic Mode 组件 (降级备选方案)
         self._masker: Optional[BlindPacketMasker] = None
@@ -72,10 +78,14 @@ class MaskStage(StageBase):
         merged_cfg: Dict[str, Any] = {**self._config, **(config or {})}
         
         # 更新处理模式选择
-        self._use_enhanced_mode = merged_cfg.get("mode", "enhanced") == "enhanced"
+        mode = merged_cfg.get("mode", "enhanced")
+        self._use_enhanced_mode = mode == "enhanced"
+        self._use_processor_adapter_mode = mode == "processor_adapter"
 
         if self._use_enhanced_mode:
             self._initialize_enhanced_mode(merged_cfg)
+        elif self._use_processor_adapter_mode:
+            self._initialize_processor_adapter_mode(merged_cfg)
         else:
             self._initialize_basic_mode(merged_cfg)
 
@@ -121,6 +131,47 @@ class MaskStage(StageBase):
             # 增强模式初始化失败，降级到基础模式
             self._use_enhanced_mode = False
             self._initialize_basic_mode(config)
+
+    def _initialize_processor_adapter_mode(self, config: Dict[str, Any]) -> None:
+        """初始化处理器适配器模式（TSharkEnhancedMaskProcessor + ProcessorStageAdapter）"""
+        try:
+            # 创建增强处理器并用适配器包装
+            self._processor_adapter = self._create_enhanced_processor(config)
+            
+            # 初始化适配器
+            self._processor_adapter.initialize(config)
+            
+        except ImportError as e:
+            # 如果处理器适配器组件不可用，降级到增强模式
+            self._use_processor_adapter_mode = False
+            self._use_enhanced_mode = True
+            self._initialize_enhanced_mode(config)
+        except Exception as e:
+            # 处理器适配器模式初始化失败，降级到增强模式
+            self._use_processor_adapter_mode = False
+            self._use_enhanced_mode = True
+            self._initialize_enhanced_mode(config)
+
+    def _create_enhanced_processor(self, config: Dict[str, Any]):
+        """创建增强掩码处理器"""
+        from pktmask.core.processors.tshark_enhanced_mask_processor import TSharkEnhancedMaskProcessor
+        from pktmask.core.processors.base_processor import ProcessorConfig
+        from pktmask.core.pipeline.stages.processor_stage_adapter import ProcessorStageAdapter
+        
+        # 创建处理器配置
+        processor_config = ProcessorConfig(
+            enabled=True,
+            name="tshark_enhanced_mask",
+            priority=1
+        )
+        
+        # 创建 TSharkEnhancedMaskProcessor 实例
+        processor = TSharkEnhancedMaskProcessor(processor_config)
+        
+        # 用 ProcessorStageAdapter 包装
+        adapter = ProcessorStageAdapter(processor, config)
+        
+        return adapter
 
     def _initialize_basic_mode(self, config: Dict[str, Any]) -> None:
         """初始化基础模式（原有 BlindPacketMasker 逻辑）"""
@@ -206,8 +257,29 @@ class MaskStage(StageBase):
 
         if self._use_enhanced_mode and self._executor:
             return self._process_with_enhanced_mode(input_path, output_path)
+        elif self._use_processor_adapter_mode and self._processor_adapter:
+            return self._process_with_processor_adapter_mode(input_path, output_path)
         else:
             return self._process_with_basic_mode(input_path, output_path)
+
+    def _process_with_processor_adapter_mode(self, input_path: Path, output_path: Path) -> StageStats:
+        """使用 TSharkEnhancedMaskProcessor + ProcessorStageAdapter 进行处理"""
+        start_time = time.time()
+        
+        try:
+            # 通过适配器调用 TSharkEnhancedMaskProcessor
+            result = self._processor_adapter.process_file(input_path, output_path)
+            
+            # ProcessorStageAdapter.process_file 返回 StageStats，直接返回
+            return result
+            
+        except Exception as e:
+            # 处理器适配器模式执行异常，降级到增强模式
+            duration_ms = (time.time() - start_time) * 1000
+            return self._process_with_basic_mode_fallback(
+                input_path, output_path, duration_ms, 
+                f"processor_adapter_mode_failed: {e}"
+            )
 
     def _process_with_enhanced_mode(self, input_path: Path, output_path: Path) -> StageStats:
         """使用 MultiStageExecutor 进行智能处理"""
@@ -276,6 +348,7 @@ class MaskStage(StageBase):
                 duration_ms=duration_ms,
                 extra_metrics={
                     "enhanced_mode": False,
+                    "processor_adapter_mode": False,
                     "mode": "bypass",
                     "reason": "no_valid_masking_recipe"
                 },
@@ -300,13 +373,14 @@ class MaskStage(StageBase):
             extra_metrics={
                 **stats.to_dict(),
                 "enhanced_mode": False,
+                "processor_adapter_mode": False,
                 "mode": "basic_masking"
             },
         )
 
     def _process_with_basic_mode_fallback(self, input_path: Path, output_path: Path, 
                                         duration_ms: float, error: Optional[str] = None) -> StageStats:
-        """增强模式失败时的降级处理"""
+        """增强模式或处理器适配器模式失败时的降级处理"""
         # 简单复制文件作为降级方案
         packets: List[Packet] = rdpcap(str(input_path))
         wrpcap(str(output_path), packets)
@@ -318,9 +392,10 @@ class MaskStage(StageBase):
             duration_ms=duration_ms,
             extra_metrics={
                 "enhanced_mode": False,
+                "processor_adapter_mode": False,
                 "mode": "fallback",
-                "original_mode": "enhanced",
-                "fallback_reason": error or "enhanced_mode_execution_failed",
+                "original_mode": "enhanced_or_processor_adapter",
+                "fallback_reason": error or "advanced_mode_execution_failed",
                 "graceful_degradation": True
             },
         ) 
