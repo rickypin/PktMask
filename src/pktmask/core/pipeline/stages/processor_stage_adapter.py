@@ -11,7 +11,7 @@ from pktmask.core.processors.base_processor import BaseProcessor, ProcessorResul
 class ProcessorStageAdapter(StageBase):
     """将 BaseProcessor 适配为 StageBase 接口的适配器
     
-    这个适配器允许现有的 BaseProcessor 实现（如 EnhancedTrimmer）
+    这个适配器允许现有的 BaseProcessor 实现（如 TSharkEnhancedMaskProcessor）
     被集成到新的 PipelineExecutor 中，实现调用路径的统一。
     """
     

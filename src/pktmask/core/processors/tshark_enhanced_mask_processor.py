@@ -14,7 +14,7 @@ TShark增强掩码处理器
 - 增强的错误分类、重试和诊断系统 (Phase 2, Day 13)
 
 降级策略:
-1. TShark不可用 → 降级到EnhancedTrimmer
+1. TShark不可用 → 降级到MaskStage
 2. 协议解析失败 → 降级到标准MaskStage
 3. 其他错误 → 错误恢复+重试机制
 
@@ -95,7 +95,6 @@ class RetryConfig:
 class FallbackMode(Enum):
     """降级模式枚举"""
     NONE = "none"                    # 无降级，直接失败
-    ENHANCED_TRIMMER = "enhanced_trimmer"   # 降级到EnhancedTrimmer
     MASK_STAGE = "mask_stage"        # 降级到标准MaskStage
     RETRY = "retry"                  # 错误恢复+重试
 
@@ -112,7 +111,6 @@ class FallbackConfig:
     fallback_on_other_errors: bool = True
     preferred_fallback_order: List[FallbackMode] = field(
         default_factory=lambda: [
-            FallbackMode.ENHANCED_TRIMMER,
             FallbackMode.MASK_STAGE
         ]
     )
@@ -262,7 +260,7 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
     - TLS-24 (Heartbeat): 完全保留
     
     提供智能降级机制：
-    - TShark不可用时降级到EnhancedTrimmer
+    - TShark不可用时降级到MaskStage
     - 协议解析失败时降级到标准MaskStage
     - 其他错误时进行错误恢复和重试
     
@@ -659,12 +657,7 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
         
         for fallback_mode in self.enhanced_config.fallback_config.preferred_fallback_order:
             try:
-                if fallback_mode == FallbackMode.ENHANCED_TRIMMER:
-                    self._initialize_enhanced_trimmer_fallback()
-                    fallback_initialized = True
-                    self._logger.info("EnhancedTrimmer fallback processor initialization successful")
-                    
-                elif fallback_mode == FallbackMode.MASK_STAGE:
+                if fallback_mode == FallbackMode.MASK_STAGE:
                     self._initialize_mask_stage_fallback()
                     fallback_initialized = True 
                     self._logger.info("MaskStage fallback processor initialization successful")
@@ -679,27 +672,7 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
             
         return True
         
-    def _initialize_enhanced_trimmer_fallback(self):
-        """初始化EnhancedTrimmer降级处理器"""
-        try:
-            from .enhanced_trimmer import EnhancedTrimmer
-            
-            fallback_config = ProcessorConfig(
-                enabled=True,
-                name="enhanced_trimmer_fallback",
-                priority=1
-            )
-            
-            trimmer = EnhancedTrimmer(fallback_config)
-            if trimmer.initialize():
-                self._fallback_processors[FallbackMode.ENHANCED_TRIMMER] = trimmer
-            else:
-                raise RuntimeError("EnhancedTrimmer initialization returned False")
-                
-        except Exception as e:
-            self._logger.warning(f"EnhancedTrimmer fallback processor initialization failed: {e}")
-            raise
-            
+
     def _initialize_mask_stage_fallback(self):
         """初始化MaskStage降级处理器"""
         try:
@@ -960,26 +933,22 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
     def _determine_fallback_mode(self, error_context: Optional[str]) -> FallbackMode:
         """根据错误上下文确定降级模式"""
         if not error_context:
-            return FallbackMode.ENHANCED_TRIMMER
+            return FallbackMode.MASK_STAGE
             
         error_lower = error_context.lower()
         
         if 'tshark' in error_lower or 'unavailable' in error_lower:
-            return FallbackMode.ENHANCED_TRIMMER
+            return FallbackMode.MASK_STAGE
         elif 'protocol' in error_lower:
             return FallbackMode.MASK_STAGE  
         else:
-            return FallbackMode.ENHANCED_TRIMMER
+            return FallbackMode.MASK_STAGE
             
     def _execute_fallback_processor(self, mode: FallbackMode, input_path: str, output_path: str) -> ProcessorResult:
         """执行指定的降级处理器"""
         processor = self._fallback_processors[mode]
         
-        if mode == FallbackMode.ENHANCED_TRIMMER:
-            # EnhancedTrimmer使用BaseProcessor接口
-            return processor.process_file(input_path, output_path)
-            
-        elif mode == FallbackMode.MASK_STAGE:
+        if mode == FallbackMode.MASK_STAGE:
             # MaskStage使用StageBase接口，需要适配
             result = processor.process_file(input_path, output_path)
             

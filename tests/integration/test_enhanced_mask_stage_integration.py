@@ -19,13 +19,12 @@ from pktmask.core.pipeline.models import StageStats
 class TestEnhancedMaskStageIntegration:
     """测试增强版 MaskStage 与系统的集成"""
 
-    @patch('pktmask.core.trim.multi_stage_executor.MultiStageExecutor')
     @patch('pktmask.core.trim.stages.tshark_preprocessor.TSharkPreprocessor')
     @patch('pktmask.core.trim.stages.enhanced_pyshark_analyzer.EnhancedPySharkAnalyzer')
     @patch('pktmask.core.trim.stages.tcp_payload_masker_adapter.TcpPayloadMaskerAdapter')
     @patch('pktmask.config.defaults.get_tshark_paths')
     def test_pipeline_executor_integration_enhanced_mode(self, mock_tshark_paths, mock_adapter,
-                                                       mock_analyzer, mock_preprocessor, mock_executor):
+                                                       mock_analyzer, mock_preprocessor):
         """测试 PipelineExecutor 与增强模式 MaskStage 的集成"""
         # Mock 配置
         mock_tshark_paths.return_value = ['/usr/bin/tshark']
@@ -43,7 +42,6 @@ class TestEnhancedMaskStageIntegration:
             Mock(packets_processed=100, packets_modified=30)
         ]
         mock_executor_instance.execute_pipeline.return_value = mock_result
-        mock_executor.return_value = mock_executor_instance
         
         # 配置 Pipeline
         config = {

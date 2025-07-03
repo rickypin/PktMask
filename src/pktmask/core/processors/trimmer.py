@@ -1,41 +1,41 @@
 """
 裁切处理器
 
-简化版的裁切处理器，直接使用Enhanced Trimmer实现。
+简化版的裁切处理器，直接使用TSharkEnhancedMaskProcessor实现。
 """
 import os
 from typing import Optional
 
 from .base_processor import BaseProcessor, ProcessorConfig, ProcessorResult
-from .enhanced_trimmer import EnhancedTrimmer
+from .tshark_enhanced_mask_processor import TSharkEnhancedMaskProcessor
 from ...infrastructure.logging import get_logger
 
 
 class Trimmer(BaseProcessor):
     """裁切处理器
     
-    直接使用Enhanced Trimmer实现载荷裁切功能。
+    直接使用TSharkEnhancedMaskProcessor实现载荷裁切功能。
     """
     
     def __init__(self, config: ProcessorConfig):
         super().__init__(config)
         self._logger = get_logger('trimmer')
-        self._enhanced_trimmer: Optional[EnhancedTrimmer] = None
+        self._enhanced_trimmer: Optional[TSharkEnhancedMaskProcessor] = None
         
     def _initialize_impl(self):
         """初始化裁切组件"""
         try:
-            # 创建Enhanced Trimmer实例
+            # 创建TSharkEnhancedMaskProcessor实例
             enhanced_config = ProcessorConfig(
                 enabled=True,
                 name='enhanced_trim',
                 priority=self.config.priority
             )
-            self._enhanced_trimmer = EnhancedTrimmer(enhanced_config)
+            self._enhanced_trimmer = TSharkEnhancedMaskProcessor(enhanced_config)
             
-            # 初始化Enhanced Trimmer
+            # 初始化TSharkEnhancedMaskProcessor
             if not self._enhanced_trimmer.initialize():
-                raise RuntimeError("Enhanced Trimmer初始化失败")
+                raise RuntimeError("TSharkEnhancedMaskProcessor初始化失败")
             
             self._logger.info("裁切处理器初始化成功")
             
@@ -61,16 +61,16 @@ class Trimmer(BaseProcessor):
             
             self._logger.info(f"开始裁切处理: {input_path} -> {output_path}")
             
-            # 委托给Enhanced Trimmer处理
+            # 委托给TSharkEnhancedMaskProcessor处理
             result = self._enhanced_trimmer.process_file(input_path, output_path)
             
             if not result.success:
                 return ProcessorResult(
                     success=False,
-                    error=f"Enhanced Trimmer处理失败: {result.error}"
+                    error=f"TSharkEnhancedMaskProcessor处理失败: {result.error}"
                 )
             
-            # 从Enhanced Trimmer结果提取数据
+            # 从TSharkEnhancedMaskProcessor结果提取数据
             result_data = result.data or {}
             
             # 更新统计信息

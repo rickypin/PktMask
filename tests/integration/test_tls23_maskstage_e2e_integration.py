@@ -107,50 +107,13 @@ def test_maskstage_e2e_validation_direct_mode():
     assert result.returncode == 0
 
 
-def test_maskstage_vs_enhanced_trimmer_comparison():
-    """对比Enhanced MaskStage与EnhancedTrimmer的验证结果
-    
-    运行两个验证器并比较结果，确保功能对等性。
-    """
-    # 依赖检测
-    try:
-        import pyshark  # noqa: F401
-        from pktmask.core.processors.enhanced_trimmer import EnhancedTrimmer  # noqa: F401
-        from pktmask.core.pipeline.stages.mask_payload.stage import MaskStage  # noqa: F401
-    except ImportError:
-        pytest.xfail("依赖缺失：PyShark、EnhancedTrimmer 或 Enhanced MaskStage")
-
-    # 运行原版EnhancedTrimmer验证
-    trimmer_cmd = [
-        sys.executable,
-        "scripts/validation/tls23_e2e_validator.py",
-        "--input-dir", str(SAMPLES_DIR),
-        "--output-dir", str(OUTPUT_DIR / "trimmer_baseline"),
-        "--verbose",
-    ]
-    env = dict(**os.environ, PYTHONPATH=str(Path(__file__).parent.parent.parent))
-    trimmer_result = subprocess.run(trimmer_cmd, capture_output=True, text=True, env=env)
-
-    # 运行Enhanced MaskStage验证
-    maskstage_result = _run_maskstage_validator("pipeline")
-
-    # 如果任一验证器因依赖问题失败，跳过对比测试
-    if trimmer_result.returncode != 0 and maskstage_result.returncode != 0:
-        pytest.xfail("两个验证器都因依赖问题失败，跳过对比测试")
-    
-    # 输出详细信息用于调试
-    print(f"EnhancedTrimmer 退出码: {trimmer_result.returncode}")
-    print(f"Enhanced MaskStage 退出码: {maskstage_result.returncode}")
-    
-    if trimmer_result.returncode != 0:
-        print("EnhancedTrimmer STDERR:", trimmer_result.stderr[:500])
-    if maskstage_result.returncode != 0:
-        print("Enhanced MaskStage STDERR:", maskstage_result.stderr[:500])
-    
-    # 理想情况：两个验证器应该有相同的退出码（都成功或都失败）
-    # 但考虑到环境依赖差异，我们主要验证MaskStage验证器能正常工作
-    
-    # 至少验证MaskStage验证器输出了正确的文件
+def test_maskstage_validator_only():
+    """验证MaskStage验证器能正常工作"""
+    # 运行MaskStage验证
+    result = _run_maskstage_validator("pipeline")
+    # 验证返回码
+    assert result.returncode == 0
+    # 验证输出文件生成
     assert (OUTPUT_DIR / "pipeline" / "validation_summary.json").exists()
     assert (OUTPUT_DIR / "pipeline" / "validation_summary.html").exists()
 

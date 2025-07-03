@@ -46,7 +46,6 @@ class ProcessorRegistry:
             
         except ImportError as e:
             print(f"加载内置处理器时出错: {e}")
-            # Phase 4.2: 降级处理 - 如果EnhancedTrimmer导入失败，使用原版
             try:
                 from .trimmer import Trimmer
                 cls._processors['trim_packet'] = Trimmer
@@ -162,5 +161,5 @@ class ProcessorRegistry:
         cls._load_builtin_processors()
         trimmer_class = cls._processors.get('trim_packet', None)
         if trimmer_class:
-            return trimmer_class.__name__ == 'EnhancedTrimmer'
+            return trimmer_class.__name__ == 'TSharkEnhancedMaskProcessor'
         return False 

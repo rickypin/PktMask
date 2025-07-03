@@ -30,11 +30,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 try:
-    from pktmask.core.trim.multi_stage_executor import MultiStageExecutor
-    from pktmask.core.trim.stages.tshark_preprocessor import TSharkPreprocessor
-    from pktmask.core.trim.stages.pyshark_analyzer import PySharkAnalyzer
-    from pktmask.core.trim.stages.tcp_payload_masker_adapter import TcpPayloadMaskerAdapter
-    from pktmask.core.trim.stages.base_stage import StageContext
+    from pktmask.core.processors.tshark_enhanced_mask_processor import TSharkEnhancedMaskProcessor
     MODULES_AVAILABLE = True
 except ImportError as e:
     print(f"⚠️ 警告：无法导入必要模块: {e}")
@@ -141,22 +137,11 @@ class TLSSampleValidator:
             mask_table_file = temp_path / "mask_table.json"
             
             try:
-                # 创建多阶段执行器
-                executor = MultiStageExecutor()
-                
-                # 注册处理阶段
-                executor.register_stage(TSharkPreprocessor())
-                executor.register_stage(PySharkAnalyzer())
-                executor.register_stage(TcpPayloadMaskerAdapter())
-                
-                # 执行流水线
+                # 使用 TSharkEnhancedMaskProcessor 进行处理
+                processor = TSharkEnhancedMaskProcessor()
                 start = time.time()
-                result = executor.execute_pipeline(
-                    input_file=Path(TLS_SAMPLE_FILE),
-                    output_file=Path(output_file)
-                )
+                result = processor.process_file(str(TLS_SAMPLE_FILE), str(output_file))
                 end = time.time()
-                
                 processing_time = end - start
                 
                 # 收集结果信息

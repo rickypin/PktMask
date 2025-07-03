@@ -1,29 +1,13 @@
 """
 Trim模块数据模型
 
-包含掩码规范、掩码表、TCP流管理等核心数据结构。
+包含掩码规范和TLS协议处理等核心数据结构。
 """
 
+# 基础掩码规范（实际存在的文件）
 from .mask_spec import MaskSpec, MaskAfter, MaskRange, KeepAll
-from .mask_table import StreamMaskTable, StreamMaskEntry
-from .execution_result import ExecutionResult, StageResult
-from .simple_execution_result import SimpleExecutionResult
 
-# Phase 1 重构：新增的序列号掩码机制
-from .tcp_stream import (
-    ConnectionDirection, 
-    TCPConnection, 
-    DirectionalTCPStream, 
-    TCPStreamManager,
-    detect_packet_direction
-)
-from .sequence_mask_table import (
-    MaskEntry,
-    SequenceMatchResult, 
-    SequenceMaskTable
-)
-
-# MaskStage重构：TLS协议处理模型
+# TLS协议处理模型（实际存在的文件）
 from .tls_models import (
     TLSProcessingStrategy,
     MaskAction,
@@ -36,23 +20,10 @@ from .tls_models import (
 )
 
 __all__ = [
-    # 原有掩码规范
+    # 掩码规范
     'MaskSpec', 'MaskAfter', 'MaskRange', 'KeepAll',
     
-    # 原有掩码表
-    'StreamMaskTable', 'StreamMaskEntry',
-    
-    # 执行结果
-    'ExecutionResult', 'StageResult', 'SimpleExecutionResult',
-    
-    # 新增：TCP流管理
-    'ConnectionDirection', 'TCPConnection', 'DirectionalTCPStream', 'TCPStreamManager',
-    'detect_packet_direction',
-    
-    # 新增：序列号掩码表
-    'MaskEntry', 'SequenceMatchResult', 'SequenceMaskTable',
-    
-    # MaskStage重构：TLS协议处理模型
+    # TLS协议处理模型
     'TLSProcessingStrategy', 'MaskAction', 'TLSRecordInfo', 'MaskRule', 'TLSAnalysisResult',
     'create_mask_rule_for_tls_record', 'validate_tls_record_boundary', 'get_tls_processing_strategy'
 ] 
