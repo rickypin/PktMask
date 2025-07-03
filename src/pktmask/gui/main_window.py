@@ -177,10 +177,14 @@ class NewPipelineThread(QThread):
         if not self.is_running:
             return
         
-        # 可以在这里添加更详细的阶段进度报告
-        self.progress_signal.emit(PipelineEvents.LOG, {
-            'message': f"    - {stage.name}: 处理了 {stats.packets_processed} 个包，修改了 {stats.packets_modified} 个包"
-        })
+        # Emit log with stage-specific action wording
+        if stage.name == 'DedupStage':
+            msg = f"    - {stage.name}: processed {stats.packets_processed} pkts, removed {stats.packets_modified} pkts"
+        elif stage.name == 'AnonStage':
+            msg = f"    - {stage.name}: processed {stats.packets_processed} pkts, Anonymized {stats.packets_modified} ips"
+        else:
+            msg = f"    - {stage.name}: processed {stats.packets_processed} pkts, masked {stats.packets_modified} pkts"
+        self.progress_signal.emit(PipelineEvents.LOG, {'message': msg})
 
     def stop(self):
         self.is_running = False
@@ -540,9 +544,9 @@ class MainWindow(QMainWindow):
         if self.dedup_packet_cb.isChecked():
             enabled_steps.append("🔄 Deduplication")
         if self.mask_ip_cb.isChecked():
-            enabled_steps.append("🛡️ IP Masking")
+            enabled_steps.append("🛡️ IP Anonymization")
         if self.trim_packet_cb.isChecked():
-            enabled_steps.append("✂️ Payload Trimming")
+            enabled_steps.append("✂️ Payload Masking")
             
         separator_length = 70
         start_report = f"{'='*separator_length}\n🚀 STARTING PACKET PROCESSING PIPELINE\n{'='*separator_length}\n"
@@ -600,7 +604,7 @@ class MainWindow(QMainWindow):
                 output_files = []
                 if self.current_processing_file in self.file_processing_results:
                     steps_data = self.file_processing_results[self.current_processing_file]['steps']
-                    step_order = ['Deduplication', 'IP Masking', 'Payload Trimming']
+                    step_order = ['Deduplication', 'IP Anonymization', 'Payload Masking']
                     for step_name in reversed(step_order):
                         if step_name in steps_data:
                             output_file = steps_data[step_name]['data'].get('output_filename')
@@ -625,19 +629,20 @@ class MainWindow(QMainWindow):
             self.update_log(data['message'])
 
         elif event_type == PipelineEvents.STEP_SUMMARY:
-            # **修复**: 只从第一个Stage获取包计数，避免重复计算
+            # **修复**: 简化包计数逻辑，只从第一个Stage（DedupStage）计算包数，避免重复计算
             step_name = data.get('step_name', '')
             packets_processed = data.get('packets_processed', 0)
+            current_file = data.get('filename', '')
             
-            # 只有当这是文件的第一个Stage时才计算包数
-            if step_name in ['DedupStage', 'AnonStage'] and packets_processed > 0:
+            # 只从DedupStage计算包数（它总是第一个运行的Stage）
+            if step_name == 'DedupStage' and packets_processed > 0:
                 # 检查这个文件是否已经计算过包数
-                current_file = data.get('filename', '')
-                if current_file not in getattr(self, '_counted_files', set()):
-                    if not hasattr(self, '_counted_files'):
-                        self._counted_files = set()
+                if not hasattr(self, '_counted_files'):
+                    self._counted_files = set()
+                if current_file not in self._counted_files:
                     self._counted_files.add(current_file)
                     self.packets_processed_count += packets_processed
+                    self.packets_processed_label.setText(str(self.packets_processed_count))
             
             self.collect_step_result(data)
 

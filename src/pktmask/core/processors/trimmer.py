@@ -104,7 +104,7 @@ class Trimmer(BaseProcessor):
     
     def get_display_name(self) -> str:
         """获取用户友好的显示名称"""
-        return "Trim Payloads"
+        return "Mask Payloads"
     
     def get_description(self) -> str:
         """获取处理器描述"""

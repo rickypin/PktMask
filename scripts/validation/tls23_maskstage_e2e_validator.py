@@ -157,13 +157,16 @@ def validate_file(original_json: Path, masked_json: Path) -> Dict[str, Any]:
 
     返回字段说明：
     - status: pass / fail
-    - total_records: TLS 23 消息总数
+    - input_tls23_pkts: 输入文件中TLS-23消息包数  
+    - masked_zero_pkts: 主程序置零掩码的包数
+    - output_tls23_pkts: 输出文件中TLS-23消息包数
     - masked_records: 完全成功掩码的消息数
     - unmasked_records: 未完全掩码的消息数
     - records_before / records_after: 原始、掩码文件检测到的消息数
     - masked_ok_frames: 完全掩码的帧号列表
     - failed_frames: 未完全掩码(仍含明文字节)的帧号列表
     - failed_frame_details: 掩码失败帧的主要信息
+    - success_frame_details: 掩码成功帧的主要信息
     """
     original_frames = extract_frames(read_json(original_json))
     masked_frames = extract_frames(read_json(masked_json))
@@ -181,12 +184,24 @@ def validate_file(original_json: Path, masked_json: Path) -> Dict[str, Any]:
     failed_frames: List[int] = []
     masked_ok_frames: List[int] = []
     failed_frame_details: List[Dict[str, Any]] = []
+    success_frame_details: List[Dict[str, Any]] = []
+    masked_zero_count = 0  # 统计实际置零的包数
 
     for no, m_frame in masked_by_no.items():
         if no == -1:  # 无法识别帧号，跳过
             continue
         if is_zero_payload(m_frame):
             masked_ok_frames.append(no)
+            masked_zero_count += 1
+            # 收集成功帧的关键信息
+            success_frame_details.append({
+                "frame": no,
+                "path": m_frame.get("path"),
+                "lengths": m_frame.get("lengths"),
+                "zero_bytes": m_frame.get("zero_bytes"),
+                "num_records": m_frame.get("num_records"),
+                "protocol_types": m_frame.get("protocol_types"),
+            })
         else:
             failed_frames.append(no)
             # 收集关键信息，方便调试
@@ -200,7 +215,12 @@ def validate_file(original_json: Path, masked_json: Path) -> Dict[str, Any]:
                 "payload_preview": m_frame.get("payload_preview") or m_frame.get("data") or m_frame.get("payload_hex"),
             })
 
-    total_records = len(masked_frames)
+    # 统计输入文件中TLS-23消息包数
+    input_tls23_count = len(original_frames)
+    
+    # 统计输出文件中TLS-23消息包数 
+    output_tls23_count = len(masked_frames)
+    
     masked_records = len(masked_ok_frames)
     unmasked_records = len(failed_frames)
 
@@ -210,12 +230,15 @@ def validate_file(original_json: Path, masked_json: Path) -> Dict[str, Any]:
         "status": status,
         "records_before": len(original_frames),
         "records_after": len(masked_frames),
-        "total_records": total_records,
+        "input_tls23_pkts": input_tls23_count,
+        "masked_zero_pkts": masked_zero_count,
+        "output_tls23_pkts": output_tls23_count,
         "masked_records": masked_records,
         "unmasked_records": unmasked_records,
         "masked_ok_frames": sorted(masked_ok_frames),
         "failed_frames": sorted(failed_frames),
         "failed_frame_details": failed_frame_details,
+        "success_frame_details": success_frame_details,
     }
 
 
@@ -896,6 +919,7 @@ def main() -> None:
     overall_pass_rate = (passed_files / len(files)) * 100
     summary = {
         "overall_pass_rate": round(overall_pass_rate, 2),
+        "maskstage_mode": maskstage_mode,
         "files": results
     }
     write_json(output_dir / "validation_summary.json", summary)
@@ -922,7 +946,8 @@ def write_html_report(summary: Dict[str, Any], output_path: Path) -> None:
         "h1{font-size:24px;} table{border-collapse:collapse;width:100%;}"  
         "th,td{border:1px solid #ddd;padding:8px;} th{background:#f4f4f4;}"  
         "tr.pass{background:#e8f7e4;} tr.fail{background:#fdecea;}"  
-        "code{background:#f4f4f4;padding:2px 4px;border-radius:4px;}"  
+        "code{background:#f4f4f4;padding:2px 4px;border-radius:4px;}"
+        "details{margin:10px 0;} summary{cursor:pointer;font-weight:bold;}"
     )
 
     rows_html = []
@@ -933,11 +958,29 @@ def write_html_report(summary: Dict[str, Any], output_path: Path) -> None:
             f"<tr class='{cls}'>"
             f"<td>{f.get('file')}</td>"
             f"<td>{status}</td>"
-            f"<td>{f.get('total_records','-')}</td>"
+            f"<td>{f.get('input_tls23_pkts','-')}</td>"
+            f"<td>{f.get('masked_zero_pkts','-')}</td>"
+            f"<td>{f.get('output_tls23_pkts','-')}</td>"
             f"<td>{f.get('masked_records','-')}</td>"
             f"<td>{f.get('unmasked_records','-')}</td>"
             f"</tr>"
         )
+        
+        # 添加成功帧详情（如果有）
+        if f.get("success_frame_details"):
+            success_lines = []
+            for d in f["success_frame_details"]:
+                frame = d.get("frame")
+                path = d.get("path")
+                zero = d.get("zero_bytes")
+                lens = d.get("lengths")
+                protocol_types = d.get("protocol_types")
+                success_lines.append(
+                    f"<li>帧 <code>{frame}</code> | path=<code>{path}</code> | lengths={lens} | zero_bytes={zero} | types={protocol_types}</li>"
+                )
+            success_html = "<details><summary>✅ 成功帧详情</summary><ul>" + "\n".join(success_lines) + "</ul></details>"
+            rows_html.append(f"<tr class='{cls}'><td colspan='7'>" + success_html + "</td></tr>")
+        
         # 若失败则添加详情行，可折叠 <details>
         if status != "pass" and f.get("failed_frame_details"):
             detail_lines = []
@@ -950,15 +993,20 @@ def write_html_report(summary: Dict[str, Any], output_path: Path) -> None:
                 detail_lines.append(
                     f"<li>帧 <code>{frame}</code> | path=<code>{path}</code> | lengths={lens} | zero_bytes={zero} | payload_preview=<code>{preview}</code></li>"
                 )
-            details_html = "<details><summary>失败帧详情</summary><ul>" + "\n".join(detail_lines) + "</ul></details>"
-            rows_html.append(f"<tr class='{cls}'><td colspan='5'>" + details_html + "</td></tr>")
+            details_html = "<details><summary>❌ 失败帧详情</summary><ul>" + "\n".join(detail_lines) + "</ul></details>"
+            rows_html.append(f"<tr class='{cls}'><td colspan='7'>" + details_html + "</td></tr>")
 
     html = (
         "<!DOCTYPE html><html><head><meta charset='utf-8'>"  
-        f"<title>TLS23 Validation Report</title><style>{style}</style></head><body>"  
-        f"<h1>TLS23 Validation Report</h1>"  
-        f"<p>Overall Pass Rate: <strong>{summary.get('overall_pass_rate')}%</strong></p>"  
-        "<table><thead><tr><th>File</th><th>Status</th><th>Total Records</th><th>Masked</th><th>Unmasked</th></tr></thead><tbody>"  
+        f"<title>TLS23 MaskStage E2E Validation Report</title><style>{style}</style></head><body>"  
+        f"<h1>TLS23 MaskStage E2E Validation Report</h1>"  
+        f"<p>Overall Pass Rate: <strong>{summary.get('overall_pass_rate')}%</strong></p>"
+        f"<p>MaskStage Mode: <strong>{summary.get('maskstage_mode', 'unknown')}</strong></p>"
+        "<table><thead><tr>"
+        "<th>File</th><th>Status</th>"
+        "<th>Input TLS23</th><th>Masked Zero</th><th>Output TLS23</th>"
+        "<th>Masked</th><th>Unmasked</th>"
+        "</tr></thead><tbody>"  
         + "\n".join(rows_html) + "</tbody></table>"  
         "</body></html>"
     )

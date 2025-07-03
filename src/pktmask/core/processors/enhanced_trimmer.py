@@ -444,8 +444,8 @@ class EnhancedTrimmer(BaseProcessor):
                 self._logger.warning(f"清理临时文件失败: {e}")
                 
     def get_display_name(self) -> str:
-        """获取用户友好的显示名称（保持兼容性）"""
-        return "Trim Payloads"
+        """获取用户友好的显示名称"""
+        return "Mask Payloads"
     
     def get_description(self) -> str:
         """获取处理器描述（移除HTTP支持）"""

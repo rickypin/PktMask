@@ -141,8 +141,8 @@ class IPAnonymizer(BaseProcessor):
             return ProcessorResult(success=False, error=error_msg)
     
     def get_display_name(self) -> str:
-        """获取用户友好的显示名称"""
-        return "Mask IPs"
+        """获取处理器的显示名称"""
+        return "Anonymize IPs"
     
     def get_description(self) -> str:
         """获取处理器描述"""

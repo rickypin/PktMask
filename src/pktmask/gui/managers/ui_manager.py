@@ -166,13 +166,13 @@ class UIManager:
         pipeline_layout.setSpacing(20)
         
         self.main_window.dedup_packet_cb = QCheckBox("Remove Dupes")
-        self.main_window.mask_ip_cb = QCheckBox("Mask IPs")
-        self.main_window.trim_packet_cb = QCheckBox("Trim Payloads (Preserve TLS Handshake)")
-        self.main_window.web_focused_cb = QCheckBox("Web-Focused Traffic Only (功能已移除)")
+        self.main_window.mask_ip_cb = QCheckBox("Anonymize IPs")
+        self.main_window.trim_packet_cb = QCheckBox("Mask Payloads")
+        self.main_window.web_focused_cb = QCheckBox("Web-Focused Traffic Only (Coming Soon)")
         
-        self.main_window.trim_packet_cb.setToolTip("Intelligently trims packet payloads while preserving TLS handshake data.")
+        self.main_window.trim_packet_cb.setToolTip("Intelligently masks packet payloads while preserving TLS handshake data.")
         self.main_window.web_focused_cb.setToolTip(
-            "HTTP协议处理功能已从本版本中移除。仅支持TLS、IP匿名化和去重功能。"
+            "HTTP协议处理功能将在未来版本中提供。仅支持TLS、IP匿名化和去重功能。"
         )
         
         # 设置手型光标
@@ -337,7 +337,7 @@ class UIManager:
             "│ 2. Configure actions         │\n"
             "│ 3. Start processing          │\n"
             "└──────────────────────────────┘\n\n"
-            "💡 Remove Dupes & Mask IPs enabled by default\n\n"
+            "💡 Remove Dupes & Anonymize IPs enabled by default\n\n"
             "Processing logs will appear here..."
         )
         
@@ -360,18 +360,18 @@ class UIManager:
                 "   • Eliminates duplicate packets to reduce file size\n"
                 "   • Reduces noise in network analysis and forensics\n"
                 "   • Optimizes storage and speeds up analysis\n\n"
-                "🛡️ Mask IPs - Advanced Anonymization\n"
+                "🛡️ Anonymize IPs - Advanced Anonymization\n"
                 "   • Preserves network topology and subnet relationships\n"
                 "   • Uses hierarchical anonymization for consistent mapping\n"
                 "   • Perfect for data sharing, compliance, and research\n\n"
-                "✂️ Trim Payloads - Intelligent Data Reduction\n"
+                "✂️ Mask Payloads - Intelligent Data Reduction\n"
                 "   • Removes sensitive payload data while preserving headers\n"
                 "   • Keeps TLS handshakes intact for protocol analysis\n"
                 "   • Reduces file size without losing network behavior insights\n\n"
-                "🌐 Web-Focused Traffic Only (功能已移除)\n"
-                "   • HTTP协议处理功能已从本版本移除\n"
-                "   • 仅支持TLS、IP匿名化和去重功能\n"
-                "   • 建议使用通用处理模式\n\n"
+                "🌐 Web-Focused Traffic Only (Coming Soon)\n"
+                "   • HTTP protocol processing functionality will be provided in future versions\n"
+                "   • Only supports TLS, IP anonymization, and de-duplication functionality\n"
+                "   • It's recommended to use a generic processing mode\n\n"
                 "🎯 Use Cases: Security research, network troubleshooting,\n"
                 "   compliance reporting, and safe data sharing."
             )
@@ -400,9 +400,9 @@ class UIManager:
                 # 子标题
                 subtitle = line[3:].strip()
                 emoji_map = {
-                    'Mask IPs': '🛡️',
+                    'Anonymize IPs': '🛡️',
                     'Remove Dupes': '🔄',
-                    'Trim Payloads': '✂️',
+                    'Mask Payloads': '✂️',
                     'Processing Flow': '⚡',
                     'Key Benefits': '🎯'
                 }

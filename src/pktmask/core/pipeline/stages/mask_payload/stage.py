@@ -295,15 +295,34 @@ class MaskStage(StageBase):
             duration_ms = (time.time() - start_time) * 1000
             
             if result.success:
-                # 计算总体统计信息
+                # **修复**: 从MultiStageExecutor的结果中正确提取统计信息
                 total_packets_processed = 0
                 total_packets_modified = 0
                 
-                for stage_result in result.stage_results:
-                    if hasattr(stage_result, 'packets_processed'):
-                        total_packets_processed = max(total_packets_processed, stage_result.packets_processed)
-                    if hasattr(stage_result, 'packets_modified'):
-                        total_packets_modified = max(total_packets_modified, stage_result.packets_modified)
+                # 方法1: 从result.stats中查找TcpPayloadMaskerAdapter的统计信息
+                # MultiStageExecutor的stats字典包含所有Stage的统计: {stage_name: stats}
+                if hasattr(result, 'stats') and result.stats:
+                    # 查找TcpPayloadMaskerAdapter(最终的掩码执行器)的统计
+                    adapter_stats = result.stats.get('TcpPayloadMaskerAdapter', {})
+                    if adapter_stats:
+                        total_packets_processed = adapter_stats.get('processed_packets', 0)
+                        total_packets_modified = adapter_stats.get('modified_packets', 0)
+                        
+                        # Debug log
+                        print(f"🔍 MaskStage从TcpPayloadMaskerAdapter获取统计: processed={total_packets_processed}, modified={total_packets_modified}")
+                
+                # 方法2: 如果第一种方法没有获取到数据，尝试从其他Stage获取
+                if total_packets_processed == 0:
+                    # 遍历所有Stage的统计信息，寻找包含处理统计的Stage
+                    for stage_name, stage_stats in result.stats.items():
+                        if isinstance(stage_stats, dict):
+                            processed = stage_stats.get('processed_packets', 0) or stage_stats.get('packets_processed', 0)
+                            modified = stage_stats.get('modified_packets', 0) or stage_stats.get('packets_modified', 0)
+                            if processed > 0:
+                                total_packets_processed = processed
+                                total_packets_modified = modified
+                                print(f"🔍 MaskStage从{stage_name}获取统计: processed={processed}, modified={modified}")
+                                break
                 
                 return StageStats(
                     stage_name=self.name,
@@ -312,11 +331,12 @@ class MaskStage(StageBase):
                     duration_ms=duration_ms,
                     extra_metrics={
                         "enhanced_mode": True,
-                        "stages_count": len(result.stage_results),
+                        "stages_count": len(result.stage_results) if result.stage_results else 0,
                         "success_rate": "100%",
                         "pipeline_success": True,
                         "multi_stage_processing": True,
-                        "intelligent_protocol_detection": True
+                        "intelligent_protocol_detection": True,
+                        "stats_source": "enhanced_mode_pipeline"
                     }
                 )
             else:

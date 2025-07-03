@@ -370,10 +370,10 @@ class PipelineManager:
             self._logger.debug("启用去重Stage")
         
         if self.main_window.trim_packet_cb.isChecked():
-            # 使用默认的掩码配方
             config["mask"] = {
                 "enabled": True,
-                "recipe_path": "config/samples/simple_mask_recipe.json"
+                "recipe_path": "config/samples/simple_mask_recipe.json",
+                "mode": "processor_adapter"
             }
             self._logger.debug("启用载荷掩码Stage")
         

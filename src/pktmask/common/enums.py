@@ -190,8 +190,8 @@ class UIStrings(Enum):
     
     # 复选框文本
     CHECKBOX_DEDUP_PACKET = "Remove Dupes"
-    CHECKBOX_MASK_IP = "Mask IPs"
-    CHECKBOX_TRIM_PACKET = "Trim Payloads (Preserve TLS Handshake)"
+    CHECKBOX_MASK_IP = "Anonymize IPs"
+    CHECKBOX_TRIM_PACKET = "Mask Payloads"
     CHECKBOX_WEB_FOCUSED = "Web-Focused Traffic Only (功能已移除)"
     
     # 路径标签默认文本
@@ -218,8 +218,8 @@ class UIStrings(Enum):
 
 # 界面文本常量（更新HTTP功能状态）
 CHECKBOX_DEDUP_PACKET = "Remove Dupes"
-CHECKBOX_MASK_IP = "Mask IPs"
-CHECKBOX_TRIM_PACKET = "Trim Payloads (Preserve TLS Handshake)"
+CHECKBOX_MASK_IP = "Anonymize IPs"
+CHECKBOX_TRIM_PACKET = "Mask Payloads"
 CHECKBOX_WEB_FOCUSED = "Web-Focused Traffic Only (功能已移除)"
 
 # 工具提示常量（更新HTTP功能状态）
