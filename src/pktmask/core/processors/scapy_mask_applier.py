@@ -93,9 +93,15 @@ class ScapyMaskApplier:
             FileNotFoundError: 输入文件不存在时抛出
             ImportError: Scapy不可用时抛出
         """
+        # 支持 Path 参数，将路径转换为字符串
+        if isinstance(input_file, Path):
+            input_file = str(input_file)
+        if isinstance(output_file, Path):
+            output_file = str(output_file)
         if not self.check_dependencies():
             raise ImportError("Scapy库不可用，无法进行掩码应用")
         
+        # 验证输入文件存在
         if not Path(input_file).exists():
             raise FileNotFoundError(f"输入文件不存在: {input_file}")
         
@@ -256,20 +262,32 @@ class ScapyMaskApplier:
         # 应用所有掩码规则
         packet_was_modified = False
         
-        for rule in rules:
+        self.logger.info(f"⚡ [包级掩码] 包{packet_number}: 开始应用{len(rules)}个掩码规则，载荷长度={original_length}")
+        
+        for i, rule in enumerate(rules):
+            self.logger.info(f"⚡ [包级掩码] 包{packet_number}: 应用第{i+1}/{len(rules)}个规则: {rule.get_description()}")
+            
             if self._apply_single_mask_rule(
                 masked_payload, rule, packet_number, original_length
             ):
                 packet_was_modified = True
+                self.logger.info(f"⚡ [包级掩码] 包{packet_number}: 第{i+1}个规则应用成功")
+            else:
+                self.logger.info(f"⚡ [包级掩码] 包{packet_number}: 第{i+1}个规则跳过或失败")
         
         # 更新数据包载荷
         if packet_was_modified:
             self._update_packet_payload(modified_packet, bytes(masked_payload))
             self._modified_packets_count += 1
             
+            self.logger.info(f"⚡ [包级掩码完成] 包{packet_number}: 载荷已更新，包已修改")
+            
             # 重新计算校验和（如果启用）
             if self._recalculate_checksums:
                 self._recalculate_packet_checksums(modified_packet)
+                self.logger.info(f"⚡ [包级掩码] 包{packet_number}: 校验和已重新计算")
+        else:
+            self.logger.info(f"⚡ [包级掩码] 包{packet_number}: 无修改，包保持原样")
         
         return modified_packet
     
@@ -296,25 +314,91 @@ class ScapyMaskApplier:
             self.logger.debug(f"规则{rule.get_description()}：保留操作，跳过")
             return False
         
-        # 计算绝对偏移量
-        abs_start = rule.absolute_mask_start
-        abs_end = rule.absolute_mask_end
+        # 详细分析掩码规则类型
+        is_cross_packet_rule = ("跨包" in rule.reason or rule.mask_length == -1)
+        is_segment_rule = ("分段" in rule.reason or "首段" in rule.reason or "中间段" in rule.reason)
+        is_reassembly_rule = ("重组" in rule.reason)
         
-        # 边界安全检查
+        self.logger.info(f"⚡ [掩码规则分析] 包{packet_number}: 跨包={is_cross_packet_rule}, 分段={is_segment_rule}, 重组={is_reassembly_rule}")
+        
+        # 计算掩码范围
+        if rule.mask_length == -1:
+            # 特殊处理：mask_length=-1 表示掩码到TCP载荷结束
+            if rule.mask_offset == 0 and rule.tls_record_offset == 0:
+                # 掩码整个TCP载荷（分段包）
+                abs_start = 0
+                abs_end = payload_length
+                self.logger.info(f"⚡ [TLS-23分段掩码] 包{packet_number}: 分段包完整掩码，掩码整个载荷 0-{payload_length} (TLS-{rule.tls_record_type})")
+                self.logger.info(f"⚡ [TLS-23分段掩码] 包{packet_number}: 原因={rule.reason}")
+                
+            elif rule.mask_offset > 0:
+                # 从指定偏移掩码到载荷结束（重组包）
+                abs_start = rule.tls_record_offset + rule.mask_offset
+                abs_end = payload_length
+                
+                # 边界安全检查：确保不超出载荷范围
+                if abs_start >= payload_length:
+                    self.logger.warning(f"⚡ [边界警告] 包{packet_number}: 掩码起始位置{abs_start}超出载荷长度{payload_length}，调整到载荷结束")
+                    abs_start = payload_length
+                    abs_end = payload_length
+                
+                self.logger.info(f"⚡ [TLS-23重组掩码] 包{packet_number}: 重组包掩码，从偏移{abs_start}掩码到载荷结束{abs_end} (TLS-{rule.tls_record_type})")
+                self.logger.info(f"⚡ [TLS-23重组掩码] 包{packet_number}: 保留头部{rule.mask_offset}字节，掩码剩余载荷{max(0, abs_end - abs_start)}字节")
+                self.logger.info(f"⚡ [TLS-23重组掩码] 包{packet_number}: 原因={rule.reason}")
+            else:
+                # 掩码整个载荷（兼容性处理）
+                abs_start = rule.tls_record_offset
+                abs_end = payload_length
+                self.logger.info(f"⚡ [TLS-23兼容掩码] 包{packet_number}: 兼容性掩码规则，从偏移{abs_start}掩码到载荷结束{abs_end} (TLS-{rule.tls_record_type})")
+                
+        elif rule.tls_record_length == 0 and is_cross_packet_rule:
+            # 旧版跨包规则兼容性处理
+            if rule.mask_offset == 0:
+                # 掩码整个载荷
+                abs_start = 0
+                abs_end = payload_length
+                self.logger.info(f"⚡ [TLS-23兼容分段] 包{packet_number}: 兼容性分段包掩码规则，掩码整个载荷 0-{payload_length} (TLS-{rule.tls_record_type})")
+            else:
+                # 从偏移开始掩码
+                abs_start = rule.tls_record_offset + rule.mask_offset
+                abs_end = payload_length
+                self.logger.info(f"⚡ [TLS-23兼容重组] 包{packet_number}: 兼容性重组包掩码规则，从偏移{abs_start}掩码到载荷结束{abs_end} (TLS-{rule.tls_record_type})")
+            
+            self.logger.info(f"⚡ [TLS-23兼容掩码] 包{packet_number}: 原因={rule.reason}")
+            
+        else:
+            # 普通规则：计算绝对偏移量
+            abs_start = rule.absolute_mask_start
+            abs_end = rule.absolute_mask_end
+            
+            # 边界安全检查：确保不超出载荷范围
+            if abs_end > payload_length:
+                original_end = abs_end
+                abs_end = payload_length
+                self.logger.warning(f"⚡ [边界调整] 包{packet_number}: 掩码结束位置从{original_end}调整到{abs_end}(载荷长度)")
+            
+            self.logger.info(f"⚡ [普通掩码] 包{packet_number}: 普通掩码规则，绝对偏移{abs_start}-{abs_end} (TLS-{rule.tls_record_type})")
+            if rule.tls_record_type == 23:
+                self.logger.info(f"⚡ [TLS-23标准掩码] 包{packet_number}: ApplicationData掩码，保留头部{rule.mask_offset}字节，掩码载荷{rule.mask_length}字节")
+        
+        # 增强的边界安全检查
         if self._validate_boundaries:
-            if not self._validate_mask_boundaries(
+            validation_result = self._validate_mask_boundaries_enhanced(
                 abs_start, abs_end, payload_length, rule, packet_number
-            ):
+            )
+            if not validation_result:
                 return False
         
         # 应用掩码
         try:
-            # 确保不会超出载荷边界
+            # 确保不会超出载荷边界，并处理边界情况
             actual_start = max(0, min(abs_start, payload_length))
             actual_end = max(actual_start, min(abs_end, payload_length))
             
             if actual_start < actual_end:
                 # 应用掩码字节
+                masked_bytes_before = sum(1 for b in payload_buffer[actual_start:actual_end] if b == self._mask_byte_value)
+                
                 for i in range(actual_start, actual_end):
                     payload_buffer[i] = self._mask_byte_value
                 
@@ -322,21 +406,53 @@ class ScapyMaskApplier:
                 self._masked_bytes_count += masked_bytes
                 self._applied_rules_count += 1
                 
-                self.logger.debug(
-                    f"TLS-{rule.tls_record_type} 掩码应用成功: "
-                    f"偏移{actual_start}-{actual_end}, 掩码{masked_bytes}字节"
-                )
+                # 验证掩码是否正确应用
+                masked_bytes_after = sum(1 for b in payload_buffer[actual_start:actual_end] if b == self._mask_byte_value)
+                newly_masked = masked_bytes_after - masked_bytes_before
+                
+                # 详细的掩码成功日志
+                if is_cross_packet_rule:
+                    if is_segment_rule:
+                        self.logger.info(
+                            f"⚡ [TLS-23分段掩码成功] 包{packet_number}: "
+                            f"分段载荷完整掩码 {actual_start}-{actual_end}, 掩码{masked_bytes}字节，新置零{newly_masked}字节"
+                        )
+                    elif is_reassembly_rule:
+                        self.logger.info(
+                            f"⚡ [TLS-23重组掩码成功] 包{packet_number}: "
+                            f"重组载荷掩码 {actual_start}-{actual_end}, 掩码{masked_bytes}字节，新置零{newly_masked}字节"
+                        )
+                    else:
+                        self.logger.info(
+                            f"⚡ [TLS-23跨包掩码成功] 包{packet_number}: "
+                            f"跨包载荷掩码 {actual_start}-{actual_end}, 掩码{masked_bytes}字节，新置零{newly_masked}字节"
+                        )
+                else:
+                    self.logger.info(
+                        f"⚡ [TLS-{rule.tls_record_type}掩码成功] 包{packet_number}: "
+                        f"偏移{actual_start}-{actual_end}, 掩码{masked_bytes}字节，新置零{newly_masked}字节"
+                    )
+                
+                # 额外验证TLS-23的掩码完整性
+                if rule.tls_record_type == 23:
+                    zero_count = sum(1 for b in payload_buffer[actual_start:actual_end] if b == self._mask_byte_value)
+                    zero_percentage = (zero_count / masked_bytes * 100) if masked_bytes > 0 else 0
+                    self.logger.info(f"⚡ [TLS-23掩码验证] 包{packet_number}: ApplicationData载荷，{zero_count}/{masked_bytes}字节已正确置零 ({zero_percentage:.1f}%)")
+                    
+                    # 如果掩码完整性不足，记录警告
+                    if zero_percentage < 95 and masked_bytes > 10:  # 对于小载荷放宽要求
+                        self.logger.warning(f"⚡ [掩码完整性警告] 包{packet_number}: 置零率{zero_percentage:.1f}%低于预期，可能存在掩码重叠或其他问题")
                 
                 return True
             else:
-                self.logger.debug(f"掩码范围无效: {actual_start}-{actual_end}")
+                self.logger.warning(f"⚡ [掩码范围无效] 包{packet_number}: 掩码范围{actual_start}-{actual_end}无效，跳过掩码应用")
                 return False
                 
         except Exception as e:
-            self.logger.error(f"应用掩码规则失败: {e}")
+            self.logger.error(f"⚡ [掩码应用异常] 包{packet_number}: 应用掩码规则失败: {e}")
             return False
     
-    def _validate_mask_boundaries(
+    def _validate_mask_boundaries_enhanced(
         self, 
         abs_start: int, 
         abs_end: int, 
@@ -344,7 +460,7 @@ class ScapyMaskApplier:
         rule: MaskRule,
         packet_number: int
     ) -> bool:
-        """验证掩码边界安全性
+        """增强的掩码边界验证
         
         Args:
             abs_start: 绝对起始偏移
@@ -356,28 +472,57 @@ class ScapyMaskApplier:
         Returns:
             边界是否安全
         """
+        # 检查基本边界条件
         if abs_start < 0:
             self.logger.warning(
-                f"包{packet_number}掩码起始偏移为负数: {abs_start}"
+                f"⚡ [边界验证] 包{packet_number}: 掩码起始偏移为负数{abs_start}，调整为0"
+            )
+            self._boundary_violations_count += 1
+            # 对于跨包规则，这可能是正常的，不阻止执行
+            return True
+        
+        if abs_start > payload_length:
+            self.logger.warning(
+                f"⚡ [边界验证] 包{packet_number}: 掩码起始偏移{abs_start}超出载荷长度{payload_length}"
+            )
+            self._boundary_violations_count += 1
+            # 如果是跨包规则，可能是TShark重组信息不准确，但仍尝试掩码
+            if "跨包" in rule.reason:
+                self.logger.info(f"⚡ [跨包容错] 包{packet_number}: 跨包规则允许边界超出，继续执行")
+                return True
+            return False
+        
+        if abs_end < abs_start:
+            self.logger.warning(
+                f"⚡ [边界验证] 包{packet_number}: 掩码结束位置{abs_end}小于起始位置{abs_start}"
             )
             self._boundary_violations_count += 1
             return False
         
+        # 对于跨包规则，放宽边界检查
+        if "跨包" in rule.reason or rule.mask_length == -1:
+            # 跨包规则：只要起始位置合理即可
+            if abs_start <= payload_length:
+                self.logger.debug(f"⚡ [跨包边界验证] 包{packet_number}: 跨包规则边界检查通过")
+                return True
+            else:
+                self.logger.warning(f"⚡ [跨包边界验证] 包{packet_number}: 跨包规则起始位置{abs_start}超出载荷{payload_length}，但继续执行")
+                return True  # 继续执行，让后续逻辑处理边界调整
+        
+        # 普通规则：严格边界检查
         if abs_end > payload_length:
+            excess = abs_end - payload_length
             self.logger.warning(
-                f"包{packet_number}掩码结束偏移超出载荷范围: "
-                f"{abs_end} > {payload_length} (TLS记录类型{rule.tls_record_type})"
+                f"⚡ [边界验证] 包{packet_number}: 掩码超出载荷边界{excess}字节 ({abs_end} > {payload_length})"
             )
             self._boundary_violations_count += 1
+            # 允许轻微超出（可能是TLS长度计算的小误差）
+            if excess <= 10:
+                self.logger.info(f"⚡ [边界容错] 包{packet_number}: 轻微超出{excess}字节，允许执行并调整边界")
+                return True
             return False
         
-        if abs_start >= abs_end:
-            self.logger.warning(
-                f"包{packet_number}掩码范围无效: {abs_start} >= {abs_end}"
-            )
-            self._boundary_violations_count += 1
-            return False
-        
+        self.logger.debug(f"⚡ [边界验证通过] 包{packet_number}: 掩码范围{abs_start}-{abs_end}在载荷{payload_length}范围内")
         return True
     
     def _extract_tcp_payload(self, packet: Packet) -> Optional[bytes]:

@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
 """
-TLS23 MaskStage 端到端验证器
+Enhanced TLS MaskStage 端到端验证器 (Phase 3 增强版)
 
-专门用于验证Enhanced MaskStage的TLS23掩码功能，与现有的EnhancedTrimmer验证器并行使用。
+专门用于验证Enhanced MaskStage的完整TLS协议类型(20-24)掩码功能：
+- TLS-20 (ChangeCipherSpec): 完全保留验证
+- TLS-21 (Alert): 完全保留验证  
+- TLS-22 (Handshake): 完全保留验证
+- TLS-23 (ApplicationData): 智能掩码验证(5字节头部保留)
+- TLS-24 (Heartbeat): 完全保留验证
 
-主要差异：
-- 使用Enhanced MaskStage而非EnhancedTrimmer进行掩码处理
-- 通过PipelineExecutor调用，验证新架构的集成效果
-- 提供与原版本相同的验证逻辑和报告格式
+新增验证功能：
+- 多协议类型验证 (validate_protocol_type_detection)
+- 跨TCP段处理验证 (validate_cross_segment_handling)
+- 边界安全处理验证 (validate_boundary_safety)
+- 完全保留策略验证 (validate_complete_preservation)
+- 智能掩码策略验证 (validate_smart_masking)
 
 Author: PktMask Core Team
-Version: v1.0
+Version: v2.0 (Phase 3 Day 15 增强版)
 """
 
 import argparse
@@ -21,7 +28,7 @@ import subprocess
 import sys
 from glob import glob
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 
 # -------------------------- 日志配置 --------------------------
 LOG_FORMAT = "[%(levelname)s] %(message)s"
@@ -43,6 +50,39 @@ def run_cmd(cmd: List[str], verbose: bool = False) -> None:
         print(result.stdout)
     if result.returncode != 0:
         raise RuntimeError(f"Command failed ({result.returncode}): {' '.join(cmd)}\n{result.stdout}")
+
+
+def run_enhanced_tls_marker(pcap_path: Path, output_dir: Path, types: str = "20,21,22,23,24", verbose: bool = False) -> Path:
+    """运行增强版TLS协议类型检测工具，返回JSON输出文件路径"""
+    if verbose:
+        logger.info("运行增强版TLS协议类型检测: %s (类型: %s)", pcap_path, types)
+    
+    try:
+        run_cmd([
+            PYTHON_EXEC,
+            "-m",
+            "pktmask.tools.enhanced_tls_marker",
+            "--pcap",
+            str(pcap_path),
+            "--types",
+            types,
+            "--formats",
+            "json",
+            "--output-dir",
+            str(output_dir),
+        ], verbose)
+        
+        # 返回生成的JSON文件路径
+        pcap_stem = pcap_path.stem
+        json_path = output_dir / f"{pcap_stem}_enhanced_tls_frames.json"
+        
+        if not json_path.exists():
+            raise RuntimeError(f"增强版TLS检测未生成预期的JSON文件: {json_path}")
+            
+        return json_path
+        
+    except Exception as e:
+        raise RuntimeError(f"增强版TLS协议类型检测失败: {e}")
 
 
 def discover_files(input_dir: Path, pattern: str) -> List[Path]:
@@ -179,6 +219,483 @@ def validate_file(original_json: Path, masked_json: Path) -> Dict[str, Any]:
     }
 
 
+# ---------------------- 增强验证函数 (Phase 3 Day 15) ------------------------
+
+def validate_complete_preservation(original_json: Path, masked_json: Path, target_types: List[int] = [20, 21, 22, 24]) -> Dict[str, Any]:
+    """验证TLS-20/21/22/24完全保留 - 原始和掩码后的数据应该完全一致"""
+    logger.info("验证完全保留策略 (TLS类型: %s)", target_types)
+    
+    original_data = read_json(original_json)
+    masked_data = read_json(masked_json)
+    
+    # 提取目标类型的记录
+    original_matches = extract_frames(original_data)
+    masked_matches = extract_frames(masked_data)
+    
+    # 按帧号建立映射
+    def _get_frame_no(f: Dict[str, Any]) -> int:
+        for k in ("frame", "packet_number", "frame_no", "no"):
+            if k in f and isinstance(f[k], int):
+                return f[k]
+        return -1
+    
+    original_by_frame = {_get_frame_no(f): f for f in original_matches}
+    masked_by_frame = {_get_frame_no(f): f for f in masked_matches}
+    
+    preservation_results = []
+    total_target_records = 0
+    preserved_records = 0
+    
+    for frame_no, orig_frame in original_by_frame.items():
+        if frame_no == -1:
+            continue
+            
+        # 检查是否包含目标类型
+        orig_types = orig_frame.get("protocol_types", [])
+        if not isinstance(orig_types, list):
+            orig_types = [orig_types] if orig_types is not None else []
+        
+        target_found = any(t in target_types for t in orig_types)
+        if not target_found:
+            continue
+            
+        total_target_records += 1
+        
+        # 检查掩码后是否存在
+        masked_frame = masked_by_frame.get(frame_no)
+        if not masked_frame:
+            preservation_results.append({
+                "frame": frame_no,
+                "status": "missing",
+                "reason": "掩码后帧丢失"
+            })
+            continue
+        
+        # 比较关键属性
+        preserved = True
+        differences = []
+        
+        # 比较协议类型
+        masked_types = masked_frame.get("protocol_types", [])
+        if not isinstance(masked_types, list):
+            masked_types = [masked_types] if masked_types is not None else []
+            
+        if orig_types != masked_types:
+            preserved = False
+            differences.append(f"协议类型不一致: {orig_types} -> {masked_types}")
+        
+        # 比较记录长度
+        orig_lengths = orig_frame.get("lengths", [])
+        masked_lengths = masked_frame.get("lengths", [])
+        if orig_lengths != masked_lengths:
+            preserved = False
+            differences.append(f"记录长度不一致: {orig_lengths} -> {masked_lengths}")
+        
+        # 比较载荷数据（对于完全保留类型，应该完全相同）
+        for field in ["payload_preview", "data", "payload_hex"]:
+            orig_payload = orig_frame.get(field)
+            masked_payload = masked_frame.get(field)
+            if orig_payload and masked_payload and orig_payload != masked_payload:
+                preserved = False
+                differences.append(f"{field}不一致")
+                break
+        
+        if preserved:
+            preserved_records += 1
+            preservation_results.append({
+                "frame": frame_no,
+                "status": "preserved",
+                "protocol_types": orig_types
+            })
+        else:
+            preservation_results.append({
+                "frame": frame_no, 
+                "status": "modified",
+                "protocol_types": orig_types,
+                "differences": differences
+            })
+    
+    preservation_rate = (preserved_records / total_target_records * 100) if total_target_records > 0 else 0
+    
+    return {
+        "total_target_records": total_target_records,
+        "preserved_records": preserved_records, 
+        "preservation_rate": round(preservation_rate, 2),
+        "status": "pass" if preservation_rate >= 95.0 else "fail",
+        "details": preservation_results
+    }
+
+
+def validate_smart_masking(original_json: Path, masked_json: Path, target_type: int = 23, header_bytes: int = 5) -> Dict[str, Any]:
+    """验证TLS-23智能掩码（保留指定字节头部，掩码其余载荷）"""
+    logger.info("验证智能掩码策略 (TLS-%d, 头部保留: %d字节)", target_type, header_bytes)
+    
+    original_data = read_json(original_json)
+    masked_data = read_json(masked_json)
+    
+    original_matches = extract_frames(original_data)
+    masked_matches = extract_frames(masked_data)
+    
+    def _get_frame_no(f: Dict[str, Any]) -> int:
+        for k in ("frame", "packet_number", "frame_no", "no"):
+            if k in f and isinstance(f[k], int):
+                return f[k]
+        return -1
+    
+    def _is_smart_masked(frame: Dict[str, Any], header_bytes: int) -> bool:
+        """判断帧是否正确应用了智能掩码（头部保留，载荷掩码）"""
+        # 检查 zero_bytes 和 lengths 字段
+        if "zero_bytes" in frame and "lengths" in frame:
+            zero_bytes = frame.get("zero_bytes", 0)
+            lengths = frame.get("lengths", [])
+            if isinstance(lengths, list) and lengths:
+                total_length = sum(lengths)
+                expected_masked_bytes = total_length - header_bytes
+                # 如果置零字节数接近期望的掩码字节数（允许一定误差）
+                return abs(zero_bytes - expected_masked_bytes) <= 5
+        
+        # 回退到字符串检查
+        hex_fields = []
+        for key in ("payload_preview", "data", "payload_hex", "payload"):
+            if key in frame and isinstance(frame[key], str):
+                hex_fields.append(frame[key])
+        
+        if hex_fields:
+            for hf in hex_fields:
+                cleaned = hf.replace(" ", "").replace(":", "")
+                if len(cleaned) >= header_bytes * 2:  # 每字节2个十六进制字符
+                    header_part = cleaned[:header_bytes * 2]
+                    payload_part = cleaned[header_bytes * 2:]
+                    # 头部不应全为零，载荷部分应大部分为零
+                    header_not_all_zero = set(header_part) != {"0"}
+                    payload_mostly_zero = payload_part.count("0") / len(payload_part) > 0.8 if payload_part else True
+                    return header_not_all_zero and payload_mostly_zero
+        
+        return False
+    
+    original_by_frame = {_get_frame_no(f): f for f in original_matches}
+    masked_by_frame = {_get_frame_no(f): f for f in masked_matches}
+    
+    masking_results = []
+    total_target_records = 0
+    correctly_masked_records = 0
+    
+    for frame_no, orig_frame in original_by_frame.items():
+        if frame_no == -1:
+            continue
+            
+        # 检查是否包含目标类型
+        orig_types = orig_frame.get("protocol_types", [])
+        if not isinstance(orig_types, list):
+            orig_types = [orig_types] if orig_types is not None else []
+        
+        if target_type not in orig_types:
+            continue
+            
+        total_target_records += 1
+        
+        # 检查掩码后是否存在
+        masked_frame = masked_by_frame.get(frame_no)
+        if not masked_frame:
+            masking_results.append({
+                "frame": frame_no,
+                "status": "missing",
+                "reason": "掩码后帧丢失"
+            })
+            continue
+        
+        # 检查是否正确应用了智能掩码（头部保留，载荷大部分置零）
+        is_correctly_masked = _is_smart_masked(masked_frame, header_bytes)
+        
+        if is_correctly_masked:
+            correctly_masked_records += 1
+            masking_results.append({
+                "frame": frame_no,
+                "status": "correctly_masked",
+                "protocol_types": orig_types
+            })
+        else:
+            masking_results.append({
+                "frame": frame_no,
+                "status": "incorrectly_masked", 
+                "protocol_types": orig_types,
+                "reason": "载荷未正确掩码"
+            })
+    
+    masking_rate = (correctly_masked_records / total_target_records * 100) if total_target_records > 0 else 0
+    
+    return {
+        "total_target_records": total_target_records,
+        "correctly_masked_records": correctly_masked_records,
+        "masking_rate": round(masking_rate, 2),
+        "status": "pass" if masking_rate >= 95.0 else "fail",
+        "details": masking_results
+    }
+
+
+def validate_cross_segment_handling(original_json: Path, masked_json: Path) -> Dict[str, Any]:
+    """验证跨TCP段处理正确性 - 检查流级别的处理一致性"""
+    logger.info("验证跨TCP段处理正确性")
+    
+    original_data = read_json(original_json)
+    masked_data = read_json(masked_json)
+    
+    original_matches = extract_frames(original_data)
+    masked_matches = extract_frames(masked_data)
+    
+    # 按TCP流分组
+    def _get_stream_info(f: Dict[str, Any]) -> Tuple[str, int]:
+        path = f.get("path", "")
+        frame_no = f.get("frame", f.get("packet_number", -1))
+        
+        # 从path中提取TCP流信息（如果可用）
+        if "tcp" in path.lower():
+            return ("tcp_stream", frame_no)
+        return ("unknown_stream", frame_no)
+    
+    # 分析流级别的一致性
+    stream_analysis = {}
+    
+    for orig_frame in original_matches:
+        stream_id, frame_no = _get_stream_info(orig_frame)
+        if stream_id not in stream_analysis:
+            stream_analysis[stream_id] = {"original": [], "masked": []}
+        stream_analysis[stream_id]["original"].append((frame_no, orig_frame))
+    
+    for masked_frame in masked_matches:
+        stream_id, frame_no = _get_stream_info(masked_frame)
+        if stream_id in stream_analysis:
+            stream_analysis[stream_id]["masked"].append((frame_no, masked_frame))
+    
+    cross_segment_results = []
+    total_streams = len(stream_analysis)
+    consistent_streams = 0
+    
+    for stream_id, stream_data in stream_analysis.items():
+        original_frames = sorted(stream_data["original"], key=lambda x: x[0])
+        masked_frames = sorted(stream_data["masked"], key=lambda x: x[0])
+        
+        # 检查帧数量一致性
+        if len(original_frames) != len(masked_frames):
+            cross_segment_results.append({
+                "stream": stream_id,
+                "status": "inconsistent",
+                "reason": f"帧数量不一致: {len(original_frames)} -> {len(masked_frames)}"
+            })
+            continue
+        
+        # 检查帧序列一致性
+        frame_consistency = True
+        for (orig_no, orig_frame), (masked_no, masked_frame) in zip(original_frames, masked_frames):
+            if orig_no != masked_no:
+                frame_consistency = False
+                break
+        
+        if frame_consistency:
+            consistent_streams += 1
+            cross_segment_results.append({
+                "stream": stream_id,
+                "status": "consistent",
+                "frame_count": len(original_frames)
+            })
+        else:
+            cross_segment_results.append({
+                "stream": stream_id,
+                "status": "inconsistent",
+                "reason": "帧序列不一致"
+            })
+    
+    consistency_rate = (consistent_streams / total_streams * 100) if total_streams > 0 else 0
+    
+    return {
+        "total_streams": total_streams,
+        "consistent_streams": consistent_streams,
+        "consistency_rate": round(consistency_rate, 2),
+        "status": "pass" if consistency_rate >= 90.0 else "fail",
+        "details": cross_segment_results
+    }
+
+
+def validate_protocol_type_detection(original_json: Path, target_types: List[int] = [20, 21, 22, 23, 24]) -> Dict[str, Any]:
+    """验证协议类型识别准确性 - 检查是否正确识别所有目标TLS协议类型"""
+    logger.info("验证协议类型识别准确性 (目标类型: %s)", target_types)
+    
+    original_data = read_json(original_json)
+    original_matches = extract_frames(original_data)
+    
+    detected_types = set()
+    type_counts = {}
+    frame_type_details = []
+    
+    for frame in original_matches:
+        frame_no = frame.get("frame", frame.get("packet_number", -1))
+        protocol_types = frame.get("protocol_types", [])
+        
+        if not isinstance(protocol_types, list):
+            protocol_types = [protocol_types] if protocol_types is not None else []
+        
+        for ptype in protocol_types:
+            if isinstance(ptype, int) and ptype in target_types:
+                detected_types.add(ptype)
+                type_counts[ptype] = type_counts.get(ptype, 0) + 1
+                
+        if protocol_types:
+            frame_type_details.append({
+                "frame": frame_no,
+                "detected_types": protocol_types
+            })
+    
+    # 计算检测完整性
+    missing_types = set(target_types) - detected_types
+    detection_completeness = (len(detected_types) / len(target_types) * 100) if target_types else 0
+    
+    return {
+        "target_types": target_types,
+        "detected_types": sorted(list(detected_types)),
+        "missing_types": sorted(list(missing_types)),
+        "type_counts": type_counts,
+        "detection_completeness": round(detection_completeness, 2),
+        "status": "pass" if detection_completeness >= 80.0 else "fail",
+        "frame_details": frame_type_details[:10]  # 限制输出数量
+    }
+
+
+def validate_boundary_safety(original_json: Path, masked_json: Path) -> Dict[str, Any]:
+    """验证边界安全处理 - 检查是否存在边界违规或数据损坏"""
+    logger.info("验证边界安全处理")
+    
+    original_data = read_json(original_json) 
+    masked_data = read_json(masked_json)
+    
+    original_matches = extract_frames(original_data)
+    masked_matches = extract_frames(masked_data)
+    
+    def _get_frame_no(f: Dict[str, Any]) -> int:
+        for k in ("frame", "packet_number", "frame_no", "no"):
+            if k in f and isinstance(f[k], int):
+                return f[k]
+        return -1
+    
+    original_by_frame = {_get_frame_no(f): f for f in original_matches}
+    masked_by_frame = {_get_frame_no(f): f for f in masked_matches}
+    
+    boundary_issues = []
+    safe_frames = 0
+    total_frames = len(original_by_frame)
+    
+    for frame_no, orig_frame in original_by_frame.items():
+        if frame_no == -1:
+            continue
+            
+        masked_frame = masked_by_frame.get(frame_no)
+        if not masked_frame:
+            boundary_issues.append({
+                "frame": frame_no,
+                "issue": "frame_missing",
+                "description": "掩码处理后帧丢失"
+            })
+            continue
+        
+        # 检查记录长度一致性
+        orig_lengths = orig_frame.get("lengths", [])
+        masked_lengths = masked_frame.get("lengths", [])
+        
+        if len(orig_lengths) != len(masked_lengths):
+            boundary_issues.append({
+                "frame": frame_no,
+                "issue": "length_mismatch",
+                "description": f"记录数量变化: {len(orig_lengths)} -> {len(masked_lengths)}"
+            })
+            continue
+        
+        # 检查长度值异常变化
+        length_issues = []
+        for i, (orig_len, masked_len) in enumerate(zip(orig_lengths, masked_lengths)):
+            if orig_len != masked_len:
+                length_issues.append(f"记录{i}: {orig_len} -> {masked_len}")
+        
+        if length_issues:
+            boundary_issues.append({
+                "frame": frame_no,
+                "issue": "length_change", 
+                "description": f"记录长度变化: {'; '.join(length_issues)}"
+            })
+            continue
+        
+        # 检查是否存在异常的零字节计数
+        orig_zero_bytes = orig_frame.get("zero_bytes", 0)
+        masked_zero_bytes = masked_frame.get("zero_bytes", 0)
+        
+        # 掩码后零字节数应该增加（用于TLS-23）或保持不变（用于其他类型）
+        if masked_zero_bytes < orig_zero_bytes:
+            boundary_issues.append({
+                "frame": frame_no,
+                "issue": "zero_bytes_decrease",
+                "description": f"零字节数异常减少: {orig_zero_bytes} -> {masked_zero_bytes}"
+            })
+            continue
+        
+        safe_frames += 1
+    
+    safety_rate = (safe_frames / total_frames * 100) if total_frames > 0 else 0
+    
+    return {
+        "total_frames": total_frames,
+        "safe_frames": safe_frames,
+        "boundary_issues": len(boundary_issues),
+        "safety_rate": round(safety_rate, 2),
+        "status": "pass" if safety_rate >= 95.0 else "fail",
+        "issue_details": boundary_issues[:10]  # 限制输出数量
+    }
+
+
+def validate_enhanced_tls_processing(original_json: Path, masked_json: Path) -> Dict[str, Any]:
+    """综合验证增强TLS处理结果 - 集成所有验证功能"""
+    logger.info("开始综合验证增强TLS处理结果")
+    
+    results = {}
+    
+    # 1. 验证TLS-20/21/22/24完全保留
+    results["complete_preservation"] = validate_complete_preservation(original_json, masked_json, [20, 21, 22, 24])
+    
+    # 2. 验证TLS-23智能掩码（5字节头部保留）
+    results["smart_masking"] = validate_smart_masking(original_json, masked_json, 23, 5)
+    
+    # 3. 验证跨TCP段处理正确性
+    results["cross_segment_handling"] = validate_cross_segment_handling(original_json, masked_json)
+    
+    # 4. 验证协议类型识别准确性
+    results["protocol_type_detection"] = validate_protocol_type_detection(original_json, [20, 21, 22, 23, 24])
+    
+    # 5. 验证边界安全处理
+    results["boundary_safety"] = validate_boundary_safety(original_json, masked_json)
+    
+    # 计算综合评分
+    test_scores = []
+    for test_name, test_result in results.items():
+        if test_result.get("status") == "pass":
+            test_scores.append(100)
+        else:
+            # 根据具体指标计算分数
+            if "rate" in test_result:
+                rate_key = [k for k in test_result.keys() if k.endswith("_rate")][0]
+                test_scores.append(test_result[rate_key])
+            else:
+                test_scores.append(0)
+    
+    overall_score = sum(test_scores) / len(test_scores) if test_scores else 0
+    overall_status = "pass" if overall_score >= 80.0 else "fail"
+    
+    results["overall"] = {
+        "score": round(overall_score, 2),
+        "status": overall_status,
+        "passed_tests": sum(1 for r in results.values() if r.get("status") == "pass"),
+        "total_tests": 5  # 5个验证函数：完全保留、智能掩码、跨段处理、协议类型检测、边界安全
+    }
+    
+    return results
+
+
 # ---------------------- MaskStage 处理函数 --------------------------
 
 def run_maskstage_internal(input_path: Path, output_path: Path, verbose: bool = False) -> None:
@@ -192,13 +709,13 @@ def run_maskstage_internal(input_path: Path, output_path: Path, verbose: bool = 
     except ImportError as imp_err:
         raise RuntimeError(f"无法导入 Enhanced MaskStage: {imp_err}")
 
-    # 配置Enhanced MaskStage处理
+    # 配置Enhanced MaskStage处理（Processor Adapter 模式）
     config = {
         "dedup": {"enabled": False},
         "anon": {"enabled": False}, 
         "mask": {
             "enabled": True,
-            "mode": "enhanced",  # 使用增强模式
+            "mode": "processor_adapter",  # 使用处理器适配器模式
             "preserve_ratio": 0.3,
             "tls_strategy_enabled": True,
             "enable_tshark_preprocessing": True
@@ -232,9 +749,9 @@ def run_maskstage_direct(input_path: Path, output_path: Path, verbose: bool = Fa
     except ImportError as imp_err:
         raise RuntimeError(f"无法导入 Enhanced MaskStage: {imp_err}")
 
-    # 配置Enhanced MaskStage
+    # 配置Enhanced MaskStage（Processor Adapter 模式）
     config = {
-        "mode": "enhanced",  # 使用增强模式
+        "mode": "processor_adapter",  # 使用处理器适配器模式
         "preserve_ratio": 0.3,
         "tls_strategy_enabled": True,
         "enable_tshark_preprocessing": True
@@ -355,11 +872,12 @@ def main() -> None:
             if tmp_json_masked.exists():
                 shutil.move(tmp_json_masked, masked_json)
 
-            # ---------- 结果对比 ----------
+            # ---------- 验证结果 ----------
             file_result = validate_file(orig_json, masked_json)
             file_result["file"] = pcap_path.name
             file_result["maskstage_mode"] = maskstage_mode
             results.append(file_result)
+
             if file_result["status"] == "pass":
                 passed_files += 1
                 logger.info("✅ %s - 通过 (MaskStage %s)", pcap_path.name, maskstage_mode)
@@ -378,13 +896,7 @@ def main() -> None:
     overall_pass_rate = (passed_files / len(files)) * 100
     summary = {
         "overall_pass_rate": round(overall_pass_rate, 2),
-        "maskstage_mode": maskstage_mode,
-        "files": results,
-        "test_metadata": {
-            "validator_version": "v1.0",
-            "component": "Enhanced MaskStage",
-            "vs_original": "EnhancedTrimmer E2E Validator"
-        }
+        "files": results
     }
     write_json(output_dir / "validation_summary.json", summary)
 
@@ -404,16 +916,13 @@ def write_html_report(summary: Dict[str, Any], output_path: Path) -> None:
     """根据 summary 生成人类可读的 HTML 报告"""
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    maskstage_mode = summary.get("maskstage_mode", "unknown")
-    
     # 简单内联样式，避免外部依赖
     style = (
         "body{font-family:Arial,Helvetica,sans-serif;margin:20px;}"
-        "h1{font-size:24px;} h2{font-size:18px;color:#333;} "
-        "table{border-collapse:collapse;width:100%;}th,td{border:1px solid #ddd;padding:8px;} "
-        "th{background:#f4f4f4;}tr.pass{background:#e8f7e4;} tr.fail{background:#fdecea;}"
-        "code{background:#f4f4f4;padding:2px 4px;border-radius:4px;}"
-        ".metadata{background:#f0f8ff;padding:10px;border-radius:5px;margin:10px 0;}"
+        "h1{font-size:24px;} table{border-collapse:collapse;width:100%;}"  
+        "th,td{border:1px solid #ddd;padding:8px;} th{background:#f4f4f4;}"  
+        "tr.pass{background:#e8f7e4;} tr.fail{background:#fdecea;}"  
+        "code{background:#f4f4f4;padding:2px 4px;border-radius:4px;}"  
     )
 
     rows_html = []
@@ -429,26 +938,29 @@ def write_html_report(summary: Dict[str, Any], output_path: Path) -> None:
             f"<td>{f.get('unmasked_records','-')}</td>"
             f"</tr>"
         )
-
-    metadata = summary.get("test_metadata", {})
-    metadata_html = (
-        f"<div class='metadata'>"
-        f"<h2>测试元数据</h2>"
-        f"<p><strong>验证器版本:</strong> {metadata.get('validator_version', 'unknown')}</p>"
-        f"<p><strong>测试组件:</strong> {metadata.get('component', 'unknown')}</p>"
-        f"<p><strong>MaskStage模式:</strong> {maskstage_mode}</p>"
-        f"<p><strong>对比版本:</strong> {metadata.get('vs_original', 'unknown')}</p>"
-        f"</div>"
-    )
+        # 若失败则添加详情行，可折叠 <details>
+        if status != "pass" and f.get("failed_frame_details"):
+            detail_lines = []
+            for d in f["failed_frame_details"]:
+                frame = d.get("frame")
+                path = d.get("path")
+                zero = d.get("zero_bytes")
+                lens = d.get("lengths")
+                preview = (d.get("payload_preview") or "").replace("<", "&lt;")
+                detail_lines.append(
+                    f"<li>帧 <code>{frame}</code> | path=<code>{path}</code> | lengths={lens} | zero_bytes={zero} | payload_preview=<code>{preview}</code></li>"
+                )
+            details_html = "<details><summary>失败帧详情</summary><ul>" + "\n".join(detail_lines) + "</ul></details>"
+            rows_html.append(f"<tr class='{cls}'><td colspan='5'>" + details_html + "</td></tr>")
 
     html = (
-        "<!DOCTYPE html><html><head><meta charset='utf-8'>"
-        f"<title>TLS23 MaskStage Validation Report</title><style>{style}</style></head><body>"
-        f"<h1>TLS23 MaskStage Validation Report</h1>"
-        f"{metadata_html}"
-        f"<p>Overall Pass Rate: <strong>{summary.get('overall_pass_rate')}%</strong></p>"
-        "<table><thead><tr><th>File</th><th>Status</th><th>Total Records</th><th>Masked</th><th>Unmasked</th></tr></thead><tbody>"
-        + "\n".join(rows_html) + "</tbody></table>" "</body></html>"
+        "<!DOCTYPE html><html><head><meta charset='utf-8'>"  
+        f"<title>TLS23 Validation Report</title><style>{style}</style></head><body>"  
+        f"<h1>TLS23 Validation Report</h1>"  
+        f"<p>Overall Pass Rate: <strong>{summary.get('overall_pass_rate')}%</strong></p>"  
+        "<table><thead><tr><th>File</th><th>Status</th><th>Total Records</th><th>Masked</th><th>Unmasked</th></tr></thead><tbody>"  
+        + "\n".join(rows_html) + "</tbody></table>"  
+        "</body></html>"
     )
 
     output_path.write_text(html, encoding="utf-8")

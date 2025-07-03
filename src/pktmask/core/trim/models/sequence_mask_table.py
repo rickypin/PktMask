@@ -168,12 +168,9 @@ class SequenceMaskTable:
         
         stream_entries = self._table[entry.tcp_stream_id]
         
-        # 使用二分查找插入位置保持排序
-        insert_pos = bisect.bisect_left(
-            stream_entries, 
-            entry.seq_start,
-            key=lambda x: x.seq_start
-        )
+        # 使用二分查找插入位置保持排序 (Python 3.9兼容版本)
+        seq_starts = [x.seq_start for x in stream_entries]
+        insert_pos = bisect.bisect_left(seq_starts, entry.seq_start)
         
         stream_entries.insert(insert_pos, entry)
         self._stats['entries_added'] += 1
@@ -240,12 +237,9 @@ class SequenceMaskTable:
         stream_entries = self._table[tcp_stream_id]
         results = []
         
-        # 使用二分查找找到可能相交的条目范围
-        start_idx = bisect.bisect_left(
-            stream_entries,
-            packet_end,
-            key=lambda x: x.seq_start
-        )
+        # 使用二分查找找到可能相交的条目范围 (Python 3.9兼容版本)
+        seq_starts = [x.seq_start for x in stream_entries]
+        start_idx = bisect.bisect_left(seq_starts, packet_end)
         
         # 向前查找所有可能相交的条目
         for i in range(start_idx):

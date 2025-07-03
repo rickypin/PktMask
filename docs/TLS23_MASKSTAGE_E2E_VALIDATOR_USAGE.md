@@ -1,6 +1,6 @@
 # TLS23 MaskStage E2E Validator 使用指南
 
-> 版本：v1.0 · 适用工具：scripts/validation/tls23_maskstage_e2e_validator.py · 作者：PktMask Core Team
+> 版本：v2.0 (Phase 3 Day 15 Enhanced) · 适用工具：scripts/validation/tls23_maskstage_e2e_validator.py · 作者：PktMask Core Team
 
 ---
 
@@ -14,6 +14,19 @@
 - **双模式支持**：支持通过PipelineExecutor或直接调用MaskStage
 - **兼容性验证**：确保Enhanced MaskStage与EnhancedTrimmer功能对等
 - **完整报告**：生成JSON和HTML格式的详细验证报告
+
+### 🚀 Phase 3 Day 15 增强功能
+
+- **全TLS协议类型支持**：扩展支持TLS-20/21/22/23/24所有协议类型
+- **智能验证策略**：不同TLS类型采用不同验证方法（完全保留vs智能掩码）
+- **5个专业验证函数**：
+  - `validate_complete_preservation()` - 验证TLS-20/21/22/24完全保留策略
+  - `validate_smart_masking()` - 验证TLS-23智能掩码(5字节头部保留)
+  - `validate_cross_segment_handling()` - 验证跨TCP段处理正确性
+  - `validate_protocol_type_detection()` - 验证协议类型识别准确性
+  - `validate_boundary_safety()` - 验证边界安全处理机制
+- **综合验证功能**：`validate_enhanced_tls_processing()` 集成所有验证函数
+- **增强TLS标记工具集成**：使用Enhanced TLS Marker Tool支持所有协议类型
 
 ### 🔄 与原版对比
 

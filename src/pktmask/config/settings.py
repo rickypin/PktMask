@@ -147,6 +147,7 @@ class TSharkEnhancedSettings:
     
     # 调试配置
     enable_detailed_logging: bool = False
+    enable_performance_monitoring: bool = True  # 添加缺失的性能监控配置
     keep_intermediate_files: bool = False
     enable_stage_timing: bool = True
     
@@ -393,6 +394,7 @@ class AppConfig:
             
             # 调试配置
             'enable_detailed_logging': enhanced.enable_detailed_logging,
+            'enable_performance_monitoring': enhanced.enable_performance_monitoring,
             'keep_intermediate_files': enhanced.keep_intermediate_files,
             'enable_stage_timing': enhanced.enable_stage_timing,
             

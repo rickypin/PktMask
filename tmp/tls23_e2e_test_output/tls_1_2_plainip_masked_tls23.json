@@ -1,0 +1,31 @@
+{
+  "summary": {
+    "total_frames": 2,
+    "total_records": 3,
+    "by_path": {
+      "eth:ethertype:ip:tcp:tls": 3
+    },
+    "total_matches": 2
+  },
+  "matches": [
+    {
+      "frame": 14,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 2,
+      "lengths": [
+        169,
+        26
+      ],
+      "zero_bytes": 195
+    },
+    {
+      "frame": 15,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        106
+      ],
+      "zero_bytes": 106
+    }
+  ]
+}

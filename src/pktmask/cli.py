@@ -22,6 +22,8 @@ def _run_pipeline(
     enable_anon: bool = False,
     enable_mask: bool = False,
     recipe_path: Optional[str] = None,
+    mask_mode: Optional[str] = None,
+    verbose: bool = False,
 ) -> None:
     """构造 Pipeline 配置并执行。"""
 
@@ -36,8 +38,18 @@ def _run_pipeline(
     if recipe_path:
         cfg["mask"]["recipe_path"] = recipe_path  # type: ignore[index]
 
+    if mask_mode:
+        cfg["mask"]["mode"] = mask_mode
+
     executor = PipelineExecutor(cfg)
-    result = executor.run(str(input_file), str(output_file))
+
+    # 根据 verbose 决定是否传入进度回调
+    if verbose:
+        def _progress(stage, stats):  # type: ignore
+            typer.echo(f"[{stage.name}] 处理 {stats.packets_processed} 包，修改 {stats.packets_modified} 包，用时 {stats.duration_ms:.1f} ms")
+        result = executor.run(str(input_file), str(output_file), progress_cb=_progress)
+    else:
+        result = executor.run(str(input_file), str(output_file))
 
     # 简要输出统计信息；详细信息可序列化 result.to_dict()
     typer.echo(
@@ -56,6 +68,8 @@ def cmd_mask(
     output_path: Path = typer.Option(..., "-o", "--output", help="输出文件路径"),
     dedup: bool = typer.Option(False, "--dedup", help="启用去重阶段"),
     anon: bool = typer.Option(False, "--anon", help="启用 IP 匿名化阶段"),
+    mode: str = typer.Option("enhanced", "--mode", help="掩码模式: enhanced|processor_adapter|basic"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="启用详细进度输出"),
     recipe_path: Optional[str] = typer.Option(
         None,
         "--recipe-path",
@@ -71,6 +85,8 @@ def cmd_mask(
         enable_anon=anon,
         enable_mask=True,
         recipe_path=recipe_path,
+        mask_mode=mode,
+        verbose=verbose,
     )
 
 
@@ -119,4 +135,8 @@ def cmd_anon(
         input_file=input_path,
         output_file=output_path,
         enable_anon=True,
-    ) 
+    )
+
+
+if __name__ == "__main__":
+    app() 

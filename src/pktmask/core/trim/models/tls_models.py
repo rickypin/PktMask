@@ -114,17 +114,31 @@ class MaskRule:
         if self.tls_record_offset < 0:
             raise ValueError(f"TLS记录偏移量不能为负数: {self.tls_record_offset}")
         
-        if self.tls_record_length <= 0:
+        # 特殊处理跨包分段掩码规则
+        is_cross_packet_rule = (
+            "跨包" in self.reason and (
+                self.tls_record_length == 0 or  # 旧版兼容
+                self.mask_length == -1          # 新版特殊值
+            )
+        )
+        
+        if is_cross_packet_rule:
+            # 跨包规则的特殊情况，允许特殊长度值
+            pass
+        elif self.tls_record_length <= 0:
             raise ValueError(f"TLS记录长度必须为正数: {self.tls_record_length}")
         
         if self.mask_offset < 0:
             raise ValueError(f"掩码偏移量不能为负数: {self.mask_offset}")
         
-        if self.mask_length < 0:
-            raise ValueError(f"掩码长度不能为负数: {self.mask_length}")
+        # mask_length=-1 是特殊值，表示掩码到TCP载荷结束
+        if self.mask_length < -1:
+            raise ValueError(f"掩码长度不能小于-1: {self.mask_length}")
         
-        if self.mask_offset + self.mask_length > self.tls_record_length:
-            raise ValueError(f"掩码范围超出TLS记录边界: {self.mask_offset + self.mask_length} > {self.tls_record_length}")
+        # 对于跨包规则，跳过边界检查
+        if not is_cross_packet_rule and self.mask_length >= 0:
+            if self.mask_offset + self.mask_length > self.tls_record_length:
+                raise ValueError(f"掩码范围超出TLS记录边界: {self.mask_offset + self.mask_length} > {self.tls_record_length}")
         
         if self.tls_record_type is not None and self.tls_record_type not in [20, 21, 22, 23, 24]:
             raise ValueError(f"不支持的TLS记录类型: {self.tls_record_type}")
@@ -142,7 +156,15 @@ class MaskRule:
     @property
     def is_mask_operation(self) -> bool:
         """判断是否为实际的掩码操作"""
-        return self.action == MaskAction.MASK_PAYLOAD and self.mask_length > 0
+        if self.action != MaskAction.MASK_PAYLOAD:
+            return False
+        
+        # 跨包规则：mask_length=-1 或包含"跨包"的原因
+        if self.mask_length == -1 or "跨包" in self.reason:
+            return True
+        
+        # 普通规则：mask_length > 0
+        return self.mask_length > 0
     
     def get_description(self) -> str:
         """获取规则描述"""
@@ -197,13 +219,17 @@ def create_mask_rule_for_tls_record(record: TLSRecordInfo) -> MaskRule:
     Returns:
         对应的掩码规则
     """
+    # 确保所有TLS记录长度计算一致性：包含5字节头部
+    header_size = 5
+    total_length = record.length + header_size
+    
     if record.processing_strategy == TLSProcessingStrategy.KEEP_ALL:
         # 完全保留：20, 21, 22, 24类型
         return MaskRule(
             packet_number=record.packet_number,
             tcp_stream_id=record.tcp_stream_id,
             tls_record_offset=record.record_offset,
-            tls_record_length=record.length,
+            tls_record_length=total_length,  # 统一包含头部长度
             mask_offset=0,
             mask_length=0,
             action=MaskAction.KEEP_ALL,
@@ -212,33 +238,31 @@ def create_mask_rule_for_tls_record(record: TLSRecordInfo) -> MaskRule:
         )
     
     elif record.processing_strategy == TLSProcessingStrategy.MASK_PAYLOAD:
-        # 智能掩码：23(ApplicationData)类型
-        if record.is_complete and record.length > 5:
-            # 完整记录且长度超过头部：保留5字节头部，掩码载荷
+        # 智能掩码：23(ApplicationData)类型，保留头部5字节，掩码所有消息体字节
+        if record.is_complete and record.length > 0:
             return MaskRule(
                 packet_number=record.packet_number,
                 tcp_stream_id=record.tcp_stream_id,
                 tls_record_offset=record.record_offset,
-                tls_record_length=record.length,
-                mask_offset=5,  # 保留5字节TLS头部
-                mask_length=record.length - 5,
+                tls_record_length=total_length,
+                mask_offset=header_size,  # 保留TLS头部
+                mask_length=record.length,  # 掩码全部消息体字节
                 action=MaskAction.MASK_PAYLOAD,
                 reason="TLS-23 智能掩码：保留头部，掩码载荷",
                 tls_record_type=record.content_type
             )
-        else:
-            # 不完整记录或纯头部记录：完全保留
-            return MaskRule(
-                packet_number=record.packet_number,
-                tcp_stream_id=record.tcp_stream_id,
-                tls_record_offset=record.record_offset,
-                tls_record_length=record.length,
-                mask_offset=0,
-                mask_length=0,
-                action=MaskAction.KEEP_ALL,
-                reason="TLS-23 不完整记录或纯头部：完全保留",
-                tls_record_type=record.content_type
-            )
+        # 不完整或无消息体时完全保留
+        return MaskRule(
+            packet_number=record.packet_number,
+            tcp_stream_id=record.tcp_stream_id,
+            tls_record_offset=record.record_offset,
+            tls_record_length=total_length,
+            mask_offset=0,
+            mask_length=0,
+            action=MaskAction.KEEP_ALL,
+            reason="TLS-23 不完整记录或无消息体：完全保留",
+            tls_record_type=record.content_type
+        )
     
     else:
         raise ValueError(f"未知的TLS处理策略: {record.processing_strategy}")

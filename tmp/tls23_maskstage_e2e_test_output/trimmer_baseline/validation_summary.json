@@ -1,0 +1,2286 @@
+{
+  "overall_pass_rate": 66.67,
+  "files": [
+    {
+      "status": "pass",
+      "records_before": 5,
+      "records_after": 5,
+      "total_records": 5,
+      "masked_records": 5,
+      "unmasked_records": 0,
+      "masked_ok_frames": [
+        22,
+        24,
+        26,
+        28,
+        32
+      ],
+      "failed_frames": [],
+      "failed_frame_details": [],
+      "file": "tls_1_2_smtp_mix.pcapng"
+    },
+    {
+      "status": "pass",
+      "records_before": 64,
+      "records_after": 64,
+      "total_records": 64,
+      "masked_records": 64,
+      "unmasked_records": 0,
+      "masked_ok_frames": [
+        1,
+        2,
+        30,
+        32,
+        71,
+        73,
+        74,
+        108,
+        110,
+        142,
+        144,
+        180,
+        182,
+        218,
+        220,
+        221,
+        256,
+        258,
+        259,
+        283,
+        285,
+        286,
+        316,
+        318,
+        345,
+        347,
+        348,
+        415,
+        418,
+        421,
+        422,
+        424,
+        425,
+        460,
+        462,
+        463,
+        490,
+        492,
+        493,
+        521,
+        523,
+        524,
+        571,
+        573,
+        602,
+        606,
+        607,
+        639,
+        641,
+        671,
+        673,
+        712,
+        714,
+        742,
+        744,
+        745,
+        779,
+        781,
+        782,
+        820,
+        822,
+        850,
+        852,
+        853
+      ],
+      "failed_frames": [],
+      "failed_frame_details": [],
+      "file": "tls_1_2_double_vlan.pcap"
+    },
+    {
+      "status": "fail",
+      "records_before": 12,
+      "records_after": 12,
+      "total_records": 12,
+      "masked_records": 3,
+      "unmasked_records": 9,
+      "masked_ok_frames": [
+        11,
+        16,
+        98
+      ],
+      "failed_frames": [
+        25,
+        34,
+        43,
+        52,
+        61,
+        70,
+        79,
+        88,
+        97
+      ],
+      "failed_frame_details": [
+        {
+          "frame": 25,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 25,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 34,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 30,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 43,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 37,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 52,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 29,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 61,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 27,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 70,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 38,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 79,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 24,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 88,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 44,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 97,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 12,
+          "num_records": 1,
+          "payload_preview": null
+        }
+      ],
+      "file": "ssl_3.pcapng"
+    },
+    {
+      "status": "fail",
+      "records_before": 607,
+      "records_after": 607,
+      "total_records": 607,
+      "masked_records": 494,
+      "unmasked_records": 113,
+      "masked_ok_frames": [
+        12,
+        13,
+        16,
+        17,
+        18,
+        21,
+        33,
+        34,
+        36,
+        37,
+        38,
+        39,
+        41,
+        45,
+        46,
+        48,
+        50,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        70,
+        72,
+        73,
+        75,
+        77,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        98,
+        102,
+        103,
+        105,
+        107,
+        120,
+        121,
+        122,
+        123,
+        124,
+        125,
+        127,
+        130,
+        131,
+        132,
+        135,
+        148,
+        149,
+        150,
+        151,
+        152,
+        153,
+        155,
+        159,
+        160,
+        162,
+        164,
+        177,
+        178,
+        179,
+        180,
+        181,
+        182,
+        184,
+        188,
+        189,
+        191,
+        193,
+        206,
+        207,
+        208,
+        210,
+        211,
+        212,
+        215,
+        227,
+        229,
+        230,
+        231,
+        232,
+        233,
+        235,
+        239,
+        240,
+        242,
+        244,
+        257,
+        258,
+        259,
+        260,
+        261,
+        262,
+        264,
+        268,
+        269,
+        271,
+        273,
+        286,
+        287,
+        288,
+        289,
+        290,
+        291,
+        293,
+        295,
+        296,
+        298,
+        300,
+        313,
+        315,
+        316,
+        317,
+        318,
+        319,
+        322,
+        323,
+        324,
+        327,
+        340,
+        341,
+        342,
+        343,
+        344,
+        345,
+        349,
+        350,
+        352,
+        354,
+        367,
+        369,
+        370,
+        372,
+        374,
+        386,
+        387,
+        388,
+        389,
+        390,
+        391,
+        393,
+        398,
+        399,
+        401,
+        403,
+        416,
+        419,
+        420,
+        422,
+        424,
+        436,
+        437,
+        438,
+        439,
+        440,
+        441,
+        443,
+        448,
+        449,
+        450,
+        453,
+        466,
+        467,
+        468,
+        469,
+        470,
+        471,
+        473,
+        476,
+        477,
+        479,
+        481,
+        494,
+        495,
+        496,
+        497,
+        498,
+        499,
+        501,
+        504,
+        505,
+        507,
+        509,
+        522,
+        523,
+        524,
+        525,
+        526,
+        527,
+        529,
+        533,
+        534,
+        536,
+        538,
+        551,
+        552,
+        553,
+        554,
+        555,
+        556,
+        558,
+        561,
+        562,
+        564,
+        566,
+        579,
+        580,
+        581,
+        582,
+        583,
+        584,
+        586,
+        589,
+        590,
+        591,
+        594,
+        607,
+        609,
+        610,
+        611,
+        614,
+        626,
+        628,
+        630,
+        631,
+        632,
+        633,
+        635,
+        638,
+        639,
+        641,
+        643,
+        656,
+        657,
+        658,
+        659,
+        660,
+        661,
+        663,
+        667,
+        668,
+        669,
+        672,
+        685,
+        686,
+        687,
+        688,
+        689,
+        690,
+        692,
+        694,
+        695,
+        696,
+        699,
+        712,
+        713,
+        714,
+        715,
+        716,
+        717,
+        719,
+        722,
+        723,
+        725,
+        727,
+        740,
+        741,
+        742,
+        743,
+        744,
+        745,
+        747,
+        749,
+        751,
+        752,
+        754,
+        756,
+        769,
+        770,
+        771,
+        772,
+        773,
+        774,
+        776,
+        780,
+        781,
+        783,
+        785,
+        798,
+        799,
+        800,
+        801,
+        802,
+        803,
+        806,
+        808,
+        809,
+        811,
+        813,
+        826,
+        827,
+        828,
+        829,
+        835,
+        843,
+        847,
+        848,
+        850,
+        856,
+        858,
+        871,
+        872,
+        873,
+        874,
+        876,
+        878,
+        880,
+        881,
+        883,
+        884,
+        886,
+        888,
+        889,
+        895,
+        897,
+        898,
+        899,
+        900,
+        903,
+        904,
+        1143,
+        1159,
+        1173,
+        1174,
+        1176,
+        1177,
+        1178,
+        1181,
+        1193,
+        1194,
+        1197,
+        1198,
+        1199,
+        1200,
+        1202,
+        1203,
+        1204,
+        1207,
+        1208,
+        1211,
+        1212,
+        1214,
+        1216,
+        1217,
+        1219,
+        1220,
+        1223,
+        1224,
+        1225,
+        1228,
+        1229,
+        1238,
+        1239,
+        1241,
+        1249,
+        1276,
+        1326,
+        1327,
+        1329,
+        1331,
+        1332,
+        1334,
+        1341,
+        1342,
+        1419,
+        1437,
+        1457,
+        1486,
+        1517,
+        1550,
+        1566,
+        1580,
+        1596,
+        1609,
+        1615,
+        1683,
+        1700,
+        1715,
+        1728,
+        1744,
+        1757,
+        1770,
+        1783,
+        1798,
+        1812,
+        1825,
+        1862,
+        1863,
+        1864,
+        1865,
+        1867,
+        1869,
+        1870,
+        1872,
+        1874,
+        1875,
+        1877,
+        1882,
+        1883,
+        1884,
+        1885,
+        1886,
+        1889,
+        1913,
+        1914,
+        1915,
+        1916,
+        1918,
+        1920,
+        1932,
+        1934,
+        1935,
+        1936,
+        1937,
+        1938,
+        1940,
+        1944,
+        1945,
+        1946,
+        1949,
+        1962,
+        1963,
+        1964,
+        1965,
+        1966,
+        1967,
+        1969,
+        1972,
+        1973,
+        1975,
+        1977,
+        1990,
+        1991,
+        1992,
+        1993,
+        1994,
+        1995,
+        1997,
+        2001,
+        2002,
+        2003,
+        2006,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2026,
+        2029,
+        2030,
+        2032,
+        2034,
+        2047,
+        2048,
+        2049,
+        2050,
+        2051,
+        2052,
+        2054,
+        2057,
+        2058,
+        2060,
+        2062,
+        2075,
+        2076,
+        2077,
+        2078,
+        2079,
+        2080,
+        2082,
+        2084,
+        2085,
+        2086,
+        2089,
+        2098,
+        2099,
+        2100,
+        2101,
+        2106
+      ],
+      "failed_frames": [
+        807,
+        841,
+        845,
+        853,
+        857,
+        859,
+        893,
+        917,
+        924,
+        925,
+        926,
+        938,
+        944,
+        945,
+        946,
+        947,
+        950,
+        961,
+        971,
+        972,
+        987,
+        1001,
+        1002,
+        1015,
+        1017,
+        1031,
+        1046,
+        1059,
+        1060,
+        1074,
+        1087,
+        1088,
+        1101,
+        1102,
+        1114,
+        1115,
+        1130,
+        1141,
+        1157,
+        1167,
+        1231,
+        1234,
+        1236,
+        1244,
+        1247,
+        1259,
+        1261,
+        1263,
+        1275,
+        1283,
+        1285,
+        1295,
+        1309,
+        1311,
+        1323,
+        1339,
+        1344,
+        1347,
+        1358,
+        1360,
+        1369,
+        1371,
+        1381,
+        1384,
+        1391,
+        1393,
+        1402,
+        1404,
+        1418,
+        1435,
+        1446,
+        1467,
+        1469,
+        1473,
+        1485,
+        1491,
+        1495,
+        1502,
+        1516,
+        1521,
+        1534,
+        1537,
+        1549,
+        1565,
+        1579,
+        1594,
+        1608,
+        1614,
+        1625,
+        1627,
+        1643,
+        1646,
+        1654,
+        1666,
+        1668,
+        1682,
+        1699,
+        1714,
+        1727,
+        1742,
+        1756,
+        1769,
+        1782,
+        1796,
+        1810,
+        1824,
+        1838,
+        1880,
+        1894,
+        1896,
+        1898,
+        1901,
+        1911
+      ],
+      "failed_frame_details": [
+        {
+          "frame": 807,
+          "path": "eth:ethertype:vlan:ethertype:ip:icmp:ip:tcp:tls",
+          "lengths": [
+            122
+          ],
+          "zero_bytes": 8,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 841,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            8219
+          ],
+          "zero_bytes": 34,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 845,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            2768
+          ],
+          "zero_bytes": 10,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 853,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            2196
+          ],
+          "zero_bytes": 6,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 857,
+          "path": "eth:ethertype:vlan:ethertype:ip:icmp:ip:tcp:tls",
+          "lengths": [
+            148
+          ],
+          "zero_bytes": 8,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 859,
+          "path": "eth:ethertype:vlan:ethertype:ip:icmp:ip:tcp:tls",
+          "lengths": [
+            144
+          ],
+          "zero_bytes": 7,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 893,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            4697
+          ],
+          "zero_bytes": 15,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 917,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            13173
+          ],
+          "zero_bytes": 58,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 924,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            10253
+          ],
+          "zero_bytes": 42,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 925,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 10,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 926,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 2,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 938,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            14642
+          ],
+          "zero_bytes": 67,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 944,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            4422
+          ],
+          "zero_bytes": 17,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 945,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 7,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 946,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 6,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 947,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 8,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 950,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            2953
+          ],
+          "zero_bytes": 11,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 961,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls:tls",
+          "lengths": [
+            14495,
+            1188
+          ],
+          "zero_bytes": 63,
+          "num_records": 2,
+          "payload_preview": null
+        },
+        {
+          "frame": 971,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            13173
+          ],
+          "zero_bytes": 50,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 972,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 4,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 987,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls:tls",
+          "lengths": [
+            16408,
+            1178
+          ],
+          "zero_bytes": 72,
+          "num_records": 2,
+          "payload_preview": null
+        },
+        {
+          "frame": 1001,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 73,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1002,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1178
+          ],
+          "zero_bytes": 5,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1015,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 58,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1017,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            2342
+          ],
+          "zero_bytes": 13,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1031,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls:tls",
+          "lengths": [
+            16408,
+            1178
+          ],
+          "zero_bytes": 78,
+          "num_records": 2,
+          "payload_preview": null
+        },
+        {
+          "frame": 1046,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls:tls",
+          "lengths": [
+            16408,
+            1178
+          ],
+          "zero_bytes": 75,
+          "num_records": 2,
+          "payload_preview": null
+        },
+        {
+          "frame": 1059,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 67,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1060,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1178
+          ],
+          "zero_bytes": 2,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1074,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls:tls",
+          "lengths": [
+            16408,
+            1013
+          ],
+          "zero_bytes": 66,
+          "num_records": 2,
+          "payload_preview": null
+        },
+        {
+          "frame": 1087,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 55,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1088,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1178
+          ],
+          "zero_bytes": 6,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1101,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 63,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1102,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1178
+          ],
+          "zero_bytes": 10,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1114,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 68,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1115,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1178
+          ],
+          "zero_bytes": 5,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1130,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls:tls",
+          "lengths": [
+            16408,
+            286
+          ],
+          "zero_bytes": 49,
+          "num_records": 2,
+          "payload_preview": null
+        },
+        {
+          "frame": 1141,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 63,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1157,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 65,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1167,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            11416
+          ],
+          "zero_bytes": 38,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1231,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 4,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1234,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            2953
+          ],
+          "zero_bytes": 8,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1236,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            2681
+          ],
+          "zero_bytes": 8,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1244,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            2726
+          ],
+          "zero_bytes": 6,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1247,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            2172
+          ],
+          "zero_bytes": 9,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1259,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            13173
+          ],
+          "zero_bytes": 58,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1261,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 5,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1263,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 7,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1275,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 58,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1283,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            8793
+          ],
+          "zero_bytes": 36,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1285,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 9,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1295,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            13173
+          ],
+          "zero_bytes": 53,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1309,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16093
+          ],
+          "zero_bytes": 62,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1311,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 5,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1323,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            14631
+          ],
+          "zero_bytes": 62,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1339,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            4544
+          ],
+          "zero_bytes": 18,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1344,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 4,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1347,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            2953
+          ],
+          "zero_bytes": 8,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1358,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            14633
+          ],
+          "zero_bytes": 57,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1360,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 5,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1369,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            11713
+          ],
+          "zero_bytes": 52,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1371,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 11,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1381,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            13191
+          ],
+          "zero_bytes": 71,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1384,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            2953
+          ],
+          "zero_bytes": 11,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1391,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            8793
+          ],
+          "zero_bytes": 32,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1393,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 8,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1402,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            8820
+          ],
+          "zero_bytes": 24,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1404,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 4,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1418,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 62,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1435,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 77,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1446,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            12311
+          ],
+          "zero_bytes": 52,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1467,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            13173
+          ],
+          "zero_bytes": 54,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1469,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 9,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1473,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            4413
+          ],
+          "zero_bytes": 15,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1485,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 63,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1491,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            5873
+          ],
+          "zero_bytes": 25,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1495,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            4422
+          ],
+          "zero_bytes": 24,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1502,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            8793
+          ],
+          "zero_bytes": 35,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1516,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 61,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1521,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            4413
+          ],
+          "zero_bytes": 16,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1534,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 67,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1537,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            2317
+          ],
+          "zero_bytes": 8,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1549,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 59,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1565,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 66,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1579,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 57,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1594,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 51,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1608,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 69,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1614,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            7036
+          ],
+          "zero_bytes": 25,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1625,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            13173
+          ],
+          "zero_bytes": 37,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1627,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1493
+          ],
+          "zero_bytes": 5,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1643,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 62,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1646,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            882
+          ],
+          "zero_bytes": 3,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1654,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            10262
+          ],
+          "zero_bytes": 44,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1666,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 68,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1668,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            2335
+          ],
+          "zero_bytes": 7,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1682,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 64,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1699,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 68,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1714,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 53,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1727,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 62,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1742,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 76,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1756,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 69,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1769,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 65,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1782,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 61,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1796,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 77,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1810,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 58,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1824,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 56,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1838,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            16408
+          ],
+          "zero_bytes": 67,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1880,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1597
+          ],
+          "zero_bytes": 14,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1894,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            4817
+          ],
+          "zero_bytes": 12,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1896,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1475
+          ],
+          "zero_bytes": 5,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1898,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            1481
+          ],
+          "zero_bytes": 6,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1901,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            2935
+          ],
+          "zero_bytes": 11,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 1911,
+          "path": "eth:ethertype:vlan:ethertype:ip:tcp:tls",
+          "lengths": [
+            10081
+          ],
+          "zero_bytes": 47,
+          "num_records": 1,
+          "payload_preview": null
+        }
+      ],
+      "file": "tls_1_2_single_vlan.pcap"
+    },
+    {
+      "status": "fail",
+      "records_before": 47,
+      "records_after": 47,
+      "total_records": 47,
+      "masked_records": 29,
+      "unmasked_records": 18,
+      "masked_ok_frames": [
+        14,
+        15,
+        51,
+        63,
+        67,
+        73,
+        80,
+        85,
+        86,
+        88,
+        90,
+        91,
+        93,
+        94,
+        100,
+        104,
+        107,
+        109,
+        111,
+        113,
+        115,
+        117,
+        119,
+        154,
+        156,
+        157,
+        159,
+        162,
+        164
+      ],
+      "failed_frames": [
+        16,
+        18,
+        21,
+        68,
+        70,
+        122,
+        125,
+        128,
+        131,
+        132,
+        135,
+        137,
+        140,
+        143,
+        146,
+        149,
+        150,
+        152
+      ],
+      "failed_frame_details": [
+        {
+          "frame": 16,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 5,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 18,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            1662
+          ],
+          "zero_bytes": 6,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 21,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            1543
+          ],
+          "zero_bytes": 5,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 68,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 7,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 70,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            1678
+          ],
+          "zero_bytes": 8,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 122,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 6,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 125,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 10,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 128,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 5,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 131,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 12,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 132,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 8,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 135,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 9,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 137,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            1912
+          ],
+          "zero_bytes": 7,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 140,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 13,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 143,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 11,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 146,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 9,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 149,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 8,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 150,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            1178
+          ],
+          "zero_bytes": 3,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 152,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            1092
+          ],
+          "zero_bytes": 8,
+          "num_records": 1,
+          "payload_preview": null
+        }
+      ],
+      "file": "tls_1_0_multi_segment_google-https.pcap"
+    },
+    {
+      "status": "pass",
+      "records_before": 1,
+      "records_after": 1,
+      "total_records": 1,
+      "masked_records": 1,
+      "unmasked_records": 0,
+      "masked_ok_frames": [
+        10
+      ],
+      "failed_frames": [],
+      "failed_frame_details": [],
+      "file": "tls_1_2-2.pcapng"
+    },
+    {
+      "status": "pass",
+      "records_before": 4,
+      "records_after": 4,
+      "total_records": 4,
+      "masked_records": 4,
+      "unmasked_records": 0,
+      "masked_ok_frames": [
+        17,
+        19,
+        29,
+        31
+      ],
+      "failed_frames": [],
+      "failed_frame_details": [],
+      "file": "tls_1_2_pop_mix.pcapng"
+    },
+    {
+      "status": "pass",
+      "records_before": 2,
+      "records_after": 2,
+      "total_records": 2,
+      "masked_records": 2,
+      "unmasked_records": 0,
+      "masked_ok_frames": [
+        14,
+        15
+      ],
+      "failed_frames": [],
+      "failed_frame_details": [],
+      "file": "tls_1_2_plainip.pcap"
+    },
+    {
+      "status": "pass",
+      "records_before": 10,
+      "records_after": 10,
+      "total_records": 10,
+      "masked_records": 10,
+      "unmasked_records": 0,
+      "masked_ok_frames": [
+        6,
+        8,
+        9,
+        10,
+        12,
+        21,
+        23,
+        25,
+        26,
+        28
+      ],
+      "failed_frames": [],
+      "failed_frame_details": [],
+      "file": "tls_1_3_0-RTT-2_22_23_mix.pcapng"
+    }
+  ]
+}

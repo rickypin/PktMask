@@ -1,0 +1,372 @@
+{
+  "total_tls23_packets": 12,
+  "packets": [
+    {
+      "frame": 11,
+      "tcp_stream": "0",
+      "tcp_seq": 170,
+      "tcp_len": 974,
+      "tls_record_lengths": [
+        "969"
+      ],
+      "total_tls_length": 2409,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 16,
+      "tcp_stream": "0",
+      "tcp_seq": 147,
+      "tcp_len": 440,
+      "tls_record_lengths": [
+        "435"
+      ],
+      "total_tls_length": 1077,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 25,
+      "tcp_stream": "0",
+      "tcp_seq": 7887,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 34,
+      "tcp_stream": "0",
+      "tcp_seq": 16100,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 43,
+      "tcp_stream": "0",
+      "tcp_seq": 24313,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 52,
+      "tcp_stream": "0",
+      "tcp_seq": 32526,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 61,
+      "tcp_stream": "0",
+      "tcp_seq": 40739,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 70,
+      "tcp_stream": "0",
+      "tcp_seq": 48952,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 79,
+      "tcp_stream": "0",
+      "tcp_seq": 57165,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 88,
+      "tcp_stream": "0",
+      "tcp_seq": 65378,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 97,
+      "tcp_stream": "0",
+      "tcp_seq": 73591,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 98,
+      "tcp_stream": "0",
+      "tcp_seq": 74504,
+      "tcp_len": 891,
+      "tls_record_lengths": [
+        "863",
+        "18"
+      ],
+      "total_tls_length": 2171,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    }
+  ],
+  "cross_packet_candidates": [
+    {
+      "frame": 11,
+      "tcp_stream": "0",
+      "tcp_seq": 170,
+      "tcp_len": 974,
+      "tls_record_lengths": [
+        "969"
+      ],
+      "total_tls_length": 2409,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 16,
+      "tcp_stream": "0",
+      "tcp_seq": 147,
+      "tcp_len": 440,
+      "tls_record_lengths": [
+        "435"
+      ],
+      "total_tls_length": 1077,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 25,
+      "tcp_stream": "0",
+      "tcp_seq": 7887,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 34,
+      "tcp_stream": "0",
+      "tcp_seq": 16100,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 43,
+      "tcp_stream": "0",
+      "tcp_seq": 24313,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 52,
+      "tcp_stream": "0",
+      "tcp_seq": 32526,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 61,
+      "tcp_stream": "0",
+      "tcp_seq": 40739,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 70,
+      "tcp_stream": "0",
+      "tcp_seq": 48952,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 79,
+      "tcp_stream": "0",
+      "tcp_seq": 57165,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 88,
+      "tcp_stream": "0",
+      "tcp_seq": 65378,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 97,
+      "tcp_stream": "0",
+      "tcp_seq": 73591,
+      "tcp_len": 913,
+      "tls_record_lengths": [
+        "8208"
+      ],
+      "total_tls_length": 33288,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    },
+    {
+      "frame": 98,
+      "tcp_stream": "0",
+      "tcp_seq": 74504,
+      "tcp_len": 891,
+      "tls_record_lengths": [
+        "863",
+        "18"
+      ],
+      "total_tls_length": 2171,
+      "tcp_reassembled_in": [],
+      "tls_reassembled_in": [],
+      "has_tcp_reassembly": false,
+      "has_tls_reassembly": false,
+      "potential_cross_packet": true
+    }
+  ],
+  "tcp_streams": [
+    "0"
+  ]
+}

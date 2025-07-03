@@ -1,0 +1,125 @@
+{
+  "overall_pass_rate": 0.0,
+  "files": [
+    {
+      "status": "fail",
+      "records_before": 47,
+      "records_after": 34,
+      "total_records": 34,
+      "masked_records": 27,
+      "unmasked_records": 7,
+      "masked_ok_frames": [
+        14,
+        51,
+        63,
+        73,
+        80,
+        85,
+        86,
+        88,
+        90,
+        91,
+        93,
+        94,
+        100,
+        104,
+        107,
+        109,
+        111,
+        113,
+        115,
+        117,
+        119,
+        154,
+        156,
+        157,
+        159,
+        162,
+        164
+      ],
+      "failed_frames": [
+        21,
+        122,
+        125,
+        128,
+        131,
+        143,
+        146
+      ],
+      "failed_frame_details": [
+        {
+          "frame": 21,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            1543
+          ],
+          "zero_bytes": 118,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 122,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 644,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 125,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 645,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 128,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 642,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 131,
+          "path": "eth:ethertype:ip:tcp:tls:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 649,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 143,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 644,
+          "num_records": 1,
+          "payload_preview": null
+        },
+        {
+          "frame": 146,
+          "path": "eth:ethertype:ip:tcp:tls:tls",
+          "lengths": [
+            2068
+          ],
+          "zero_bytes": 643,
+          "num_records": 1,
+          "payload_preview": null
+        }
+      ],
+      "file": "tls_1_0_multi_segment_google-https.pcap",
+      "maskstage_mode": "pipeline"
+    }
+  ]
+}

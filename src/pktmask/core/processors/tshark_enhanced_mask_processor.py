@@ -632,6 +632,9 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
             # Stage 1: TShark TLS分析器
             from .tshark_tls_analyzer import TSharkTLSAnalyzer
             self._tshark_analyzer = TSharkTLSAnalyzer(self._create_analyzer_config())
+            # 初始化 TSharkTLSAnalyzer，确保 TShark 可用
+            if not self._tshark_analyzer.initialize():
+                raise RuntimeError("TShark TLS 分析器初始化失败")
             
             # Stage 2: TLS掩码规则生成器  
             from .tls_mask_rule_generator import TLSMaskRuleGenerator
@@ -751,71 +754,32 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
         }
         
     def process_file(self, input_path: str, output_path: str) -> ProcessorResult:
-        """处理文件的核心方法，包含完整的降级机制和重试机制（Phase 2, Day 13 增强版）"""
+        """处理文件的核心方法 - 强制协议适配模式版本（禁用所有降级机制）"""
         start_time = time.time()
         
-        try:
-            # 输入验证
-            self.validate_inputs(input_path, output_path)
-            
-            # 使用重试机制尝试主要处理流程
-            if self._has_core_components():
-                try:
-                    result = self._execute_with_retry(
-                        self._process_with_core_pipeline_safe, 
-                        input_path, 
-                        output_path
-                    )
-                    if result.success:
-                        self._update_success_stats(result, time.time() - start_time)
-                        return result
-                except Exception as e:
-                    error_context = self._create_error_context(
-                        ErrorCategory.PROCESSING_ERROR,
-                        ErrorSeverity.MEDIUM,
-                        "CORE_PIPELINE_FAILED",
-                        f"核心处理流程执行失败: {e}",
-                        exception=e,
-                        file_context=input_path,
-                        stage_context="core_pipeline"
-                    )
-                    
-                    if not self._handle_error_with_context(error_context):
-                        return ProcessorResult(success=False, error=str(e))
-                    
-            # 主要流程失败，尝试降级处理
-            if self.enhanced_config.fallback_config.enable_fallback:
-                self._logger.warning("主要处理流程失败，开始降级处理")
-                return self._process_with_fallback_enhanced(input_path, output_path, start_time)
-            else:
-                error_context = self._create_error_context(
-                    ErrorCategory.PROCESSING_ERROR,
-                    ErrorSeverity.HIGH,
-                    "NO_FALLBACK_AVAILABLE",
-                    "主要处理流程失败且降级功能已禁用",
-                    file_context=input_path
-                )
-                self._handle_error_with_context(error_context)
-                return ProcessorResult(
-                    success=False,
-                    error="主要处理流程失败且降级功能已禁用"
-                )
-                
-        except Exception as e:
-            error_context = self._create_error_context(
-                ErrorCategory.PROCESSING_ERROR,
-                ErrorSeverity.HIGH,
-                "UNEXPECTED_ERROR",
-                f"文件处理发生意外异常: {e}",
-                exception=e,
-                file_context=input_path
+        # 输入验证
+        self.validate_inputs(input_path, output_path)
+        
+        # 强制检查核心组件可用性
+        if not self._has_core_components():
+            raise RuntimeError(
+                "核心组件不可用！强制协议适配模式要求所有核心组件必须可用。"
+                f"TShark分析器: {'✓' if self._tshark_analyzer else '✗'}, "
+                f"规则生成器: {'✓' if self._rule_generator else '✗'}, "
+                f"Scapy应用器: {'✓' if self._scapy_applier else '✗'}"
             )
-            
-            # 异常情况下的降级处理
-            if self.enhanced_config.fallback_config.enable_fallback and self._handle_error_with_context(error_context):
-                return self._process_with_fallback_enhanced(input_path, output_path, start_time, str(e))
-            else:
-                return ProcessorResult(success=False, error=str(e))
+        
+        # 强制使用协议适配模式，不捕获异常，让所有错误直接抛出
+        self._logger.info("🚀 [强制协议适配模式] 开始执行三阶段处理流程")
+        
+        result = self._process_with_core_pipeline(input_path, output_path)
+        
+        if result.success:
+            self._update_success_stats(result, time.time() - start_time)
+            self._logger.info("🚀 [强制协议适配模式] 处理成功完成")
+            return result
+        else:
+            raise RuntimeError(f"协议适配模式处理失败: {result.error}")
     
     def _process_with_core_pipeline_safe(self, input_path: str, output_path: str) -> ProcessorResult:
         """安全的核心处理流程，包含详细错误处理"""
@@ -877,57 +841,86 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
                 self._scapy_applier is not None)
                 
     def _process_with_core_pipeline(self, input_path: str, output_path: str) -> ProcessorResult:
-        """使用三阶段核心流程处理文件"""
-        try:
-            self._logger.info(f"开始三阶段处理: {input_path}")
+        """使用三阶段核心流程处理文件 - 强制协议适配模式版本"""
+        # 转换输入输出路径为 Path 对象，避免字符串调用 .exists() 出错
+        input_path = Path(input_path)
+        output_path = Path(output_path)
+        
+        self._logger.info(f"🚀 [强制协议适配模式] 开始三阶段处理: {input_path}")
+        
+        # Stage 1: TShark TLS分析 - 不捕获异常，直接抛出
+        stage1_start = time.time()
+        self._logger.info(f"🚀 [TLS-23跨包处理] 开始Stage 1: TShark TLS分析")
+        tls_records = self._tshark_analyzer.analyze_file(input_path)
+        stage1_duration = time.time() - stage1_start
+        
+        if not tls_records:
+            self._logger.warning("TShark分析未发现TLS记录")
+        else:
+            # 统计TLS记录类型和跨包情况
+            tls_23_records = [r for r in tls_records if r.content_type == 23]
+            cross_packet_records = [r for r in tls_records if len(r.spans_packets) > 1]
+            tls_23_cross_packet = [r for r in tls_23_records if len(r.spans_packets) > 1]
             
-            # Stage 1: TShark TLS分析
-            stage1_start = time.time()
-            tls_records = self._tshark_analyzer.analyze_file(input_path)
-            stage1_duration = time.time() - stage1_start
+            self._logger.info(f"🚀 [TLS-23跨包统计] TLS记录分析结果:")
+            self._logger.info(f"🚀   总TLS记录: {len(tls_records)}")
+            self._logger.info(f"🚀   TLS-23记录: {len(tls_23_records)}")
+            self._logger.info(f"🚀   跨包记录: {len(cross_packet_records)}")
+            self._logger.info(f"🚀   TLS-23跨包记录: {len(tls_23_cross_packet)}")
             
-            if not tls_records:
-                self._logger.warning("TShark分析未发现TLS记录")
-                
-            self._logger.info(f"Stage 1完成: 发现{len(tls_records)}个TLS记录，耗时{stage1_duration:.2f}秒")
-            
-            # Stage 2: 生成掩码规则
-            stage2_start = time.time()
-            mask_rules = self._rule_generator.generate_rules(tls_records)
-            stage2_duration = time.time() - stage2_start
-            
-            self._logger.info(f"Stage 2完成: 生成{len(mask_rules)}条掩码规则，耗时{stage2_duration:.2f}秒")
-            
-            # Stage 3: Scapy应用掩码
-            stage3_start = time.time()
-            apply_result = self._scapy_applier.apply_masks(input_path, output_path, mask_rules)
-            stage3_duration = time.time() - stage3_start
-            
-            self._logger.info(f"Stage 3完成: 处理完成，耗时{stage3_duration:.2f}秒")
-            
-            # 汇总结果
-            total_duration = stage1_duration + stage2_duration + stage3_duration
-            
-            return ProcessorResult(
-                success=True,
-                stats={
-                    'tls_records_found': len(tls_records),
-                    'mask_rules_generated': len(mask_rules),
-                    'packets_processed': apply_result.get('packets_processed', 0),
-                    'packets_modified': apply_result.get('packets_modified', 0),
-                    'processing_mode': 'tshark_enhanced',
-                    'stage_performance': {
-                        'stage1_tshark_analysis': stage1_duration,
-                        'stage2_rule_generation': stage2_duration,  
-                        'stage3_scapy_application': stage3_duration,
-                        'total_duration': total_duration
-                    }
+        self._logger.info(f"Stage 1完成: 发现{len(tls_records)}个TLS记录，耗时{stage1_duration:.2f}秒")
+        
+        # Stage 2: 生成掩码规则 - 不捕获异常，直接抛出
+        stage2_start = time.time()
+        self._logger.info(f"🚀 [TLS-23跨包处理] 开始Stage 2: 掩码规则生成")
+        mask_rules = self._rule_generator.generate_rules(tls_records)
+        stage2_duration = time.time() - stage2_start
+        
+        # 统计掩码规则
+        tls_23_rules = [r for r in mask_rules if r.tls_record_type == 23]
+        mask_payload_rules = [r for r in mask_rules if r.action.value == "mask_payload"]
+        segment_rules = [r for r in mask_rules if "分段掩码" in r.reason]
+        
+        self._logger.info(f"🚀 [TLS-23跨包统计] 掩码规则生成结果:")
+        self._logger.info(f"🚀   总掩码规则: {len(mask_rules)}")
+        self._logger.info(f"🚀   TLS-23规则: {len(tls_23_rules)}")
+        self._logger.info(f"🚀   掩码载荷规则: {len(mask_payload_rules)}")
+        self._logger.info(f"🚀   分段掩码规则: {len(segment_rules)}")
+        
+        self._logger.info(f"Stage 2完成: 生成{len(mask_rules)}条掩码规则，耗时{stage2_duration:.2f}秒")
+        
+        # Stage 3: Scapy应用掩码 - 不捕获异常，直接抛出
+        stage3_start = time.time()
+        self._logger.info(f"🚀 [TLS-23跨包处理] 开始Stage 3: Scapy掩码应用")
+        apply_result = self._scapy_applier.apply_masks(input_path, output_path, mask_rules)
+        stage3_duration = time.time() - stage3_start
+        
+        self._logger.info(f"🚀 [TLS-23跨包统计] 掩码应用结果:")
+        self._logger.info(f"🚀   处理包数: {apply_result.get('packets_processed', 0)}")
+        self._logger.info(f"🚀   修改包数: {apply_result.get('packets_modified', 0)}")
+        self._logger.info(f"🚀   掩码字节数: {apply_result.get('masked_bytes', 0)}")
+        
+        self._logger.info(f"Stage 3完成: 处理完成，耗时{stage3_duration:.2f}秒")
+        
+        # 汇总结果
+        total_duration = stage1_duration + stage2_duration + stage3_duration
+        
+        return ProcessorResult(
+            success=True,
+            stats={
+                'tls_records_found': len(tls_records),
+                'mask_rules_generated': len(mask_rules),
+                'packets_processed': apply_result.get('packets_processed', 0),
+                'packets_modified': apply_result.get('packets_modified', 0),
+                'processing_mode': 'tshark_enhanced_forced',  # 标记为强制协议适配模式
+                'stage_performance': {
+                    'stage1_tshark_analysis': stage1_duration,
+                    'stage2_rule_generation': stage2_duration,  
+                    'stage3_scapy_application': stage3_duration,
+                    'total_duration': total_duration
                 }
-            )
-            
-        except Exception as e:
-            self._logger.error(f"三阶段处理流程失败: {e}")
-            raise
+            }
+        )
             
     def _process_with_fallback(self, input_path: str, output_path: str, start_time: float, 
                               error_context: Optional[str] = None) -> ProcessorResult:

@@ -1,0 +1,48 @@
+{
+  "summary": {
+    "total_frames": 4,
+    "total_records": 4,
+    "by_path": {
+      "eth:ethertype:ip:tcp:tls": 4
+    },
+    "total_matches": 4
+  },
+  "matches": [
+    {
+      "frame": 17,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        29
+      ],
+      "zero_bytes": 29
+    },
+    {
+      "frame": 19,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        107
+      ],
+      "zero_bytes": 107
+    },
+    {
+      "frame": 29,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        29
+      ],
+      "zero_bytes": 29
+    },
+    {
+      "frame": 31,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        107
+      ],
+      "zero_bytes": 107
+    }
+  ]
+}
