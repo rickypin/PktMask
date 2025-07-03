@@ -1,4 +1,3 @@
-import warnings
 from pathlib import Path
 from typing import Optional
 
@@ -7,12 +6,12 @@ import typer
 from pktmask.core.pipeline.executor import PipelineExecutor
 
 # ---------------------------------------------------------------------------
-# Typer 应用初始化
+# Typer Application Initialization
 # ---------------------------------------------------------------------------
-app = typer.Typer(help="PktMask CLI - 基于 PipelineExecutor 的命令行接口")
+app = typer.Typer(help="PktMask CLI - Command line interface based on PipelineExecutor")
 
 # ---------------------------------------------------------------------------
-# 公共帮助函数
+# Common Helper Functions
 # ---------------------------------------------------------------------------
 
 def _run_pipeline(
@@ -25,7 +24,7 @@ def _run_pipeline(
     mask_mode: Optional[str] = None,
     verbose: bool = False,
 ) -> None:
-    """构造 Pipeline 配置并执行。"""
+    """Build pipeline configuration and execute."""
 
     cfg = {
         "dedup": {"enabled": enable_dedup},
@@ -43,40 +42,40 @@ def _run_pipeline(
 
     executor = PipelineExecutor(cfg)
 
-    # 根据 verbose 决定是否传入进度回调
+    # Decide whether to pass progress callback based on verbose flag
     if verbose:
         def _progress(stage, stats):  # type: ignore
-            typer.echo(f"[{stage.name}] 处理 {stats.packets_processed} 包，修改 {stats.packets_modified} 包，用时 {stats.duration_ms:.1f} ms")
+            typer.echo(f"[{stage.name}] Processed {stats.packets_processed} packets, modified {stats.packets_modified} packets, took {stats.duration_ms:.1f} ms")
         result = executor.run(str(input_file), str(output_file), progress_cb=_progress)
     else:
         result = executor.run(str(input_file), str(output_file))
 
-    # 简要输出统计信息；详细信息可序列化 result.to_dict()
+    # Brief statistical output; detailed info can be serialized via result.to_dict()
     typer.echo(
-        f"✅ 处理完成! 耗时: {result.duration_ms:.1f} ms | 输出文件: {result.output_file}"
+        f"✅ Processing completed! Duration: {result.duration_ms:.1f} ms | Output file: {result.output_file}"
     )
 
 
 # ---------------------------------------------------------------------------
-# 主命令: mask
+# Main Command: mask
 # ---------------------------------------------------------------------------
 
 
 @app.command("mask")
 def cmd_mask(
-    input_path: Path = typer.Argument(..., exists=True, readable=True, help="输入 PCAP/PCAPNG 文件"),
-    output_path: Path = typer.Option(..., "-o", "--output", help="输出文件路径"),
-    dedup: bool = typer.Option(False, "--dedup", help="启用去重阶段"),
-    anon: bool = typer.Option(False, "--anon", help="启用 IP 匿名化阶段"),
-    mode: str = typer.Option("enhanced", "--mode", help="掩码模式: enhanced|processor_adapter|basic"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="启用详细进度输出"),
+    input_path: Path = typer.Argument(..., exists=True, readable=True, help="Input PCAP/PCAPNG file"),
+    output_path: Path = typer.Option(..., "-o", "--output", help="Output file path"),
+    dedup: bool = typer.Option(False, "--dedup", help="Enable deduplication stage"),
+    anon: bool = typer.Option(False, "--anon", help="Enable IP anonymization stage"),
+    mode: str = typer.Option("processor_adapter", "--mode", help="Mask mode: enhanced|processor_adapter|basic"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose progress output"),
     recipe_path: Optional[str] = typer.Option(
         None,
         "--recipe-path",
-        help="可选的 MaskRecipe JSON 路径 (用于 BlindPacketMasker)",
+        help="Optional MaskRecipe JSON path (for BlindPacketMasker)",
     ),
 ):
-    """执行载荷掩码 (BlindPacketMasker) Pipeline。"""
+    """Execute payload masking (BlindPacketMasker) Pipeline."""
 
     _run_pipeline(
         input_file=input_path,
@@ -91,31 +90,16 @@ def cmd_mask(
 
 
 # ---------------------------------------------------------------------------
-# 兼容别名: trim (Deprecated)
-# ---------------------------------------------------------------------------
-
-
-@app.command("trim")
-def cmd_trim(*args, **kwargs):  # type: ignore[override]
-    """已废弃的别名，等价于 `mask` 命令。"""
-
-    warnings.warn(
-        "`pktmask trim` 已废弃，请使用 `pktmask mask`。", DeprecationWarning, stacklevel=2
-    )
-    cmd_mask(*args, **kwargs)  # type: ignore[arg-type]
-
-
-# ---------------------------------------------------------------------------
-# dedup / anon 单独命令 (便于快速处理)
+# Standalone dedup/anon commands (for quick processing)
 # ---------------------------------------------------------------------------
 
 
 @app.command("dedup")
 def cmd_dedup(
-    input_path: Path = typer.Argument(..., exists=True, readable=True, help="输入 PCAP/PCAPNG 文件"),
-    output_path: Path = typer.Option(..., "-o", "--output", help="输出文件路径"),
+    input_path: Path = typer.Argument(..., exists=True, readable=True, help="Input PCAP/PCAPNG file"),
+    output_path: Path = typer.Option(..., "-o", "--output", help="Output file path"),
 ):
-    """仅执行去重阶段。"""
+    """Execute deduplication stage only."""
 
     _run_pipeline(
         input_file=input_path,
@@ -126,10 +110,10 @@ def cmd_dedup(
 
 @app.command("anon")
 def cmd_anon(
-    input_path: Path = typer.Argument(..., exists=True, readable=True, help="输入 PCAP/PCAPNG 文件"),
-    output_path: Path = typer.Option(..., "-o", "--output", help="输出文件路径"),
+    input_path: Path = typer.Argument(..., exists=True, readable=True, help="Input PCAP/PCAPNG file"),
+    output_path: Path = typer.Option(..., "-o", "--output", help="Output file path"),
 ):
-    """仅执行 IP 匿名化阶段。"""
+    """Execute IP anonymization stage only."""
 
     _run_pipeline(
         input_file=input_path,

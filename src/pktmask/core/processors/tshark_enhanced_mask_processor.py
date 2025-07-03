@@ -512,21 +512,21 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
                 fallback_config=fallback_config
             )
             
-            self._logger.info("TShark增强配置已从AppConfig加载")
-            self._logger.debug(f"TLS处理: {enhanced_config.enable_tls_processing}")
-            self._logger.debug(f"跨段检测: {enhanced_config.enable_cross_segment_detection}")
-            self._logger.debug(f"降级机制: {enhanced_config.fallback_config.enable_fallback}")
+            self._logger.info("TShark enhanced configuration loaded from AppConfig")
+            self._logger.debug(f"TLS processing: {enhanced_config.enable_tls_processing}")
+            self._logger.debug(f"Cross-segment detection: {enhanced_config.enable_cross_segment_detection}")
+            self._logger.debug(f"Fallback mechanism: {enhanced_config.fallback_config.enable_fallback}")
             
             return enhanced_config
             
         except Exception as e:
-            self._logger.warning(f"从AppConfig加载配置失败，使用默认配置: {e}")
+            self._logger.warning(f"Failed to load configuration from AppConfig, using default configuration: {e}")
             return TSharkEnhancedConfig()  # 回退到默认配置
         
     def _initialize_impl(self):
         """初始化TShark增强掩码处理器（Phase 2, Day 13 增强版）"""
         try:
-            self._logger.info("开始初始化TShark增强掩码处理器...")
+            self._logger.info("Starting TShark enhanced mask processor initialization...")
             
             # 创建临时工作目录
             self._setup_temp_directory()
@@ -537,16 +537,16 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
                     ErrorCategory.DEPENDENCY_ERROR,
                     ErrorSeverity.HIGH,
                     "TSHARK_UNAVAILABLE",
-                    "TShark工具不可用，无法执行深度协议解析"
+                    "TShark tool unavailable, cannot perform deep protocol analysis"
                 )
                 
                 if self.enhanced_config.fallback_config.fallback_on_tshark_unavailable:
-                    self._logger.warning("TShark不可用，准备降级到备用处理器")
+                    self._logger.warning("TShark unavailable, preparing to fallback to backup processor")
                     if self._handle_error_with_context(error_context):
                         return self._initialize_fallback_processors()
                 else:
                     self._handle_error_with_context(error_context)
-                    raise RuntimeError("TShark不可用且降级功能已禁用")
+                    raise RuntimeError("TShark unavailable and fallback functionality is disabled")
             
             # 初始化三阶段处理组件
             self._initialize_core_components()
@@ -555,24 +555,24 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
             if self.enhanced_config.fallback_config.enable_fallback:
                 self._initialize_fallback_processors()
             
-            self._logger.info("TShark增强掩码处理器初始化成功")
-            self._logger.info(f"工作目录: {self._temp_dir}")
-            self._logger.info(f"TLS处理配置: 20-24协议类型支持")
-            self._logger.info(f"降级机制: {'启用' if self.enhanced_config.fallback_config.enable_fallback else '禁用'}")
-            self._logger.info(f"错误分析: {'启用' if self.enhanced_config.enable_error_analytics else '禁用'}")
+            self._logger.info("TShark enhanced mask processor initialization successful")
+            self._logger.info(f"Working directory: {self._temp_dir}")
+            self._logger.info(f"TLS processing configuration: 20-24 protocol type support")
+            self._logger.info(f"Fallback mechanism: {'Enabled' if self.enhanced_config.fallback_config.enable_fallback else 'Disabled'}")
+            self._logger.info(f"Error analysis: {'Enabled' if self.enhanced_config.enable_error_analytics else 'Disabled'}")
             
         except Exception as e:
             error_context = self._create_error_context(
                 ErrorCategory.INITIALIZATION_ERROR,
                 ErrorSeverity.HIGH,
                 "INIT_FAILED",
-                f"TShark增强掩码处理器初始化失败: {e}",
+                f"TShark enhanced mask processor initialization failed: {e}",
                 exception=e
             )
             
             # 尝试降级初始化
             if self.enhanced_config.fallback_config.enable_fallback and self._handle_error_with_context(error_context):
-                self._logger.info("尝试降级初始化...")
+                self._logger.info("Attempting fallback initialization...")
                 return self._initialize_fallback_processors()
             else:
                 raise
@@ -585,7 +585,7 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
             self._temp_dir = Path(tempfile.mkdtemp(prefix="tshark_enhanced_mask_"))
         
         self._temp_dir.mkdir(parents=True, exist_ok=True)
-        self._logger.debug(f"临时工作目录已创建: {self._temp_dir}")
+        self._logger.debug(f"Temporary working directory created: {self._temp_dir}")
         
     def _check_tshark_availability(self) -> bool:
         """检查TShark工具的可用性"""
@@ -610,20 +610,20 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
                     )
                     
                     if result.returncode == 0 and 'TShark' in result.stdout:
-                        self._logger.info(f"TShark可用: {tshark_path}")
+                        self._logger.info(f"TShark available: {tshark_path}")
                         version_line = result.stdout.split('\n')[0]
-                        self._logger.info(f"版本信息: {version_line}")
+                        self._logger.info(f"Version information: {version_line}")
                         return True
                         
                 except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
-                    self._logger.debug(f"TShark路径检查失败 {tshark_path}: {e}")
+                    self._logger.debug(f"TShark path check failed {tshark_path}: {e}")
                     continue
             
-            self._logger.warning("所有TShark路径检查失败")
+            self._logger.warning("All TShark path checks failed")
             return False
             
         except Exception as e:
-            self._logger.error(f"TShark可用性检查异常: {e}")
+            self._logger.error(f"TShark availability check exception: {e}")
             return False
             
     def _initialize_core_components(self):
@@ -634,7 +634,7 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
             self._tshark_analyzer = TSharkTLSAnalyzer(self._create_analyzer_config())
             # 初始化 TSharkTLSAnalyzer，确保 TShark 可用
             if not self._tshark_analyzer.initialize():
-                raise RuntimeError("TShark TLS 分析器初始化失败")
+                raise RuntimeError("TShark TLS analyzer initialization failed")
             
             # Stage 2: TLS掩码规则生成器  
             from .tls_mask_rule_generator import TLSMaskRuleGenerator
@@ -644,13 +644,13 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
             from .scapy_mask_applier import ScapyMaskApplier  
             self._scapy_applier = ScapyMaskApplier(self._create_applier_config())
             
-            self._logger.info("三阶段核心组件初始化成功")
+            self._logger.info("Three-stage core components initialization successful")
             
         except ImportError as e:
-            self._logger.error(f"核心组件导入失败: {e}")
-            raise RuntimeError(f"核心组件不可用: {e}")
+            self._logger.error(f"Core component import failed: {e}")
+            raise RuntimeError(f"Core components unavailable: {e}")
         except Exception as e:
-            self._logger.error(f"核心组件初始化失败: {e}")
+            self._logger.error(f"Core component initialization failed: {e}")
             raise
             
     def _initialize_fallback_processors(self) -> bool:
@@ -662,19 +662,19 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
                 if fallback_mode == FallbackMode.ENHANCED_TRIMMER:
                     self._initialize_enhanced_trimmer_fallback()
                     fallback_initialized = True
-                    self._logger.info("EnhancedTrimmer降级处理器初始化成功")
+                    self._logger.info("EnhancedTrimmer fallback processor initialization successful")
                     
                 elif fallback_mode == FallbackMode.MASK_STAGE:
                     self._initialize_mask_stage_fallback()
                     fallback_initialized = True 
-                    self._logger.info("MaskStage降级处理器初始化成功")
+                    self._logger.info("MaskStage fallback processor initialization successful")
                     
             except Exception as e:
-                self._logger.warning(f"降级处理器{fallback_mode.value}初始化失败: {e}")
+                self._logger.warning(f"Fallback processor {fallback_mode.value} initialization failed: {e}")
                 continue
         
         if not fallback_initialized:
-            self._logger.error("所有降级处理器初始化失败")
+            self._logger.error("All fallback processor initialization failed")
             return False
             
         return True
@@ -694,10 +694,10 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
             if trimmer.initialize():
                 self._fallback_processors[FallbackMode.ENHANCED_TRIMMER] = trimmer
             else:
-                raise RuntimeError("EnhancedTrimmer初始化返回False")
+                raise RuntimeError("EnhancedTrimmer initialization returned False")
                 
         except Exception as e:
-            self._logger.warning(f"EnhancedTrimmer降级处理器初始化失败: {e}")
+            self._logger.warning(f"EnhancedTrimmer fallback processor initialization failed: {e}")
             raise
             
     def _initialize_mask_stage_fallback(self):
@@ -770,13 +770,13 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
             )
         
         # 强制使用协议适配模式，不捕获异常，让所有错误直接抛出
-        self._logger.info("🚀 [强制协议适配模式] 开始执行三阶段处理流程")
+        self._logger.info("🚀 [Forced Protocol Adapter Mode] Starting three-stage processing pipeline")
         
         result = self._process_with_core_pipeline(input_path, output_path)
         
         if result.success:
             self._update_success_stats(result, time.time() - start_time)
-            self._logger.info("🚀 [强制协议适配模式] 处理成功完成")
+            self._logger.info("🚀 [Forced Protocol Adapter Mode] Processing completed successfully")
             return result
         else:
             raise RuntimeError(f"协议适配模式处理失败: {result.error}")
@@ -846,33 +846,33 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
         input_path = Path(input_path)
         output_path = Path(output_path)
         
-        self._logger.info(f"🚀 [强制协议适配模式] 开始三阶段处理: {input_path}")
+        self._logger.info(f"🚀 [Forced Protocol Adapter Mode] Starting three-stage processing: {input_path}")
         
         # Stage 1: TShark TLS分析 - 不捕获异常，直接抛出
         stage1_start = time.time()
-        self._logger.info(f"🚀 [TLS-23跨包处理] 开始Stage 1: TShark TLS分析")
+        self._logger.info(f"🚀 [TLS-23 Cross-Packet Processing] Starting Stage 1: TShark TLS Analysis")
         tls_records = self._tshark_analyzer.analyze_file(input_path)
         stage1_duration = time.time() - stage1_start
         
         if not tls_records:
-            self._logger.warning("TShark分析未发现TLS记录")
+            self._logger.warning("TShark analysis found no TLS records")
         else:
             # 统计TLS记录类型和跨包情况
             tls_23_records = [r for r in tls_records if r.content_type == 23]
             cross_packet_records = [r for r in tls_records if len(r.spans_packets) > 1]
             tls_23_cross_packet = [r for r in tls_23_records if len(r.spans_packets) > 1]
             
-            self._logger.info(f"🚀 [TLS-23跨包统计] TLS记录分析结果:")
-            self._logger.info(f"🚀   总TLS记录: {len(tls_records)}")
-            self._logger.info(f"🚀   TLS-23记录: {len(tls_23_records)}")
-            self._logger.info(f"🚀   跨包记录: {len(cross_packet_records)}")
-            self._logger.info(f"🚀   TLS-23跨包记录: {len(tls_23_cross_packet)}")
+            self._logger.info(f"🚀 [TLS-23 Cross-Packet Statistics] TLS record analysis results:")
+            self._logger.info(f"🚀   Total TLS records: {len(tls_records)}")
+            self._logger.info(f"🚀   TLS-23 records: {len(tls_23_records)}")
+            self._logger.info(f"🚀   Cross-packet records: {len(cross_packet_records)}")
+            self._logger.info(f"🚀   TLS-23 cross-packet records: {len(tls_23_cross_packet)}")
             
-        self._logger.info(f"Stage 1完成: 发现{len(tls_records)}个TLS记录，耗时{stage1_duration:.2f}秒")
+        self._logger.info(f"Stage 1 completed: Found {len(tls_records)} TLS records, took {stage1_duration:.2f} seconds")
         
         # Stage 2: 生成掩码规则 - 不捕获异常，直接抛出
         stage2_start = time.time()
-        self._logger.info(f"🚀 [TLS-23跨包处理] 开始Stage 2: 掩码规则生成")
+        self._logger.info(f"🚀 [TLS-23 Cross-Packet Processing] Starting Stage 2: Mask Rule Generation")
         mask_rules = self._rule_generator.generate_rules(tls_records)
         stage2_duration = time.time() - stage2_start
         
@@ -881,26 +881,26 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
         mask_payload_rules = [r for r in mask_rules if r.action.value == "mask_payload"]
         segment_rules = [r for r in mask_rules if "分段掩码" in r.reason]
         
-        self._logger.info(f"🚀 [TLS-23跨包统计] 掩码规则生成结果:")
-        self._logger.info(f"🚀   总掩码规则: {len(mask_rules)}")
-        self._logger.info(f"🚀   TLS-23规则: {len(tls_23_rules)}")
-        self._logger.info(f"🚀   掩码载荷规则: {len(mask_payload_rules)}")
-        self._logger.info(f"🚀   分段掩码规则: {len(segment_rules)}")
+        self._logger.info(f"🚀 [TLS-23 Cross-Packet Statistics] Mask rule generation results:")
+        self._logger.info(f"🚀   Total mask rules: {len(mask_rules)}")
+        self._logger.info(f"🚀   TLS-23 rules: {len(tls_23_rules)}")
+        self._logger.info(f"🚀   Mask payload rules: {len(mask_payload_rules)}")
+        self._logger.info(f"🚀   Segment mask rules: {len(segment_rules)}")
         
-        self._logger.info(f"Stage 2完成: 生成{len(mask_rules)}条掩码规则，耗时{stage2_duration:.2f}秒")
+        self._logger.info(f"Stage 2 completed: Generated {len(mask_rules)} mask rules, took {stage2_duration:.2f} seconds")
         
         # Stage 3: Scapy应用掩码 - 不捕获异常，直接抛出
         stage3_start = time.time()
-        self._logger.info(f"🚀 [TLS-23跨包处理] 开始Stage 3: Scapy掩码应用")
+        self._logger.info(f"🚀 [TLS-23 Cross-Packet Processing] Starting Stage 3: Scapy Mask Application")
         apply_result = self._scapy_applier.apply_masks(input_path, output_path, mask_rules)
         stage3_duration = time.time() - stage3_start
         
-        self._logger.info(f"🚀 [TLS-23跨包统计] 掩码应用结果:")
-        self._logger.info(f"🚀   处理包数: {apply_result.get('packets_processed', 0)}")
-        self._logger.info(f"🚀   修改包数: {apply_result.get('packets_modified', 0)}")
-        self._logger.info(f"🚀   掩码字节数: {apply_result.get('masked_bytes', 0)}")
+        self._logger.info(f"🚀 [TLS-23 Cross-Packet Statistics] Mask application results:")
+        self._logger.info(f"🚀   Packets processed: {apply_result.get('packets_processed', 0)}")
+        self._logger.info(f"🚀   Packets modified: {apply_result.get('packets_modified', 0)}")
+        self._logger.info(f"🚀   Masked bytes: {apply_result.get('masked_bytes', 0)}")
         
-        self._logger.info(f"Stage 3完成: 处理完成，耗时{stage3_duration:.2f}秒")
+        self._logger.info(f"Stage 3 completed: Processing finished, took {stage3_duration:.2f} seconds")
         
         # 汇总结果
         total_duration = stage1_duration + stage2_duration + stage3_duration
@@ -933,7 +933,7 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
         for mode in self.enhanced_config.fallback_config.preferred_fallback_order:
             if mode in self._fallback_processors:
                 try:
-                    self._logger.info(f"使用降级处理器: {mode.value}")
+                    self._logger.info(f"Using fallback processor: {mode.value}")
                     result = self._execute_fallback_processor(mode, input_path, output_path)
                     
                     if result.success:
@@ -948,13 +948,13 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
                         return result
                         
                 except Exception as e:
-                    self._logger.warning(f"降级处理器{mode.value}执行失败: {e}")
+                    self._logger.warning(f"Fallback processor {mode.value} execution failed: {e}")
                     continue
                     
         # 所有降级处理器都失败
         return ProcessorResult(
             success=False,
-            error=f"主要处理流程和所有降级处理器都失败。原始错误: {error_context}"
+            error=f"Primary processing pipeline and all fallback processors failed. Original error: {error_context}"
         )
         
     def _determine_fallback_mode(self, error_context: Optional[str]) -> FallbackMode:
@@ -964,9 +964,9 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
             
         error_lower = error_context.lower()
         
-        if 'tshark' in error_lower or '不可用' in error_lower:
+        if 'tshark' in error_lower or 'unavailable' in error_lower:
             return FallbackMode.ENHANCED_TRIMMER
-        elif '协议解析' in error_lower or 'protocol' in error_lower:
+        elif 'protocol' in error_lower:
             return FallbackMode.MASK_STAGE  
         else:
             return FallbackMode.ENHANCED_TRIMMER
@@ -994,10 +994,10 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
                     }
                 )
             else:
-                return ProcessorResult(success=False, error="MaskStage处理结果格式异常")
+                return ProcessorResult(success=False, error="MaskStage processing result format exception")
                 
         else:
-            raise ValueError(f"不支持的降级模式: {mode}")
+            raise ValueError(f"Unsupported fallback mode: {mode}")
             
     def _update_success_stats(self, result: ProcessorResult, duration: float):
         """更新成功处理统计"""
@@ -1023,13 +1023,13 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
             
     def get_display_name(self) -> str:
         """获取用户友好的显示名称"""
-        return "TShark增强掩码处理器"
+        return "TShark Enhanced Mask Processor"
         
     def get_description(self) -> str:
         """获取处理器描述"""
-        return ("基于TShark深度协议解析的增强掩码处理器，"
-                "支持TLS 20-24协议类型的智能分类处理，"
-                "包含完整的降级机制确保系统健壮性")
+        return ("Enhanced mask processor based on TShark deep protocol analysis, "
+                "supporting intelligent classification processing for TLS 20-24 protocol types, "
+                "including complete fallback mechanisms to ensure system robustness")
                 
     def get_enhanced_stats(self) -> Dict[str, Any]:
         """获取增强统计信息"""

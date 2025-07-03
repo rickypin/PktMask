@@ -126,9 +126,9 @@ class EnhancedTrimmer(BaseProcessor):
             # 自动注册所有可用策略
             self._strategy_factory.auto_register_strategies()
             
-            self._logger.info("Enhanced Trimmer 初始化成功")
-            self._logger.info(f"工作目录: {self._temp_dir}")
-            self._logger.info(f"支持的协议策略: {self._strategy_factory.list_available_strategies()}")
+            self._logger.info("Enhanced Trimmer initialization successful")
+            self._logger.info(f"Working directory: {self._temp_dir}")
+            self._logger.info(f"Supported protocol strategies: {self._strategy_factory.list_available_strategies()}")
             
         except Exception as e:
             self._logger.error(f"Enhanced Trimmer 初始化失败: {e}")

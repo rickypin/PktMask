@@ -78,7 +78,7 @@ class MultiStageExecutor:
         self._current_context: Optional[StageContext] = None
         self._execution_results: List[StageResult] = []
         
-        self._logger.info(f"多阶段执行器初始化完成，工作目录: {self.work_dir}")
+        self._logger.info(f"Multi-stage executor initialization completed, working directory: {self.work_dir}")
     
     def register_stage(self, stage: BaseStage) -> None:
         """注册处理阶段

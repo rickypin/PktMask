@@ -179,15 +179,15 @@ class StrategyFactory:
         """
         strategy_class = self.registry.get_strategy_class(strategy_name)
         if not strategy_class:
-            self.logger.error(f"未找到策略: {strategy_name}")
+            self.logger.error(f"Strategy not found: {strategy_name}")
             return None
             
         try:
             strategy = strategy_class(config)
-            self.logger.debug(f"已创建策略实例: {strategy_name}")
+            self.logger.debug(f"Created strategy instance: {strategy_name}")
             return strategy
         except Exception as e:
-            self.logger.error(f"创建策略 {strategy_name} 失败: {e}", exc_info=True)
+            self.logger.error(f"Failed to create strategy {strategy_name}: {e}", exc_info=True)
             return None
             
     def get_best_strategy(self, protocol_info: ProtocolInfo, context: TrimContext,
@@ -205,14 +205,14 @@ class StrategyFactory:
         """
         # HTTP协议直接返回默认策略（HTTP支持已移除）
         if protocol_info.name.upper() in ['HTTP', 'HTTPS']:
-            self.logger.info(f"HTTP协议支持已移除，使用默认策略")
+            self.logger.info(f"HTTP protocol support has been removed, using default strategy")
             return self.get_strategy_by_name('default', config)
         
         # 获取支持该协议的所有策略
         strategy_names = self.registry.get_strategies_for_protocol(protocol_info.name)
         
         if not strategy_names:
-            self.logger.warning(f"没有找到支持协议 {protocol_info.name} 的策略，使用默认策略")
+            self.logger.warning(f"No strategy found supporting protocol {protocol_info.name}, using default strategy")
             return self.get_strategy_by_name('default', config)
             
         # 创建候选策略实例并测试
@@ -223,12 +223,12 @@ class StrategyFactory:
                 candidates.append(strategy)
                 
         if not candidates:
-            self.logger.warning(f"没有策略可以处理协议 {protocol_info.name} 和给定上下文，使用默认策略")
+            self.logger.warning(f"No strategy can handle protocol {protocol_info.name} and given context, using default strategy")
             return self.get_strategy_by_name('default', config)
             
         # 按优先级排序，选择最高优先级的策略
         best_strategy = max(candidates, key=lambda s: s.priority)
-        self.logger.debug(f"为协议 {protocol_info.name} 选择策略: {best_strategy.strategy_name}")
+        self.logger.debug(f"Selected strategy for protocol {protocol_info.name}: {best_strategy.strategy_name}")
         
         return best_strategy
         
@@ -270,26 +270,26 @@ class StrategyFactory:
         
         扫描strategies包并自动注册所有找到的策略类。
         """
-        self.logger.info("开始自动注册策略...")
+        self.logger.info("Starting automatic strategy registration...")
         
         # 导入并注册所有可用策略（移除HTTP策略）
         try:
             from .default_strategy import DefaultStrategy
             self.register_strategy(DefaultStrategy)
-            self.logger.info("已注册DefaultStrategy")
+            self.logger.info("Registered DefaultStrategy")
         except ImportError as e:
-            self.logger.warning(f"无法导入DefaultStrategy: {e}")
+            self.logger.warning(f"Unable to import DefaultStrategy: {e}")
             
         try:
             from .tls_strategy import TLSTrimStrategy
             self.register_strategy(TLSTrimStrategy)
-            self.logger.info("已注册TLSTrimStrategy")
+            self.logger.info("Registered TLSTrimStrategy")
         except ImportError as e:
-            self.logger.warning(f"无法导入TLSTrimStrategy: {e}")
+            self.logger.warning(f"Unable to import TLSTrimStrategy: {e}")
         
         # 输出已注册的策略
         registered_strategies = self.list_available_strategies()
-        self.logger.info(f"策略自动注册完成，共注册 {len(registered_strategies)} 个策略: {list(registered_strategies.keys())}")
+        self.logger.info(f"Strategy automatic registration completed, registered {len(registered_strategies)} strategies: {list(registered_strategies.keys())}")
 
 
 # 全局策略工厂实例

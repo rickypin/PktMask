@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-PktMask 主程序入口
+PktMask main program entry point
 """
 
 from .gui.main_window import main

@@ -67,12 +67,12 @@ class TSharkPreprocessor(BaseStage):
         
         # 验证TShark版本
         version = self._get_tshark_version()
-        self._logger.info(f"找到TShark版本: {version}")
+        self._logger.info(f"Found TShark version: {version}")
         
         # 验证TShark功能
         self._verify_tshark_capabilities()
         
-        self._logger.info("TShark预处理器初始化完成")
+        self._logger.info("TShark preprocessor initialization completed")
     
     def _find_tshark_executable(self) -> Optional[str]:
         """查找TShark可执行文件

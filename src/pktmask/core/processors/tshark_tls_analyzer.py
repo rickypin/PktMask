@@ -164,7 +164,7 @@ class TSharkTLSAnalyzer:
         if not pcap_file.exists():
             raise FileNotFoundError(f"PCAP文件不存在: {pcap_file}")
         
-        self.logger.info(f"开始分析PCAP文件: {pcap_file}")
+        self.logger.info(f"Starting PCAP file analysis: {pcap_file}")
         start_time = time.time()
         
         try:

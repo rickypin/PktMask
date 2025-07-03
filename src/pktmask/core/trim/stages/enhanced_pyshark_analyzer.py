@@ -66,7 +66,7 @@ class EnhancedPySharkAnalyzer(BaseStage):
             raise RuntimeError(
                 "PyShark 未安装，请先运行 `pip install pyshark` 以启用协议分析功能"
             )
-        self._logger.info("EnhancedPySharkAnalyzer 初始化完成")
+        self._logger.info("EnhancedPySharkAnalyzer initialization completed")
 
     def validate_inputs(self, context: StageContext) -> bool:
         if not context.input_file or not Path(context.input_file).exists():
