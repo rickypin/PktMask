@@ -24,14 +24,14 @@ Enhanced MaskStage 是 PktMask 架构重构后的核心载荷掩码处理组件�
 
 ```
 Enhanced MaskStage
-├── Enhanced Mode (默认)
-│   ├── MultiStageExecutor
-│   │   ├── TSharkPreprocessor     (TCP流重组、IP碎片重组)
-│   │   ├── EnhancedPySharkAnalyzer (协议识别、掩码表生成)
-│   │   └── TcpPayloadMaskerAdapter (序列号匹配、精确掩码)
+├── Processor Adapter Mode (默认)
+│   ├── TSharkEnhancedMaskProcessor
+│   │   ├── TSharkTLSAnalyzer     (TLS协议深度分析)
+│   │   ├── TLSMaskRuleGenerator  (智能掩码规则生成)
+│   │   └── ScapyMaskApplier      (精确掩码应用)
 │   └── 完整统计与事件集成
 └── Basic Mode (降级备选)
-    ├── BlindPacketMasker         (传统配方掩码)
+    ├── 透传复制模式             (保持原始数据)
     └── 简化统计
 ```
 
@@ -56,24 +56,23 @@ def __init__(self, config: Optional[Dict[str, Any]] = None)
 - `config` (Dict[str, Any], 可选): 配置字典
 
 **配置字段:**
-- `mode` (str): 处理模式，"enhanced" (默认) 或 "basic"
-- `preserve_ratio` (float): 载荷保留比例 (0.0-1.0)
-- `tls_strategy_enabled` (bool): 是否启用TLS策略
-- `recipe_path` (str): 掩码配方文件路径 (Basic Mode)
-- `tshark_*`: TShark预处理器配置
-- `pyshark_*`: PyShark分析器配置
-- `scapy_*`: Scapy适配器配置
+- `mode` (str): 处理模式，"processor_adapter" (默认) 或 "basic"
+- `preserve_ratio` (float): 载荷保留比例 (0.0-1.0) [已废弃]
+- `tls_strategy_enabled` (bool): 是否启用TLS策略 [已废弃]
+- `recipe_path` (str): 掩码配方文件路径 [已废弃，BlindPacketMasker已移除]
+- `tshark_*`: TShark增强处理器配置
+- `mask_*`: 掩码规则生成配置
+- `scapy_*`: Scapy掩码应用配置
 
 **配置示例:**
 ```python
 config = {
-    "mode": "enhanced",
-    "preserve_ratio": 0.3,
-    "tls_strategy_enabled": True,
-    "enable_tshark_preprocessing": True,
-    "tshark_memory_limit": "512M",
-    "pyshark_timeout": 300,
-    "scapy_batch_size": 1000
+    "mode": "processor_adapter",
+    "enable_tls_processing": True,
+    "enable_cross_segment_detection": True,
+    "tls_23_strategy": "mask_payload",
+    "enable_boundary_safety": True,
+    "chunk_size": 1000
 }
 ```
 
@@ -89,8 +88,8 @@ config = {
 - `config` (Dict[str, Any], 可选): 运行时配置，会与构造函数配置合并
 
 **行为:**
-- Enhanced Mode: 创建并注册 MultiStageExecutor 三个阶段
-- Basic Mode: 创建 BlindPacketMasker 实例
+- Processor Adapter Mode: 创建 TSharkEnhancedMaskProcessor 实例
+- Basic Mode: 透传复制模式（无掩码处理）
 - 失败时触发降级到 Basic Mode
 
 **异常:**
@@ -126,26 +125,25 @@ StageStats(
 ```
 
 **处理模式:**
-- **Enhanced Mode**: 使用 MultiStageExecutor 进行智能多阶段处理
-- **Basic Mode**: 使用 BlindPacketMasker 进行传统配方掩码
-- **Fallback Mode**: Enhanced Mode 失败时的降级处理
+- **Processor Adapter Mode**: 使用 TSharkEnhancedMaskProcessor 进行智能TLS协议分析
+- **Basic Mode**: 透传复制模式，保持原始数据不变
+- **Fallback Mode**: Processor Adapter Mode 失败时的降级处理
 
 ---
 
 ### 🔍 内部方法
 
-#### `_initialize_enhanced_mode(config: Dict[str, Any]) -> None`
+#### `_initialize_processor_adapter_mode(config: Dict[str, Any]) -> None`
 
-初始化增强模式组件。
+初始化处理器适配器模式组件。
 
 **创建组件:**
-1. MultiStageExecutor 实例
-2. TSharkPreprocessor (Stage 0)
-3. EnhancedPySharkAnalyzer (Stage 1) 
-4. TcpPayloadMaskerAdapter (Stage 2)
+1. TSharkEnhancedMaskProcessor 实例
+2. ProcessorStageAdapter 包装器
 
 **配置传播:**
-- `_create_stage_config(stage_type, config)` 为每个阶段生成专用配置
+- 创建 ProcessorConfig 实例
+- 通过适配器传递配置参数
 
 ---
 
@@ -154,31 +152,31 @@ StageStats(
 初始化基础模式组件。
 
 **创建组件:**
-- BlindPacketMasker 实例 (从配方文件)
+- 透传复制模式（无外部依赖）
+- self._masker = None（占位，保持接口一致）
 
 ---
 
-#### `_process_with_enhanced_mode(input_path: Path, output_path: Path) -> StageStats`
+#### `_process_with_processor_adapter_mode(input_path: Path, output_path: Path) -> StageStats`
 
-使用 MultiStageExecutor 进行智能处理。
+使用 TSharkEnhancedMaskProcessor 进行智能处理。
 
 **处理流程:**
-1. 调用 `_executor.execute_pipeline()`
-2. 收集多阶段统计信息
-3. 生成 Enhanced Mode 特有的指标
+1. 调用 `_processor_adapter.process_file()`
+2. 收集 TLS 协议分析统计信息
+3. 生成 Processor Adapter Mode 特有的指标
 4. 失败时触发降级处理
 
 ---
 
 #### `_process_with_basic_mode(input_path: Path, output_path: Path) -> StageStats`
 
-使用 BlindPacketMasker 进行基础处理。
+使用透传模式进行基础处理（BlindPacketMasker 已移除）。
 
 **处理流程:**
-1. 读取数据包 (`rdpcap`)
-2. 应用掩码 (`_masker.mask_packets`)
-3. 写入结果 (`wrpcap`)
-4. 收集统计信息
+1. 使用 `shutil.copyfile()` 直接复制文件
+2. 读取数据包统计信息 (`rdpcap`)
+3. 收集透传统计信息（无修改包数）
 
 ---
 
@@ -186,48 +184,45 @@ StageStats(
 
 为指定阶段创建专用配置。
 
-**支持的阶段类型:**
-- `"tshark"`: TShark预处理器配置
-- `"pyshark"`: PyShark分析器配置  
-- `"scapy"`: Scapy适配器配置
+**支持的配置类型:**
+- `processor_config`: TSharkEnhancedMaskProcessor 配置
+- `adapter_config`: ProcessorStageAdapter 配置
 
 **配置映射:**
 ```python
-# TShark 配置
-"tshark": {
-    "enable_tcp_reassembly": config.get("enable_tshark_preprocessing", True),
-    "memory_limit": config.get("tshark_memory_limit", "256M"),
-    "timeout": config.get("tshark_timeout", 300)
-}
+# TSharkEnhancedMaskProcessor 配置
+processor_config = ProcessorConfig(
+    enabled=True,
+    name="tshark_enhanced_mask",
+    priority=1
+)
 
-# PyShark 配置
-"pyshark": {
-    "enable_protocol_detection": config.get("enable_protocol_detection", True),
-    "tls_strategy_enabled": config.get("tls_strategy_enabled", True),
-    "timeout": config.get("pyshark_timeout", 300)
-}
-
-# Scapy 配置
-"scapy": {
-    "batch_size": config.get("scapy_batch_size", 1000),
-    "enable_statistics": config.get("enable_statistics", True)
-}
+# 适配器配置
+enhanced_config = TSharkEnhancedMaskProcessorConfig(
+    enable_tls_processing=config.get("enable_tls_processing", True),
+    enable_cross_segment_detection=config.get("enable_cross_segment_detection", True),
+    tls_23_strategy=config.get("tls_23_strategy", "mask_payload"),
+    enable_boundary_safety=config.get("enable_boundary_safety", True)
+)
 ```
 
 ---
 
 ## 📊 统计指标
 
-### Enhanced Mode 指标
+### Processor Adapter Mode 指标
 
 ```python
 {
-    "enhanced_mode": True,
-    "stages_count": 3,
-    "success_rate": "100%", 
-    "pipeline_success": True,
-    "multi_stage_processing": True,
-    "intelligent_protocol_detection": True
+    "processor_adapter_mode": True,
+    "tls_records_found": 15,
+    "mask_rules_generated": 12,
+    "processing_mode": "tshark_enhanced_forced",
+    "stage_performance": {
+        "stage1_tshark_analysis": 1.2,
+        "stage2_rule_generation": 0.8,
+        "stage3_scapy_application": 2.1
+    }
 }
 ```
 
@@ -235,10 +230,10 @@ StageStats(
 
 ```python
 {
-    "enhanced_mode": False,
-    "mode": "basic_masking",
-    "recipe_entries": 15,
-    "modified_packets_by_rule": {...}
+    "processor_adapter_mode": False,
+    "mode": "basic_passthrough",
+    "reason": "blind_packet_masker_removed",
+    "packets_modified": 0  # 透传模式无修改
 }
 ```
 
@@ -246,11 +241,12 @@ StageStats(
 
 ```python
 {
-    "enhanced_mode": False,
+    "processor_adapter_mode": False,
     "mode": "fallback",
-    "original_mode": "enhanced",
-    "fallback_reason": "enhanced_mode_execution_failed",
-    "graceful_degradation": True
+    "original_mode": "processor_adapter",
+    "fallback_reason": "processor_adapter_mode_execution_failed",
+    "graceful_degradation": True,
+    "downgrade_trace": True
 }
 ```
 
@@ -265,9 +261,9 @@ StageStats(
 config = {
     "mask": {
         "enabled": True,
-        "mode": "enhanced",
-        "preserve_ratio": 0.3,
-        "tls_strategy_enabled": True
+        "mode": "processor_adapter",
+        "enable_tls_processing": True,
+        "tls_23_strategy": "mask_payload"
     }
 }
 
@@ -283,8 +279,8 @@ from pktmask.core.pipeline.stages.mask_payload.stage import MaskStage
 
 # 创建并配置 Stage
 stage = MaskStage({
-    "mode": "enhanced",
-    "preserve_ratio": 0.3
+    "mode": "processor_adapter",
+    "enable_tls_processing": True
 })
 
 # 初始化
@@ -300,22 +296,21 @@ print(f"处理了 {stats.packets_processed} 个包，修改了 {stats.packets_mo
 ```python
 # 高级配置示例
 config = {
-    "mode": "enhanced",
-    "preserve_ratio": 0.2,
-    "tls_strategy_enabled": True,
+    "mode": "processor_adapter",
+    "enable_tls_processing": True,
+    "enable_cross_segment_detection": True,
     
-    # TShark 配置
-    "enable_tshark_preprocessing": True,
-    "tshark_memory_limit": "1G",
-    "tshark_timeout": 600,
+    # TLS 策略配置
+    "tls_20_strategy": "preserve",
+    "tls_21_strategy": "preserve", 
+    "tls_22_strategy": "preserve",
+    "tls_23_strategy": "mask_payload",
+    "tls_24_strategy": "preserve",
     
-    # PyShark 配置  
-    "enable_protocol_detection": True,
-    "pyshark_timeout": 400,
-    
-    # Scapy 配置
-    "scapy_batch_size": 2000,
-    "enable_statistics": True
+    # 安全和性能配置
+    "enable_boundary_safety": True,
+    "enable_detailed_logging": False,
+    "chunk_size": 2000
 }
 
 stage = MaskStage(config)
@@ -330,9 +325,9 @@ stage = MaskStage(config)
 Enhanced MaskStage 实现了完整的优雅降级机制：
 
 ```
-Enhanced Mode 失败
+Processor Adapter Mode 失败
         ↓
-自动切换到 Basic Mode 
+自动切换到 Basic Mode (透传)
         ↓
 Basic Mode 失败
         ↓  
@@ -356,8 +351,8 @@ Fallback Mode (文件复制)
 if stats.extra_metrics.get("mode") == "fallback":
     print(f"降级原因: {stats.extra_metrics.get('fallback_reason')}")
     
-if not stats.extra_metrics.get("enhanced_mode", False):
-    print("未使用增强模式处理")
+if not stats.extra_metrics.get("processor_adapter_mode", False):
+    print("未使用处理器适配器模式处理")
 ```
 
 ---
@@ -388,9 +383,9 @@ throughput = stats.packets_processed / (duration / 1000)  # pps
 efficiency = stats.packets_modified / stats.packets_processed  # 修改率
 
 # 功能监控  
-enhanced_mode_usage = stats.extra_metrics.get("enhanced_mode", False)
-pipeline_success = stats.extra_metrics.get("pipeline_success", False)
-stages_completed = stats.extra_metrics.get("stages_count", 0)
+processor_adapter_usage = stats.extra_metrics.get("processor_adapter_mode", False)
+tls_analysis_success = stats.extra_metrics.get("tls_records_found", 0) > 0
+mask_rules_generated = stats.extra_metrics.get("mask_rules_generated", 0)
 ```
 
 ---
@@ -428,7 +423,7 @@ stages_completed = stats.extra_metrics.get("stages_count", 0)
 
 ```python
 # 1. 扩展模式枚举
-SUPPORTED_MODES = ["enhanced", "basic", "custom"]
+SUPPORTED_MODES = ["processor_adapter", "basic", "custom"]
 
 # 2. 添加初始化方法
 def _initialize_custom_mode(self, config: Dict[str, Any]) -> None:
