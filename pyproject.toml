@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pktmask"
-version = "0.1.0"
+version = "0.2.0"
 description = "A GUI tool for masking IP addresses in pcap/pcapng files"
 readme = "README.md"
 requires-python = ">=3.8"

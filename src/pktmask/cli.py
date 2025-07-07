@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Optional
+import warnings
 
 import typer
 
@@ -35,7 +36,17 @@ def _run_pipeline(
     }
 
     if recipe_path:
-        cfg["mask"]["recipe_path"] = recipe_path  # type: ignore[index]
+        # 发出废弃警告
+        warnings.warn(
+            "参数 'recipe_path' 已废弃，将在未来版本中移除。"
+            "该参数已被忽略。请使用新的 processor_adapter 模式进行智能协议分析，"
+            "或通过编程接口直接传入 MaskingRecipe 对象。"
+            "当前操作将以智能模式继续执行以保持兼容性。",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        # 注意：废弃的 recipe_path 被忽略，不再传递给配置
+        # cfg["mask"]["recipe_path"] = recipe_path  # 已废弃，不再使用
 
     if mask_mode:
         cfg["mask"]["mode"] = mask_mode

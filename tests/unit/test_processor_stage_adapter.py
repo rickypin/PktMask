@@ -8,13 +8,17 @@ ProcessorStageAdapter 单元测试
 """
 
 import unittest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock, MagicMock, patch
 from pathlib import Path
 import tempfile
+import pytest
+import logging
 
 from pktmask.core.pipeline.stages.processor_stage_adapter import ProcessorStageAdapter
 from pktmask.core.pipeline.models import StageStats
 from pktmask.core.processors.base_processor import BaseProcessor, ProcessorConfig, ProcessorResult
+from pktmask.core.pipeline.stages.mask_payload.stage import MaskStage
+from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, MaskAfter
 
 
 class MockProcessor(BaseProcessor):
@@ -187,5 +191,216 @@ class TestProcessorStageAdapter(unittest.TestCase):
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
 
+class TestMaskStageProcessorAdapterIntegration(unittest.TestCase):
+    """MaskStage 与 ProcessorStageAdapter 集成测试"""
+    
+    def setUp(self):
+        """测试准备"""
+        self.temp_dir = Path(tempfile.mkdtemp())
+        self.input_file = self.temp_dir / "input.pcap"
+        self.output_file = self.temp_dir / "output.pcap"
+        self.input_file.touch()  # 创建空文件
+        
+    def tearDown(self):
+        """清理测试文件"""
+        import shutil
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
+    
+    def test_no_recipe_processor_adapter_success(self):
+        """测试用例1: 不提供 recipe → processor_adapter 成功 → 正常处理（mock）"""
+        # 配置：不提供 recipe，使用默认 processor_adapter 模式
+        config = {"mode": "processor_adapter"}
+        
+        with patch('pktmask.core.processors.tshark_enhanced_mask_processor.TSharkEnhancedMaskProcessor') as mock_processor_class:
+            with patch('pktmask.core.pipeline.stages.processor_stage_adapter.ProcessorStageAdapter') as mock_adapter_class:
+                # 设置 mock 返回值
+                mock_processor = Mock()
+                mock_processor.initialize.return_value = True
+                mock_processor.is_initialized = True
+                mock_processor_class.return_value = mock_processor
+                
+                mock_adapter = Mock()
+                mock_adapter.process_file.return_value = StageStats(
+                    stage_name="MaskStage",
+                    packets_processed=100,
+                    packets_modified=50,
+                    duration_ms=1200.5,
+                    extra_metrics={"processor_adapter_mode": True}
+                )
+                mock_adapter_class.return_value = mock_adapter
+                
+                # 创建 MaskStage
+                stage = MaskStage(config)
+                stage.initialize()
+                
+                # 验证初始化使用了 processor_adapter 模式
+                self.assertTrue(stage._use_processor_adapter_mode)
+                self.assertIsNotNone(stage._processor_adapter)
+                
+                # 执行处理
+                result = stage.process_file(self.input_file, self.output_file)
+                
+                # 验证结果
+                self.assertIsInstance(result, StageStats)
+                self.assertEqual(result.stage_name, "MaskStage")
+                self.assertEqual(result.packets_processed, 100)
+                self.assertEqual(result.packets_modified, 50)
+                self.assertTrue(result.extra_metrics.get("processor_adapter_mode"))
+                
+                # 验证调用链
+                mock_processor_class.assert_called_once()
+                mock_adapter_class.assert_called_once()
+                mock_adapter.process_file.assert_called_once_with(self.input_file, self.output_file)
+    
+    def test_processor_adapter_exception_fallback(self):
+        """测试用例2: processor_adapter 抛异常 → 降级，验证透传且 log 捕获"""
+        config = {"mode": "processor_adapter"}
+        
+        with patch('pktmask.core.processors.tshark_enhanced_mask_processor.TSharkEnhancedMaskProcessor') as mock_processor_class:
+            with patch('pktmask.core.pipeline.stages.processor_stage_adapter.ProcessorStageAdapter') as mock_adapter_class:
+                with patch('pktmask.core.pipeline.stages.mask_payload.stage.rdpcap') as mock_rdpcap:
+                    with patch('pktmask.core.pipeline.stages.mask_payload.stage.wrpcap') as mock_wrpcap:
+                        # 设置 processor_adapter 抛异常
+                        mock_processor = Mock()
+                        mock_processor.initialize.return_value = True
+                        mock_processor.is_initialized = True
+                        mock_processor_class.return_value = mock_processor
+                        
+                        mock_adapter = Mock()
+                        mock_adapter.process_file.side_effect = RuntimeError("TShark processor failed")
+                        mock_adapter_class.return_value = mock_adapter
+                        
+                        # 设置透传处理的 mock
+                        mock_packets = [Mock(), Mock(), Mock()]
+                        mock_rdpcap.return_value = mock_packets
+                        
+                        # 创建 MaskStage 并处理
+                        stage = MaskStage(config)
+                        stage.initialize()
+                        
+                        # 直接测试 process_file 方法的降级处理
+                        # MaskStage 已经内置了降级机制，不会抛出异常
+                        result = stage.process_file(self.input_file, self.output_file)
+                        
+                        # 验证降级结果
+                        self.assertIsInstance(result, StageStats)
+                        self.assertEqual(result.stage_name, "MaskStage")
+                        self.assertEqual(result.packets_processed, len(mock_packets))
+                        self.assertEqual(result.packets_modified, 0)  # 透传模式不修改包
+                        
+                        # 验证降级指标
+                        extra_metrics = result.extra_metrics
+                        self.assertFalse(extra_metrics.get("processor_adapter_mode"))
+                        self.assertEqual(extra_metrics.get("mode"), "fallback")
+                        self.assertEqual(extra_metrics.get("original_mode"), "processor_adapter")
+                        self.assertIn("TShark processor failed", extra_metrics.get("fallback_reason", ""))
+                        self.assertTrue(extra_metrics.get("graceful_degradation"))
+                        
+                        # 验证透传调用
+                        mock_rdpcap.assert_called_once_with(str(self.input_file))
+                        mock_wrpcap.assert_called_once()
+    
+    def test_masking_recipe_basic_mode(self):
+        """测试用例3: 直接提供 MaskingRecipe → basic_masking 路径生效"""
+        # 创建 MaskingRecipe 实例
+        recipe = MaskingRecipe(
+            total_packets=10,
+            packet_instructions={0: [MaskAfter(keep_bytes=5)]},
+            metadata={"test": "basic_mode"}
+        )
+        
+        config = {
+            "mode": "basic",
+            "recipe": recipe
+        }
+        
+        with patch('pktmask.core.pipeline.stages.mask_payload.stage.BlindPacketMasker') as mock_masker_class:
+            with patch('pktmask.core.pipeline.stages.mask_payload.stage.rdpcap') as mock_rdpcap:
+                with patch('pktmask.core.pipeline.stages.mask_payload.stage.wrpcap') as mock_wrpcap:
+                    # 设置 BlindPacketMasker mock
+                    mock_masker = Mock()
+                    mock_stats = Mock()
+                    mock_stats.processed_packets = 10
+                    mock_stats.modified_packets = 3
+                    mock_stats.to_dict.return_value = {
+                        "processed_packets": 10,
+                        "modified_packets": 3,
+                        "processing_time_seconds": 0.5
+                    }
+                    mock_masker.mask_packets.return_value = [Mock() for _ in range(10)]
+                    mock_masker.get_statistics.return_value = mock_stats
+                    mock_masker_class.return_value = mock_masker
+                    
+                    # 设置 rdpcap mock
+                    mock_packets = [Mock() for _ in range(10)]
+                    mock_rdpcap.return_value = mock_packets
+                    
+                    # 创建 MaskStage
+                    stage = MaskStage(config)
+                    stage.initialize()
+                    
+                    # 验证初始化使用了 basic 模式
+                    self.assertFalse(stage._use_processor_adapter_mode)
+                    self.assertIsNotNone(stage._masker)
+                    
+                    # 执行处理
+                    result = stage.process_file(self.input_file, self.output_file)
+                    
+                    # 验证结果
+                    self.assertIsInstance(result, StageStats)
+                    self.assertEqual(result.stage_name, "MaskStage")
+                    self.assertEqual(result.packets_processed, 10)
+                    self.assertEqual(result.packets_modified, 3)
+                    
+                    # 验证 basic_masking 模式指标
+                    extra_metrics = result.extra_metrics
+                    self.assertFalse(extra_metrics.get("processor_adapter_mode"))
+                    self.assertEqual(extra_metrics.get("mode"), "basic_masking")
+                    self.assertIn("processed_packets", extra_metrics)
+                    self.assertIn("modified_packets", extra_metrics)
+                    
+                    # 验证调用链
+                    mock_masker_class.assert_called_once_with(masking_recipe=recipe)
+                    mock_rdpcap.assert_called_once_with(str(self.input_file))
+                    mock_masker.mask_packets.assert_called_once_with(mock_packets)
+                    mock_wrpcap.assert_called_once()
+    
+    def test_processor_adapter_initialization_exception_fallback_with_caplog(self):
+        """测试用例2补充: 使用 caplog 检查降级日志"""
+        config = {"mode": "processor_adapter"}
+        
+        with patch('pktmask.core.processors.tshark_enhanced_mask_processor.TSharkEnhancedMaskProcessor', side_effect=ImportError("TShark不可用")):
+            # 直接使用 caplog fixture (需要在 pytest 环境中)
+            import logging
+            
+            # 创建日志捕获器
+            log_capture_handler = logging.Handler()
+            captured_logs = []
+            
+            class LogCapture(logging.Handler):
+                def emit(self, record):
+                    captured_logs.append(record)
+            
+            log_handler = LogCapture()
+            # 使用 MaskStage 的日志记录器名称
+            logger = logging.getLogger('MaskStage')
+            logger.addHandler(log_handler)
+            logger.setLevel(logging.ERROR)
+            
+            try:
+                stage = MaskStage(config)
+                stage.initialize()
+                
+                # 验证降级到 basic 模式
+                self.assertFalse(stage._use_processor_adapter_mode)
+                
+                # 验证日志中包含降级信息
+                log_messages = [record.getMessage() for record in captured_logs]
+                degradation_logged = any("降级为Basic Mode" in msg for msg in log_messages)
+                self.assertTrue(degradation_logged, f"未找到降级日志，实际日志: {log_messages}")
+            finally:
+                logger.removeHandler(log_handler)
+
+
 if __name__ == '__main__':
-    unittest.main() 
+    unittest.main()

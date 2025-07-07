@@ -165,6 +165,7 @@ MaskStage 提供两种处理模式：
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Basic Mode                              │
+│                    (简化后：只有透传/直接 recipe)                │
 └─────────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
@@ -178,11 +179,11 @@ MaskStage 提供两种处理模式：
 │                                                                 │
 │ 1.2 MaskStage.initialize()                                     │
 │     ├─ 调用 _initialize_basic_mode()                           │
-│     ├─ 解析配方配置                                             │
+│     ├─ 解析配方配置（简化版）                                   │
 │     │   ├─ recipe: 直接使用 MaskingRecipe 实例                 │
 │     │   ├─ recipe_dict: 从字典创建配方                          │
 │     │   └─ recipe_path: 从 JSON 文件加载配方                   │
-│     └─ 创建 BlindPacketMasker 实例                             │
+│     └─ [移除] 不再创建 BlindPacketMasker 实例                   │
 └─────────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
@@ -196,21 +197,21 @@ MaskStage 提供两种处理模式：
 │ 2.2 _process_with_basic_mode()                                 │
 │     ├─ 记录开始时间                                             │
 │     ├─ 使用 rdpcap() 读取所有数据包                            │
-│     └─ 检查 self._masker 是否存在                              │
+│     └─ 检查 recipe 配置是否存在                                │
 └─────────────────────────────────────────────────────────────────┘
                                 │
                     ┌───────────┴───────────┐
-                    │     有有效掩码器？      │
+                    │     有有效 recipe？     │
                     └───────┬───────────────┘
                           │ NO             │ YES
                           ▼                ▼
 ┌─────────────────────────────────┐  ┌─────────────────────────────────┐
-│           3A. 透传模式           │  │         3B. 掩码处理模式         │
+│           3A. 透传模式           │  │         3B. 直接 recipe 模式     │
 ├─────────────────────────────────┤  ├─────────────────────────────────┤
-│ ├─ 直接复制数据包               │  │ ├─ 调用 masker.mask_packets()   │
-│ ├─ wrpcap() 写入文件            │  │ ├─ 获取掩码统计信息             │
+│ ├─ 直接复制数据包               │  │ ├─ 直接应用 MaskingRecipe      │
+│ ├─ wrpcap() 写入文件            │  │ ├─ 简单的规则匹配和字段替换     │
 │ └─ 返回透传模式统计             │  │ ├─ wrpcap() 写入修改后数据包    │
-│                                 │  │ └─ 返回掩码处理统计             │
+│                                 │  │ └─ 返回 recipe 处理统计         │
 └─────────────────────────────────┘  └─────────────────────────────────┘
                           │                ▼
                           └──────────┬─────────────────────────────────┘
@@ -228,15 +229,15 @@ MaskStage 提供两种处理模式：
 │     ├─ mode: "bypass"                                          │
 │     └─ reason: "no_valid_masking_recipe"                       │
 │                                                                 │
-│ 4B. 掩码处理结果:                                              │
+│ 4B. 直接 recipe 处理结果:                                       │
 │ ├─ stage_name: "MaskStage"                                     │
-│ ├─ packets_processed: stats.processed_packets                  │
-│ ├─ packets_modified: stats.modified_packets                    │
+│ ├─ packets_processed: 处理的数据包数                           │
+│ ├─ packets_modified: 修改的数据包数                            │
 │ ├─ duration_ms: 处理耗时                                       │
 │ └─ extra_metrics:                                              │
 │     ├─ processor_adapter_mode: False                           │
-│     ├─ mode: "basic_masking"                                   │
-│     └─ **stats.to_dict() (BlindPacketMasker 统计)            │
+│     ├─ mode: "direct_recipe"                                   │
+│     └─ recipe_rules_applied: 应用的规则数量                    │
 └─────────────────────────────────────────────────────────────────┘
 
 ```
@@ -256,13 +257,13 @@ MaskStage 提供两种处理模式：
 | **执行阶段** | RuntimeError | TShark 执行超时或崩溃 | 降级到简单文件复制 |
 | **执行阶段** | MemoryError | 内存不足无法处理大文件 | 降级到简单文件复制 |
 
-### 5.2 Basic 模式内部降级
+### 5.2 Basic 模式内部降级 (简化后)
 
 | 触发条件 | 具体场景 | 降级处理 |
 |----------|----------|----------|
 | 无有效配方 | recipe/recipe_dict/recipe_path 均无效 | 透传模式 (简单复制) |
 | 配方解析失败 | JSON 格式错误或配方结构不正确 | 透传模式 (简单复制) |
-| BlindPacketMasker 创建失败 | 配方参数错误 | 透传模式 (简单复制) |
+| recipe 应用失败 | 配方参数错误或规则应用异常 | 透传模式 (简单复制) |
 
 ### 5.3 TSharkEnhancedMaskProcessor 内部降级 (深层降级)
 
@@ -309,11 +310,12 @@ TShark 主处理失败 → EnhancedTrimmer → MaskStage → 完全失败
     "reason": "no_valid_masking_recipe"
 }
 
-# Basic 模式正常掩码统计
+# Basic 模式直接 recipe 处理统计 (简化后)
 {
     "processor_adapter_mode": False,
-    "mode": "basic_masking",
-    # ... BlindPacketMasker 统计信息
+    "mode": "direct_recipe",
+    "recipe_rules_applied": 应用的规则数量,
+    "recipe_type": "MaskingRecipe"
 }
 ```
 
@@ -328,11 +330,12 @@ TShark 主处理失败 → EnhancedTrimmer → MaskStage → 完全失败
 
 ## 7. 总结
 
-### 7.1 模式选择策略
+### 7.1 模式选择策略 (简化后)
 
 1. **默认策略**: 优先使用 processor_adapter 模式获得最佳功能
-2. **降级策略**: 遇到问题时自动降级到 basic 模式确保可用性
-3. **透传策略**: basic 模式无有效配方时透传文件确保数据完整性
+2. **降级策略**: 遇到问题时自动降级到 basic 模式
+3. **透传策略**: basic 模式无有效配方或处理失败时透传文件确保数据完整性
+4. **直接 recipe**: basic 模式简化为直接应用 MaskingRecipe，去除 BlindPacketMasker 复杂性
 
 ### 7.2 健壮性保证
 

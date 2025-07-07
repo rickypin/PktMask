@@ -28,9 +28,13 @@ class PipelineExecutor:
             "anon": {"enabled": True},
             "mask": {
                 "enabled": True,
-                "recipe_path": "config/samples/simple_mask_recipe.json",
+                "mode": "processor_adapter"  # 使用智能协议分析模式
             },
         }
+        
+    注意：recipe_path 和 recipe_dict 配置项已废弃。
+    新版本使用 processor_adapter 模式进行智能协议分析，
+    或通过编程接口直接传入 MaskingRecipe 对象。
 
     缺失的键或 `enabled=False` 将导致对应 Stage 被跳过。
     """

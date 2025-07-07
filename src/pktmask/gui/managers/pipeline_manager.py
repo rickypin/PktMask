@@ -372,10 +372,11 @@ class PipelineManager:
         if self.main_window.trim_packet_cb.isChecked():
             config["mask"] = {
                 "enabled": True,
-                "recipe_path": "config/samples/simple_mask_recipe.json",
+                # 注意：移除了已废弃的 recipe_path 配置项
+                # 现在默认使用 processor_adapter 模式进行智能协议分析
                 "mode": "processor_adapter"
             }
-            self._logger.debug("启用载荷掩码Stage")
+            self._logger.debug("启用载荷掩码Stage - 使用智能协议分析模式")
         
         self._logger.info(f"构建了包含 {len(config)} 个启用Stage的配置")
         return config 
