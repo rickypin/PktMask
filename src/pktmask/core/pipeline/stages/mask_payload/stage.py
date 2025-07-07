@@ -27,7 +27,7 @@ class MaskStage(StageBase):
 
     支持两种处理模式：
     1. Processor Adapter Mode (默认): 使用 TSharkEnhancedMaskProcessor + ProcessorStageAdapter
-    2. Basic Mode (降级): 使用原有 BlindPacketMasker 进行基础掩码
+    2. Basic Mode (降级): 纯透传复制模式（BlindPacketMasker 已移除）
 
     配置 ``config`` 字典支持以下键：
 
@@ -37,7 +37,7 @@ class MaskStage(StageBase):
     4. ``mode``: 处理模式 - "processor_adapter" (默认), 或 "basic"
 
     当三个键均不存在或解析失败时，Processor Adapter Mode 会进行智能协议分析；
-    Basic Mode 会回退为 *透传模式*。
+    Basic Mode 统一为 *透传模式* (不再使用 BlindPacketMasker)。
     """
 
     name: str = "MaskStage"
@@ -179,7 +179,7 @@ class MaskStage(StageBase):
 
 
     def _process_with_basic_mode(self, input_path: Path, output_path: Path) -> StageStats:
-        """使用原有 BlindPacketMasker 进行基础处理"""
+        """使用透传模式进行基础处理（BlindPacketMasker 已移除）"""
         start_time = time.time()
 
         # basic 模式统一为透传复制

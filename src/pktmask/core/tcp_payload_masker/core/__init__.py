@@ -41,9 +41,9 @@ from .consistency import ConsistencyVerifier
 from .payload_extractor import PayloadExtractor, create_payload_extractor
 from .keep_range_applier import MaskApplier, create_mask_applier
 
-# 新架构核心组件 (Phase 1.2)
-from .blind_masker import BlindPacketMasker
-from .packet_processor import PacketProcessor
+# 新架构核心组件 (Phase 1.2) - BlindPacketMasker 已移除
+# from .blind_masker import BlindPacketMasker  # 已废弃
+from .packet_processor import PacketProcessor  # 依赖 BlindPacketMasker，已废弃
 
 __all__ = [
     # 主要API
@@ -73,7 +73,7 @@ __all__ = [
     'MaskApplier',
     'create_mask_applier',
     
-    # 新架构核心组件 (Phase 1.2)
-    'BlindPacketMasker',
-    'PacketProcessor'
+    # 新架构核心组件 (Phase 1.2) - 已废弃
+    # 'BlindPacketMasker',  # 已移除
+    'PacketProcessor'  # 已废弃，依赖 BlindPacketMasker
 ] 

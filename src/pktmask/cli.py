@@ -83,10 +83,10 @@ def cmd_mask(
     recipe_path: Optional[str] = typer.Option(
         None,
         "--recipe-path",
-        help="Optional MaskRecipe JSON path (for BlindPacketMasker)",
+        help="Optional MaskRecipe JSON path (已废弃，BlindPacketMasker 已移除)",
     ),
 ):
-    """Execute payload masking (BlindPacketMasker) Pipeline."""
+    """Execute payload masking Pipeline (BlindPacketMasker 已废弃，使用 TSharkEnhancedMaskProcessor)."""
 
     _run_pipeline(
         input_file=input_path,

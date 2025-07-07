@@ -66,8 +66,8 @@ from .api.validator import (
     estimate_memory_usage
 )
 
-# 核心引擎
-from .core.blind_masker import BlindPacketMasker
+# 核心引擎 - BlindPacketMasker 已移除
+# from .core.blind_masker import BlindPacketMasker  # 已废弃
 from .core.consistency import ConsistencyVerifier
 
 # 统计工具
@@ -113,6 +113,6 @@ __all__ = [
     "estimate_memory_usage",
     
     # 核心引擎
-    "BlindPacketMasker",
+    # "BlindPacketMasker",  # 已移除
     "ConsistencyVerifier"
 ] 

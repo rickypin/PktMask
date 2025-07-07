@@ -7,7 +7,7 @@
 import os
 import time
 import logging
-from typing import List, Iterator
+from typing import List, Iterator, Any
 from scapy.all import PcapReader, PcapWriter, Ether, IP, TCP, UDP, raw
 from scapy.packet import Packet
 
@@ -16,7 +16,6 @@ from ..api.types import (
     PacketMaskingResult, 
     MaskingStatistics
 )
-from .blind_masker import BlindPacketMasker
 
 
 logger = logging.getLogger(__name__)
@@ -28,7 +27,7 @@ class PacketProcessor:
     
     负责：
     1. PCAP文件的读取和写入
-    2. 调用BlindPacketMasker进行掩码处理
+    2. 数据包处理（BlindPacketMasker 调用已废弃）
     3. Scapy校验和的自动修复
     4. 处理进度和错误管理
     """
@@ -80,8 +79,8 @@ class PacketProcessor:
             if output_dir and not os.path.exists(output_dir):
                 os.makedirs(output_dir, exist_ok=True)
             
-            # 创建掩码器
-            masker = BlindPacketMasker(masking_recipe)
+            # 注意：BlindPacketMasker 已被移除，此处理器已废弃
+            raise NotImplementedError("PacketProcessor 已废弃，BlindPacketMasker 已被移除")
             
             # 处理数据包
             result = self._process_packets(input_file, output_file, masker)
@@ -112,7 +111,7 @@ class PacketProcessor:
         self, 
         input_file: str, 
         output_file: str, 
-        masker: BlindPacketMasker
+        masker: Any  # BlindPacketMasker 已被移除
     ) -> PacketMaskingResult:
         """
         处理数据包的核心逻辑

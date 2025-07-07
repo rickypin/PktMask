@@ -15,7 +15,6 @@ from scapy.all import PcapReader, wrpcap, Ether, raw
 
 from .types import PacketMaskInstruction, MaskingRecipe, PacketMaskingResult
 from .validator import validate_masking_recipe
-from ..core.blind_masker import BlindPacketMasker
 from ..core.consistency import ConsistencyVerifier
 from ..utils.stats import MaskingStatistics
 
@@ -248,8 +247,8 @@ def _process_packets(
     Returns:
         处理统计信息字典
     """
-    # 创建盲操作掩码器
-    masker = BlindPacketMasker(masking_recipe)
+    # BlindPacketMasker 已被移除，此函数已废弃
+    raise NotImplementedError("BlindPacketMasker 已被移除，此API函数已废弃")
     modified_packets = []
     
     try:

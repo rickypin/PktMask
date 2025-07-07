@@ -40,7 +40,7 @@ def create_masking_recipe_from_dict(data: Dict[str, Any]) -> MaskingRecipe:
         data: 解析后的 JSON / YAML 字典。
 
     Returns:
-        MaskingRecipe 对象，可直接被 ``BlindPacketMasker`` 使用。
+        MaskingRecipe 对象，可用于载荷掩码处理。
     """
 
     if not isinstance(data, dict):
