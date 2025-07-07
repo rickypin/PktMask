@@ -166,7 +166,7 @@ def pytest_collection_modifyitems(config, items):
     legacy_patterns = [
         r"test_phase[0-9]+_",  # 以阶段编号命名的旧测试
         r"test_tcp_payload_masker_",  # 早期tcp_payload_masker实现
-        r"test_pyshark_analyzer",  # 旧PyShark分析器接口
+        r"test_enhanced_pyshark_analyzer",  # 增强PyShark分析器接口
         r"test_tshark_preprocessor",  # 旧TShark预处理器接口
         r"test_tls_reassembly_fix",  # 针对旧TLS重组逻辑
         r"test_tcp_sequence_masking_validation",  # 旧序列号掩码验证框架
