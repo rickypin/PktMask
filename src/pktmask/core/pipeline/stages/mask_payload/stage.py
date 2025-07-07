@@ -12,7 +12,6 @@ from scapy.all import rdpcap, wrpcap, Packet  # type: ignore
 
 from pktmask.core.pipeline.base_stage import StageBase
 from pktmask.core.pipeline.models import StageStats
-from pktmask.core.tcp_payload_masker.core.blind_masker import BlindPacketMasker
 from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe  # 核心数据结构
 from pktmask.core.tcp_payload_masker.utils.helpers import (
     create_masking_recipe_from_dict,
@@ -59,8 +58,8 @@ class MaskStage(StageBase):
         # Processor Adapter Mode 组件
         self._processor_adapter: Optional[Any] = None  # ProcessorStageAdapter，延迟导入
         
-        # Basic Mode 组件 (降级备选方案)
-        self._masker: Optional[BlindPacketMasker] = None
+        # Basic Mode 组件：仅透传复制，无外部依赖
+        self._masker = None  # 占位，保持接口一致
         
         super().__init__()
 
@@ -84,7 +83,9 @@ class MaskStage(StageBase):
         if self._use_processor_adapter_mode:
             self._initialize_processor_adapter_mode(merged_cfg)
         else:
-            self._initialize_basic_mode(merged_cfg)
+            # basic 模式仅透传，不再尝试创建 BlindPacketMasker
+            self._logger.info("MaskStage basic 模式已简化为纯透传，无 BlindPacketMasker")
+            self._masker = None
 
 
 
@@ -129,113 +130,9 @@ class MaskStage(StageBase):
         
         return adapter
 
-    def _initialize_basic_mode(self, config: Dict[str, Any]) -> None:
-        """初始化基础模式（原有 BlindPacketMasker 逻辑）
-        
-        默认透传模式，除非直接注入 MaskingRecipe 对象才启用掩码功能。
-        这种设计确保了 Basic Mode 的简洁性和明确性。
-        
-        注意：为保持向后兼容，此方法继续支持废弃的配置项，但会发出警告。
-        
-        Args:
-            config: 配置字典，支持 "recipe" 键传入 MaskingRecipe 实例
-        """
-        recipe_obj: Optional[MaskingRecipe] = None
-
-        # 优先接受直接传入的 MaskingRecipe 对象
-        if isinstance(config.get("recipe"), MaskingRecipe):
-            recipe_obj = config["recipe"]
-        # 向后兼容：处理废弃的配置项，但发出警告
-        elif "recipe_dict" in config or "recipe_path" in config:
-            self._handle_deprecated_config_with_warning(config)
-            # 注意：废弃配置项被忽略，不会创建实际的掩码器
-            # 这确保老代码不会崩溃，但行为会改变为透传模式
-
-        # 创建 BlindPacketMasker（若配方有效）
-        if recipe_obj is not None:
-            self._masker = BlindPacketMasker(masking_recipe=recipe_obj)
-        # 如果没有有效的 MaskingRecipe 对象，_masker 保持 None，
-        # 这样在 process_file 中会启用透传模式
-
-    def _handle_deprecated_config_with_warning(self, config: Dict[str, Any]) -> None:
-        """处理废弃的配置项并发出警告
-        
-        为保持向后兼容性，此方法会检查并警告废弃的配置项。
-        废弃的配置项将被忽略，不会抛出错误。
-        
-        Args:
-            config: 包含废弃配置项的配置字典
-        """
-        deprecated_items = []
-        
-        if "recipe_dict" in config:
-            deprecated_items.append("recipe_dict")
-            
-        if "recipe_path" in config:
-            deprecated_items.append("recipe_path")
-            
-        if deprecated_items:
-            warning_msg = (
-                f"配置项 {', '.join(deprecated_items)} 已废弃，将在未来版本中移除。"
-                "这些配置项已被忽略，请使用新的配置方式：直接传入 MaskingRecipe 对象到 'recipe' 键，"
-                "或使用 processor_adapter 模式进行智能协议分析。"
-                "当前操作将以透传模式继续执行以保持兼容性。"
-            )
-            
-            warnings.warn(
-                warning_msg,
-                DeprecationWarning,
-                stacklevel=3  # 指向调用者的调用者，通常是用户代码
-            )
-            
-            self._logger.warning(
-                f"MaskStage 检测到废弃配置项: {deprecated_items}. "
-                "这些配置项已被忽略。请更新到新的配置方式。"
-            )
-
-    def _create_stage_config(self, stage_type: str, base_config: Dict[str, Any]) -> Dict[str, Any]:
-        """为指定阶段创建配置
-        
-        .. deprecated:: 
-            此方法已过时，未被其他模块使用。将在后续版本中移除。
-            现在推荐使用 Processor Adapter Mode 或直接传入 MaskingRecipe 对象。
-        """
-        # 延迟导入以避免循环导入
-        from pktmask.config.defaults import get_tshark_paths
-        
-        stage_config = {
-            'preserve_ratio': base_config.get('preserve_ratio', 0.3),
-            'min_preserve_bytes': base_config.get('min_preserve_bytes', 100),
-            'chunk_size': base_config.get('chunk_size', 1000),
-            'enable_detailed_logging': base_config.get('enable_detailed_logging', False)
-        }
-        
-        if stage_type == "tshark":
-            stage_config.update({
-                'enable_tcp_reassembly': True,
-                'enable_ip_defragmentation': True,
-                'enable_tls_desegmentation': True,
-                'tshark_executable_paths': get_tshark_paths(),
-                'tshark_custom_executable': base_config.get('tshark_custom_executable'),
-                'tshark_enable_reassembly': True,
-                'tshark_enable_defragmentation': True,
-                'tshark_timeout_seconds': base_config.get('tshark_timeout_seconds', 300),
-                'tshark_max_memory_mb': base_config.get('tshark_max_memory_mb', 1024)
-            })
-        elif stage_type == "pyshark":
-            stage_config.update({
-                'tls_strategy_enabled': base_config.get('tls_strategy_enabled', True),
-                'default_strategy_enabled': base_config.get('default_strategy_enabled', True),
-                'auto_protocol_detection': base_config.get('auto_protocol_detection', True)
-            })
-        elif stage_type == "scapy":
-            stage_config.update({
-                'preserve_timestamps': True,
-                'recalculate_checksums': True,
-                'enable_validation': base_config.get('enable_validation', True)
-            })
-            
-        return stage_config
+    # NOTE: basic 模式已简化为纯透传，无需初始化任何掩码器
+    def _initialize_basic_mode(self, config: Dict[str, Any]) -> None:  # noqa: D401
+        self._masker = None
 
     # ------------------------------------------------------------------
     # 核心方法
@@ -285,50 +182,25 @@ class MaskStage(StageBase):
         """使用原有 BlindPacketMasker 进行基础处理"""
         start_time = time.time()
 
-        # 无有效掉码器 -> 直接复制文件，透传处理
-        if self._masker is None:
-            self._logger.info("MaskStage Basic Mode透传，无MaskingRecipe")
-            shutil.copyfile(str(input_path), str(output_path))
-            duration_ms = (time.time() - start_time) * 1000
-            
-            # 获取数据包数量用于统计（仅用于统计，不做处理）
-            packets: List[Packet] = rdpcap(str(input_path))
-            
-            return StageStats(
-                stage_name=self.name,
-                packets_processed=len(packets),
-                packets_modified=0,
-                duration_ms=duration_ms,
-                extra_metrics={
-                    "processor_adapter_mode": False,
-                    "mode": "basic_passthrough",
-                    "reason": "no_valid_masking_recipe"
-                },
-            )
+        # basic 模式统一为透传复制
+        self._logger.info("MaskStage Basic Mode 透传复制执行")
 
-        # ------------------------------------------------------------------
-        # 掩码处理
-        # ------------------------------------------------------------------
-        # 读取全部数据包
-        packets: List[Packet] = rdpcap(str(input_path))
-        
-        modified_packets = self._masker.mask_packets(packets)
-        stats = self._masker.get_statistics()
-
-        # 写入输出文件
-        wrpcap(str(output_path), modified_packets)
+        shutil.copyfile(str(input_path), str(output_path))
 
         duration_ms = (time.time() - start_time) * 1000
 
+        # 统计：读取包数，但不对数据包做任何修改
+        packets: List[Packet] = rdpcap(str(input_path))
+
         return StageStats(
             stage_name=self.name,
-            packets_processed=stats.processed_packets,
-            packets_modified=stats.modified_packets,
+            packets_processed=len(packets),
+            packets_modified=0,
             duration_ms=duration_ms,
             extra_metrics={
-                **stats.to_dict(),
                 "processor_adapter_mode": False,
-                "mode": "basic_masking"
+                "mode": "basic_passthrough",
+                "reason": "blind_packet_masker_removed"
             },
         )
 
