@@ -106,21 +106,30 @@ def _initialize_mask_stage_fallback(self):
    grep -r "blind_masker" src/ --exclude-dir=__pycache__
    ```
 
-### 阶段二: 清理辅助功能和配置
+### 阶段二: 清理辅助功能和配置 ✅ **已完成**
 
 **目标**: 移除为 BlindPacketMasker 服务的周边代码
 
 1. **清理辅助函数**:
-   - [ ] 验证 `create_masking_recipe_from_dict` 是否被其他组件使用
-   - [ ] 如果确认无用，从 `utils/helpers.py` 中移除
+   - [x] ✅ 验证 `create_masking_recipe_from_dict` 使用情况：发现 masker.py 中的版本已废弃
+   - [x] ✅ 标记 masker.py 中的重复函数为废弃，抛出 NotImplementedError
+   - [x] ✅ 保留 helpers.py 中的更新版本
 
 2. **清理 CLI 参数**:
-   - [ ] 保留 `recipe_path` 参数但加强废弃警告
-   - [ ] 确保参数被忽略，不影响处理流程
+   - [x] ✅ 强化 `recipe_path` 参数的废弃警告（多层警告机制）
+   - [x] ✅ 确保参数被完全忽略，不影响处理流程
+   - [x] ✅ 添加终端颜色显示，确保用户注意到废弃警告
 
 3. **清理相关测试**:
-   - [ ] 删除专门测试 BlindPacketMasker 的测试文件
-   - [ ] 修改依赖 BlindPacketMasker 的其他测试
+   - [x] ✅ 修改测试中的 BlindPacketMasker 引用为透传模式测试
+   - [x] ✅ 更新测试验证逻辑，适应 basic 模式的透传特性
+   - [x] ✅ 所有相关测试通过验证
+
+**阶段二成果统计**:
+- 废弃函数数：1个（masker.py 中的 create_masking_recipe_from_dict）
+- 强化警告数：1个（CLI recipe_path 参数）
+- 修改测试文件数：1个（test_processor_stage_adapter.py）
+- 验证通过的测试数：15个
 
 ### 阶段三: 优化降级逻辑 (可选)
 

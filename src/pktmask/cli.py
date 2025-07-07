@@ -36,14 +36,31 @@ def _run_pipeline(
     }
 
     if recipe_path:
-        # 发出废弃警告
+        # 发出强化的废弃警告
         warnings.warn(
-            "参数 'recipe_path' 已废弃，将在未来版本中移除。"
-            "该参数已被忽略。请使用新的 processor_adapter 模式进行智能协议分析，"
-            "或通过编程接口直接传入 MaskingRecipe 对象。"
-            "当前操作将以智能模式继续执行以保持兼容性。",
+            "\n" + "="*60 + "\n"
+            "⚠️  参数 'recipe_path' 已废弃！\n"
+            "\n"
+            "原因：依赖的 BlindPacketMasker 组件已被移除\n"
+            "影响：该参数已被完全忽略，不会影响处理流程\n"
+            "\n"
+            "迁移建议：\n"
+            "1. 推荐：使用默认的 processor_adapter 模式进行智能协议分析\n"
+            "2. 高级：通过编程接口直接传入 MaskingRecipe 对象\n"
+            "3. 简单：移除 --recipe-path 参数，使用自动分析模式\n"
+            "\n"
+            "当前操作将以智能模式继续执行以保持向后兼容性。\n"
+            "="*60,
             DeprecationWarning,
             stacklevel=2
+        )
+        # 同时打印到终端，确保用户看到
+        typer.echo(
+            typer.style(
+                "⚠️  WARNING: --recipe-path 参数已废弃并被忽略 (BlindPacketMasker 已移除)",
+                fg=typer.colors.YELLOW,
+                bold=True
+            )
         )
         # 注意：废弃的 recipe_path 被忽略，不再传递给配置
         # cfg["mask"]["recipe_path"] = recipe_path  # 已废弃，不再使用

@@ -300,9 +300,9 @@ class TestMaskStageProcessorAdapterIntegration(unittest.TestCase):
                         mock_rdpcap.assert_called_once_with(str(self.input_file))
                         mock_wrpcap.assert_called_once()
     
-    def test_masking_recipe_basic_mode(self):
-        """测试用例3: 直接提供 MaskingRecipe → basic_masking 路径生效"""
-        # 创建 MaskingRecipe 实例
+    def test_basic_mode_fallback_passthrough(self):
+        """测试用例3: basic 模式现已简化为透传模式（BlindPacketMasker 已移除）"""
+        # 创建 MaskingRecipe 实例（会被忽略，因为 basic 模式现为透传）
         recipe = MaskingRecipe(
             total_packets=10,
             packet_instructions={0: [MaskAfter(keep_bytes=5)]},
@@ -314,56 +314,39 @@ class TestMaskStageProcessorAdapterIntegration(unittest.TestCase):
             "recipe": recipe
         }
         
-        with patch('pktmask.core.pipeline.stages.mask_payload.stage.BlindPacketMasker') as mock_masker_class:
-            with patch('pktmask.core.pipeline.stages.mask_payload.stage.rdpcap') as mock_rdpcap:
-                with patch('pktmask.core.pipeline.stages.mask_payload.stage.wrpcap') as mock_wrpcap:
-                    # 设置 BlindPacketMasker mock
-                    mock_masker = Mock()
-                    mock_stats = Mock()
-                    mock_stats.processed_packets = 10
-                    mock_stats.modified_packets = 3
-                    mock_stats.to_dict.return_value = {
-                        "processed_packets": 10,
-                        "modified_packets": 3,
-                        "processing_time_seconds": 0.5
-                    }
-                    mock_masker.mask_packets.return_value = [Mock() for _ in range(10)]
-                    mock_masker.get_statistics.return_value = mock_stats
-                    mock_masker_class.return_value = mock_masker
-                    
-                    # 设置 rdpcap mock
-                    mock_packets = [Mock() for _ in range(10)]
-                    mock_rdpcap.return_value = mock_packets
-                    
-                    # 创建 MaskStage
-                    stage = MaskStage(config)
-                    stage.initialize()
-                    
-                    # 验证初始化使用了 basic 模式
-                    self.assertFalse(stage._use_processor_adapter_mode)
-                    self.assertIsNotNone(stage._masker)
-                    
-                    # 执行处理
-                    result = stage.process_file(self.input_file, self.output_file)
-                    
-                    # 验证结果
-                    self.assertIsInstance(result, StageStats)
-                    self.assertEqual(result.stage_name, "MaskStage")
-                    self.assertEqual(result.packets_processed, 10)
-                    self.assertEqual(result.packets_modified, 3)
-                    
-                    # 验证 basic_masking 模式指标
-                    extra_metrics = result.extra_metrics
-                    self.assertFalse(extra_metrics.get("processor_adapter_mode"))
-                    self.assertEqual(extra_metrics.get("mode"), "basic_masking")
-                    self.assertIn("processed_packets", extra_metrics)
-                    self.assertIn("modified_packets", extra_metrics)
-                    
-                    # 验证调用链
-                    mock_masker_class.assert_called_once_with(masking_recipe=recipe)
-                    mock_rdpcap.assert_called_once_with(str(self.input_file))
-                    mock_masker.mask_packets.assert_called_once_with(mock_packets)
-                    mock_wrpcap.assert_called_once()
+        # basic 模式现在是透传模式，使用 shutil.copyfile 进行文件复制
+        with patch('pktmask.core.pipeline.stages.mask_payload.stage.rdpcap') as mock_rdpcap:
+            with patch('pktmask.core.pipeline.stages.mask_payload.stage.shutil.copyfile') as mock_copyfile:
+                # 设置 rdpcap mock - 用于统计包数
+                mock_packets = [Mock() for _ in range(10)]
+                mock_rdpcap.return_value = mock_packets
+                
+                # 创建 MaskStage
+                stage = MaskStage(config)
+                stage.initialize()
+                
+                # 验证初始化使用了 basic 模式（透传）
+                self.assertFalse(stage._use_processor_adapter_mode)
+                self.assertIsNone(stage._masker)  # basic 模式不再使用 masker
+                
+                # 执行处理
+                result = stage.process_file(self.input_file, self.output_file)
+                
+                # 验证结果 - 透传模式的特征
+                self.assertIsInstance(result, StageStats)
+                self.assertEqual(result.stage_name, "MaskStage")
+                self.assertEqual(result.packets_processed, 10)  # 读取的包数
+                self.assertEqual(result.packets_modified, 0)   # 透传模式不修改包
+                
+                # 验证透传模式的指标
+                extra_metrics = result.extra_metrics
+                self.assertFalse(extra_metrics.get("processor_adapter_mode"))
+                self.assertEqual(extra_metrics.get("mode"), "basic_passthrough")
+                self.assertEqual(extra_metrics.get("reason"), "blind_packet_masker_removed")
+                
+                # 验证透传调用链
+                mock_copyfile.assert_called_once_with(str(self.input_file), str(self.output_file))
+                mock_rdpcap.assert_called_once_with(str(self.input_file))  # 用于统计包数
     
     def test_processor_adapter_initialization_exception_fallback_with_caplog(self):
         """测试用例2补充: 使用 caplog 检查降级日志"""

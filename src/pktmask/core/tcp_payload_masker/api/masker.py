@@ -126,7 +126,11 @@ def create_masking_recipe_from_dict(
     instructions_dict: Dict[str, Dict]
 ) -> MaskingRecipe:
     """
-    从字典格式创建掩码配方
+    【已废弃】从字典格式创建掩码配方
+    
+    注意：此函数已废弃，因为依赖的 BlindPacketMasker 已被移除。
+    请使用 utils.helpers.create_masking_recipe_from_dict 替代，
+    或直接使用新的智能处理器模式（processor_adapter）。
     
     Args:
         instructions_dict: 指令字典，键为"index_timestamp"格式
@@ -134,68 +138,13 @@ def create_masking_recipe_from_dict(
     Returns:
         MaskingRecipe: 掩码配方对象
         
-    Example:
-        instructions = {
-            "5_1234567890.123456": {
-                "packet_index": 5,
-                "packet_timestamp": "1234567890.123456",
-                "payload_offset": 54,
-                "mask_spec": {"type": "MaskAfter", "keep_bytes": 5}
-            }
-        }
-        recipe = create_masking_recipe_from_dict(instructions)
+    Raises:
+        NotImplementedError: 此函数已被废弃
     """
-    from ..models.mask_spec import MaskAfter, MaskRange, KeepAll
-    
-    instructions = {}
-    
-    for key, inst_dict in instructions_dict.items():
-        try:
-            # 解析键
-            parts = key.split('_', 1)
-            if len(parts) != 2:
-                logger.warning(f"忽略格式错误的指令键: {key}")
-                continue
-            
-            packet_index = int(parts[0])
-            packet_timestamp = parts[1]
-            
-            # 创建mask_spec对象
-            mask_spec_dict = inst_dict['mask_spec']
-            mask_type = mask_spec_dict['type']
-            
-            if mask_type == 'MaskAfter':
-                mask_spec = MaskAfter(keep_bytes=mask_spec_dict['keep_bytes'])
-            elif mask_type == 'MaskRange':
-                ranges = [
-                    type('Range', (), {'start': r['start'], 'length': r['length']})()
-                    for r in mask_spec_dict['ranges']
-                ]
-                mask_spec = MaskRange(ranges=ranges)
-            elif mask_type == 'KeepAll':
-                mask_spec = KeepAll()
-            else:
-                logger.warning(f"未知的掩码类型: {mask_type}")
-                continue
-            
-            # 创建指令对象
-            instruction = PacketMaskInstruction(
-                packet_index=packet_index,
-                packet_timestamp=packet_timestamp,
-                payload_offset=inst_dict['payload_offset'],
-                mask_spec=mask_spec
-            )
-            
-            instructions[(packet_index, packet_timestamp)] = instruction
-            
-        except (KeyError, ValueError, TypeError) as e:
-            logger.warning(f"忽略格式错误的指令 {key}: {e}")
-            continue
-    
-    return MaskingRecipe(
-        instructions=instructions,
-        total_packets=len(instructions_dict),
-        metadata={"source": "dict_conversion"}
+    raise NotImplementedError(
+        "create_masking_recipe_from_dict 已废弃（BlindPacketMasker 已移除）。"
+        "请使用 pktmask.core.tcp_payload_masker.utils.helpers.create_masking_recipe_from_dict 替代，"
+        "或使用新的智能处理器模式（processor_adapter）进行自动协议分析。"
     )
 
 
