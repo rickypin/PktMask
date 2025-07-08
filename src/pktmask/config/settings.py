@@ -117,7 +117,6 @@ class FallbackConfig:
     fallback_on_parse_error: bool = True
     fallback_on_other_errors: bool = True
     preferred_fallback_order: list = field(default_factory=lambda: [
-        "enhanced_trimmer",
         "mask_stage"
     ])
 

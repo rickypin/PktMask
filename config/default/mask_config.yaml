@@ -39,7 +39,6 @@ tools:
       fallback_on_tshark_unavailable: true
       max_retries: 2
       preferred_fallback_order:
-      - enhanced_trimmer
       - mask_stage
       retry_delay_seconds: 1.0
       tshark_check_timeout: 5.0
