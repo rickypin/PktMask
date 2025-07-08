@@ -158,9 +158,9 @@ class PipelineExecutor:
         # ------------------------------------------------------------------
         dedup_cfg = config.get("dedup", {})
         if dedup_cfg.get("enabled", False):
-            from pktmask.core.pipeline.stages.dedup import DedupStage
+            from pktmask.core.pipeline.stages.dedup import DeduplicationStage
 
-            stage = DedupStage(dedup_cfg)
+            stage = DeduplicationStage(dedup_cfg)
             stage.initialize()
             stages.append(stage)
 

@@ -17,7 +17,7 @@ except ImportError:
     rdpcap = wrpcap = Packet = None
 
 
-class Deduplicator(BaseProcessor):
+class DeduplicationProcessor(BaseProcessor):
     """去重处理器
     
     直接实现数据包去重功能。
@@ -183,4 +183,22 @@ class Deduplicator(BaseProcessor):
         except Exception as e:
             self._logger.warning(f"生成数据包哈希失败: {e}")
             # 备用方案：使用字符串表示
-            return hashlib.md5(str(packet).encode()).hexdigest() 
+            return hashlib.md5(str(packet).encode()).hexdigest()
+
+
+# 兼容性别名 - 保持向后兼容
+class Deduplicator(DeduplicationProcessor):
+    """兼容性别名，请使用 DeduplicationProcessor 代替。
+    
+    .. deprecated:: 当前版本
+       请使用 :class:`DeduplicationProcessor` 代替 :class:`Deduplicator`
+    """
+    
+    def __init__(self, config: ProcessorConfig):
+        import warnings
+        warnings.warn(
+            "Deduplicator 已废弃，请使用 DeduplicationProcessor 代替",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        super().__init__(config)

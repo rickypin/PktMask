@@ -759,7 +759,7 @@ class ReportManager:
             # 新Pipeline系统没有type字段，从step_name推断
             if step_name_raw == 'AnonStage':
                 step_type = 'mask_ip'  # 统一使用mask_ip作为IP匿名化的类型
-            elif step_name_raw == 'DedupStage':
+            elif step_name_raw in ['DedupStage', 'DeduplicationStage']:
                 step_type = 'remove_dupes'
             elif step_name_raw == 'MaskStage':
                 step_type = 'trim_payloads'

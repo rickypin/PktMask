@@ -7,20 +7,20 @@ import warnings
 
 from pktmask.core.pipeline.base_stage import StageBase
 from pktmask.core.pipeline.models import StageStats
-from pktmask.core.processors.deduplicator import Deduplicator, ProcessorConfig, ProcessorResult
+from pktmask.core.processors.deduplicator import DeduplicationProcessor, ProcessorConfig, ProcessorResult
 
 
-class DedupStage(StageBase):
-    """基于 :class:`~pktmask.core.processors.deduplicator.Deduplicator` 的 Pipeline 去重阶段。"""
+class DeduplicationStage(StageBase):
+    """基于 :class:`~pktmask.core.processors.deduplicator.DeduplicationProcessor` 的 Pipeline 去重阶段。"""
 
-    name: str = "DedupStage"
+    name: str = "DeduplicationStage"
 
     def __init__(self, config: Optional[Dict[str, Any]] | None = None):
         # Stage config 目前无需特殊解析，仅透传给底层处理器
         self._config: Dict[str, Any] = config or {}
         # Deduplicator 不直接消耗额外配置，构造轻量对象即可
         proc_cfg = ProcessorConfig(enabled=True, name="dedup_packet")
-        self._processor: Deduplicator = Deduplicator(proc_cfg)
+        self._processor: DeduplicationProcessor = DeduplicationProcessor(proc_cfg)
         super().__init__()
 
     # ------------------------------------------------------------------
@@ -62,7 +62,7 @@ class DedupStage(StageBase):
 
         if not result.success:
             warnings.warn(
-                f"DedupStage 处理失败: {result.error}",
+                f"DeduplicationStage 处理失败: {result.error}",
                 RuntimeWarning,
                 stacklevel=2,
             )
@@ -82,4 +82,21 @@ class DedupStage(StageBase):
             packets_modified=int(stats_dict.get("removed_count", 0)),
             duration_ms=duration_ms,
             extra_metrics=stats_dict,
-        ) 
+        )
+
+
+# 兼容性别名 - 保持向后兼容
+class DedupStage(DeduplicationStage):
+    """兼容性别名，请使用 DeduplicationStage 代替。
+    
+    .. deprecated:: 当前版本
+       请使用 :class:`DeduplicationStage` 代替 :class:`DedupStage`
+    """
+    
+    def __init__(self, config: Optional[Dict[str, Any]] | None = None):
+        warnings.warn(
+            "DedupStage 已废弃，请使用 DeduplicationStage 代替",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        super().__init__(config)
