@@ -20,9 +20,15 @@ class StepStatus(str, Enum):
 
 
 class BaseStepResult(BaseModel):
-    """基础步骤结果"""
-    step_name: str = Field(..., description="步骤名称")
-    step_type: str = Field(..., description="步骤类型")
+    """基础步骤结果
+    
+    命名说明：
+    - step_name：显示用的步骤名称（如 "Deduplication", "IP Anonymization"）
+    - step_type：内部处理标识符（如 "dedup_packet", "mask_ip"）
+    - 两者间的映射关系请参考 config/naming_aliases.yaml
+    """
+    step_name: str = Field(..., description="步骤名称（用于显示）")
+    step_type: str = Field(..., description="步骤类型（内部标识符）")
     status: StepStatus = Field(default=StepStatus.PENDING, description="步骤状态")
     start_time: Optional[datetime] = Field(default=None, description="开始时间")
     end_time: Optional[datetime] = Field(default=None, description="结束时间")
@@ -136,12 +142,21 @@ class CustomStepResult(BaseStepResult):
 
 
 # 步骤结果类型映射
+# 注意：此映射表定义了处理逻辑标识符与领域模型类之间的对应关系
+# 详细的命名规则和别名映射请参考：config/naming_aliases.yaml
 STEP_RESULT_MAPPING = {
-    'mask_ip': IPAnonymizationResult,
-    'dedup_packet': DeduplicationResult,
-    'trim_packet': TrimmingResult,
-    'intelligent_trim': TrimmingResult,  # 别名
-    'remove_dupes': DeduplicationResult,  # 别名
+    # IP匿名化处理
+    'mask_ip': IPAnonymizationResult,      # 标准处理标识符
+    'mask_ips': IPAnonymizationResult,     # 复数形式别名
+    
+    # 去重处理
+    'dedup_packet': DeduplicationResult,   # 标准处理标识符
+    'remove_dupes': DeduplicationResult,   # 传统别名
+    
+    # 载荷掩码处理
+    'trim_packet': TrimmingResult,         # 传统处理标识符
+    'intelligent_trim': TrimmingResult,    # 智能裁切别名
+    'mask_payload': TrimmingResult,        # 新标准处理标识符
 }
 
 

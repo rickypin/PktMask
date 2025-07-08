@@ -1,0 +1,92 @@
+# 命名别名映射配置
+# 记录领域模型与处理逻辑之间的正式映射关系
+
+# 结果类型映射
+result_type_mapping:
+  # 去重相关
+  dedup_packet: "DeduplicationResult"
+  remove_dupes: "DeduplicationResult"
+  
+  # IP匿名化相关  
+  mask_ip: "IPAnonymizationResult"
+  mask_ips: "IPAnonymizationResult"
+  
+  # 载荷裁切相关
+  trim_packet: "TrimmingResult"
+  intelligent_trim: "TrimmingResult"
+  mask_payload: "TrimmingResult"
+
+# 步骤名称映射
+step_name_mapping:
+  # 标准化步骤名称
+  deduplication:
+    aliases: ["remove_dupes", "dedup_packet", "dedup"]
+    canonical: "Deduplication"
+    description: "数据包去重处理"
+    
+  ip_anonymization:
+    aliases: ["mask_ip", "mask_ips", "anon_ip"]
+    canonical: "IP Anonymization"
+    description: "IP地址匿名化处理"
+    
+  payload_masking:
+    aliases: ["trim_packet", "intelligent_trim", "mask_payload"]
+    canonical: "Payload Masking"
+    description: "载荷掩码处理"
+
+# 处理器类型映射
+processor_type_mapping:
+  # 去重处理器
+  dedup:
+    class_name: "DeduplicationProcessor"
+    legacy_aliases: ["Deduplicator"]
+    
+  # IP匿名化处理器
+  anon:
+    class_name: "IPAnonymizationProcessor" 
+    legacy_aliases: ["IPAnonymizer"]
+    
+  # 载荷掩码处理器
+  mask:
+    class_name: "MaskingProcessor"
+    legacy_aliases: ["EnhancedTrimmer", "TrimProcessor"]
+
+# Stage类型映射
+stage_type_mapping:
+  # 去重Stage
+  dedup:
+    class_name: "DeduplicationStage"
+    legacy_aliases: ["DedupStage"]
+    
+  # IP匿名化Stage
+  anon:
+    class_name: "AnonStage"
+    legacy_aliases: ["IPAnonymizationStage"]
+    
+  # 载荷掩码Stage
+  mask:
+    class_name: "MaskStage"
+    legacy_aliases: ["MaskPayloadStage", "TrimmingStage"]
+
+# 配置键映射
+config_key_mapping:
+  # Pipeline配置键
+  dedup: 
+    description: "去重配置"
+    enabled_key: "enabled"
+    
+  anon:
+    description: "IP匿名化配置" 
+    enabled_key: "enabled"
+    strategy_key: "strategy"
+    
+  mask:
+    description: "载荷掩码配置"
+    enabled_key: "enabled"
+    mode_key: "mode"
+
+# 文件后缀映射
+file_suffix_mapping:
+  dedup: "-Deduped"
+  anon: "-Masked" 
+  mask: "-Trimmed"

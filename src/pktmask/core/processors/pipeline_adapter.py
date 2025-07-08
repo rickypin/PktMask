@@ -2,13 +2,13 @@
 处理器管道适配器
 
 ！！！废弃警告！！！
-该模块已被废弃，请使用 ProcessorStageAdapter 替代。
+该模块已被废弃，请使用 pktmask.adapters.pipeline_processor_adapter 代替。
 
 原功能：将新的处理器系统适配到现有的Pipeline架构中，
 提供向后兼容性而无需重写整个管道系统。
 
 迁移指南：
-- 使用 pktmask.core.pipeline.stages.processor_stage_adapter.ProcessorStageAdapter
+- 使用 pktmask.adapters.pipeline_processor_adapter.PipelineProcessorAdapter
 - 新的适配器更简洁，支持新的 Pipeline 架构
 """
 from typing import List, Optional, Dict, Any
