@@ -18,7 +18,7 @@ from pktmask.core.tcp_payload_masker.utils.helpers import (
 )
 
 
-class MaskStage(StageBase):
+class MaskPayloadStage(StageBase):
     """完整功能的载荷掩码阶段
 
     该 Stage 提供两种处理模式：
@@ -40,7 +40,7 @@ class MaskStage(StageBase):
     Basic Mode 统一为 *透传模式* (不再使用 BlindPacketMasker)。
     """
 
-    name: str = "MaskStage"
+    name: str = "MaskPayloadStage"
 
     # ------------------------------------------------------------------
     # 生命周期
@@ -225,3 +225,7 @@ class MaskStage(StageBase):
                 "downgrade_trace": True
             },
         )
+
+
+# Backward compatibility alias
+MaskStage = MaskPayloadStage

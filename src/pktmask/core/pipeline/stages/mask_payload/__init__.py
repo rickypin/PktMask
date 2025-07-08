@@ -1,3 +1,3 @@
-from .stage import MaskStage
+from .stage import MaskPayloadStage as MaskStage
 
-__all__ = ["MaskStage"] 
+__all__ = ["MaskStage"]

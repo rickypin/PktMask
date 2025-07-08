@@ -180,7 +180,7 @@ class PipelineExecutor:
         # ------------------------------------------------------------------
         mask_cfg = config.get("mask", {})
         if mask_cfg.get("enabled", False):
-            from pktmask.core.pipeline.stages.mask_payload.stage import MaskStage
+            from pktmask.core.pipeline.stages.mask_payload.stage import MaskPayloadStage as MaskStage
             
             # 创建 Enhanced MaskStage 实例
             stage = MaskStage(mask_cfg)

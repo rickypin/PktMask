@@ -30,7 +30,7 @@ class ProcessorRegistry:
             from .ip_anonymizer import IPAnonymizer
             from .deduplicator import Deduplicator  
             from .trimmer import Trimmer
-            from .masking_processor import MaskingProcessor
+            from .masking_processor import MaskPayloadProcessor as MaskingProcessor
             
             cls._processors.update({
                 # 新正式键 (见 REFACTOR_PLAN §3)

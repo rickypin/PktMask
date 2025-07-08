@@ -37,9 +37,9 @@ from .api.types import (
 from .consistency import verify_file_consistency
 
 # 向后兼容的旧API (保留以避免破坏现有代码，Phase 2中适配)
-from .tcp_masker import TcpPayloadMasker
+from .tcp_masker import TcpMaskPayloadApplier as TcpPayloadMasker
 from .keep_range_models import TcpKeepRangeEntry, TcpMaskingResult, TcpKeepRangeTable
-from .keep_range_applier import MaskApplier, create_mask_applier
+from .keep_range_applier import TcpMaskRangeApplier, create_mask_applier
 from .exceptions import (
     TcpPayloadMaskerError,
     ProtocolBindingError,
@@ -82,7 +82,7 @@ __all__ = [
     'TcpKeepRangeEntry', 
     'TcpMaskingResult',
     'TcpKeepRangeTable',
-    'MaskApplier',
+    'TcpMaskRangeApplier',
     'create_mask_applier',
     'TcpPayloadMaskerError',
     'ProtocolBindingError',

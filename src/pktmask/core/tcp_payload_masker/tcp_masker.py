@@ -22,10 +22,10 @@ from .exceptions import (
     ConfigurationError
 )
 from .file_handler import PcapFileHandler
-from .keep_range_applier import MaskApplier
+from .keep_range_applier import TcpMaskRangeApplier
 
 
-class TcpPayloadMasker:
+class TcpMaskPayloadApplier:
     """TCP载荷掩码处理器
     
     专用于TCP载荷的保留范围掩码处理。采用隐私优先设计理念：
@@ -244,7 +244,7 @@ class TcpPayloadMasker:
         """
         # 初始化组件
         file_handler = PcapFileHandler(self.logger)
-        keep_range_masker = MaskApplier(
+        keep_range_masker = TcpMaskRangeApplier(
             mask_byte_value=self.config_manager.get('mask_byte_value', 0x00),
             logger=self.logger
         )

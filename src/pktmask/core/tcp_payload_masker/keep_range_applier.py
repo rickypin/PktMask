@@ -14,7 +14,7 @@ from .payload_extractor import PayloadExtractor
 from .exceptions import TcpPayloadMaskerError, ValidationError
 
 
-class MaskApplier:
+class TcpMaskRangeApplier:
     """掩码应用器
     
     负责将掩码规则精确应用到数据包载荷中。
@@ -193,7 +193,7 @@ class MaskApplier:
 def create_mask_applier(
     mask_byte_value: int = 0x00,
     logger: Optional[logging.Logger] = None
-) -> MaskApplier:
+) -> TcpMaskRangeApplier:
     """创建掩码应用器实例的工厂函数
     
     Args:
@@ -201,6 +201,6 @@ def create_mask_applier(
         logger: 可选的日志器
         
     Returns:
-        MaskApplier: 掩码应用器实例
+        TcpMaskRangeApplier: 掩码应用器实例
     """
-    return MaskApplier(mask_byte_value=mask_byte_value, logger=logger) 
+    return TcpMaskRangeApplier(mask_byte_value=mask_byte_value, logger=logger)

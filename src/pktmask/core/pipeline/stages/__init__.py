@@ -5,7 +5,7 @@ from importlib import import_module
 def __getattr__(name: str):
     if name == "MaskStage":
         module = import_module("pktmask.core.pipeline.stages.mask_payload.stage")
-        return getattr(module, name)
+        return getattr(module, "MaskPayloadStage")
     if name == "DedupStage":
         module = import_module("pktmask.core.pipeline.stages.dedup")
         return getattr(module, name)

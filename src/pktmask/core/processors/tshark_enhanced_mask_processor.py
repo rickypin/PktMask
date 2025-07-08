@@ -676,7 +676,7 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
     def _initialize_mask_stage_fallback(self):
         """初始化MaskStage降级处理器"""
         try:
-            from ..pipeline.stages.mask_payload.stage import MaskStage
+            from ..pipeline.stages.mask_payload.stage import MaskPayloadStage as MaskStage
             
             # 创建基础模式的MaskStage配置
             mask_stage_config = {

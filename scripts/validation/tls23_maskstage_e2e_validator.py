@@ -23,12 +23,20 @@ Version: v2.0 (Phase 3 Day 15 增强版)
 import argparse
 import json
 import logging
+import os
 import shutil
 import subprocess
 import sys
 from glob import glob
 from pathlib import Path
 from typing import List, Dict, Any, Tuple
+
+# Add src directory to Python path for module imports
+script_dir = Path(__file__).parent.absolute()
+project_root = script_dir.parent.parent  # Go up two levels to project root
+src_path = project_root / "src"
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
 
 # -------------------------- 日志配置 --------------------------
 LOG_FORMAT = "[%(levelname)s] %(message)s"
@@ -45,7 +53,12 @@ def run_cmd(cmd: List[str], verbose: bool = False) -> None:
     """执行外部命令并实时输出。出现非零退出码时抛出 RuntimeError"""
     if verbose:
         logger.info("运行命令: %s", " ".join(cmd))
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    
+    # Set up environment with PYTHONPATH
+    env = os.environ.copy()
+    env['PYTHONPATH'] = str(src_path)
+    
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
     if verbose and result.stdout:
         print(result.stdout)
     if result.returncode != 0:
@@ -728,7 +741,7 @@ def run_maskstage_internal(input_path: Path, output_path: Path, verbose: bool = 
 
     try:
         from pktmask.core.pipeline.executor import PipelineExecutor
-        from pktmask.core.pipeline.stages.mask_payload.stage import MaskStage
+        from pktmask.core.pipeline.stages.mask_payload.stage import MaskPayloadStage as MaskStage
     except ImportError as imp_err:
         raise RuntimeError(f"无法导入 Enhanced MaskStage: {imp_err}")
 
@@ -768,7 +781,7 @@ def run_maskstage_direct(input_path: Path, output_path: Path, verbose: bool = Fa
         logger.info("直接使用 Enhanced MaskStage 处理: %s -> %s", input_path, output_path)
 
     try:
-        from pktmask.core.pipeline.stages.mask_payload.stage import MaskStage
+        from pktmask.core.pipeline.stages.mask_payload.stage import MaskPayloadStage as MaskStage
     except ImportError as imp_err:
         raise RuntimeError(f"无法导入 Enhanced MaskStage: {imp_err}")
 

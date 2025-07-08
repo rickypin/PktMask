@@ -4,7 +4,7 @@ from .base_processor import BaseProcessor, ProcessorConfig, ProcessorResult
 from .tshark_enhanced_mask_processor import TSharkEnhancedMaskProcessor
 
 
-class MaskingProcessor(BaseProcessor):
+class MaskPayloadProcessor(BaseProcessor):
     """新版官方载荷掩码处理器。
 
     该类作为官方推荐的载荷掩码处理器，基于TSharkEnhancedMaskProcessor实现。
