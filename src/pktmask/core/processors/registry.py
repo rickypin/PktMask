@@ -58,21 +58,6 @@ class ProcessorRegistry:
         """获取处理器实例"""
         cls._load_builtin_processors()
         
-        # 别名映射，保持向后兼容
-        alias_map = {
-            'mask_ip': 'anon_ip',
-            'trim_packet': 'mask_payload',
-        }
-
-        if name not in cls._processors and name in alias_map:
-            import warnings
-
-            new_name = alias_map[name]
-            warnings.warn(
-                f"处理器键 '{name}' 已废弃，请使用 '{new_name}'", DeprecationWarning, stacklevel=2
-            )
-            name = new_name
-
         if name not in cls._processors:
             available = list(cls._processors.keys())
             raise ValueError(f"未知处理器: {name}。可用处理器: {available}")
