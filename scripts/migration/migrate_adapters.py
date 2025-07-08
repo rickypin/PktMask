@@ -51,7 +51,7 @@ IMPORT_MAPPINGS = {
 
 # 类名映射
 CLASS_MAPPINGS = {
-    "PipelineProcessorAdapter": "ProcessorAdapter",
+    "ProcessorAdapter": "ProcessorAdapter",
 }
 
 

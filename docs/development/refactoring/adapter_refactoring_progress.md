@@ -42,10 +42,15 @@
 
 ## 阶段二：迁移阶段（7天）
 
-### 第1-2天：核心适配器迁移 ⏳ [计划：2025-01-12至13]
-- [ ] 迁移 `processor_adapter.py`
-- [ ] 迁移 `encapsulation/adapter.py` → `encapsulation_adapter.py`
-- [ ] 更新相关导入路径
+### 第1-2天：核心适配器迁移 ✅ [2025-01-09]
+- [x] 迁移 `processor_adapter.py`
+- [x] 迁移 `encapsulation/adapter.py` → `encapsulation_adapter.py`
+- [x] 更新相关导入路径
+  - [x] 所有6个适配器文件已成功迁移到新位置
+  - [x] 创建了向后兼容的代理文件
+  - [x] 更新了4个文件中的7处导入语句
+  - [x] 修复了所有适配器中的相对导入路径
+  - [x] 解决了domain模块的循环导入问题
 
 ### 第3-4天：数据适配器迁移 ⏳ [计划：2025-01-14至15]
 - [ ] 迁移 `event_adapter.py`

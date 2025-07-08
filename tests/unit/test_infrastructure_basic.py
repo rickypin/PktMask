@@ -91,7 +91,7 @@ class TestDomainAdapters:
     def test_event_adapter_exists(self):
         """测试事件适配器存在"""
         try:
-            from pktmask.domain.adapters.event_adapter import EventDataAdapter
+            from pktmask.adapters.event_adapter import EventDataAdapter
             assert EventDataAdapter is not None
         except ImportError:
             pytest.skip("事件适配器不可用")
@@ -99,7 +99,7 @@ class TestDomainAdapters:
     def test_statistics_adapter_exists(self):
         """测试统计适配器存在"""
         try:
-            from pktmask.domain.adapters.statistics_adapter import StatisticsDataAdapter
+            from pktmask.adapters.statistics_adapter import StatisticsDataAdapter
             assert StatisticsDataAdapter is not None
         except ImportError:
             pytest.skip("统计适配器不可用")

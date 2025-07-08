@@ -4,4 +4,10 @@
 为保持向后兼容而设计的适配器集合。
 """
 
-# 后续会在这里添加兼容性适配器的导出
+from .anon_compat import IpAnonymizationStageCompat
+from .dedup_compat import DeduplicationStageCompat
+
+__all__ = [
+    'IpAnonymizationStageCompat',
+    'DeduplicationStageCompat',
+]
