@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-ProcessorStageAdapter 单元测试
+PipelineProcessorAdapter 单元测试
 
 测试 BaseProcessor 到 StageBase 的适配功能。
 """
@@ -14,10 +14,10 @@ import tempfile
 import pytest
 import logging
 
-from pktmask.core.pipeline.stages.processor_stage_adapter import ProcessorStageAdapter
+from pktmask.core.adapters.processor_adapter import PipelineProcessorAdapter
 from pktmask.core.pipeline.models import StageStats
 from pktmask.core.processors.base_processor import BaseProcessor, ProcessorConfig, ProcessorResult
-from pktmask.core.pipeline.stages.mask_payload.stage import MaskStage
+from pktmask.core.pipeline.stages.mask_payload.stage import MaskPayloadStage
 from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe, MaskAfter
 
 
@@ -37,8 +37,8 @@ class MockProcessor(BaseProcessor):
         return "Mock Processor"
 
 
-class TestProcessorStageAdapter(unittest.TestCase):
-    """ProcessorStageAdapter 测试类"""
+class TestPipelineProcessorAdapter(unittest.TestCase):
+    """PipelineProcessorAdapter 测试类"""
     
     def setUp(self):
         """测试准备"""
@@ -54,7 +54,7 @@ class TestProcessorStageAdapter(unittest.TestCase):
         
     def test_adapter_initialization(self):
         """测试适配器初始化"""
-        adapter = ProcessorStageAdapter(self.mock_processor, self.adapter_config)
+        adapter = PipelineProcessorAdapter(self.mock_processor, self.adapter_config)
         
         # 验证基本属性
         self.assertEqual(adapter.name, "Adapter_MockProcessor")
@@ -63,7 +63,7 @@ class TestProcessorStageAdapter(unittest.TestCase):
         
     def test_adapter_initialize_method(self):
         """测试适配器初始化方法"""
-        adapter = ProcessorStageAdapter(self.mock_processor, self.adapter_config)
+        adapter = PipelineProcessorAdapter(self.mock_processor, self.adapter_config)
         
         # 初始化应该成功
         adapter.initialize()
@@ -74,7 +74,7 @@ class TestProcessorStageAdapter(unittest.TestCase):
         
     def test_adapter_initialize_with_runtime_config(self):
         """测试带运行时配置的初始化"""
-        adapter = ProcessorStageAdapter(self.mock_processor, self.adapter_config)
+        adapter = PipelineProcessorAdapter(self.mock_processor, self.adapter_config)
         runtime_config = {"runtime_param": "runtime_value"}
         
         adapter.initialize(runtime_config)
@@ -85,7 +85,7 @@ class TestProcessorStageAdapter(unittest.TestCase):
         
     def test_successful_file_processing(self):
         """测试成功的文件处理"""
-        adapter = ProcessorStageAdapter(self.mock_processor, self.adapter_config)
+        adapter = PipelineProcessorAdapter(self.mock_processor, self.adapter_config)
         adapter.initialize()
         
         # 处理文件
@@ -112,7 +112,7 @@ class TestProcessorStageAdapter(unittest.TestCase):
             error="Test error message"
         )
         
-        adapter = ProcessorStageAdapter(self.mock_processor, self.adapter_config)
+        adapter = PipelineProcessorAdapter(self.mock_processor, self.adapter_config)
         adapter.initialize()
         
         # 处理文件应该抛出异常
@@ -127,7 +127,7 @@ class TestProcessorStageAdapter(unittest.TestCase):
         # 设置处理器抛出异常
         self.mock_processor.process_file = Mock(side_effect=Exception("Test exception"))
         
-        adapter = ProcessorStageAdapter(self.mock_processor, self.adapter_config)
+        adapter = PipelineProcessorAdapter(self.mock_processor, self.adapter_config)
         adapter.initialize()
         
         # 处理文件应该抛出异常
@@ -142,7 +142,7 @@ class TestProcessorStageAdapter(unittest.TestCase):
         # 给底层处理器添加 get_required_tools 方法
         self.mock_processor.get_required_tools = Mock(return_value=['tshark', 'tcpdump'])
         
-        adapter = ProcessorStageAdapter(self.mock_processor, self.adapter_config)
+        adapter = PipelineProcessorAdapter(self.mock_processor, self.adapter_config)
         
         tools = adapter.get_required_tools()
         self.assertEqual(tools, ['tshark', 'tcpdump'])
@@ -150,7 +150,7 @@ class TestProcessorStageAdapter(unittest.TestCase):
         
     def test_get_required_tools_without_method(self):
         """测试获取必需工具（底层处理器无此方法）"""
-        adapter = ProcessorStageAdapter(self.mock_processor, self.adapter_config)
+        adapter = PipelineProcessorAdapter(self.mock_processor, self.adapter_config)
         
         tools = adapter.get_required_tools()
         self.assertEqual(tools, [])
@@ -160,14 +160,14 @@ class TestProcessorStageAdapter(unittest.TestCase):
         # 给底层处理器添加 stop 方法
         self.mock_processor.stop = Mock()
         
-        adapter = ProcessorStageAdapter(self.mock_processor, self.adapter_config)
+        adapter = PipelineProcessorAdapter(self.mock_processor, self.adapter_config)
         adapter.stop()
         
         self.mock_processor.stop.assert_called_once()
         
     def test_stop_without_method(self):
         """测试停止功能（底层处理器无此方法）"""
-        adapter = ProcessorStageAdapter(self.mock_processor, self.adapter_config)
+        adapter = PipelineProcessorAdapter(self.mock_processor, self.adapter_config)
         
         # 应该不抛出异常
         adapter.stop()
@@ -177,13 +177,13 @@ class TestProcessorStageAdapter(unittest.TestCase):
         # 设置处理器初始化失败
         self.mock_processor.initialize = Mock(return_value=False)
         
-        adapter = ProcessorStageAdapter(self.mock_processor, self.adapter_config)
+        adapter = PipelineProcessorAdapter(self.mock_processor, self.adapter_config)
         
         # 初始化应该抛出异常
         with self.assertRaises(RuntimeError) as context:
             adapter.initialize()
         
-        self.assertIn("初始化失败", str(context.exception))
+        self.assertIn("Failed to initialize", str(context.exception))
         
     def tearDown(self):
         """清理测试文件"""
@@ -191,8 +191,8 @@ class TestProcessorStageAdapter(unittest.TestCase):
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
 
-class TestMaskStageProcessorAdapterIntegration(unittest.TestCase):
-    """MaskStage 与 ProcessorStageAdapter 集成测试"""
+class TestMaskStagePipelineProcessorAdapterIntegration(unittest.TestCase):
+    """MaskStage 与 PipelineProcessorAdapter 集成测试"""
     
     def setUp(self):
         """测试准备"""
@@ -212,7 +212,7 @@ class TestMaskStageProcessorAdapterIntegration(unittest.TestCase):
         config = {"mode": "processor_adapter"}
         
         with patch('pktmask.core.processors.tshark_enhanced_mask_processor.TSharkEnhancedMaskProcessor') as mock_processor_class:
-            with patch('pktmask.core.pipeline.stages.processor_stage_adapter.ProcessorStageAdapter') as mock_adapter_class:
+            with patch('pktmask.core.adapters.processor_adapter.PipelineProcessorAdapter') as mock_adapter_class:
                 # 设置 mock 返回值
                 mock_processor = Mock()
                 mock_processor.initialize.return_value = True
@@ -221,7 +221,7 @@ class TestMaskStageProcessorAdapterIntegration(unittest.TestCase):
                 
                 mock_adapter = Mock()
                 mock_adapter.process_file.return_value = StageStats(
-                    stage_name="MaskStage",
+                    stage_name="MaskPayloadStage",
                     packets_processed=100,
                     packets_modified=50,
                     duration_ms=1200.5,
@@ -229,8 +229,8 @@ class TestMaskStageProcessorAdapterIntegration(unittest.TestCase):
                 )
                 mock_adapter_class.return_value = mock_adapter
                 
-                # 创建 MaskStage
-                stage = MaskStage(config)
+                # 创建 MaskPayloadStage
+                stage = MaskPayloadStage(config)
                 stage.initialize()
                 
                 # 验证初始化使用了 processor_adapter 模式
@@ -242,7 +242,7 @@ class TestMaskStageProcessorAdapterIntegration(unittest.TestCase):
                 
                 # 验证结果
                 self.assertIsInstance(result, StageStats)
-                self.assertEqual(result.stage_name, "MaskStage")
+                self.assertEqual(result.stage_name, "MaskPayloadStage")
                 self.assertEqual(result.packets_processed, 100)
                 self.assertEqual(result.packets_modified, 50)
                 self.assertTrue(result.extra_metrics.get("processor_adapter_mode"))
@@ -257,7 +257,7 @@ class TestMaskStageProcessorAdapterIntegration(unittest.TestCase):
         config = {"mode": "processor_adapter"}
         
         with patch('pktmask.core.processors.tshark_enhanced_mask_processor.TSharkEnhancedMaskProcessor') as mock_processor_class:
-            with patch('pktmask.core.pipeline.stages.processor_stage_adapter.ProcessorStageAdapter') as mock_adapter_class:
+            with patch('pktmask.core.adapters.processor_adapter.PipelineProcessorAdapter') as mock_adapter_class:
                 with patch('pktmask.core.pipeline.stages.mask_payload.stage.rdpcap') as mock_rdpcap:
                     with patch('pktmask.core.pipeline.stages.mask_payload.stage.wrpcap') as mock_wrpcap:
                         # 设置 processor_adapter 抛异常
@@ -274,8 +274,8 @@ class TestMaskStageProcessorAdapterIntegration(unittest.TestCase):
                         mock_packets = [Mock(), Mock(), Mock()]
                         mock_rdpcap.return_value = mock_packets
                         
-                        # 创建 MaskStage 并处理
-                        stage = MaskStage(config)
+                        # 创建 MaskPayloadStage 并处理
+                        stage = MaskPayloadStage(config)
                         stage.initialize()
                         
                         # 直接测试 process_file 方法的降级处理
@@ -284,7 +284,7 @@ class TestMaskStageProcessorAdapterIntegration(unittest.TestCase):
                         
                         # 验证降级结果
                         self.assertIsInstance(result, StageStats)
-                        self.assertEqual(result.stage_name, "MaskStage")
+                        self.assertEqual(result.stage_name, "MaskPayloadStage")
                         self.assertEqual(result.packets_processed, len(mock_packets))
                         self.assertEqual(result.packets_modified, 0)  # 透传模式不修改包
                         
@@ -321,8 +321,8 @@ class TestMaskStageProcessorAdapterIntegration(unittest.TestCase):
                 mock_packets = [Mock() for _ in range(10)]
                 mock_rdpcap.return_value = mock_packets
                 
-                # 创建 MaskStage
-                stage = MaskStage(config)
+                # 创建 MaskPayloadStage
+                stage = MaskPayloadStage(config)
                 stage.initialize()
                 
                 # 验证初始化使用了 basic 模式（透传）
@@ -334,7 +334,7 @@ class TestMaskStageProcessorAdapterIntegration(unittest.TestCase):
                 
                 # 验证结果 - 透传模式的特征
                 self.assertIsInstance(result, StageStats)
-                self.assertEqual(result.stage_name, "MaskStage")
+                self.assertEqual(result.stage_name, "MaskPayloadStage")
                 self.assertEqual(result.packets_processed, 10)  # 读取的包数
                 self.assertEqual(result.packets_modified, 0)   # 透传模式不修改包
                 
@@ -365,13 +365,13 @@ class TestMaskStageProcessorAdapterIntegration(unittest.TestCase):
                     captured_logs.append(record)
             
             log_handler = LogCapture()
-            # 使用 MaskStage 的日志记录器名称
-            logger = logging.getLogger('MaskStage')
+            # 使用 MaskPayloadStage 的日志记录器名称
+            logger = logging.getLogger('MaskPayloadStage')
             logger.addHandler(log_handler)
             logger.setLevel(logging.ERROR)
             
             try:
-                stage = MaskStage(config)
+                stage = MaskPayloadStage(config)
                 stage.initialize()
                 
                 # 验证降级到 basic 模式

@@ -26,7 +26,7 @@ class MaskPayloadStage(StageBase):
     - 完整统计和事件集成
 
     支持两种处理模式：
-    1. Processor Adapter Mode (默认): 使用 TSharkEnhancedMaskProcessor + ProcessorStageAdapter
+    1. Processor Adapter Mode (默认): 使用 TSharkEnhancedMaskProcessor + PipelineProcessorAdapter
     2. Basic Mode (降级): 纯透传复制模式（BlindPacketMasker 已移除）
 
     配置 ``config`` 字典支持以下键：
@@ -56,7 +56,7 @@ class MaskPayloadStage(StageBase):
         self._use_processor_adapter_mode = mode == "processor_adapter"
         
         # Processor Adapter Mode 组件
-        self._processor_adapter: Optional[Any] = None  # ProcessorStageAdapter，延迟导入
+        self._processor_adapter: Optional[Any] = None  # PipelineProcessorAdapter，延迟导入
         
         # Basic Mode 组件：仅透传复制，无外部依赖
         self._masker = None  # 占位，保持接口一致
@@ -90,7 +90,7 @@ class MaskPayloadStage(StageBase):
 
 
     def _initialize_processor_adapter_mode(self, config: Dict[str, Any]) -> None:
-        """初始化处理器适配器模式（TSharkEnhancedMaskProcessor + ProcessorStageAdapter）"""
+        """初始化处理器适配器模式（TSharkEnhancedMaskProcessor + PipelineProcessorAdapter）"""
         try:
             # 创建增强处理器并用适配器包装
             self._processor_adapter = self._create_enhanced_processor(config)
@@ -113,7 +113,7 @@ class MaskPayloadStage(StageBase):
         """创建增强掩码处理器"""
         from pktmask.core.processors.tshark_enhanced_mask_processor import TSharkEnhancedMaskProcessor
         from pktmask.core.processors.base_processor import ProcessorConfig
-        from pktmask.core.pipeline.stages.processor_stage_adapter import ProcessorStageAdapter
+        from pktmask.core.adapters.processor_adapter import PipelineProcessorAdapter
         
         # 创建处理器配置
         processor_config = ProcessorConfig(
@@ -125,8 +125,8 @@ class MaskPayloadStage(StageBase):
         # 创建 TSharkEnhancedMaskProcessor 实例
         processor = TSharkEnhancedMaskProcessor(processor_config)
         
-        # 用 ProcessorStageAdapter 包装
-        adapter = ProcessorStageAdapter(processor, config)
+        # 用 PipelineProcessorAdapter 包装
+        adapter = PipelineProcessorAdapter(processor, config)
         
         return adapter
 
@@ -157,14 +157,14 @@ class MaskPayloadStage(StageBase):
             return self._process_with_basic_mode(input_path, output_path)
 
     def _process_with_processor_adapter_mode(self, input_path: Path, output_path: Path) -> StageStats:
-        """使用 TSharkEnhancedMaskProcessor + ProcessorStageAdapter 进行处理"""
+        """使用 TSharkEnhancedMaskProcessor + PipelineProcessorAdapter 进行处理"""
         start_time = time.time()
         
         try:
             # 通过适配器调用 TSharkEnhancedMaskProcessor
             result = self._processor_adapter.process_file(input_path, output_path)
             
-            # ProcessorStageAdapter.process_file 返回 StageStats，直接返回
+            # PipelineProcessorAdapter.process_file 返回 StageStats，直接返回
             return result
             
         except Exception as e:
