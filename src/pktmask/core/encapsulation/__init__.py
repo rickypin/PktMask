@@ -20,7 +20,7 @@ from .types import (
 
 from .detector import EncapsulationDetector
 from .parser import ProtocolStackParser
-from .adapter import ProcessingAdapter
+# ProcessingAdapter 已移至 pktmask.adapters.encapsulation_adapter
 
 __all__ = [
     # 数据类型

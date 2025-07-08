@@ -8,7 +8,6 @@ from scapy.all import PcapReader, PcapNgReader, IP, IPv6, TCP, UDP
 from ..infrastructure.logging import get_logger, log_performance
 from ..common.exceptions import ProcessingError, NetworkError
 from ..common.constants import ProcessingConstants
-from .encapsulation import ProcessingAdapter, EncapsulationType
 
 class AnonymizationStrategy(ABC):
     """IP 匿名化策略的抽象基类。"""
@@ -305,8 +304,8 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
     """
     def __init__(self):
         self._ip_map: Dict[str, str] = {}
-        # 新增：封装处理适配器
-        self._encap_adapter = ProcessingAdapter()
+        # 新增：封装处理适配器（延迟初始化以避免循环导入）
+        self._encap_adapter = None
         self._encap_stats = {
             'total_packets_scanned': 0,
             'encapsulated_packets': 0,
@@ -314,10 +313,18 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
             'plain_packets': 0
         }
 
+    def _get_encap_adapter(self):
+        """延迟初始化封装适配器以避免循环导入"""
+        if self._encap_adapter is None:
+            from pktmask.adapters.encapsulation_adapter import ProcessingAdapter
+            self._encap_adapter = ProcessingAdapter()
+        return self._encap_adapter
+
     def reset(self):
         self._ip_map = {}
         # 重置封装统计
-        self._encap_adapter.reset_stats()
+        if self._encap_adapter is not None:
+            self._encap_adapter.reset_stats()
         self._encap_stats = {
             'total_packets_scanned': 0,
             'encapsulated_packets': 0,
@@ -385,7 +392,8 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                         self._encap_stats['total_packets_scanned'] += 1
                         
                         # 【增强】使用封装适配器分析数据包，提取所有层级的IP
-                        ip_analysis = self._encap_adapter.analyze_packet_for_ip_processing(packet)
+                        encap_adapter = self._get_encap_adapter()
+                        ip_analysis = encap_adapter.analyze_packet_for_ip_processing(packet)
                         
                         # 更新封装统计
                         if ip_analysis['has_encapsulation']:
@@ -396,7 +404,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                             self._encap_stats['plain_packets'] += 1
                         
                         # 【增强】处理所有层级的IP地址
-                        ip_pairs = self._encap_adapter.extract_ips_for_anonymization(ip_analysis)
+                        ip_pairs = encap_adapter.extract_ips_for_anonymization(ip_analysis)
                         for src_ip, dst_ip, context in ip_pairs:
                             # 处理IPv4地址
                             if '.' in src_ip:
@@ -428,7 +436,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         duration = end_time - start_time
         
         # 【增强】获取封装处理统计
-        encap_proc_stats = self._encap_adapter.get_processing_stats()
+        encap_proc_stats = encap_adapter.get_processing_stats()
         
         log_performance('ip_prescan_addresses', duration, 'ip_anonymization.performance', 
                        files_processed=len(files_to_process), unique_ips=len(unique_ips),
@@ -591,7 +599,8 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         is_anonymized = False
         
         # 【增强】使用封装适配器分析数据包
-        ip_analysis = self._encap_adapter.analyze_packet_for_ip_processing(pkt)
+        encap_adapter = self._get_encap_adapter()
+        ip_analysis = encap_adapter.analyze_packet_for_ip_processing(pkt)
         
         if ip_analysis['has_encapsulation'] and ip_analysis['ip_layers']:
             # 【增强】多层封装处理 - 匿名化所有层级的IP
