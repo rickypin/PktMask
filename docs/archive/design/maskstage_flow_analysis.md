@@ -1,8 +1,14 @@
+> ⚠️ **警告**: 本文档已过时，描述的是旧版本架构。
+> 
+> 当前版本的架构文档请参考: [MaskPayloadStage 架构文档](../../current/architecture/mask_payload_stage.md)
+> 
+> 本文档中提到的 PySharkAnalyzer、ProcessorStageAdapter、BlindPacketMasker 等组件在当前版本中已不存在。
+
 # MaskStage 流程分析报告
 
 ## 文档信息
-- **创建时间**: 2025-01-27
-- **版本**: v1.0
+- **创建时间**: 2024-07-07
+- **版本**: v1.0 (已过时)
 - **作者**: 技术分析团队
 - **主题**: MaskStage处理器架构、执行流程及PyShark角色深度分析
 
