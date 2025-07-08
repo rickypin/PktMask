@@ -18,7 +18,36 @@ from pktmask.infrastructure.logging import get_logger
 
 
 class EventDataAdapter:
-    """事件数据适配器 - 在新旧数据格式之间转换"""
+    """事件数据适配器 - 在新旧数据格式之间转换
+    
+    提供新旧事件数据格式之间的双向转换，确保向后兼容性。
+    主要用于将遗留的字典格式事件转换为新的强类型事件数据模型。
+    
+    主要功能：
+    - 从遗留字典格式转换为 PipelineEventData 模型
+    - 从 PipelineEventData 模型转换回遗留字典格式
+    - 自动处理字段映射和缺失字段
+    - 提供错误恢复机制
+    
+    使用示例：
+        >>> from pktmask.adapters import EventDataAdapter
+        >>> from pktmask.core.events import PipelineEvents
+        >>> 
+        >>> adapter = EventDataAdapter()
+        >>> 
+        >>> # 转换遗留格式到新格式
+        >>> legacy_data = {'message': 'Starting pipeline', 'total_files': 10}
+        >>> event_data = adapter.from_legacy_dict(PipelineEvents.PIPELINE_START, legacy_data)
+        >>> 
+        >>> # 转换新格式到遗留格式
+        >>> legacy_dict = adapter.to_legacy_dict(event_data)
+    
+    字段映射示例：
+    - 'msg' -> 'message'
+    - 'total_dirs' -> 'total_subdirs'
+    - 'base_dir' -> 'root_path'
+    - 'output_directory' -> 'output_dir'
+    """
     
     def __init__(self):
         self._logger = get_logger(__name__)

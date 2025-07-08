@@ -15,6 +15,22 @@ class PipelineProcessorAdapter(StageBase):
     - 代理处理器的生命周期管理（初始化、停止）
     - 传递工具依赖要求
     - 提供异常处理和错误转换
+    
+    使用示例：
+        >>> from pktmask.core.processors import IPAnonymizationProcessor
+        >>> from pktmask.adapters import PipelineProcessorAdapter
+        >>> 
+        >>> # 创建处理器
+        >>> processor = IPAnonymizationProcessor(config)
+        >>> # 包装为适配器
+        >>> adapter = PipelineProcessorAdapter(processor)
+        >>> # 在管道中使用
+        >>> pipeline.add_stage(adapter)
+    
+    注意事项：
+    - 适配器会自动管理处理器的生命周期
+    - 处理器的错误会被转换为 RuntimeError
+    - 适配器名称会自动添加 'Adapter_' 前缀
     """
     
     def __init__(self, processor: BaseProcessor, config: Optional[Dict[str, Any]] = None):
