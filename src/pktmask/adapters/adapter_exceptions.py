@@ -1,0 +1,152 @@
+"""
+适配器异常定义
+
+提供适配器模块统一的异常处理机制。
+"""
+
+from typing import Optional, Dict, Any
+
+
+class AdapterError(Exception):
+    """
+    适配器基础异常类
+    
+    所有适配器异常的基类，提供统一的错误信息格式。
+    
+    Attributes:
+        message: 错误消息
+        error_code: 错误代码
+        context: 额外的上下文信息
+    """
+    
+    def __init__(self, 
+                 message: str, 
+                 error_code: Optional[str] = None,
+                 context: Optional[Dict[str, Any]] = None):
+        self.message = message
+        self.error_code = error_code or self.__class__.__name__
+        self.context = context or {}
+        super().__init__(self.format_message())
+    
+    def format_message(self) -> str:
+        """格式化错误消息"""
+        base_msg = f"[{self.error_code}] {self.message}"
+        if self.context:
+            context_str = ", ".join(f"{k}={v}" for k, v in self.context.items())
+            return f"{base_msg} (Context: {context_str})"
+        return base_msg
+
+
+class ConfigurationError(AdapterError):
+    """配置相关异常"""
+    pass
+
+
+class MissingConfigError(ConfigurationError):
+    """缺少必要配置"""
+    
+    def __init__(self, config_key: str, adapter_name: str):
+        super().__init__(
+            f"Missing required configuration: {config_key}",
+            context={"adapter": adapter_name, "missing_key": config_key}
+        )
+
+
+class InvalidConfigError(ConfigurationError):
+    """配置格式错误"""
+    
+    def __init__(self, config_key: str, expected_type: str, actual_value: Any):
+        super().__init__(
+            f"Invalid configuration value for {config_key}",
+            context={
+                "key": config_key,
+                "expected_type": expected_type,
+                "actual_value": str(actual_value)
+            }
+        )
+
+
+class DataFormatError(AdapterError):
+    """数据格式异常"""
+    pass
+
+
+class InputFormatError(DataFormatError):
+    """输入数据格式错误"""
+    
+    def __init__(self, expected_format: str, actual_format: str = "unknown"):
+        super().__init__(
+            f"Invalid input format",
+            context={
+                "expected": expected_format,
+                "actual": actual_format
+            }
+        )
+
+
+class OutputFormatError(DataFormatError):
+    """输出数据格式错误"""
+    pass
+
+
+class CompatibilityError(AdapterError):
+    """兼容性异常"""
+    pass
+
+
+class VersionMismatchError(CompatibilityError):
+    """版本不匹配"""
+    
+    def __init__(self, required_version: str, current_version: str):
+        super().__init__(
+            f"Version mismatch",
+            context={
+                "required": required_version,
+                "current": current_version
+            }
+        )
+
+
+class FeatureNotSupportedError(CompatibilityError):
+    """功能不支持"""
+    
+    def __init__(self, feature_name: str, adapter_name: str):
+        super().__init__(
+            f"Feature not supported: {feature_name}",
+            context={
+                "feature": feature_name,
+                "adapter": adapter_name
+            }
+        )
+
+
+class ProcessingError(AdapterError):
+    """处理过程异常"""
+    pass
+
+
+class TimeoutError(ProcessingError):
+    """处理超时"""
+    
+    def __init__(self, operation: str, timeout_seconds: float):
+        super().__init__(
+            f"Operation timed out: {operation}",
+            context={
+                "operation": operation,
+                "timeout": f"{timeout_seconds}s"
+            }
+        )
+
+
+class ResourceError(ProcessingError):
+    """资源不足"""
+    
+    def __init__(self, resource_type: str, details: str = ""):
+        super().__init__(
+            f"Insufficient {resource_type}",
+            context={
+                "resource": resource_type,
+                "details": details
+            }
+        )
+
