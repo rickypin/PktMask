@@ -12,6 +12,18 @@ from typing import Dict, List, Optional, Tuple
 
 from scapy.all import PcapReader, PcapNgReader, wrpcap, IP, IPv6, TCP, UDP
 
+"""
+废弃警告！
+该文件已被废弃，请使用 pktmask.core.pipeline.stages.anon_ip.AnonStage 替代。
+现有的导入路径 pktmask.stages.IpAnonymizationStage 仍然可用，
+但已重定向到新实现。
+"""
+
+import os
+import warnings
+from scapy.all import PcapReader, PcapNgReader, wrpcap
+from typing import Optional, Dict, List
+
 from ..core.base_step import ProcessingStep
 from ..core.events import PipelineEvents
 from ..core.strategy import AnonymizationStrategy
@@ -21,11 +33,22 @@ from ..utils.time import current_time
 from ..common.constants import ProcessingConstants
 from ..infrastructure.logging import get_logger
 
+# 发出废弃警告
+warnings.warn(
+    "pktmask.stages.ip_anonymization.IpAnonymizationStage 已废弃，"
+    "请使用 pktmask.core.pipeline.stages.anon_ip.AnonStage 替代。",
+    DeprecationWarning,
+    stacklevel=2
+)
+
 
 class IpAnonymizationStage(ProcessingStep):
     """
     IP 匿名化处理步骤。
     该步骤协调一个策略（用于生成映射）和一个报告器（用于保存结果）。
+    
+    注意：该类使用 Stage 后缀，这是推荐的命名约定。
+    旧的 IpAnonymizationStep 别名已废弃，请使用 IpAnonymizationStage。
     """
     suffix: str = ProcessingConstants.MASK_IP_SUFFIX
     

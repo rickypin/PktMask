@@ -374,8 +374,11 @@ def _process_pcap_data(packets: List) -> Tuple[List, int, int, List[str]]:
 
 class IntelligentTrimmingStage(ProcessingStep):
     """
-    智能裁切处理步骤，用于从pcap文件中裁切TLS应用数据。
+    智能裁切处理步骤，用于从 pcap 文件中裁切 TLS 应用数据。
     第三阶段增强：支持多层封装的载荷裁切处理。
+    
+    注意：该类使用 Stage 后缀，这是推荐的命名约定。
+    旧的 IntelligentTrimmingStep 别名已废弃，请使用 IntelligentTrimmingStage。
     """
     suffix: str = ProcessingConstants.TRIM_PACKET_SUFFIX
     

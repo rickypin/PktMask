@@ -1,4 +1,12 @@
+"""
+废弃警告！
+该文件已被废弃，请使用 pktmask.core.pipeline.stages.dedup.DedupStage 替代。
+现有的导入路径 pktmask.stages.DeduplicationStage 仍然可用，
+但已重定向到新实现。
+"""
+
 import os
+import warnings
 from scapy.all import PcapReader, PcapNgReader, wrpcap
 from typing import Optional, Dict
 
@@ -8,6 +16,14 @@ from ..utils.file_selector import select_files
 from ..utils.time import current_time
 from ..common.constants import ProcessingConstants
 from ..infrastructure.logging import get_logger
+
+# 发出废弃警告
+warnings.warn(
+    "pktmask.stages.deduplication.DeduplicationStage 已废弃，"
+    "请使用 pktmask.core.pipeline.stages.dedup.DedupStage 替代。",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 
 def process_file_dedup(file_path, error_log):
@@ -46,6 +62,9 @@ def process_file_dedup(file_path, error_log):
 class DeduplicationStage(ProcessingStep):
     """
     去重处理步骤
+    
+    注意：该类使用 Stage 后缀，这是推荐的命名约定。
+    旧的 DeduplicationStep 别名已废弃，请使用 DeduplicationStage。
     """
     suffix: str = ProcessingConstants.DEDUP_PACKET_SUFFIX
 
