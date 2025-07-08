@@ -11,7 +11,7 @@ from scapy.all import Packet, Raw
 
 from .keep_range_models import TcpKeepRangeEntry, TcpKeepRangeTable, TcpMaskingResult
 from .payload_extractor import PayloadExtractor
-from ..exceptions import TcpPayloadMaskerError, ValidationError
+from .exceptions import TcpPayloadMaskerError, ValidationError
 
 
 class MaskApplier:

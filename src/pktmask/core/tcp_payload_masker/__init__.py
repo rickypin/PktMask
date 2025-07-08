@@ -34,12 +34,12 @@ from .api.types import (
 )
 
 # 一致性验证函数
-from .core.consistency import verify_file_consistency
+from .consistency import verify_file_consistency
 
 # 向后兼容的旧API (保留以避免破坏现有代码，Phase 2中适配)
-from .core.tcp_masker import TcpPayloadMasker
-from .core.keep_range_models import TcpKeepRangeEntry, TcpMaskingResult, TcpKeepRangeTable
-from .core.keep_range_applier import MaskApplier, create_mask_applier
+from .tcp_masker import TcpPayloadMasker
+from .keep_range_models import TcpKeepRangeEntry, TcpMaskingResult, TcpKeepRangeTable
+from .keep_range_applier import MaskApplier, create_mask_applier
 from .exceptions import (
     TcpPayloadMaskerError,
     ProtocolBindingError,
@@ -58,7 +58,7 @@ from .api.validator import (
 
 # 核心引擎 - BlindPacketMasker 已移除
 # from .core.blind_masker import BlindPacketMasker  # 已废弃
-from .core.consistency import ConsistencyVerifier
+from .consistency import ConsistencyVerifier
 
 # 统计工具
 from .utils.stats import MaskingStatistics

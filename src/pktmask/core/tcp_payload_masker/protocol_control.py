@@ -27,7 +27,7 @@ except ImportError as e:
     SCAPY_AVAILABLE = False
     _import_error = e
 
-from ..exceptions import ProtocolBindingError, ValidationError
+from .exceptions import ProtocolBindingError, ValidationError
 
 
 class ProtocolBindingController:

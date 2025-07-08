@@ -13,11 +13,13 @@ from pathlib import Path
 from .keep_range_models import TcpKeepRangeEntry, TcpMaskingResult, TcpKeepRangeTable
 from .config import ConfigManager, create_config_manager
 from .protocol_control import ProtocolBindingController
-from ..exceptions import (
+from .exceptions import (
     TcpPayloadMaskerError,
-    ProtocolBindingError, 
+    ProtocolBindingError,
     FileConsistencyError,
-    ValidationError
+    TcpKeepRangeApplicationError,
+    ValidationError,
+    ConfigurationError
 )
 from .file_handler import PcapFileHandler
 from .keep_range_applier import MaskApplier

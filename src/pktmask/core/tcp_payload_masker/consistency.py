@@ -10,8 +10,8 @@ import os
 from typing import List, Dict, Tuple, Optional
 from scapy.all import PcapReader, rdpcap, raw
 
-from ..api.types import MaskingRecipe, PacketMaskInstruction
-from ...trim.models.mask_spec import MaskAfter, MaskRange, KeepAll
+from .api.types import MaskingRecipe, PacketMaskInstruction
+from ..trim.models.mask_spec import MaskAfter, MaskRange, KeepAll
 
 logger = logging.getLogger(__name__)
 

@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional, List
 import logging
 from pathlib import Path
 
-from ..exceptions import ConfigurationError
+from .exceptions import ConfigurationError
 
 
 # 默认配置参数

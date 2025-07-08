@@ -19,7 +19,7 @@ try:
 except ImportError as e:
     raise ImportError(f"无法导入Scapy: {e}. 请安装: pip install scapy")
 
-from ..exceptions import FileConsistencyError, ValidationError
+from .exceptions import FileConsistencyError, ValidationError
 
 
 class PcapFileHandler:
