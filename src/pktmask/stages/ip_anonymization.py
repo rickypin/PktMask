@@ -52,7 +52,7 @@ class IpAnonymizationStage(ProcessingStep):
         self._strategy.build_mapping_from_directory(all_pcap_files)
         self._logger.info("目录级IP映射构建完成")
 
-    def process_file(self, input_path: str, output_path: str) -> Optional[Dict]:
+    def process_file_legacy(self, input_path: str, output_path: str) -> Optional[Dict]:
         """处理单个pcap文件，使用预先生成的映射替换IP地址。"""
         self._logger.debug(f"开始处理文件: {input_path}")
         new_packets = []

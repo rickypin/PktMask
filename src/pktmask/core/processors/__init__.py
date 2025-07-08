@@ -9,7 +9,8 @@ from .registry import ProcessorRegistry
 from .ip_anonymizer import IPAnonymizer
 from .deduplicator import Deduplicator
 from .trimmer import Trimmer
-from .pipeline_adapter import ProcessorAdapter, adapt_processors_to_pipeline
+# NOTE: ProcessorAdapter 已废弃，请使用 ProcessorStageAdapter
+# from .pipeline_adapter import ProcessorAdapter, adapt_processors_to_pipeline
 
 __all__ = [
     'BaseProcessor',
@@ -19,6 +20,7 @@ __all__ = [
     'IPAnonymizer',
     'Deduplicator',
     'Trimmer',
-    'ProcessorAdapter',
-    'adapt_processors_to_pipeline'
-] 
+    # NOTE: ProcessorAdapter 已废弃，请使用 ProcessorStageAdapter
+    # 'ProcessorAdapter',
+    # 'adapt_processors_to_pipeline'
+]

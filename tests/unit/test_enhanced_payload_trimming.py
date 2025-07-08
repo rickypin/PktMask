@@ -353,7 +353,7 @@ class TestEnhancedPayloadTrimming(unittest.TestCase):
             # 性能测量函数
             def performance_test_func(_):
                 with patch('src.pktmask.infrastructure.logging.log_performance') as mock_log:
-                    step = IntelligentTrimmingStep()
+                    step = IntelligentTrimmingStage()
                     summary = step.process_file(input_path, output_path)
                     
                     # 验证性能日志被调用

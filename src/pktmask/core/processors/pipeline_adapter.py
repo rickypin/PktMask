@@ -1,8 +1,15 @@
 """
 处理器管道适配器
 
-将新的处理器系统适配到现有的Pipeline架构中，
+！！！废弃警告！！！
+该模块已被废弃，请使用 ProcessorStageAdapter 替代。
+
+原功能：将新的处理器系统适配到现有的Pipeline架构中，
 提供向后兼容性而无需重写整个管道系统。
+
+迁移指南：
+- 使用 pktmask.core.pipeline.stages.processor_stage_adapter.ProcessorStageAdapter
+- 新的适配器更简洁，支持新的 Pipeline 架构
 """
 from typing import List, Optional, Dict, Any
 from ..base_step import ProcessingStep
@@ -13,11 +20,25 @@ from ...infrastructure.logging import get_logger
 class ProcessorAdapter(ProcessingStep):
     """处理器适配器
     
-    将新的BaseProcessor包装为现有的ProcessingStep接口，
+    ！！！废弃警告！！！
+    该类已被废弃，请使用 ProcessorStageAdapter 替代。
+    
+    原功能：将新的BaseProcessor包装为现有的ProcessingStep接口，
     使新处理器系统能够与现有Pipeline兼容。
+    
+    迁移指南：
+    - 使用 pktmask.core.pipeline.stages.processor_stage_adapter.ProcessorStageAdapter
+    - 新的适配器接口更简洁，支持新的 Pipeline 架构
     """
     
     def __init__(self, processor: BaseProcessor):
+        import warnings
+        warnings.warn(
+            "ProcessorAdapter 已废弃，请使用 ProcessorStageAdapter 替代。"
+            "请查看 pktmask.core.pipeline.stages.processor_stage_adapter.ProcessorStageAdapter",
+            DeprecationWarning,
+            stacklevel=2
+        )
         super().__init__()
         self._processor = processor
         self._logger = get_logger('processor_adapter')
@@ -114,7 +135,17 @@ class ProcessorAdapter(ProcessingStep):
 
 
 def adapt_processors_to_pipeline(processors: List[BaseProcessor]) -> List[ProcessingStep]:
-    """将处理器列表转换为管道步骤列表"""
+    """将处理器列表转换为管道步骤列表
+    
+    ！！！废弃警告！！！
+    该函数已被废弃，请直接使用 ProcessorStageAdapter 包装各个处理器。
+    """
+    import warnings
+    warnings.warn(
+        "adapt_processors_to_pipeline 已废弃，请直接使用 ProcessorStageAdapter 包装各个处理器。",
+        DeprecationWarning,
+        stacklevel=2
+    )
     adapted_steps = []
     
     for processor in processors:
