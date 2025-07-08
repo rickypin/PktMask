@@ -113,7 +113,7 @@ class MaskPayloadStage(StageBase):
         """创建增强掩码处理器"""
         from pktmask.core.processors.tshark_enhanced_mask_processor import TSharkEnhancedMaskProcessor
         from pktmask.core.processors.base_processor import ProcessorConfig
-        from pktmask.adapters.processor_adapter import ProcessorAdapter
+        from pktmask.adapters.processor_adapter import PipelineProcessorAdapter
         
         # 创建处理器配置
         processor_config = ProcessorConfig(
@@ -125,8 +125,8 @@ class MaskPayloadStage(StageBase):
         # 创建 TSharkEnhancedMaskProcessor 实例
         processor = TSharkEnhancedMaskProcessor(processor_config)
         
-        # 用 ProcessorAdapter 包装
-        adapter = ProcessorAdapter(processor, config)
+        # 用 PipelineProcessorAdapter 包装
+        adapter = PipelineProcessorAdapter(processor, config)
         
         return adapter
 
