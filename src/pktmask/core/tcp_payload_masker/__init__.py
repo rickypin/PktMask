@@ -33,16 +33,6 @@ from .api.types import (
     MaskingStatistics
 )
 
-# Phase 1.3: API函数 (已完成)
-from .api.masker import (
-    mask_pcap_with_instructions,
-    validate_masking_recipe,
-    create_masking_recipe_from_dict,
-    get_api_version,
-    get_supported_formats,
-    estimate_processing_time
-)
-
 # 一致性验证函数
 from .core.consistency import verify_file_consistency
 
@@ -85,13 +75,7 @@ __all__ = [
     "MaskingStatistics",
     
     # Phase 1.3: API函数 (已完成)
-    "mask_pcap_with_instructions",
-    "validate_masking_recipe",
-    "create_masking_recipe_from_dict",
     "verify_file_consistency",
-    "get_api_version",
-    "get_supported_formats",
-    "estimate_processing_time",
     
     # 向后兼容的旧API
     'TcpPayloadMasker',
