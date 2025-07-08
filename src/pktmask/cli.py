@@ -150,5 +150,5 @@ def cmd_anon(
     )
 
 
-if __name__ == "__main__":
-    app() 
+# CLI 命令由 __main__.py 统一管理
+# 直接运行此文件已不再支持

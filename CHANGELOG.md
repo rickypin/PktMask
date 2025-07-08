@@ -1,3 +1,30 @@
+## [Unreleased]
+
+### Changed
+- 统一入口点：所有功能通过 `pktmask` 命令访问
+- GUI 成为默认模式（无参数启动）
+- CLI 命令简化（移除 `cli` 前缀）
+- 依赖管理集中化：移除子包独立配置，统一使用顶层 `pyproject.toml`
+
+### Added
+- 新增 `performance` 可选依赖组：包含 `psutil` 和 `memory-profiler`
+- 子包 `tcp_payload_masker` 的 `typing-extensions` 依赖已合并到主项目
+
+### Removed
+- 移除 `src/pktmask/core/tcp_payload_masker/requirements.txt`
+- 移除 `src/pktmask/core/tcp_payload_masker/setup.py`
+
+### Deprecated
+- `run_gui.py` 已弃用，请使用 `./pktmask` 或 `python pktmask.py`
+- 直接运行 `src/pktmask/cli.py` 已不再支持
+
+### Migration Guide
+- GUI 用户：使用 `./pktmask` 替代 `python run_gui.py`
+- CLI 用户：命令更简洁，如 `./pktmask mask` 替代之前的调用方式
+- 开发者：子包依赖现由顶层管理，使用 `pip install -e ".[dev,performance]"` 安装所有依赖
+
+---
+
 # PktMask 变更日志
 
 ## v0.2.1 (2025-07-08)

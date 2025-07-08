@@ -46,12 +46,42 @@ PktMask 是一个用于处理网络数据包文件的图形界面工具，专注
 
 ## 使用方法
 
-1. 启动 PktMask
+### 启动 GUI
+```bash
+# 推荐方式
+./pktmask
+
+# Windows 用户
+python pktmask.py
+
+# 使用 Python 模块
+python -m pktmask
+```
+
+### 使用 CLI
+```bash
+# 掩码处理
+./pktmask mask input.pcap -o output.pcap --dedup --anon
+
+# 仅去重
+./pktmask dedup input.pcap -o output.pcap
+
+# 仅 IP 匿名化
+./pktmask anon input.pcap -o output.pcap
+
+# 查看帮助
+./pktmask --help
+./pktmask mask --help
+```
+
+### GUI 操作步骤
+
+1. 启动 PktMask GUI
 2. 点击"选择目录"按钮，选择包含 pcap/pcapng 文件的目录
 3. 选择所需的处理功能：
    - IP地址匿名化
    - 载荷裁切（TLS智能处理）
-   - 数据包去重
+   - 数据内包去重
 4. 点击"开始处理"按钮
 5. 等待处理完成
 6. 查看处理日志和结果
