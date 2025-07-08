@@ -11,8 +11,12 @@ from PyQt6.QtCore import QTimer
 if TYPE_CHECKING:
     from ..main_window import MainWindow, PipelineThread
 
-from pktmask.core.pipeline import Pipeline
-from pktmask.core.factory import get_step_instance
+from pktmask.services import (
+    PipelineServiceError,
+    ConfigurationError,
+    create_pipeline_executor,
+    build_pipeline_config
+)
 from pktmask.core.events import PipelineEvents
 from pktmask.infrastructure.logging import get_logger
 from .statistics_manager import StatisticsManager
@@ -105,13 +109,21 @@ class PipelineManager:
                 cb.setEnabled(False)
 
         # 创建并配置新的 PipelineExecutor
-        config = self._build_pipeline_config()
+        config = build_pipeline_config(
+            enable_anon=self.main_window.mask_ip_cb.isChecked(),
+            enable_dedup=self.main_window.dedup_packet_cb.isChecked(),
+            enable_mask=self.main_window.trim_packet_cb.isChecked()
+        )
         if not config:
             self._logger.warning("未选择任何处理步骤")
             return
 
-        from pktmask.core.pipeline.executor import PipelineExecutor
-        executor = PipelineExecutor(config)
+        try:
+            executor = create_pipeline_executor(config)
+        except ConfigurationError as e:
+            self._logger.error(f"配置错误: {str(e)}")
+            self.main_window.update_log(f"配置错误: {str(e)}")
+            return
         self._logger.info(f"构建了包含 {len(config)} 个Stage的 PipelineExecutor")
 
         # 开始处理
@@ -120,7 +132,7 @@ class PipelineManager:
     def stop_pipeline_processing(self):
         """停止处理流程"""
         self.main_window.user_stopped = True  # 设置停止标志
-        self.main_window.log_text.append("\n--- Stopping pipeline... ---")
+        self.main_window.update_log("--- Stopping pipeline... ---")
         if self.processing_thread:
             self.processing_thread.stop()
             # 等待线程安全结束，最多等待 3 秒
@@ -152,10 +164,10 @@ class PipelineManager:
     def start_processing(self, executor):
         """启动处理线程"""
         # 导入新的PipelineThread（避免循环导入）
-        from ..main_window import NewPipelineThread
+        from ..main_window import ServicePipelineThread
         
         # 创建处理线程
-        self.processing_thread = NewPipelineThread(
+        self.processing_thread = ServicePipelineThread(
             executor, 
             self.main_window.base_dir, 
             self.main_window.current_output_dir
@@ -356,27 +368,5 @@ class PipelineManager:
         except Exception as e:
             self._logger.error(f"生成最终报告时发生错误: {e}")
     
-    def _build_pipeline_config(self) -> dict:
-        """构建新的 PipelineExecutor 配置"""
-        config = {}
-        
-        # 根据复选框状态构建配置
-        if self.main_window.mask_ip_cb.isChecked():
-            config["anon"] = {"enabled": True}
-            self._logger.debug("启用IP匿名化Stage")
-        
-        if self.main_window.dedup_packet_cb.isChecked():
-            config["dedup"] = {"enabled": True}
-            self._logger.debug("启用去重Stage")
-        
-        if self.main_window.trim_packet_cb.isChecked():
-            config["mask"] = {
-                "enabled": True,
-                # 注意：移除了已废弃的 recipe_path 配置项
-                # 现在默认使用 processor_adapter 模式进行智能协议分析
-                "mode": "processor_adapter"
-            }
-            self._logger.debug("启用载荷掩码Stage - 使用智能协议分析模式")
-        
-        self._logger.info(f"构建了包含 {len(config)} 个启用Stage的配置")
-        return config 
+    # 旧的_build_pipeline_config方法已移除，使用服务层的build_pipeline_config函数
+    pass

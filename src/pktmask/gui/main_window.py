@@ -22,9 +22,7 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal, QObject, QEvent, QTimer, QTime
 from PyQt6.QtGui import QFont, QIcon, QTextCursor, QFontMetrics, QColor, QAction
 
 # Refactored imports
-from pktmask.core.pipeline import Pipeline
 from pktmask.core.events import PipelineEvents
-from pktmask.core.factory import get_step_instance
 from pktmask.utils.path import resource_path
 from pktmask.common.constants import UIConstants, FormatConstants, SystemConstants, PROCESS_DISPLAY_NAMES
 from pktmask.utils import current_timestamp, format_milliseconds_to_time, open_directory_in_system, current_time
@@ -53,10 +51,18 @@ class PipelineThread(QThread):
     """
     一个统一的线程来运行处理流水线。
     它通过信号将结构化的进度数据发送到主线程。
+    
+    @deprecated: 该类已废弃，请使用 ServicePipelineThread 代替
     """
     progress_signal = pyqtSignal(PipelineEvents, dict)
 
-    def __init__(self, pipeline: Pipeline, base_dir: str, output_dir: str):
+    def __init__(self, pipeline, base_dir: str, output_dir: str):
+        import warnings
+        warnings.warn(
+            "PipelineThread is deprecated. Use ServicePipelineThread instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         super().__init__()
         self._pipeline = pipeline
         self._base_dir = base_dir
@@ -83,14 +89,13 @@ class PipelineThread(QThread):
         self.progress_signal.emit(PipelineEvents.LOG, {'message': '--- Pipeline Stopped by User ---'})
         self.progress_signal.emit(PipelineEvents.PIPELINE_END, {})
 
-class NewPipelineThread(QThread):
+class ServicePipelineThread(QThread):
     """
-    使用新的 PipelineExecutor 的处理线程。
-    它处理目录遍历并为每个文件调用 executor。
+    使用服务接口的处理线程。
     """
     progress_signal = pyqtSignal(PipelineEvents, dict)
 
-    def __init__(self, executor, base_dir: str, output_dir: str):
+    def __init__(self, executor: object, base_dir: str, output_dir: str):
         super().__init__()
         self._executor = executor
         self._base_dir = base_dir
@@ -99,97 +104,26 @@ class NewPipelineThread(QThread):
 
     def run(self):
         try:
-            self._run_directory_processing()
+            from pktmask.services.pipeline_service import process_directory
+            process_directory(
+                self._executor,
+                self._base_dir,
+                self._output_dir,
+                progress_callback=self.progress_signal.emit,
+                is_running_check=lambda: self.is_running
+            )
         except Exception as e:
-            self.progress_signal.emit(PipelineEvents.ERROR, {'message': str(e)})
-
-    def _run_directory_processing(self):
-        """运行目录处理逻辑"""
-        import os
-        import time
-        
-        # 发送管道开始事件
-        self.progress_signal.emit(PipelineEvents.PIPELINE_START, {'total_subdirs': 1})
-        
-        # 扫描目录中的PCAP文件
-        pcap_files = []
-        for file in os.scandir(self._base_dir):
-            if file.name.endswith(('.pcap', '.pcapng')):
-                pcap_files.append(file.path)
-        
-        if not pcap_files:
-            self.progress_signal.emit(PipelineEvents.LOG, {'message': '目录中未找到PCAP文件'})
-            self.progress_signal.emit(PipelineEvents.PIPELINE_END, {})
-            return
-        
-        # 发送子目录开始事件
-        rel_subdir = os.path.relpath(self._base_dir, self._base_dir)
-        self.progress_signal.emit(PipelineEvents.SUBDIR_START, {
-            'name': rel_subdir,
-            'current': 1,
-            'total': 1,
-            'file_count': len(pcap_files)
-        })
-        
-        # 处理每个文件
-        for input_path in pcap_files:
-            if not self.is_running:
-                break
-                
-            # 发送文件开始事件
-            self.progress_signal.emit(PipelineEvents.FILE_START, {'path': input_path})
-            
-            try:
-                # 构造输出文件名
-                base_name, ext = os.path.splitext(os.path.basename(input_path))
-                output_path = os.path.join(self._output_dir, f"{base_name}_processed{ext}")
-                
-                # 使用新的 executor 处理文件
-                result = self._executor.run(input_path, output_path, progress_cb=self._handle_stage_progress)
-                
-                # 发送步骤摘要事件
-                for stage_stats in result.stage_stats:
-                    self.progress_signal.emit(PipelineEvents.STEP_SUMMARY, {
-                        'step_name': stage_stats.stage_name,
-                        'filename': os.path.basename(input_path),
-                        'packets_processed': stage_stats.packets_processed,
-                        'packets_modified': stage_stats.packets_modified,
-                        'duration_ms': stage_stats.duration_ms,
-                        **stage_stats.extra_metrics
-                    })
-                
-            except Exception as e:
-                self.progress_signal.emit(PipelineEvents.ERROR, {
-                    'message': f"处理文件 {os.path.basename(input_path)} 时出错: {str(e)}"
-                })
-            
-            # 发送文件完成事件
-            self.progress_signal.emit(PipelineEvents.FILE_END, {'path': input_path})
-        
-        # 发送子目录结束事件
-        self.progress_signal.emit(PipelineEvents.SUBDIR_END, {'name': rel_subdir})
-        
-        # 发送管道结束事件
-        self.progress_signal.emit(PipelineEvents.PIPELINE_END, {})
-
-    def _handle_stage_progress(self, stage, stats):
-        """处理阶段进度回调"""
-        if not self.is_running:
-            return
-        
-        # Emit log with stage-specific action wording
-        if stage.name == 'DedupStage':
-            msg = f"    - {stage.name}: processed {stats.packets_processed} pkts, removed {stats.packets_modified} pkts"
-        elif stage.name == 'AnonStage':
-            msg = f"    - {stage.name}: processed {stats.packets_processed} pkts, Anonymized {stats.packets_modified} ips"
-        else:
-            msg = f"    - {stage.name}: processed {stats.packets_processed} pkts, masked {stats.packets_modified} pkts"
-        self.progress_signal.emit(PipelineEvents.LOG, {'message': msg})
+            from pktmask.services.pipeline_service import PipelineServiceError
+            if isinstance(e, PipelineServiceError):
+                self.progress_signal.emit(PipelineEvents.ERROR, {'message': str(e)})
+            else:
+                self.progress_signal.emit(PipelineEvents.ERROR, {'message': f'Unexpected error: {str(e)}'})
 
     def stop(self):
         self.is_running = False
-        # 发送停止日志和结束事件来触发 UI 恢复
         self.progress_signal.emit(PipelineEvents.LOG, {'message': '--- Pipeline Stopped by User ---'})
+        from pktmask.services.pipeline_service import stop_pipeline
+        stop_pipeline(self._executor)
         self.progress_signal.emit(PipelineEvents.PIPELINE_END, {})
 
 class MainWindow(QMainWindow):
@@ -536,7 +470,14 @@ class MainWindow(QMainWindow):
         """开始管道处理（委托给PipelineManager）"""
         self.pipeline_manager.start_pipeline_processing()
 
-    def start_processing(self, pipeline: Pipeline):
+    def start_processing(self, pipeline):
+        """@deprecated: 该方法已废弃，请使用 PipelineManager.start_processing"""
+        import warnings
+        warnings.warn(
+            "MainWindow.start_processing is deprecated. Use PipelineManager.start_processing instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         self.log_text.append(f"--- Pipeline Started ---\n")
         
         # 添加处理开始的信息
