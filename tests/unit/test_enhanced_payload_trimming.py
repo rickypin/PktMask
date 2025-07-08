@@ -18,8 +18,8 @@ import os
 
 from scapy.all import Ether, IP, TCP, Raw, Dot1Q, wrpcap
 
-from src.pktmask.steps.trimming import (
-    IntelligentTrimmingStep,
+from src.pktmask.stages.trimming import (
+    IntelligentTrimmingStage,
     get_tcp_session_key_enhanced,
     get_tcp_session_key,
     _process_pcap_data_enhanced,
@@ -38,7 +38,7 @@ class TestEnhancedPayloadTrimming(unittest.TestCase):
     def setUp(self):
         """设置测试环境"""
         self.adapter = ProcessingAdapter()
-        self.trimming_step = IntelligentTrimmingStep()
+        self.trimming_step = IntelligentTrimmingStage()
         
     def tearDown(self):
         """清理测试环境"""
@@ -183,7 +183,7 @@ class TestEnhancedPayloadTrimming(unittest.TestCase):
 
     def test_trimming_step_initialization(self):
         """测试智能裁切步骤完整初始化（合并增强版本）"""
-        step = IntelligentTrimmingStep()
+        step = IntelligentTrimmingStage()
         
         # 基础属性验证
         self.assertEqual(step.name, "Intelligent Trim")

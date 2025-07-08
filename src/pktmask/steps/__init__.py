@@ -1,9 +1,12 @@
-from .deduplication import DeduplicationStep
-from .ip_anonymization import IpAnonymizationStep
-from .trimming import IntelligentTrimmingStep
+from ..stages import (
+    DeduplicationStage as DeduplicationStep,
+    IpAnonymizationStage as IpAnonymizationStep,
+    IntelligentTrimmingStage as IntelligentTrimmingStep,
+)
 
-__all__ = [
-    "DeduplicationStep",
-    "IpAnonymizationStep",
-    "IntelligentTrimmingStep",
-] 
+import warnings
+warnings.warn(
+    "pktmask.steps is deprecated, use pktmask.stages", 
+    DeprecationWarning
+)
+

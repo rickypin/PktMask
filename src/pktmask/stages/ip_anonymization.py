@@ -22,7 +22,7 @@ from ..common.constants import ProcessingConstants
 from ..infrastructure.logging import get_logger
 
 
-class IpAnonymizationStep(ProcessingStep):
+class IpAnonymizationStage(ProcessingStep):
     """
     IP 匿名化处理步骤。
     该步骤协调一个策略（用于生成映射）和一个报告器（用于保存结果）。
@@ -120,5 +120,5 @@ class IpAnonymizationStep(ProcessingStep):
         return {'report': report}
 
 
-def create_ip_anonymization_step(strategy: AnonymizationStrategy, reporter: Reporter) -> IpAnonymizationStep:
-    return IpAnonymizationStep(strategy=strategy, reporter=reporter) 
+def create_ip_anonymization_step(strategy: AnonymizationStrategy, reporter: Reporter) -> IpAnonymizationStage:
+    return IpAnonymizationStage(strategy=strategy, reporter=reporter)

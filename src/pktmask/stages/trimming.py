@@ -372,7 +372,7 @@ def _process_pcap_data(packets: List) -> Tuple[List, int, int, List[str]]:
     return new_packets, total, trimmed, error_log
 
 
-class IntelligentTrimmingStep(ProcessingStep):
+class IntelligentTrimmingStage(ProcessingStep):
     """
     智能裁切处理步骤，用于从pcap文件中裁切TLS应用数据。
     第三阶段增强：支持多层封装的载荷裁切处理。

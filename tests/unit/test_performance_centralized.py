@@ -22,6 +22,7 @@ try:
     from src.pktmask.core.processors import EnhancedTrimmer, _process_pcap_data_enhanced, _process_pcap_data
     from src.pktmask.core.encapsulation.adapter import ProcessingAdapter
     from src.pktmask.infrastructure.logging import log_performance
+    from src.pktmask.stages.trimming import IntelligentTrimmingStage
 except ImportError as e:
     pytest.skip(f"无法导入模块: {e}", allow_module_level=True)
 
@@ -116,7 +117,7 @@ class TestCentralizedPerformance(unittest.TestCase):
         try:
             # 文件处理性能测试
             def file_processing_func(_):
-                step = IntelligentTrimmingStep()
+                step = IntelligentTrimmingStage()
                 return step.process_file(input_path, output_path)
             
             performance_result = PerformanceTestSuite.measure_processing_performance(

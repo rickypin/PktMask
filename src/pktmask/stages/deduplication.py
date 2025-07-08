@@ -43,7 +43,7 @@ def process_file_dedup(file_path, error_log):
         error_log.append(f"处理文件 {file_path} 出错：{str(e)}")
         return None, total_count, 0
 
-class DeduplicationStep(ProcessingStep):
+class DeduplicationStage(ProcessingStep):
     """
     去重处理步骤
     """

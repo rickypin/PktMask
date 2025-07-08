@@ -8,9 +8,9 @@ import os
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from pktmask.steps.deduplication import DeduplicationStep
-from pktmask.steps.ip_anonymization import IpAnonymizationStep  
-from pktmask.steps.trimming import IntelligentTrimmingStep
+from pktmask.stages.deduplication import DeduplicationStage
+from pktmask.stages.ip_anonymization import IpAnonymizationStage  
+from pktmask.stages.trimming import IntelligentTrimmingStage
 
 
 class TestStepsBasic:
@@ -18,7 +18,7 @@ class TestStepsBasic:
     
     def test_deduplication_step_properties(self):
         """测试去重步骤基本属性"""
-        step = DeduplicationStep()
+        step = DeduplicationStage()
         assert step.name == "Remove Dupes"
         assert hasattr(step, 'suffix')
         assert step.suffix.endswith("Deduped")
@@ -29,14 +29,14 @@ class TestStepsBasic:
         mock_strategy = Mock()
         mock_reporter = Mock()
         
-        step = IpAnonymizationStep(strategy=mock_strategy, reporter=mock_reporter)
+        step = IpAnonymizationStage(strategy=mock_strategy, reporter=mock_reporter)
         assert step.name == "Mask IP"
         assert hasattr(step, 'suffix')
         assert step.suffix.endswith("Masked")
     
     def test_trimming_step_properties(self):
         """测试载荷裁切步骤基本属性"""
-        step = IntelligentTrimmingStep()
+        step = IntelligentTrimmingStage()
         assert step.name == "Intelligent Trim"
         assert hasattr(step, 'suffix')
         assert step.suffix.endswith("Trimmed")
@@ -48,9 +48,9 @@ class TestStepsBasic:
         mock_reporter = Mock()
         
         steps = [
-            DeduplicationStep(), 
-            IpAnonymizationStep(strategy=mock_strategy, reporter=mock_reporter), 
-            IntelligentTrimmingStep()
+            DeduplicationStage(), 
+            IpAnonymizationStage(strategy=mock_strategy, reporter=mock_reporter), 
+            IntelligentTrimmingStage()
         ]
         
         # 所有步骤都应该有process_file方法
@@ -63,12 +63,12 @@ class TestStepsBasic:
         assert hasattr(dedup_step, 'process_directory')
         assert callable(dedup_step.process_directory)
     
-    @patch('pktmask.steps.deduplication.select_files')
+    @patch('pktmask.stages.deduplication.select_files')
     def test_deduplication_empty_directory(self, mock_select_files):
         """测试去重处理空目录"""
         mock_select_files.return_value = ([], "无文件")
         
-        step = DeduplicationStep()
+        step = DeduplicationStage()
         callback_calls = []
         
         def mock_callback(event, data):
