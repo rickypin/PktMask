@@ -1,0 +1,811 @@
+{
+  "gui_components": [
+    {
+      "file_path": "src/pktmask/gui/main_window.py",
+      "component_type": "gui",
+      "dependencies": [
+        "os",
+        "sys",
+        "json",
+        "markdown",
+        "datetime",
+        "typing",
+        "PyQt6.QtWidgets",
+        "PyQt6.QtCore",
+        "PyQt6.QtGui",
+        "pktmask.core.events",
+        "pktmask.utils.path",
+        "pktmask.common.constants",
+        "pktmask.utils",
+        "pktmask.infrastructure.logging",
+        "pktmask.config",
+        "stylesheet",
+        "os",
+        "warnings",
+        "pktmask.services.pipeline_service",
+        "managers",
+        "warnings",
+        "pktmask.services.pipeline_service",
+        "pktmask.domain.models.pipeline_event_data",
+        "pktmask.core.events",
+        "pktmask.domain.models.statistics_data",
+        "pktmask.services.pipeline_service"
+      ],
+      "user_facing": true,
+      "config_keys": [
+        "filename",
+        "default_mask_ip",
+        "files_processed_label",
+        "SUBDIR_START",
+        "generate_summary_report_filename",
+        "total_subdirs",
+        "_counted_files",
+        "_current_file_ips",
+        "current_processing_file",
+        "setEnabled",
+        "output_path_label",
+        "output_dir",
+        "last_input_dir",
+        "_get_path_link_style",
+        "_output_dir",
+        "open_output_directory",
+        "FILE_END",
+        "path",
+        "enabled",
+        "listdir",
+        "file_processing_results",
+        "base_dir",
+        "subdirs_packets_counted",
+        "files_processed_count",
+        "generate_default_output_path",
+        "subdirs_files_counted",
+        "files_processed",
+        "dir_path_label",
+        "last_opened_dir",
+        "default_trim",
+        "config",
+        "set_current_processing_file",
+        "enable_controls",
+        "FILE_START",
+        "remember_last_dir",
+        "current_output_dir",
+        "output_filename",
+        "_base_dir",
+        "_update_path_link_styles",
+        "generate_file_complete_report",
+        "generate_actual_output_path",
+        "update_file_count",
+        "default_dedup",
+        "file_manager",
+        "processed_files_count"
+      ]
+    },
+    {
+      "file_path": "src/pktmask/gui/stylesheet.py",
+      "component_type": "gui",
+      "dependencies": [],
+      "user_facing": true,
+      "config_keys": []
+    },
+    {
+      "file_path": "src/pktmask/gui/managers/ui_manager.py",
+      "component_type": "gui",
+      "dependencies": [
+        "os",
+        "typing",
+        "PyQt6.QtWidgets",
+        "PyQt6.QtCore",
+        "PyQt6.QtGui",
+        "pktmask.utils.path",
+        "pktmask.common.constants",
+        "stylesheet",
+        "pktmask.infrastructure.logging",
+        "main_window",
+        "pktmask.utils.path"
+      ],
+      "user_facing": true,
+      "config_keys": [
+        "default_mask_ip",
+        "dirs_group",
+        "files_processed_label",
+        "DIRS_LAYOUT_PADDING",
+        "setEnabled",
+        "output_path_label",
+        "isEnabled",
+        "_get_path_link_style",
+        "path",
+        "FilesProcessedLabel",
+        "DirPathLabel",
+        "base_dir",
+        "dir_path_label",
+        "default_trim",
+        "config",
+        "_create_dirs_group",
+        "DIRS_GROUP_HEIGHT",
+        "File",
+        "_update_path_link_styles",
+        "default_dedup",
+        "file_manager"
+      ]
+    },
+    {
+      "file_path": "src/pktmask/gui/managers/__init__.py",
+      "component_type": "gui",
+      "dependencies": [
+        "ui_manager",
+        "file_manager",
+        "pipeline_manager",
+        "report_manager",
+        "dialog_manager",
+        "statistics_manager",
+        "event_coordinator"
+      ],
+      "user_facing": true,
+      "config_keys": [
+        "FileManager",
+        "file_manager"
+      ]
+    },
+    {
+      "file_path": "src/pktmask/gui/managers/report_manager.py",
+      "component_type": "gui",
+      "dependencies": [
+        "os",
+        "typing",
+        "datetime",
+        "pktmask.infrastructure.logging",
+        "main_window"
+      ],
+      "user_facing": true,
+      "config_keys": [
+        "filename",
+        "file_ip_mappings",
+        "_current_file_ips",
+        "current_processing_file",
+        "_generate_enhanced_trimming_report_for_file",
+        "path",
+        "_generate_files_status_report",
+        "output_directory",
+        "file_processing_results",
+        "base_dir",
+        "_generate_completed_file_report",
+        "files_processed_count",
+        "files_processed",
+        "save_summary_report_to_output_dir",
+        "config",
+        "current_output_dir",
+        "output_filename",
+        "_generate_partial_file_report",
+        "_update_file_summary",
+        "total_files",
+        "_generate_file_summary_text",
+        "file_manager",
+        "processed_files_count"
+      ]
+    },
+    {
+      "file_path": "src/pktmask/gui/managers/statistics_manager.py",
+      "component_type": "gui",
+      "dependencies": [
+        "typing",
+        "PyQt6.QtCore",
+        "pktmask.infrastructure.logging",
+        "pktmask.utils.time"
+      ],
+      "user_facing": false,
+      "config_keys": [
+        "total_files_to_process",
+        "current_file",
+        "file_results_count",
+        "file_processing_results",
+        "subdirs_packets_counted",
+        "get_file_completion_rate",
+        "total_files",
+        "subdirs_files_counted",
+        "files_processed",
+        "current_processing_file",
+        "processed_files_count"
+      ]
+    },
+    {
+      "file_path": "src/pktmask/gui/managers/dialog_manager.py",
+      "component_type": "gui",
+      "dependencies": [
+        "markdown",
+        "typing",
+        "PyQt6.QtWidgets",
+        "PyQt6.QtCore",
+        "PyQt6.QtGui",
+        "os",
+        "pktmask.utils.path",
+        "pktmask.infrastructure.logging",
+        "main_window"
+      ],
+      "user_facing": true,
+      "config_keys": [
+        "getSaveFileName",
+        "config",
+        "getExistingDirectory",
+        "path",
+        "getOpenFileName"
+      ]
+    },
+    {
+      "file_path": "src/pktmask/gui/managers/file_manager.py",
+      "component_type": "gui",
+      "dependencies": [
+        "os",
+        "typing",
+        "PyQt6.QtWidgets",
+        "pktmask.utils.time",
+        "pktmask.utils.file_ops",
+        "pktmask.infrastructure.logging",
+        "main_window"
+      ],
+      "user_facing": true,
+      "config_keys": [
+        "isdir",
+        "generate_summary_report_filename",
+        "getExistingDirectory",
+        "pcap_files",
+        "output_path_label",
+        "output_dir",
+        "default_output_dir",
+        "open_output_directory",
+        "path",
+        "listdir",
+        "base_dir",
+        "is_directory",
+        "file_ops",
+        "isfile",
+        "dir_path_label",
+        "last_opened_dir",
+        "makedirs",
+        "config",
+        "current_output_dir",
+        "total_files",
+        "generate_default_output_path"
+      ]
+    },
+    {
+      "file_path": "src/pktmask/gui/managers/event_coordinator.py",
+      "component_type": "gui",
+      "dependencies": [
+        "typing",
+        "PyQt6.QtCore",
+        "pktmask.infrastructure.logging",
+        "pktmask.domain.adapters",
+        "pktmask.domain.models.pipeline_event_data",
+        "pktmask.domain.models.statistics_data",
+        "pktmask.core.events",
+        "main_window"
+      ],
+      "user_facing": true,
+      "config_keys": [
+        "file_operation",
+        "files_processed",
+        "file_operation_requested"
+      ]
+    },
+    {
+      "file_path": "src/pktmask/gui/managers/pipeline_manager.py",
+      "component_type": "gui",
+      "dependencies": [
+        "typing",
+        "PyQt6.QtCore",
+        "pktmask.services",
+        "pktmask.core.events",
+        "pktmask.infrastructure.logging",
+        "statistics_manager",
+        "main_window",
+        "main_window",
+        "os",
+        "pktmask.utils.file_ops",
+        "PyQt6.QtWidgets",
+        "os",
+        "PyQt6.QtWidgets"
+      ],
+      "user_facing": true,
+      "config_keys": [
+        "filename",
+        "files_processed_label",
+        "SUBDIR_START",
+        "total_subdirs",
+        "FILE_COMPLETED",
+        "current_processing_file",
+        "setEnabled",
+        "total_files_to_process",
+        "output_path_label",
+        "FILE_END",
+        "path",
+        "output_directory",
+        "file_processing_results",
+        "base_dir",
+        "subdirs_packets_counted",
+        "increment_file_count",
+        "files_processed_count",
+        "subdirs_files_counted",
+        "file_ops",
+        "files_processed",
+        "dir_path_label",
+        "makedirs",
+        "config",
+        "set_total_files",
+        "enable_controls",
+        "current_output_dir",
+        "total_files",
+        "file_count",
+        "generate_actual_output_path",
+        "update_file_count",
+        "file_manager",
+        "processed_files_count"
+      ]
+    },
+    {
+      "file_path": "src/pktmask/config/settings.py",
+      "component_type": "gui",
+      "dependencies": [
+        "os",
+        "yaml",
+        "json",
+        "pathlib",
+        "typing",
+        "dataclasses",
+        "datetime"
+      ],
+      "user_facing": true,
+      "config_keys": [
+        "default_mask_ip",
+        "enable_fallback",
+        "cleanup_temp_files",
+        "default",
+        "get_default_config_path",
+        "mkdir",
+        "config_version",
+        "tshark_enable_reassembly",
+        "tshark_executable_paths",
+        "enable_boundary_safety",
+        "temp_dir",
+        "enable_performance_monitoring",
+        "log_file_max_size",
+        "AppConfig",
+        "last_input_dir",
+        "enable_defragmentation",
+        "enable_tls_processing",
+        "keep_intermediate_files",
+        "enable_cross_segment_detection",
+        "fallback_enable_fallback",
+        "enable_stage_timing",
+        "tshark_enable_defragmentation",
+        "default_trim",
+        "last_output_dir",
+        "fallback_config",
+        "get_legacy_config_paths",
+        "remember_last_dir",
+        "enable_parallel_processing",
+        "executable_paths",
+        "enable_reassembly",
+        "default_dedup",
+        "enable_detailed_logging"
+      ]
+    }
+  ],
+  "stage_components": [
+    {
+      "file_path": "src/pktmask/core/pipeline/stages/dedup.py",
+      "component_type": "stage",
+      "dependencies": [
+        "__future__",
+        "time",
+        "pathlib",
+        "typing",
+        "warnings",
+        "pktmask.core.pipeline.base_stage",
+        "pktmask.core.pipeline.models",
+        "pktmask.core.processors.deduplicator"
+      ],
+      "user_facing": false,
+      "config_keys": [
+        "_config",
+        "process_file"
+      ]
+    },
+    {
+      "file_path": "src/pktmask/core/pipeline/stages/anon_ip.py",
+      "component_type": "stage",
+      "dependencies": [
+        "__future__",
+        "time",
+        "pathlib",
+        "typing",
+        "warnings",
+        "pktmask.core.pipeline.base_stage",
+        "pktmask.core.pipeline.models",
+        "pktmask.core.processors.ip_anonymizer"
+      ],
+      "user_facing": false,
+      "config_keys": [
+        "_config",
+        "process_file"
+      ]
+    },
+    {
+      "file_path": "src/pktmask/core/pipeline/stages/mask_payload/stage.py",
+      "component_type": "stage",
+      "dependencies": [
+        "__future__",
+        "json",
+        "logging",
+        "shutil",
+        "time",
+        "warnings",
+        "pathlib",
+        "typing",
+        "scapy.all",
+        "pktmask.core.pipeline.base_stage",
+        "pktmask.core.pipeline.models",
+        "pktmask.core.tcp_payload_masker.api.types",
+        "pktmask.core.tcp_payload_masker.utils.helpers",
+        "pktmask.core.processors.tshark_enhanced_mask_processor",
+        "pktmask.core.processors.base_processor",
+        "pktmask.adapters.processor_adapter"
+      ],
+      "user_facing": false,
+      "config_keys": [
+        "_config",
+        "copyfile",
+        "process_file"
+      ]
+    },
+    {
+      "file_path": "src/pktmask/stages/ip_anonymization.py",
+      "component_type": "stage",
+      "dependencies": [
+        "os",
+        "datetime",
+        "typing",
+        "scapy.all",
+        "os",
+        "warnings",
+        "scapy.all",
+        "typing",
+        "core.base_step",
+        "core.events",
+        "core.strategy",
+        "utils.file_selector",
+        "utils.reporting",
+        "utils.time",
+        "common.constants",
+        "infrastructure.logging"
+      ],
+      "user_facing": false,
+      "config_keys": [
+        "subdir",
+        "makedirs",
+        "build_mapping_from_directory",
+        "dirname",
+        "finalize_report_for_directory",
+        "output_filename",
+        "file_ip_mappings",
+        "file_selector",
+        "set_report_path",
+        "input_filename",
+        "_rel_subdir",
+        "path"
+      ]
+    },
+    {
+      "file_path": "src/pktmask/stages/deduplication.py",
+      "component_type": "stage",
+      "dependencies": [
+        "os",
+        "warnings",
+        "scapy.all",
+        "typing",
+        "core.base_step",
+        "core.events",
+        "utils.file_selector",
+        "utils.time",
+        "common.constants",
+        "infrastructure.logging",
+        "time",
+        "infrastructure.logging"
+      ],
+      "user_facing": false,
+      "config_keys": [
+        "subdir",
+        "filename",
+        "makedirs",
+        "deduplication_process_file",
+        "dirname",
+        "FILE_RESULT",
+        "output_filename",
+        "processed_files",
+        "file_selector",
+        "relpath",
+        "new_filename",
+        "input_filename",
+        "path"
+      ]
+    },
+    {
+      "file_path": "src/pktmask/stages/trimming.py",
+      "component_type": "stage",
+      "dependencies": [
+        "os",
+        "typing",
+        "scapy.all",
+        "core.base_step",
+        "common.constants",
+        "infrastructure.logging",
+        "core.encapsulation.adapter",
+        "core.encapsulation.types",
+        "time",
+        "infrastructure.logging"
+      ],
+      "user_facing": false,
+      "config_keys": [
+        "subdir",
+        "makedirs",
+        "dirname",
+        "output_filename",
+        "input_filename",
+        "path",
+        "enhanced_trimming_process_file"
+      ]
+    }
+  ],
+  "compatibility_layers": [
+    {
+      "file_path": "src/pktmask/adapters/event_adapter.py",
+      "layer_type": "adapter",
+      "target_components": [],
+      "removal_impact": "low",
+      "replacement_strategy": "直接移除，使用统一基类"
+    },
+    {
+      "file_path": "src/pktmask/adapters/encapsulation_adapter.py",
+      "layer_type": "adapter",
+      "target_components": [],
+      "removal_impact": "low",
+      "replacement_strategy": "直接移除，使用统一基类"
+    },
+    {
+      "file_path": "src/pktmask/adapters/processor_adapter.py",
+      "layer_type": "adapter",
+      "target_components": [
+        "StageBase"
+      ],
+      "removal_impact": "medium",
+      "replacement_strategy": "直接移除，使用统一基类"
+    },
+    {
+      "file_path": "src/pktmask/adapters/__init__.py",
+      "layer_type": "legacy",
+      "target_components": [],
+      "removal_impact": "medium",
+      "replacement_strategy": "保留兼容性，添加废弃警告"
+    },
+    {
+      "file_path": "src/pktmask/adapters/adapter_exceptions.py",
+      "layer_type": "adapter",
+      "target_components": [],
+      "removal_impact": "medium",
+      "replacement_strategy": "直接移除，使用统一基类"
+    },
+    {
+      "file_path": "src/pktmask/adapters/statistics_adapter.py",
+      "layer_type": "adapter",
+      "target_components": [],
+      "removal_impact": "low",
+      "replacement_strategy": "直接移除，使用统一基类"
+    },
+    {
+      "file_path": "src/pktmask/adapters/compatibility/dedup_compat.py",
+      "layer_type": "compatibility",
+      "target_components": [
+        "ProcessingStep"
+      ],
+      "removal_impact": "low",
+      "replacement_strategy": "渐进式移除，提供迁移指南"
+    },
+    {
+      "file_path": "src/pktmask/adapters/compatibility/__init__.py",
+      "layer_type": "legacy",
+      "target_components": [],
+      "removal_impact": "medium",
+      "replacement_strategy": "保留兼容性，添加废弃警告"
+    },
+    {
+      "file_path": "src/pktmask/adapters/compatibility/anon_compat.py",
+      "layer_type": "compatibility",
+      "target_components": [
+        "ProcessingStep"
+      ],
+      "removal_impact": "low",
+      "replacement_strategy": "渐进式移除，提供迁移指南"
+    },
+    {
+      "file_path": "src/pktmask/core/adapters/processor_adapter.py",
+      "layer_type": "adapter",
+      "target_components": [],
+      "removal_impact": "low",
+      "replacement_strategy": "直接移除，使用统一基类"
+    },
+    {
+      "file_path": "src/pktmask/core/adapters/__init__.py",
+      "layer_type": "legacy",
+      "target_components": [],
+      "removal_impact": "medium",
+      "replacement_strategy": "保留兼容性，添加废弃警告"
+    },
+    {
+      "file_path": "src/pktmask/core/base_step.py",
+      "layer_type": "legacy",
+      "target_components": [
+        "ProcessingStep",
+        "StageBase"
+      ],
+      "removal_impact": "low",
+      "replacement_strategy": "保留兼容性，添加废弃警告"
+    },
+    {
+      "file_path": "src/pktmask/steps/__init__.py",
+      "layer_type": "legacy",
+      "target_components": [],
+      "removal_impact": "low",
+      "replacement_strategy": "保留兼容性，添加废弃警告"
+    }
+  ],
+  "legacy_imports": {
+    "solution_phase1_simplified_compatibility.py": [
+      "ProcessingStep"
+    ],
+    "solution_phase3_unified_architecture.py": [
+      "ProcessingStep"
+    ],
+    "solution_immediate_unification.py": [
+      "ProcessingStep"
+    ],
+    "solution_phase2_migration_examples.py": [
+      "ProcessingStep"
+    ],
+    "tools/progressive_migration.py": [
+      "from pktmask.core.base_step",
+      "ProcessingStep"
+    ],
+    "tools/analyze_desktop_app.py": [
+      "from pktmask.steps",
+      "from pktmask.core.base_step",
+      "ProcessingStep",
+      "from ..steps",
+      "from .steps"
+    ],
+    "src/pktmask/core/unified_stage.py": [
+      "ProcessingStep"
+    ],
+    "src/pktmask/core/pipeline.py": [
+      "ProcessingStep"
+    ],
+    "src/pktmask/core/base_step.py": [
+      "ProcessingStep"
+    ],
+    "src/pktmask/stages/ip_anonymization.py": [
+      "ProcessingStep"
+    ],
+    "src/pktmask/stages/deduplication.py": [
+      "ProcessingStep"
+    ],
+    "src/pktmask/stages/trimming.py": [
+      "ProcessingStep"
+    ],
+    "src/pktmask/common/enums.py": [
+      "ProcessingStep"
+    ],
+    "src/pktmask/common/__init__.py": [
+      "ProcessingStep"
+    ],
+    "src/pktmask/adapters/compatibility/dedup_compat.py": [
+      "from pktmask.core.base_step",
+      "ProcessingStep"
+    ],
+    "src/pktmask/adapters/compatibility/anon_compat.py": [
+      "from pktmask.core.base_step",
+      "ProcessingStep"
+    ]
+  },
+  "config_dependencies": {
+    "src/pktmask/config/settings.py": [
+      "default_mask_ip",
+      "enable_fallback",
+      "cleanup_temp_files",
+      "default",
+      "get_default_config_path",
+      "mkdir",
+      "config_version",
+      "tshark_enable_reassembly",
+      "enable_reassembly",
+      "tshark_executable_paths",
+      "enable_boundary_safety",
+      "temp_dir",
+      "enable_performance_monitoring",
+      "enable_detailed_logging",
+      "log_file_max_size",
+      "AppConfig",
+      "enable_defragmentation",
+      "enable_tls_processing",
+      "keep_intermediate_files",
+      "enable_cross_segment_detection",
+      "fallback_enable_fallback",
+      "enable_stage_timing",
+      "tshark_enable_defragmentation",
+      "default_trim",
+      "last_output_dir",
+      "fallback_config",
+      "remember_last_dir",
+      "enable_parallel_processing",
+      "executable_paths",
+      "get_legacy_config_paths",
+      "default_dedup",
+      "last_input_dir"
+    ],
+    "src/pktmask/config/defaults.py": [
+      "log_file_name",
+      "default_mask_ip",
+      "output_dir_name",
+      "config_version",
+      "temp_dir_prefix",
+      "legacy_config_files",
+      "temp_dir_cleanup",
+      "log_file_max_size",
+      "show_hidden_files",
+      "enable_defragmentation",
+      "enabled",
+      "log_to_file",
+      "default_file_dialog_dir",
+      "default_trim",
+      "remember_last_dir",
+      "config_dir_name",
+      "executable_paths",
+      "enable_reassembly",
+      "default_dedup",
+      "default_config_file"
+    ]
+  },
+  "user_impact": {
+    "affected_features": [
+      "处理阶段配置界面",
+      "进度显示和统计",
+      "错误处理和恢复"
+    ],
+    "config_changes": {
+      "processing.stages": "processing.pipeline_stages",
+      "ui.stage_options": "ui.pipeline_options"
+    },
+    "workflow_changes": [
+      "配置文件格式可能需要更新",
+      "某些高级选项的位置可能调整"
+    ],
+    "migration_complexity": "low"
+  },
+  "migration_strategy": {
+    "phase1": {
+      "name": "后端统一",
+      "description": "统一处理阶段基类，不影响用户界面",
+      "user_impact": "无",
+      "rollback_plan": "保留原有适配器"
+    },
+    "phase2": {
+      "name": "配置迁移",
+      "description": "自动迁移用户配置文件",
+      "user_impact": "首次启动时自动迁移",
+      "rollback_plan": "备份原配置文件"
+    },
+    "phase3": {
+      "name": "界面优化",
+      "description": "优化用户界面，移除冗余选项",
+      "user_impact": "界面更简洁",
+      "rollback_plan": "保留旧界面选项"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "summary": {
+    "total_configs_processed": 0,
+    "successful_migrations": 0,
+    "skipped_migrations": 0,
+    "migration_errors": 0,
+    "no_config_found": 0,
+    "migration_timestamp": "2025-07-09T17:19:50.172506"
+  },
+  "detailed_results": {},
+  "recommendations": [
+    "📝 未发现配置文件，这是正常的（使用默认配置）"
+  ]
+}

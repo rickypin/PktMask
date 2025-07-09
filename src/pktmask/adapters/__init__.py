@@ -13,9 +13,7 @@ from .encapsulation_adapter import ProcessingAdapter
 from .event_adapter import EventDataAdapter
 from .statistics_adapter import StatisticsDataAdapter
 
-# 兼容性适配器
-from .compatibility.anon_compat import IpAnonymizationStageCompat
-from .compatibility.dedup_compat import DeduplicationStageCompat
+# 兼容性适配器已移除 - 直接使用 core.pipeline.stages 中的实现
 
 # 异常类
 from .adapter_exceptions import (
@@ -44,9 +42,7 @@ __all__ = [
     'EventDataAdapter',
     'StatisticsDataAdapter',
     
-    # 兼容性适配器
-    'IpAnonymizationStageCompat',
-    'DeduplicationStageCompat',
+    # 兼容性适配器已移除
     
     # 异常类
     'AdapterError',

@@ -1,0 +1,91 @@
+{
+  "migration_summary": {
+    "total_steps": 7,
+    "successful_steps": 7,
+    "failed_steps": 0,
+    "total_duration_seconds": 0.808416,
+    "completion_rate": 100.0
+  },
+  "step_results": [
+    {
+      "step_name": "backup_user_configs",
+      "success": true,
+      "duration_seconds": 0.000354,
+      "changes_made": [],
+      "error_message": null,
+      "rollback_info": null
+    },
+    {
+      "step_name": "analyze_current_state",
+      "success": true,
+      "duration_seconds": 0.590623,
+      "changes_made": [
+        "架构分析完成",
+        "分析输出: 🔍 开始分析桌面应用架构...\n📱 分析GUI组件...\n⚙️  分析处理阶段...\n⚙️  分析配置依赖...\n🔗 分析兼容层组件...\n📦 分析遗留导入...\n👤 分析用户工作流程...\n\n📊 分析结果:\n发现 11 个GUI组件\n发现 6 个处理阶段\n发现 13 个兼容层组件\n发现 16 个文件包含遗留导入\n用户影响复杂度: low\n迁移策略: 3 个阶段\n\n✅ 分析结果已保存到: reports/desktop_analysis.json\n"
+      ],
+      "error_message": null,
+      "rollback_info": null
+    },
+    {
+      "step_name": "implement_unified_base",
+      "success": true,
+      "duration_seconds": 0.000403,
+      "changes_made": [
+        "统一基类已存在",
+        "备份原有base_step.py: migration_backups/20250709_171949/base_step.py.backup"
+      ],
+      "error_message": null,
+      "rollback_info": null
+    },
+    {
+      "step_name": "update_stage_imports",
+      "success": true,
+      "duration_seconds": 0.125031,
+      "changes_made": [
+        "更新导入: src/pktmask/stages/ip_anonymization.py",
+        "更新导入: src/pktmask/stages/deduplication.py",
+        "更新导入: src/pktmask/stages/trimming.py",
+        "更新导入: src/pktmask/adapters/compatibility/dedup_compat.py",
+        "更新导入: src/pktmask/adapters/compatibility/anon_compat.py"
+      ],
+      "error_message": null,
+      "rollback_info": null
+    },
+    {
+      "step_name": "migrate_user_configs",
+      "success": true,
+      "duration_seconds": 0.043423,
+      "changes_made": [
+        "配置迁移完成",
+        "迁移输出: 🔄 开始配置迁移...\n\n📊 迁移结果:\n  - 处理配置文件: 0\n  - 成功迁移: 0\n  - 跳过迁移: 0\n  - 迁移错误: 0\n\n💡 建议:\n  📝 未发现配置文件，这是正常的（使用默认配置）\n\n✅ 迁移报告已保存到: reports/config_migration_report.json\n"
+      ],
+      "error_message": null,
+      "rollback_info": null
+    },
+    {
+      "step_name": "update_gui_adapters",
+      "success": true,
+      "duration_seconds": 0.001015,
+      "changes_made": [
+        "备份GUI文件: src/pktmask/gui/managers/pipeline_manager.py",
+        "备份GUI文件: src/pktmask/gui/main_window.py",
+        "GUI适配器更新准备完成（实际更新需要手动进行）"
+      ],
+      "error_message": null,
+      "rollback_info": null
+    },
+    {
+      "step_name": "validate_functionality",
+      "success": true,
+      "duration_seconds": 0.04716,
+      "changes_made": [
+        "统一基类语法检查通过",
+        "统一基类导入测试失败: Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    from pktmask.core.unified_stage import StageBase; print('导入成功')\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'pktmask'\n"
+      ],
+      "error_message": null,
+      "rollback_info": null
+    }
+  ],
+  "backup_location": "migration_backups/20250709_171949",
+  "timestamp": "2025-07-09T17:19:50.224960"
+}

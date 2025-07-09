@@ -23,6 +23,7 @@ wheels/
 # IDE
 .idea/
 .vscode/
+.augment/
 *.swp
 *.swo
 

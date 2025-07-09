@@ -476,9 +476,9 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
                 fallback_on_tshark_unavailable=enhanced_settings.fallback_config.fallback_on_tshark_unavailable,
                 fallback_on_parse_error=enhanced_settings.fallback_config.fallback_on_parse_error,
                 fallback_on_other_errors=enhanced_settings.fallback_config.fallback_on_other_errors,
-                preferred_fallback_order=[
-                    FallbackMode(mode) for mode in enhanced_settings.fallback_config.preferred_fallback_order
-                ]
+                preferred_fallback_order=self._parse_fallback_modes(
+                    enhanced_settings.fallback_config.preferred_fallback_order
+                )
             )
             
             # 创建TSharkEnhancedConfig
@@ -516,10 +516,42 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
             self._logger.debug(f"Fallback mechanism: {enhanced_config.fallback_config.enable_fallback}")
             
             return enhanced_config
-            
+
         except Exception as e:
             self._logger.warning(f"Failed to load configuration from AppConfig, using default configuration: {e}")
             return TSharkEnhancedConfig()  # 回退到默认配置
+
+    def _parse_fallback_modes(self, mode_strings: List[str]) -> List[FallbackMode]:
+        """安全地解析降级模式字符串列表"""
+        valid_modes = []
+
+        for mode_str in mode_strings:
+            try:
+                # 处理已废弃的模式
+                if mode_str == "enhanced_trimmer":
+                    self._logger.warning(
+                        f"Deprecated fallback mode 'enhanced_trimmer' found in configuration. "
+                        f"Automatically converting to 'mask_stage'."
+                    )
+                    mode_str = "mask_stage"
+
+                # 尝试转换为枚举
+                mode = FallbackMode(mode_str)
+                valid_modes.append(mode)
+
+            except ValueError:
+                self._logger.warning(
+                    f"Invalid fallback mode '{mode_str}' in configuration. "
+                    f"Valid modes are: {[m.value for m in FallbackMode]}. Skipping."
+                )
+                continue
+
+        # 如果没有有效的降级模式，使用默认值
+        if not valid_modes:
+            self._logger.warning("No valid fallback modes found, using default: mask_stage")
+            valid_modes = [FallbackMode.MASK_STAGE]
+
+        return valid_modes
         
     def _initialize_impl(self):
         """初始化TShark增强掩码处理器（Phase 2, Day 13 增强版）"""

@@ -1,21 +1,16 @@
-import warnings
+"""
+统一的处理阶段导入 - 直接使用新实现
 
-# 废弃警告
-warnings.warn(
-    "pktmask.stages 已废弃，请使用 pktmask.core.pipeline.stages 替代。",
-    DeprecationWarning,
-    stacklevel=2
-)
+兼容层已移除，直接导入 core.pipeline.stages 中的实现。
+"""
 
-# 重新导入到新实现（带兼容性适配）
-from .adapters.dedup_compat import DeduplicationStageCompat as DeduplicationStage
-from .adapters.anon_compat import IpAnonymizationStageCompat as IpAnonymizationStage
-
-# 这个还没有对应实现，暂时保持原有
-from .trimming import IntelligentTrimmingStage
+# 直接导入新的pipeline stages实现
+from ..core.pipeline.stages.dedup import DeduplicationStage
+from ..core.pipeline.stages.anon_ip import AnonStage as IpAnonymizationStage
+from ..core.pipeline.stages.mask_payload import MaskStage as IntelligentTrimmingStage
 
 __all__ = [
     "DeduplicationStage",
-    "IpAnonymizationStage", 
+    "IpAnonymizationStage",
     "IntelligentTrimmingStage",
 ]

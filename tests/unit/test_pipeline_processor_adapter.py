@@ -14,7 +14,7 @@ import tempfile
 import pytest
 import logging
 
-from pktmask.adapters.processor_adapter import PipelineProcessorAdapter
+from pktmask.core.unified_stage import StageBase
 from pktmask.core.pipeline.models import StageStats
 from pktmask.core.processors.base_processor import BaseProcessor, ProcessorConfig, ProcessorResult
 from pktmask.core.pipeline.stages.mask_payload.stage import MaskPayloadStage

@@ -16,6 +16,9 @@ from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe  # 核心数
 from pktmask.core.tcp_payload_masker.utils.helpers import (
     create_masking_recipe_from_dict,
 )
+from pktmask.core.processors.tshark_enhanced_mask_processor import TSharkEnhancedMaskProcessor
+from pktmask.core.processors.base_processor import ProcessorConfig
+from pktmask.adapters.processor_adapter import PipelineProcessorAdapter
 
 
 class MaskPayloadStage(StageBase):
@@ -113,7 +116,7 @@ class MaskPayloadStage(StageBase):
         """创建增强掩码处理器"""
         from pktmask.core.processors.tshark_enhanced_mask_processor import TSharkEnhancedMaskProcessor
         from pktmask.core.processors.base_processor import ProcessorConfig
-        from pktmask.adapters.processor_adapter import PipelineProcessorAdapter
+        from pktmask.core.unified_stage import StageBase
         
         # 创建处理器配置
         processor_config = ProcessorConfig(
