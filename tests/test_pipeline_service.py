@@ -49,7 +49,7 @@ class TestPipelineService(unittest.TestCase):
         expected = {
             "anon": {"enabled": True},
             "dedup": {"enabled": True},
-            "mask": {"enabled": True, "mode": "processor_adapter"}
+            "mask": {"enabled": True, "mode": "enhanced"}
         }
         
         self.assertEqual(config, expected)

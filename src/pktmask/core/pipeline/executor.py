@@ -32,7 +32,7 @@ class PipelineExecutor:
             },
         }
         
-    注意：recipe_path 和 recipe_dict 配置项已废弃。
+    注意：使用智能协议分析进行掩码处理。
     新版本使用 processor_adapter 模式进行智能协议分析，
     或通过编程接口直接传入 MaskingRecipe 对象。
 

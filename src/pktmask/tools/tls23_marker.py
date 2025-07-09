@@ -602,18 +602,5 @@ if __name__ == "__main__":
 
 
 # ---------------------------------------------------------------------------
-# Helper functions
+# Helper functions (moved to top of file to avoid duplication)
 # ---------------------------------------------------------------------------
-
-
-def _hex_to_bytes(h: str) -> bytes:
-    """将 Wireshark 十六进制字段(支持冒号/空格分隔)转换为 bytes。"""
-    h = h.replace(":", "").replace(" ", "").strip()
-    if not h:
-        return b""
-    import binascii
-
-    try:
-        return binascii.unhexlify(h)
-    except binascii.Error:
-        return b"" 

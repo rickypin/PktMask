@@ -76,37 +76,24 @@
 
 以下配置项已废弃，将在 v1.0.0 版本中移除：
 
-| 配置项 | 状态 | 替代方案 |
-|--------|------|----------|
-| `recipe_dict` | ⚠️ 废弃（继续工作） | 使用 `processor_adapter` 模式或直接传入 `MaskingRecipe` 对象 |
-| `recipe_path` | ⚠️ 废弃（继续工作） | 使用 `processor_adapter` 模式进行智能协议分析 |
-
-### 迁移建议
+### 简化的配置方式
 
 **CLI 用户**:
 ```bash
-# 旧方式（仍可用，但会警告）
-pktmask mask input.pcap -o output.pcap --recipe-path config/recipe.json
+# 标准掩码处理
+pktmask mask input.pcap -o output.pcap --mode enhanced
 
-# 新方式（推荐）
-pktmask mask input.pcap -o output.pcap --mode processor_adapter
+# 组合处理
+pktmask mask input.pcap -o output.pcap --dedup --anon --mode enhanced
 ```
 
 **编程接口用户**:
 ```python
-# 旧方式（仍可用，但会警告）
+# 推荐配置
 config = {
     "mask": {
         "enabled": True,
-        "recipe_path": "config/recipe.json"
-    }
-}
-
-# 新方式（推荐）
-config = {
-    "mask": {
-        "enabled": True,
-        "mode": "processor_adapter"
+        "mode": "enhanced"
     }
 }
 ```

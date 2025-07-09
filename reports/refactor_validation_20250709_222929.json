@@ -1,0 +1,252 @@
+{
+  "timestamp": "2025-07-09T22:29:29.288891",
+  "total_tests": 8,
+  "passed_tests": 6,
+  "failed_tests": 2,
+  "total_duration": 2.4126126766204834,
+  "overall_success": false,
+  "tests": [
+    {
+      "name": "functionality",
+      "success": false,
+      "duration": 1.8080081939697266,
+      "details": {
+        "unit": {
+          "returncode": 2,
+          "stdout": "\u001b[1m============================= test session starts ==============================\u001b[0m\nplatform darwin -- Python 3.13.5, pytest-8.4.1, pluggy-1.6.0 -- /Users/ricky/Downloads/PktMask/venv/bin/python\ncachedir: .pytest_cache\nrootdir: /Users/ricky/Downloads/PktMask\nconfigfile: pytest.ini\nplugins: anyio-4.9.0\n\u001b[1mcollecting ... \u001b[0m\n\u001b[1m----------------------------- live log collection ------------------------------\u001b[0m\n2025-07-09 22:29:27 [\u001b[32m    INFO\u001b[0m] pktmask.reporting: HTML template loaded successfully\n2025-07-09 22:29:27 [\u001b[32m    INFO\u001b[0m] pktmask.reporting: HTML template loaded successfully\n2025-07-09 22:29:27 [\u001b[32m    INFO\u001b[0m] src.pktmask.core.trim.strategies.factory.StrategyFactory: Starting automatic strategy registration...\n2025-07-09 22:29:27 [\u001b[32m    INFO\u001b[0m] src.pktmask.core.trim.strategies.factory.StrategyRegistry: 已注册策略: default (支持协议: ['*'])\n2025-07-09 22:29:27 [\u001b[32m    INFO\u001b[0m] src.pktmask.core.trim.strategies.factory.StrategyFactory: Registered DefaultStrategy\n2025-07-09 22:29:27 [\u001b[32m    INFO\u001b[0m] src.pktmask.core.trim.strategies.factory.StrategyRegistry: 已注册策略: tls (支持协议: ['TLS', 'SSL', 'HTTPS'])\n2025-07-09 22:29:27 [\u001b[32m    INFO\u001b[0m] src.pktmask.core.trim.strategies.factory.StrategyFactory: Registered TLSTrimStrategy\n2025-07-09 22:29:27 [\u001b[32m    INFO\u001b[0m] src.pktmask.core.trim.strategies.factory.StrategyFactory: Strategy automatic registration completed, registered 2 strategies: ['default', 'tls']\n2025-07-09 22:29:27 [\u001b[33m WARNING\u001b[0m] src.pktmask.core.trim.strategies.factory.StrategyRegistry: 策略 default 已存在，将被覆盖\n2025-07-09 22:29:27 [\u001b[32m    INFO\u001b[0m] src.pktmask.core.trim.strategies.factory.StrategyRegistry: 已注册策略: default (支持协议: ['*'])\n2025-07-09 22:29:27 [\u001b[33m WARNING\u001b[0m] src.pktmask.core.trim.strategies.factory.StrategyRegistry: 策略 tls 已存在，将被覆盖\n2025-07-09 22:29:27 [\u001b[32m    INFO\u001b[0m] src.pktmask.core.trim.strategies.factory.StrategyRegistry: 已注册策略: tls (支持协议: ['TLS', 'SSL', 'HTTPS'])\ncollected 326 items / 2 errors / 2 skipped\n\n==================================== ERRORS ====================================\n\u001b[31m\u001b[1m________ ERROR collecting tests/unit/test_enhanced_payload_trimming.py _________\u001b[0m\n\u001b[31mImportError while importing test module '/Users/ricky/Downloads/PktMask/tests/unit/test_enhanced_payload_trimming.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nvenv/lib/python3.13/site-packages/_pytest/python.py:498: in importtestmodule\n    mod = import_path(\nvenv/lib/python3.13/site-packages/_pytest/pathlib.py:587: in import_path\n    importlib.import_module(module_name)\n/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/importlib/__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n<frozen importlib._bootstrap>:1387: in _gcd_import\n    ???\n<frozen importlib._bootstrap>:1360: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:935: in _load_unlocked\n    ???\nvenv/lib/python3.13/site-packages/_pytest/assertion/rewrite.py:186: in exec_module\n    exec(co, module.__dict__)\ntests/unit/test_enhanced_payload_trimming.py:21: in <module>\n    from src.pktmask.stages.trimming import (\nE   ModuleNotFoundError: No module named 'src.pktmask.stages.trimming'\u001b[0m\n\u001b[31m\u001b[1m_______________ ERROR collecting tests/unit/test_steps_basic.py ________________\u001b[0m\n\u001b[31mImportError while importing test module '/Users/ricky/Downloads/PktMask/tests/unit/test_steps_basic.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nvenv/lib/python3.13/site-packages/_pytest/python.py:498: in importtestmodule\n    mod = import_path(\nvenv/lib/python3.13/site-packages/_pytest/pathlib.py:587: in import_path\n    importlib.import_module(module_name)\n/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/importlib/__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n<frozen importlib._bootstrap>:1387: in _gcd_import\n    ???\n<frozen importlib._bootstrap>:1360: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:935: in _load_unlocked\n    ???\nvenv/lib/python3.13/site-packages/_pytest/assertion/rewrite.py:186: in exec_module\n    exec(co, module.__dict__)\ntests/unit/test_steps_basic.py:11: in <module>\n    from pktmask.stages.deduplication import DeduplicationStage\nE   ModuleNotFoundError: No module named 'pktmask.stages.deduplication'\u001b[0m\n\u001b[33m=============================== warnings summary ===============================\u001b[0m\nvenv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474\n  /Users/ricky/Downloads/PktMask/venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474: PytestConfigWarning: Unknown config option: env\n  \n    self._warn_or_fail_if_strict(f\"Unknown config option: {key}\\n\")\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n\u001b[36m\u001b[1m=========================== short test summary info ============================\u001b[0m\n\u001b[31mERROR\u001b[0m tests/unit/test_enhanced_payload_trimming.py\n\u001b[31mERROR\u001b[0m tests/unit/test_steps_basic.py\n!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!\n\u001b[31m=================== \u001b[33m2 skipped\u001b[0m, \u001b[33m1 warning\u001b[0m, \u001b[31m\u001b[1m2 errors\u001b[0m\u001b[31m in 0.34s\u001b[0m\u001b[31m ====================\u001b[0m\n",
+          "stderr": ""
+        },
+        "integration": {
+          "returncode": 5,
+          "stdout": "\u001b[1m============================= test session starts ==============================\u001b[0m\nplatform darwin -- Python 3.13.5, pytest-8.4.1, pluggy-1.6.0 -- /Users/ricky/Downloads/PktMask/venv/bin/python\ncachedir: .pytest_cache\nrootdir: /Users/ricky/Downloads/PktMask\nconfigfile: pytest.ini\nplugins: anyio-4.9.0\n\u001b[1mcollecting ... \u001b[0mcollected 0 items\n\n\u001b[33m=============================== warnings summary ===============================\u001b[0m\nvenv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474\n  /Users/ricky/Downloads/PktMask/venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474: PytestConfigWarning: Unknown config option: env\n  \n    self._warn_or_fail_if_strict(f\"Unknown config option: {key}\\n\")\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n\u001b[33m============================== \u001b[33m\u001b[1m1 warning\u001b[0m\u001b[33m in 0.00s\u001b[0m\u001b[33m ==============================\u001b[0m\n",
+          "stderr": ""
+        },
+        "e2e": {
+          "returncode": 4,
+          "stdout": "\u001b[1m============================= test session starts ==============================\u001b[0m\nplatform darwin -- Python 3.13.5, pytest-8.4.1, pluggy-1.6.0 -- /Users/ricky/Downloads/PktMask/venv/bin/python\ncachedir: .pytest_cache\nrootdir: /Users/ricky/Downloads/PktMask\nconfigfile: pytest.ini\nplugins: anyio-4.9.0\n\u001b[1mcollecting ... \u001b[0mcollected 0 items\n\n\u001b[33m=============================== warnings summary ===============================\u001b[0m\nvenv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474\n  /Users/ricky/Downloads/PktMask/venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474: PytestConfigWarning: Unknown config option: env\n  \n    self._warn_or_fail_if_strict(f\"Unknown config option: {key}\\n\")\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n\u001b[33m============================== \u001b[33m\u001b[1m1 warning\u001b[0m\u001b[33m in 0.00s\u001b[0m\u001b[33m ==============================\u001b[0m\n",
+          "stderr": "ERROR: file or directory not found: performance'\n\n"
+        }
+      },
+      "error": "部分测试失败"
+    },
+    {
+      "name": "performance",
+      "success": true,
+      "duration": 0.0011091232299804688,
+      "details": {
+        "import_time_seconds": 0.0008678436279296875,
+        "import_success": true,
+        "memory_rss_mb": 17.984375,
+        "memory_vms_mb": 400961.234375
+      },
+      "error": null
+    },
+    {
+      "name": "code_quality",
+      "success": false,
+      "duration": 0.056294918060302734,
+      "details": {
+        "complexity": {
+          "passed": false,
+          "total_lines": 31865,
+          "total_files": 128,
+          "avg_lines_per_file": 248.9453125,
+          "large_files": [
+            {
+              "file": "pktmask/tools/tls23_marker.py",
+              "lines": 619
+            },
+            {
+              "file": "pktmask/tools/enhanced_tls_marker.py",
+              "lines": 627
+            },
+            {
+              "file": "pktmask/core/strategy.py",
+              "lines": 656
+            },
+            {
+              "file": "pktmask/gui/main_window.py",
+              "lines": 935
+            },
+            {
+              "file": "pktmask/gui/managers/ui_manager.py",
+              "lines": 640
+            },
+            {
+              "file": "pktmask/gui/managers/report_manager.py",
+              "lines": 992
+            },
+            {
+              "file": "pktmask/core/encapsulation/parser.py",
+              "lines": 516
+            },
+            {
+              "file": "pktmask/core/tcp_payload_masker/protocol_control.py",
+              "lines": 506
+            },
+            {
+              "file": "pktmask/core/tcp_payload_masker/tcp_masker.py",
+              "lines": 823
+            },
+            {
+              "file": "pktmask/core/tcp_payload_masker/keep_range_models.py",
+              "lines": 537
+            },
+            {
+              "file": "pktmask/core/processors/tls_mask_rule_generator.py",
+              "lines": 646
+            },
+            {
+              "file": "pktmask/core/processors/tshark_enhanced_mask_processor.py",
+              "lines": 1292
+            },
+            {
+              "file": "pktmask/core/processors/scapy_mask_applier.py",
+              "lines": 656
+            },
+            {
+              "file": "pktmask/core/processors/tshark_tls_analyzer.py",
+              "lines": 938
+            },
+            {
+              "file": "pktmask/core/trim/strategies/tls_strategy.py",
+              "lines": 871
+            },
+            {
+              "file": "pktmask/core/trim/testing/ab_test_framework.py",
+              "lines": 631
+            },
+            {
+              "file": "pktmask/core/trim/testing/ab_test_report.py",
+              "lines": 798
+            },
+            {
+              "file": "pktmask/core/trim/migration/strategy_migrator.py",
+              "lines": 508
+            }
+          ]
+        },
+        "duplication": {
+          "passed": false,
+          "duplicate_classes": [
+            "PerformanceTracker",
+            "ValidationError",
+            "AnonymizationStrategy",
+            "FileType",
+            "StageStats",
+            "ABTestReport",
+            "ErrorSeverity",
+            "ComparisonResult",
+            "ProcessingError",
+            "ResourceError",
+            "MaskAfter",
+            "MaskRange",
+            "StageBase",
+            "ErrorContext",
+            "PipelineEvents",
+            "ReportFormat",
+            "ProcessResult",
+            "KeepAll",
+            "MaskingStatistics",
+            "FallbackConfig",
+            "ConfigurationError",
+            "EventSeverity"
+          ],
+          "duplicate_functions": [
+            "_hex_to_bytes",
+            "main"
+          ]
+        },
+        "imports": {
+          "passed": false,
+          "issues": [
+            "深层相对导入: pktmask/core/trim/testing/ab_test_framework.py"
+          ]
+        },
+        "file_sizes": {
+          "passed": true,
+          "total_size_mb": 1.1334161758422852,
+          "large_files": [
+            {
+              "file": "pktmask/core/processors/tshark_enhanced_mask_processor.py",
+              "size_kb": 57.2490234375
+            }
+          ]
+        }
+      },
+      "error": "代码质量检查未通过"
+    },
+    {
+      "name": "dependencies",
+      "success": true,
+      "duration": 0.0889890193939209,
+      "details": {
+        "pktmask": {
+          "success": true,
+          "error": null
+        },
+        "pktmask.core": {
+          "success": true,
+          "error": null
+        },
+        "pktmask.gui": {
+          "success": true,
+          "error": null
+        },
+        "pktmask.cli": {
+          "success": true,
+          "error": null
+        }
+      },
+      "error": null
+    },
+    {
+      "name": "interfaces",
+      "success": true,
+      "duration": 0.344789981842041,
+      "details": {
+        "cli": {
+          "success": true
+        },
+        "gui": {
+          "success": true
+        }
+      },
+      "error": null
+    },
+    {
+      "name": "memory_usage",
+      "success": true,
+      "duration": 0.00014710426330566406,
+      "details": {
+        "initial_memory_mb": 37.09375,
+        "after_import_memory_mb": 37.09375,
+        "memory_increase_mb": 0.0
+      },
+      "error": null
+    },
+    {
+      "name": "error_handling",
+      "success": true,
+      "duration": 0.11315107345581055,
+      "details": {
+        "invalid_input": {
+          "handled_gracefully": true
+        }
+      },
+      "error": null
+    },
+    {
+      "name": "documentation",
+      "success": true,
+      "duration": 0.0001232624053955078,
+      "details": {
+        "required_docs": {
+          "all_present": true,
+          "missing": []
+        }
+      },
+      "error": null
+    }
+  ]
+}

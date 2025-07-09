@@ -745,13 +745,13 @@ def run_maskstage_internal(input_path: Path, output_path: Path, verbose: bool = 
     except ImportError as imp_err:
         raise RuntimeError(f"无法导入 Enhanced MaskStage: {imp_err}")
 
-    # 配置Enhanced MaskStage处理（Processor Adapter 模式）
+    # 配置Enhanced MaskStage处理（Enhanced 模式）
     config = {
         "dedup": {"enabled": False},
-        "anon": {"enabled": False}, 
+        "anon": {"enabled": False},
         "mask": {
             "enabled": True,
-            "mode": "processor_adapter",  # 使用处理器适配器模式
+            "mode": "enhanced",  # 使用增强模式
             "preserve_ratio": 0.3,
             "tls_strategy_enabled": True,
             "enable_tshark_preprocessing": True

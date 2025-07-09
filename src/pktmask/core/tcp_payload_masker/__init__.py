@@ -1,28 +1,18 @@
 """
-TCP载荷掩码器模块 - Phase 1 API重设计
+TCP载荷掩码器模块
 
-基于包级指令的TCP载荷掩码处理系统，提供独立的掩码执行接口。
+基于保留范围的TCP载荷掩码处理系统，提供专业的TCP载荷掩码接口。
 
-Phase 1 设计目标:
-- 完全独立的、基于包级指令的掩码执行引擎
-- 职责单一：纯粹的字节级掩码操作
-- 协议无关：完全不解析协议，只进行字节操作
-- API优先：提供标准化的函数调用接口
+核心功能:
+- TCP载荷保留范围掩码处理
+- 字节级精确掩码操作
+- 协议绑定控制和验证
+- 文件一致性检查
 
-Phase 1 实施进度:
-- Phase 1.1: ✅ 核心数据结构设计 (PacketMaskInstruction, MaskingRecipe, PacketMaskingResult)
-- Phase 1.2: ✅ 盲操作引擎实现 (BlindPacketMasker)
-- Phase 1.3: ✅ API封装和文件处理 (mask_pcap_with_instructions)
-- Phase 1.4: ⏳ 真实样本验证
-
-使用示例 (Phase 1.3完成后):
-    from pktmask.core.tcp_payload_masker import mask_pcap_with_instructions
-    
-    result = mask_pcap_with_instructions(
-        input_file="input.pcap",
-        output_file="output.pcap",
-        masking_recipe=recipe
-    )
+主要组件:
+- TcpPayloadMasker: 主要API类
+- TcpKeepRangeTable: 保留范围管理
+- ConsistencyVerifier: 文件一致性验证
 """
 
 # Phase 1.1: 核心数据结构 (已完成)
@@ -56,30 +46,29 @@ from .api.validator import (
     estimate_memory_usage
 )
 
-# 核心引擎 - BlindPacketMasker 已移除
-# from .core.blind_masker import BlindPacketMasker  # 已废弃
+# 核心引擎
 from .consistency import ConsistencyVerifier
 
 # 统计工具
 from .utils.stats import MaskingStatistics
 
-__version__ = "2.0.0-phase1.3"
+__version__ = "2.0.0"
 __author__ = "PktMask Team"
 
-# Phase 1.3 完整导出
+# 完整导出
 __all__ = [
-    # 新Phase 1 API - 核心数据结构
+    # 核心数据结构
     "PacketMaskInstruction",
-    "MaskingRecipe", 
+    "MaskingRecipe",
     "PacketMaskingResult",
     "MaskingStatistics",
-    
-    # Phase 1.3: API函数 (已完成)
+
+    # API函数
     "verify_file_consistency",
-    
-    # 向后兼容的旧API
+
+    # TCP载荷掩码API
     'TcpPayloadMasker',
-    'TcpKeepRangeEntry', 
+    'TcpKeepRangeEntry',
     'TcpMaskingResult',
     'TcpKeepRangeTable',
     'TcpMaskRangeApplier',
@@ -90,13 +79,12 @@ __all__ = [
     'TcpKeepRangeApplicationError',
     'ValidationError',
     'ConfigurationError',
-    
+
     # 验证功能
     "validate_packet_instruction",
     "check_file_accessibility",
     "estimate_memory_usage",
-    
+
     # 核心引擎
-    # "BlindPacketMasker",  # 已移除
     "ConsistencyVerifier"
-] 
+]

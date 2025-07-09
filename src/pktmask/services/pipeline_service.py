@@ -179,7 +179,7 @@ def validate_config(config: Dict) -> Tuple[bool, Optional[str]]:
 
 def build_pipeline_config(
     enable_anon: bool,
-    enable_dedup: bool, 
+    enable_dedup: bool,
     enable_mask: bool
 ) -> Dict:
     """根据功能开关构建管道配置"""
@@ -191,7 +191,7 @@ def build_pipeline_config(
     if enable_mask:
         config["mask"] = {
             "enabled": True,
-            "mode": "processor_adapter"
+            "mode": "enhanced"  # 修复：使用重构后的enhanced模式
         }
     return config
 

@@ -183,7 +183,7 @@ class UIManager:
         # 使用配置中的默认状态
         self.main_window.dedup_packet_cb.setChecked(self.config.ui.default_dedup)
         self.main_window.mask_ip_cb.setChecked(self.config.ui.default_mask_ip)
-        self.main_window.trim_packet_cb.setChecked(self.config.ui.default_trim)
+        self.main_window.trim_packet_cb.setChecked(self.config.ui.default_mask)
         self.main_window.web_focused_cb.setChecked(False)
         self.main_window.web_focused_cb.setEnabled(False)
         
@@ -624,16 +624,19 @@ class UIManager:
     def _update_start_button_state(self):
         """根据输入目录和选项状态更新Start按钮"""
         has_input_dir = self.main_window.base_dir is not None
-        has_any_action = (self.main_window.mask_ip_cb.isChecked() or 
-                         self.main_window.dedup_packet_cb.isChecked() or 
+        has_any_action = (self.main_window.mask_ip_cb.isChecked() or
+                         self.main_window.dedup_packet_cb.isChecked() or
                          self.main_window.trim_packet_cb.isChecked())
-        
+
         # 检查是否正在处理中
-        is_processing = (self.main_window.pipeline_thread is not None and 
-                        self.main_window.pipeline_thread.isRunning())
-        
+        processing_thread = getattr(self.main_window.pipeline_manager, 'processing_thread', None)
+        is_processing = (processing_thread is not None and processing_thread.isRunning())
+
         # 只有当有输入目录且至少选择一个操作时才启用按钮，或者正在处理中时保持启用
         should_enable = (has_input_dir and has_any_action) or is_processing
+
+
+
         self.main_window.start_proc_btn.setEnabled(should_enable)
         
         # 同时更新按钮样式

@@ -10,7 +10,6 @@ __version__ = "1.0.0"
 # 核心适配器
 from .processor_adapter import PipelineProcessorAdapter
 from .encapsulation_adapter import ProcessingAdapter
-from .event_adapter import EventDataAdapter
 from .statistics_adapter import StatisticsDataAdapter
 
 # 兼容性适配器已移除 - 直接使用 core.pipeline.stages 中的实现
@@ -39,7 +38,6 @@ __all__ = [
     # 核心适配器
     'PipelineProcessorAdapter',
     'ProcessingAdapter',
-    'EventDataAdapter',
     'StatisticsDataAdapter',
     
     # 兼容性适配器已移除

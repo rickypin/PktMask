@@ -194,11 +194,13 @@ class ReportManager:
                     original_packets = data.get('total_packets', 0)
                 
                 if step_name == 'IP Anonymization':
-                    original_ips = data.get('original_ips', 0)
-                    masked_ips = data.get('anonymized_ips', 0)
+                    # 支持新的AnonStage字段名称（从extra_metrics中获取）
+                    extra_metrics = data.get('extra_metrics', {})
+                    original_ips = data.get('original_ips', extra_metrics.get('original_ips', 0))
+                    masked_ips = data.get('anonymized_ips', extra_metrics.get('anonymized_ips', 0))
                     rate = (masked_ips / original_ips * 100) if original_ips > 0 else 0
                     report += f"   🛡️  IP Anonymization: {original_ips} → {masked_ips} IPs ({rate:.1f}%)\n"
-                    file_ip_mappings = data.get('file_ip_mappings', {})
+                    file_ip_mappings = data.get('file_ip_mappings', extra_metrics.get('file_ip_mappings', {}))
                     
                 elif step_name == 'Deduplication':
                     unique = data.get('unique_packets', 0)
@@ -207,7 +209,8 @@ class ReportManager:
                     report += f"   🔄 Deduplication: {removed} removed ({rate:.1f}%)\n"
                 
                 elif step_name == 'Payload Masking':
-                    masked = data.get('trimmed_packets', 0)
+                    # 支持新的MaskPayloadStage字段名称
+                    masked = data.get('packets_modified', data.get('trimmed_packets', 0))
                     rate = (masked / original_packets * 100) if original_packets > 0 else 0
                     report += f"   ✂️  Payload Masking: {masked} masked ({rate:.1f}%)\n"
         
@@ -761,7 +764,7 @@ class ReportManager:
                 step_type = 'mask_ip'  # 统一使用mask_ip作为IP匿名化的类型
             elif step_name_raw in ['DedupStage', 'DeduplicationStage']:
                 step_type = 'remove_dupes'
-            elif step_name_raw == 'MaskStage':
+            elif step_name_raw in ['MaskStage', 'MaskPayloadStage']:
                 step_type = 'trim_payloads'
             elif step_name_raw == 'Adapter_TSharkEnhancedMaskProcessor':
                 step_type = 'trim_payloads'  # 协议适配模式也是载荷掩码
@@ -811,6 +814,13 @@ class ReportManager:
                 ip_mappings = data['file_ip_mappings']
             elif 'ip_mappings' in data:
                 ip_mappings = data['ip_mappings']
+            elif 'extra_metrics' in data:
+                # 检查extra_metrics中的IP映射（新Pipeline系统）
+                extra_metrics = data['extra_metrics']
+                if 'file_ip_mappings' in extra_metrics:
+                    ip_mappings = extra_metrics['file_ip_mappings']
+                elif 'ip_mappings' in extra_metrics:
+                    ip_mappings = extra_metrics['ip_mappings']
             
             if ip_mappings and isinstance(ip_mappings, dict):
                 # 保存文件级IP映射

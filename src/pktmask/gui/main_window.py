@@ -157,7 +157,7 @@ class MainWindow(QMainWindow):
         # 基本属性（不依赖管理器）
         self.start_time: Optional[QTime] = None
         self.user_stopped = False  # 用户停止标志
-        self.pipeline_thread: Optional[PipelineThread] = None
+
         
         # 先初始化管理器
         self._init_managers()
@@ -205,9 +205,11 @@ class MainWindow(QMainWindow):
         self.event_coordinator.statistics_updated.connect(self._handle_statistics_update)
         self.event_coordinator.ui_update_requested.connect(lambda action, data: self._handle_ui_update_request(action, data))
         
-        # 新增：连接结构化数据信号
-        self.event_coordinator.pipeline_event_data.connect(self._handle_pipeline_event_data)
-        self.event_coordinator.statistics_data_updated.connect(self._handle_statistics_data)
+        # 新增：连接结构化数据信号（如果可用）
+        if hasattr(self.event_coordinator, 'pipeline_event_data'):
+            self.event_coordinator.pipeline_event_data.connect(self._handle_pipeline_event_data)
+        if hasattr(self.event_coordinator, 'statistics_data_updated'):
+            self.event_coordinator.statistics_data_updated.connect(self._handle_statistics_data)
 
 #    def _setup_manager_subscriptions(self):
 #        """设置管理器间的事件订阅关系"""
@@ -239,7 +241,7 @@ class MainWindow(QMainWindow):
         """处理UI更新请求"""
         if data is None:
             data = {}
-        
+
         if action == 'enable_controls':
             controls = data.get('controls', [])
             enabled = data.get('enabled', True)
@@ -336,7 +338,7 @@ class MainWindow(QMainWindow):
         # 保存处理选项的默认状态
         self.config.ui.default_dedup = self.dedup_packet_cb.isChecked()
         self.config.ui.default_mask_ip = self.mask_ip_cb.isChecked()
-        self.config.ui.default_trim = self.trim_packet_cb.isChecked()
+        self.config.ui.default_mask = self.trim_packet_cb.isChecked()
         
         # 保存最后使用的目录
         if self.base_dir and self.config.ui.remember_last_dir:
@@ -351,9 +353,10 @@ class MainWindow(QMainWindow):
         self.save_user_preferences()
         
         # 停止处理线程
-        if self.pipeline_thread and self.pipeline_thread.isRunning():
+        processing_thread = getattr(self.pipeline_manager, 'processing_thread', None)
+        if processing_thread and processing_thread.isRunning():
             self.stop_pipeline_processing()
-            self.pipeline_thread.wait(3000)  # 等待最多3秒
+            processing_thread.wait(3000)  # 等待最多3秒
         
         # 关闭事件协调器
         if hasattr(self, 'event_coordinator'):
@@ -470,47 +473,7 @@ class MainWindow(QMainWindow):
         """开始管道处理（委托给PipelineManager）"""
         self.pipeline_manager.start_pipeline_processing()
 
-    def start_processing(self, pipeline):
-        """@deprecated: 该方法已废弃，请使用 PipelineManager.start_processing"""
-        import warnings
-        warnings.warn(
-            "MainWindow.start_processing is deprecated. Use PipelineManager.start_processing instead.",
-            DeprecationWarning,
-            stacklevel=2
-        )
-        self.log_text.append(f"--- Pipeline Started ---\n")
-        
-        # 添加处理开始的信息
-        enabled_steps = []
-        if self.dedup_packet_cb.isChecked():
-            enabled_steps.append("🔄 Deduplication")
-        if self.mask_ip_cb.isChecked():
-            enabled_steps.append("🛡️ IP Anonymization")
-        if self.trim_packet_cb.isChecked():
-            enabled_steps.append("✂️ Payload Masking")
-            
-        separator_length = 70
-        start_report = f"{'='*separator_length}\n🚀 STARTING PACKET PROCESSING PIPELINE\n{'='*separator_length}\n"
-        start_report += f"📂 Input Directory: {os.path.basename(self.base_dir)}\n"
-        start_report += f"📁 Output Directory: {os.path.basename(self.current_output_dir)}\n"
-        start_report += f"🔧 Processing Steps: {', '.join(enabled_steps)}\n"
-        start_report += f"⏰ Started at: {QTime.currentTime().toString('hh:mm:ss')}\n"
-        start_report += f"{'='*separator_length}\n"
-        
-        self.summary_text.append(start_report)
 
-        self.pipeline_thread = PipelineThread(pipeline, self.base_dir, self.current_output_dir)
-        self.pipeline_thread.progress_signal.connect(self.handle_thread_progress)
-        self.pipeline_thread.finished.connect(self.on_thread_finished)
-        self.pipeline_thread.start()
-
-        # Disable all controls during processing
-        self.dir_path_label.setEnabled(False)
-        self.output_path_label.setEnabled(False)
-        for cb in [self.mask_ip_cb, self.dedup_packet_cb, self.trim_packet_cb]:
-            cb.setEnabled(False)
-        # web_focused_cb 保持禁用状态，因为功能未完成
-        self.start_proc_btn.setText("Stop")
 
     def handle_thread_progress(self, event_type: PipelineEvents, data: dict):
         """主槽函数，根据事件类型分发UI更新任务"""
@@ -625,7 +588,8 @@ class MainWindow(QMainWindow):
 
     def on_thread_finished(self):
         """线程完成时的回调函数，确保UI状态正确恢复"""
-        self.pipeline_thread = None
+        # 线程清理现在由PipelineManager处理
+        pass
 
     def get_elided_text(self, label: QLabel, text: str) -> str:
         """如果文本太长，则省略文本"""

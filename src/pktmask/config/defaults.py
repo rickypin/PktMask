@@ -13,7 +13,7 @@ DEFAULT_UI_CONFIG = {
     'font_size': 10,
     'default_dedup': True,
     'default_mask_ip': True,
-    'default_trim': False,
+    'default_mask': True,
     'remember_last_dir': True,
     'auto_open_output': False,
     'show_progress_details': True,
@@ -94,11 +94,11 @@ PROCESSOR_DEFAULTS = {
         'strict_mode': False,
         'memory_efficient': True
     },
-    'trimmer': {
-        'enabled': False,
+    'mask_payload': {
+        'enabled': True,
+        'mode': 'enhanced',
         'preserve_tls_handshake': True,
-        'preserve_tls_alerts': True,
-        'trim_threshold': 1024
+        'preserve_tls_alerts': True
     }
 }
 

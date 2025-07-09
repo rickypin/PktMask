@@ -276,6 +276,9 @@ class PipelineManager:
     
     def processing_finished(self):
         """处理完成"""
+        # 首先清理线程状态，确保UI状态检查正确
+        self.processing_thread = None
+
         # 委托给ReportManager生成报告
         self.main_window.report_manager.generate_processing_finished_report()
         
@@ -298,29 +301,32 @@ class PipelineManager:
             except Exception as e:
                 self._logger.error(f"Error auto-opening output directory: {e}")
         
-        # 通过事件协调器更新UI状态
-        if hasattr(self.main_window, 'event_coordinator'):
-            self.main_window.event_coordinator.request_ui_update('update_button_text', 
-                button='start_proc_btn', text='Start')
-            self.main_window.event_coordinator.request_ui_update('enable_controls', 
-                controls=['start_proc_btn', 'dir_path_label', 'output_path_label', 'mask_ip_cb', 'dedup_packet_cb', 'trim_packet_cb'], 
-                enabled=True)
-        else:
-            # 备用方案：直接操作
+        # 使用QTimer.singleShot确保UI更新在事件循环的下一个周期执行
+        from PyQt6.QtCore import QTimer
+
+        def update_ui_state():
+            """延迟更新UI状态"""
+            # 直接设置按钮状态
             self.main_window.start_proc_btn.setText("Start")
             self.main_window.start_proc_btn.setEnabled(True)
+
+            # 启用其他控件
             self.main_window.dir_path_label.setEnabled(True)
             self.main_window.output_path_label.setEnabled(True)
             for cb in [self.main_window.mask_ip_cb, self.main_window.dedup_packet_cb, self.main_window.trim_packet_cb]:
                 cb.setEnabled(True)
-        
-        # 更新按钮样式
-        self.main_window.ui_manager._update_start_button_style()
-        
+
+            # 更新按钮样式
+            self.main_window.ui_manager._update_start_button_style()
+
+        # 延迟100ms执行UI更新
+        QTimer.singleShot(100, update_ui_state)
+
         self._logger.info("处理流程完成")
     
     def on_thread_finished(self):
         """线程结束处理"""
+        # 线程清理已在processing_finished中处理，这里不需要重复
         self.processing_thread = None
     
     def reset_processing_state(self):

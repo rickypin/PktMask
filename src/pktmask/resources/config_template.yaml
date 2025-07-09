@@ -20,7 +20,7 @@ ui:
   # 默认选项
   default_dedup: true         # 默认启用去重
   default_mask_ip: true       # 默认启用IP匿名化
-  default_trim: false         # 默认启用载荷裁切
+  default_mask: true          # 默认启用载荷掩码
   
   # 界面行为
   remember_last_dir: true     # 记住上次使用的目录

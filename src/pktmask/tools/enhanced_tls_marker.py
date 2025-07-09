@@ -258,17 +258,7 @@ def _analyze_tls_records(packets: List[Dict], target_types: set[int] = None, ver
     }
 
 
-def _hex_to_bytes(h: str) -> bytes:
-    """把 Wireshark 提供的十六进制字段(可含冒号/空格)转换成 bytes."""
-    h = h.replace(":", "").replace(" ", "").strip()
-    if not h:
-        return b""
-    import binascii
-    try:
-        return binascii.unhexlify(h)
-    except binascii.Error:
-        return b""
-
+# _hex_to_bytes function already defined above - removed duplicate
 
 def _to_list(val: Any) -> List[str]:
     """统一转换为列表格式"""

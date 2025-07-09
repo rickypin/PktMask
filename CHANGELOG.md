@@ -119,36 +119,29 @@ from pktmask.stages import DeduplicationStage
 
 以下配置项已废弃，将在 v1.0.0 版本中移除：
 
-#### 已废弃配置项
-- `recipe_dict` → 使用 `processor_adapter` 模式或直接传入 `MaskingRecipe` 对象
-- `recipe_path` → 使用 `processor_adapter` 模式进行智能协议分析
+#### 配置简化
+- 移除了所有废弃的配置参数和兼容性层
+- 统一使用TSharkEnhancedMaskProcessor进行智能协议分析
+- 简化了CLI参数，专注于核心功能
 
-#### 迁移建议
+#### 使用方式
 
 **CLI 用户**:
 ```bash
-# 旧方式（仍可用，但会警告）
-pktmask mask input.pcap -o output.pcap --recipe-path config/recipe.json
+# 标准掩码处理
+pktmask mask input.pcap -o output.pcap --mode enhanced
 
-# 新方式（推荐）
-pktmask mask input.pcap -o output.pcap --mode processor_adapter
+# 组合处理
+pktmask mask input.pcap -o output.pcap --dedup --anon --mode enhanced
 ```
 
 **编程接口用户**:
 ```python
-# 旧方式（仍可用，但会警告）
+# 推荐配置
 config = {
     "mask": {
         "enabled": True,
-        "recipe_path": "config/recipe.json"
-    }
-}
-
-# 新方式（推荐）
-config = {
-    "mask": {
-        "enabled": True,
-        "mode": "processor_adapter"
+        "mode": "enhanced"
     }
 }
 ```

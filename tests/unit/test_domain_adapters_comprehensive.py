@@ -1,73 +1,87 @@
 #!/usr/bin/env python3
 """
-Domain适配器模块全面测试 - Phase 2核心改进
-专注于提升Domain适配器层的测试覆盖率从14-15%到50%
+Desktop Event System and Adapters Test - Refactored for simplified architecture
+Tests the new desktop-optimized event system and remaining adapters
 """
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
 
-from src.pktmask.domain.adapters.event_adapter import EventDataAdapter
 from src.pktmask.domain.adapters.statistics_adapter import StatisticsDataAdapter
-from src.pktmask.domain.models.pipeline_event_data import PipelineEventData
 from src.pktmask.domain.models.statistics_data import StatisticsData
-from src.pktmask.domain.models.file_processing_data import FileProcessingData
-from src.pktmask.domain.models.step_result_data import StepResultData
-from src.pktmask.core.events import PipelineEvents
+from src.pktmask.core.events import (
+    DesktopEvent, EventType, PipelineEvents,
+    create_pipeline_start_event, create_file_start_event, create_error_event
+)
 
 
-class TestEventDataAdapter:
-    """测试事件数据适配器"""
+class TestDesktopEventSystem:
+    """Test the new desktop-optimized event system"""
+
+    def test_desktop_event_creation(self):
+        """Test basic DesktopEvent creation"""
+        event = DesktopEvent.create_fast('test_type', 'Test message', data1='value1')
+
+        assert event.type == 'test_type'
+        assert event.message == 'Test message'
+        assert event.data['data1'] == 'value1'
+        assert event.severity == 'info'
+        assert event.timestamp is not None
     
-    def test_event_adapter_initialization(self):
-        """测试事件适配器初始化"""
-        adapter = EventDataAdapter()
-        assert hasattr(adapter, 'from_legacy_dict')
-        assert hasattr(adapter, 'to_legacy_dict')
-        assert hasattr(adapter, '_logger')
-    
-    def test_from_legacy_dict_basic(self):
-        """测试基本的从遗留字典转换"""
-        pytest.skip("Legacy format conversion tests require complex data model setup - feature works but tests need refinement")
-    
-    def test_to_legacy_dict_basic(self):
-        """测试基本的转换为遗留字典"""
-        adapter = EventDataAdapter()
-        
-        # 创建模拟的管道事件数据
-        mock_event_data = Mock()
-        mock_event_data.dict.return_value = {'message': 'test', 'level': 'info'}
-        
-        mock_pipeline_event = Mock()
-        mock_pipeline_event.data = mock_event_data
-        mock_pipeline_event.event_type = PipelineEvents.LOG
-        
-        result = adapter.to_legacy_dict(mock_pipeline_event)
-        assert isinstance(result, dict)
-        assert 'message' in result or 'type' in result
-    
-    def test_preprocess_legacy_data_log(self):
-        """测试日志数据预处理"""
-        adapter = EventDataAdapter()
-        
-        legacy_data = {
-            'msg': 'This is a test message',  # 使用'msg'而不是'message'
-            'level': 'warning'
-        }
-        
-        processed = adapter._preprocess_legacy_data(PipelineEvents.LOG, legacy_data)
-        # 验证'msg'被转换为'message'
-        assert 'message' in processed
-        assert processed['message'] == 'This is a test message'
-        assert 'level' in processed
-    
-    def test_create_enhanced_event(self):
-        """测试创建增强事件"""
-        pytest.skip("Enhanced event creation requires complex data model setup - feature works but tests need refinement")
-    
-    def test_is_legacy_format(self):
-        """测试遗留格式检测"""
-        pytest.skip("Legacy format detection requires complex data model setup - feature works but tests need refinement")
+    def test_desktop_event_factory_functions(self):
+        """Test factory functions for common events"""
+        # Test pipeline start event
+        pipeline_event = create_pipeline_start_event(100, '/input', '/output')
+        assert pipeline_event.type == EventType.PIPELINE_START
+        assert 'Starting pipeline processing 100 files' in pipeline_event.message
+        assert pipeline_event.data['total_files'] == 100
+
+        # Test file start event
+        file_event = create_file_start_event('test.pcap', '/path/test.pcap', 1024)
+        assert file_event.type == EventType.FILE_START
+        assert file_event.data['filename'] == 'test.pcap'
+        assert file_event.data['size_bytes'] == 1024
+
+        # Test error event
+        error_event = create_error_event('Test error', {'context': 'test'})
+        assert error_event.type == EventType.ERROR
+        assert error_event.is_error() == True
+        assert error_event.data['context'] == 'test'
+
+    def test_desktop_event_performance(self):
+        """Test event creation performance"""
+        import time
+
+        # Test fast creation
+        start = time.time()
+        for _ in range(1000):
+            event = DesktopEvent.create_fast('test', 'message', data='value')
+        creation_time = time.time() - start
+
+        # Should be very fast (less than 10ms for 1000 events)
+        assert creation_time < 0.01
+
+    def test_desktop_event_serialization(self):
+        """Test event serialization"""
+        event = create_pipeline_start_event(50, '/input', '/output')
+
+        # Test to_dict conversion
+        event_dict = event.to_dict()
+        assert isinstance(event_dict, dict)
+        assert event_dict['type'] == EventType.PIPELINE_START
+        assert event_dict['data']['total_files'] == 50
+
+    def test_backward_compatibility_events(self):
+        """Test backward compatibility with PipelineEvents"""
+        # Test that PipelineEvents enum still exists
+        assert hasattr(PipelineEvents, 'PIPELINE_START')
+        assert hasattr(PipelineEvents, 'FILE_START')
+        assert hasattr(PipelineEvents, 'ERROR')
+
+        # Test that EventType mapping works
+        assert EventType.PIPELINE_START == 'pipeline_start'
+        assert EventType.FILE_START == 'file_start'
+        assert EventType.ERROR == 'error'
 
 
 class TestStatisticsDataAdapter:
@@ -181,18 +195,15 @@ class TestStatisticsDataAdapter:
 class TestDataModels:
     """测试数据模型基本功能"""
     
-    def test_pipeline_event_data_exists(self):
-        """测试PipelineEventData类存在且可导入"""
+    def test_desktop_event_data_exists(self):
+        """测试DesktopEvent类存在且可导入"""
         # 验证类已成功导入
-        assert PipelineEventData is not None
-        
-        # 尝试创建实例（如果构造函数允许）
-        try:
-            event = PipelineEventData(event_type=PipelineEvents.LOG, data=Mock())
-            assert event.event_type == PipelineEvents.LOG
-        except Exception:
-            # 如果构造函数需要特定参数，这是正常的
-            pass
+        assert DesktopEvent is not None
+
+        # 创建实例
+        event = DesktopEvent.create_fast(EventType.LOG, 'Test message', level='info')
+        assert event.type == EventType.LOG
+        assert event.message == 'Test message'
     
     def test_statistics_data_exists(self):
         """测试StatisticsData类存在且可导入"""
@@ -217,31 +228,30 @@ class TestDataModels:
         assert hasattr(PipelineEvents, 'STEP_SUMMARY')
 
 
-class TestDomainAdaptersIntegration:
-    """Domain适配器集成测试"""
-    
-    def test_adapters_can_be_instantiated(self):
-        """测试适配器可以被实例化"""
-        event_adapter = EventDataAdapter()
-        stats_adapter = StatisticsDataAdapter()
-        
-        assert event_adapter is not None
-        assert stats_adapter is not None
-        assert hasattr(event_adapter, '_logger')
-        assert hasattr(stats_adapter, '_logger')
-    
-    def test_adapters_have_expected_methods(self):
-        """测试适配器具有预期的方法"""
-        event_adapter = EventDataAdapter()
-        stats_adapter = StatisticsDataAdapter()
-        
-        # 事件适配器方法
-        expected_event_methods = [
-            'from_legacy_dict', 'to_legacy_dict', 'create_enhanced_event', 'is_legacy_format'
+class TestSimplifiedArchitectureIntegration:
+    """Simplified architecture integration tests"""
+
+    def test_desktop_event_system_integration(self):
+        """Test desktop event system integration"""
+        # Test event creation and factory functions
+        events = [
+            create_pipeline_start_event(10, '/input', '/output'),
+            create_file_start_event('test.pcap', '/path/test.pcap'),
+            create_error_event('Test error')
         ]
-        for method in expected_event_methods:
-            assert hasattr(event_adapter, method), f"EventDataAdapter missing method: {method}"
-        
+
+        for event in events:
+            assert isinstance(event, DesktopEvent)
+            assert event.timestamp is not None
+            assert event.message is not None
+
+    def test_remaining_adapters_functionality(self):
+        """Test remaining adapters functionality"""
+        stats_adapter = StatisticsDataAdapter()
+
+        assert stats_adapter is not None
+        assert hasattr(stats_adapter, '_logger')
+
         # 统计适配器方法
         expected_stats_methods = [
             'from_legacy_manager', 'to_legacy_dict', 'merge_statistics', 'validate_statistics_data'
@@ -249,26 +259,25 @@ class TestDomainAdaptersIntegration:
         for method in expected_stats_methods:
             assert hasattr(stats_adapter, method), f"StatisticsDataAdapter missing method: {method}"
     
-    def test_error_handling_in_adapters(self):
-        """测试适配器的错误处理"""
-        event_adapter = EventDataAdapter()
-        stats_adapter = StatisticsDataAdapter()
-        
-        # 测试事件适配器错误处理
+    def test_error_handling_in_simplified_system(self):
+        """Test error handling in simplified system"""
+        # Test desktop event error handling
         try:
-            # 传递无效数据
-            result = event_adapter.from_legacy_dict(PipelineEvents.LOG, None)
-            # 应该优雅地处理None输入
-            assert result is not None or True  # 任何结果都可以接受
+            # Test with invalid data
+            event = DesktopEvent.create_fast('', '', invalid_param=None)
+            # Should handle gracefully
+            assert event.type == ''
+            assert event.message == ''
         except Exception:
-            # 抛出异常也是可接受的行为
+            # Exception is also acceptable
             pass
-        
-        # 测试统计适配器错误处理
+
+        # Test statistics adapter error handling
+        stats_adapter = StatisticsDataAdapter()
         try:
             result = stats_adapter.to_legacy_dict(None)
-            # 应该优雅地处理None输入
+            # Should handle None input gracefully
             assert isinstance(result, dict) or result is None
         except Exception:
-            # 抛出异常也是可接受的行为
-            pass 
+            # Exception is also acceptable behavior
+            pass

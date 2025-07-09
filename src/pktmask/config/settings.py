@@ -30,7 +30,7 @@ class UISettings:
     # 默认选项
     default_dedup: bool = True
     default_mask_ip: bool = True
-    default_trim: bool = False
+    default_mask: bool = True
     
     # 文件处理设置
     remember_last_dir: bool = True
@@ -348,7 +348,7 @@ class AppConfig:
         return {
             'default_dedup': self.ui.default_dedup,
             'default_mask_ip': self.ui.default_mask_ip,
-            'default_trim': self.ui.default_trim,
+            'default_mask': self.ui.default_mask,
             'remember_last_dir': self.ui.remember_last_dir,
             'last_input_dir': self.ui.last_input_dir,
             'last_output_dir': self.ui.last_output_dir,
