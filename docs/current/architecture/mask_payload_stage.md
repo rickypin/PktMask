@@ -88,11 +88,11 @@ MaskPayloadStage.process_file()
 config = {
     # 处理模式选择
     "mode": "processor_adapter",  # 或 "basic"
-    
-    # 掩码配方（可选）
+
+    # 掩码配方（可选，仅在processor_adapter模式下使用）
     "recipe": MaskingRecipe(),           # 直接传入实例
     "recipe_dict": {...},                # 从字典创建
-    "recipe_path": "path/to/recipe.json" # 从文件加载
+    # 注意：recipe_path 已废弃，现在使用智能协议分析
 }
 ```
 
@@ -145,9 +145,16 @@ stats = stage.process_file("input.pcap", "output.pcap")
 ### 配置掩码策略
 
 ```python
-# 使用配方文件
+# 使用智能协议分析（推荐）
 config = {
-    "recipe_path": "config/tls_mask_recipe.json"
+    "mode": "processor_adapter"  # 自动进行TLS协议分析和掩码
+}
+stage = MaskPayloadStage(config=config)
+
+# 或使用自定义配方
+config = {
+    "mode": "processor_adapter",
+    "recipe": custom_recipe_instance
 }
 stage = MaskPayloadStage(config=config)
 ```

@@ -78,7 +78,7 @@ class FinalValidator:
                 results["optional_files_missing"].append(file_path)
         
         # 检查备份文件
-        backup_dirs = list(self.project_root.glob("migration_backups/*"))
+        backup_dirs = list(self.project_root.glob("temp_backups/*"))
         if backup_dirs:
             results["backup_files_created"] = [str(d) for d in backup_dirs]
         
@@ -309,12 +309,12 @@ class FinalValidator:
             '__pycache__',
             '.git',
             'backup',
-            'migration_backups',
+            'temp_backups',
             'tools/',
             'reports/',
             '.pyc'
         ]
-        
+
         return any(pattern in str(file_path) for pattern in skip_patterns)
 
     def save_validation_report(self) -> str:

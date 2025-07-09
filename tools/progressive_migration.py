@@ -47,7 +47,7 @@ class ProgressiveMigrator:
 
     def __init__(self, project_root: str):
         self.project_root = Path(project_root)
-        self.backup_dir = self.project_root / "migration_backups" / datetime.now().strftime('%Y%m%d_%H%M%S')
+        self.backup_dir = self.project_root / "temp_backups" / datetime.now().strftime('%Y%m%d_%H%M%S')
         self.results: List[StepResult] = []
         
         # 定义迁移步骤
@@ -372,12 +372,12 @@ class ProgressiveMigrator:
             '__pycache__',
             '.git',
             'backup',
-            'migration_backups',
+            'temp_backups',
             'tools/',
             'reports/',
             '.pyc'
         ]
-        
+
         return any(pattern in str(file_path) for pattern in skip_patterns)
 
     def _generate_final_report(self, total_duration: float) -> Dict[str, Any]:

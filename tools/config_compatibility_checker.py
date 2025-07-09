@@ -171,7 +171,10 @@ class ConfigCompatibilityChecker:
         deprecated_keys = [
             "legacy.enable_old_pipeline",
             "experimental.use_beta_features",
-            "debug.enable_step_debugging"
+            "debug.enable_step_debugging",
+            "processing.recipe_path",
+            "mask_stage.recipe_path",
+            "mask.recipe_path"
         ]
         
         for deprecated_key in deprecated_keys:

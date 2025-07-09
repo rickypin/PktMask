@@ -7,12 +7,13 @@
 ---
 
 ## 0. 背景
-当前项目存在两条掩码执行链：
+当前项目已统一到单一掩码执行链：
 
-* **旧链路**：Enhanced Trimmer（TShark → PyShark → BlindPacketMasker），TLS-23 Validator 全部通过。
-* **新链路**：轻量化 PipelineExecutor（DedupStage / AnonymizeStage / MaskStage），GUI 与 CLI 已切换，但缺乏协议感知，导致 TLS-23 掩码失效。
+* **统一链路**：PipelineExecutor（DedupStage / AnonymizeStage / MaskStage），基于 TSharkEnhancedMaskProcessor 的智能协议处理。
+* **核心特性**：三阶段处理（TShark TLS分析 → 规则生成 → Scapy掩码应用），TLS-23 Validator 全部通过。
+* **降级机制**：自动降级到透传模式，确保处理可靠性。
 
-双轨维护成本高且容易产生结果不一致，故需统一到 **单一受 CI 保护的流水线**。
+统一架构降低了维护成本，确保了结果一致性。
 
 ---
 

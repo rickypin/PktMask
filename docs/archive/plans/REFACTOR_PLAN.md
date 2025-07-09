@@ -12,7 +12,7 @@
 ## 1. 背景与动机
 | 维度 | 现状 | 问题 |
 |------|------|------|
-| 功能管线 | Enhanced Trimmer（多阶段 + BlindPacketMasker）<br/>TCP Payload Masker API（遗留独立流程） | 双轨维护成本高、代码重复、用户易混淆 |
+| 功能管线 | TSharkEnhancedMaskProcessor（三阶段智能处理）<br/>统一的 PipelineExecutor 架构 | 架构已统一，维护成本降低 |
 | 入口 | GUI + 部分脚本调用 | MCP/CLI 缺失，难以嵌入自动化流程 |
 | 模块耦合 | GUI 内部直接实例化 Processor<br/>Stage ↔ GUI 回调大量交叉 | 代码层面 GUI 与核心算法耦合偏紧，影响后续扩展 |
 | 用户体验 | GUI 交互/视觉成熟、被大量用户依赖 | **必须 100 % 保持不变** |

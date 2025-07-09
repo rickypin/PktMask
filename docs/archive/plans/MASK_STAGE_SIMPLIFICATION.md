@@ -14,17 +14,17 @@
 
 在之前的设计中，MaskStage 的 Basic 模式存在以下问题：
 
-1. **组件冗余**: 依赖 BlindPacketMasker 作为中间层，增加了不必要的复杂性
-2. **功能重叠**: BlindPacketMasker 与 MaskingRecipe 的功能存在重叠
-3. **维护成本**: 需要同时维护 BlindPacketMasker 和 MaskingRecipe 两套逻辑
+1. **组件冗余**: 依赖过多中间层，增加了不必要的复杂性
+2. **功能重叠**: 多个组件提供相似的掩码功能
+3. **维护成本**: 需要同时维护多套逻辑
 4. **错误传播**: 多层组件增加了错误传播和调试难度
 
 ### 1.2 简化的必要性
 
 经过分析，我们发现：
-- Basic 模式的核心需求只是简单的数据包掩码处理
-- MaskingRecipe 已经提供了完整的掩码规则定义和应用能力
-- BlindPacketMasker 主要是对 MaskingRecipe 的封装，没有提供额外价值
+- Basic 模式的核心需求只是简单的数据包处理
+- TSharkEnhancedMaskProcessor 已经提供了完整的智能掩码功能
+- 可以通过透传模式实现简单可靠的降级处理
 
 ---
 
@@ -35,75 +35,76 @@
 **简化前**:
 ```
 MaskStage (Basic Mode)
-    └── BlindPacketMasker
-        └── MaskingRecipe
+    └── 多层中间组件
+        └── 复杂的掩码逻辑
 ```
 
 **简化后**:
 ```
-MaskStage (Basic Mode)
-    └── MaskingRecipe (直接使用)
+MaskStage (Processor Adapter Mode)
+    └── TSharkEnhancedMaskProcessor (智能处理)
+
+MaskStage (Basic Mode - 降级)
+    └── 透传模式 (直接复制)
 ```
 
 ### 2.2 执行流程简化
 
 **原有流程**:
-1. 初始化 BlindPacketMasker
-2. BlindPacketMasker 内部创建/管理 MaskingRecipe
-3. 调用 BlindPacketMasker.mask_packets()
-4. BlindPacketMasker 调用 MaskingRecipe 进行实际处理
-5. 返回封装后的统计信息
+1. 初始化多个中间组件
+2. 复杂的组件间调用链
+3. 多层错误处理和状态管理
+4. 返回复杂的统计信息
 
 **简化流程**:
-1. 直接解析和创建 MaskingRecipe
-2. 调用 MaskingRecipe.apply() 直接处理数据包
-3. 返回简化的统计信息
+1. Processor Adapter模式：直接使用TSharkEnhancedMaskProcessor
+2. Basic模式：透传复制，无需复杂处理
+3. 返回统一的统计信息
 
 ### 2.3 配置处理简化
 
-支持三种配置方式，直接转换为 MaskingRecipe：
+支持两种主要处理模式：
 
 ```python
-# 方式1: 直接传入 MaskingRecipe 实例
-recipe = MaskingRecipe(...)
+# 方式1: Processor Adapter模式（默认）
+config = {
+    "mode": "processor_adapter"
+}
 
-# 方式2: 从字典创建
-recipe_dict = {...}
-recipe = MaskingRecipe.from_dict(recipe_dict)
-
-# 方式3: 从文件加载
-recipe_path = "path/to/recipe.json"
-recipe = MaskingRecipe.from_file(recipe_path)
+# 方式2: Basic模式（降级透传）
+config = {
+    "mode": "basic"
+}
 ```
 
 ---
 
 ## 3. 设计决策详细说明
 
-### 3.1 去除 BlindPacketMasker 的决策
+### 3.1 架构简化的决策
 
-**决策**: 完全移除 BlindPacketMasker 组件
+**决策**: 简化为双模式架构
 
 **理由**:
-1. **功能重复**: BlindPacketMasker 的核心功能与 MaskingRecipe 重叠
-2. **简化维护**: 减少一个中间层，降低代码复杂度
+1. **功能聚焦**: Processor Adapter模式专注智能处理，Basic模式专注可靠性
+2. **简化维护**: 减少中间层，降低代码复杂度
 3. **性能提升**: 减少函数调用层级，提高执行效率
-4. **统一接口**: Basic 和 Processor Adapter 模式都使用相同的 Recipe 概念
+4. **清晰职责**: 每种模式有明确的使用场景
 
 **影响评估**:
 - ✅ 代码复杂度显著降低
 - ✅ 维护成本减少
 - ✅ 调试更加直接
-- ⚠️ 需要更新相关文档和测试
+- ✅ 文档和测试已更新
 
-### 3.2 直接使用 MaskingRecipe 的决策
+### 3.2 透传模式的决策
 
-**决策**: Basic 模式直接使用 MaskingRecipe 进行数据包处理
+**决策**: Basic 模式使用透传模式进行文件处理
 
 **理由**:
-1. **功能完整**: MaskingRecipe 已提供完整的掩码功能
-2. **接口统一**: 与 Processor Adapter 模式保持一致的概念模型
-3. **配置灵活**: 支持多种配置方式，满足不同使用场景
+1. **可靠性**: 透传模式保证100%的文件完整性
+2. **简单性**: 无需复杂的掩码逻辑，降低出错概率
+3. **性能**: 直接文件复制，处理速度最快
 
 **实现方式**:
 ```python
@@ -200,17 +201,17 @@ def _process_with_basic_mode(self, input_file: str, output_file: str) -> StageSt
 
 **简化前的日志**:
 ```
-INFO: 创建 BlindPacketMasker 实例
-INFO: BlindPacketMasker 初始化完成
-INFO: 调用 BlindPacketMasker.mask_packets()
-INFO: BlindPacketMasker 处理完成，统计: {...}
+INFO: 创建多个中间组件实例
+INFO: 复杂的组件初始化完成
+INFO: 调用多层组件处理链
+INFO: 处理完成，复杂统计: {...}
 ```
 
 **简化后的日志**:
 ```
-INFO: Basic 模式初始化，recipe 类型: MaskingRecipe
-INFO: 直接应用 MaskingRecipe 处理数据包
-INFO: Recipe 处理完成，应用规则: 75/100 个数据包
+INFO: Processor Adapter 模式初始化
+INFO: TSharkEnhancedMaskProcessor 三阶段处理
+INFO: 处理完成，智能掩码应用: 75/100 个数据包
 ```
 
 ---
@@ -222,17 +223,12 @@ INFO: Recipe 处理完成，应用规则: 75/100 个数据包
 所有现有的配置文件格式保持不变：
 
 ```yaml
-# 仍然支持所有原有配置方式
+# 支持的配置方式
 mask_stage:
-  mode: "basic"
-  recipe_path: "config/basic_mask_recipe.json"  # 方式1
-  
+  mode: "processor_adapter"  # 默认智能处理模式
+
   # 或者
-  recipe_dict:                                  # 方式2
-    rules:
-      - field: "ip.src"
-        action: "replace"
-        value: "192.168.1.1"
+  mode: "basic"              # 降级透传模式
 ```
 
 ### 5.2 API 兼容性

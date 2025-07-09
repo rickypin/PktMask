@@ -20,10 +20,10 @@
 
 | 组件名称 | 位置 | 功能描述 | 关键特性 |
 |---------|------|----------|---------|
-| `MaskStage` | `src/pktmask/core/pipeline/stages/` | 主掩码处理阶段 | 双模式运行、自动降级 |
+| `MaskStage` | `src/pktmask/core/pipeline/stages/` | 主掩码处理阶段 | 智能协议识别、自动降级 |
 | `TSharkEnhancedMaskProcessor` | `src/pktmask/core/processors/` | 增强型TShark掩码处理器 | TLS智能识别、跨包处理 |
 | `ProcessorStageAdapter` | `src/pktmask/core/pipeline/stages/` | 处理器适配器 | 统一接口封装 |
-| `BlindPacketMasker` | `src/pktmask/core/maskers/` | 盲掩码处理器 | 简单可靠的降级选择 |
+| `MaskingRecipe` | `src/pktmask/core/tcp_payload_masker/` | 掩码配方系统 | 直接掩码应用、配置灵活 |
 
 ### 1.2 PyShark分析组件
 
@@ -80,24 +80,19 @@ MaskStage.process_file()
 
 ```
 MaskStage.initialize()
-├── mode = "basic" 或降级触发
-├── _initialize_basic_mode()
-│   ├── 解析配方配置
-│   │   ├── recipe: 直接使用 MaskingRecipe 实例
-│   │   ├── recipe_dict: 从字典创建配方
-│   │   └── recipe_path: 从 JSON 文件加载配方
-│   └── 创建 BlindPacketMasker 实例
-└── 设置 self._masker
+├── mode = "processor_adapter" (默认) 或 "basic" (降级)
+├── _initialize_processor_adapter_mode()
+│   ├── 创建 ProcessorStageAdapter 实例
+│   └── 配置 TSharkEnhancedMaskProcessor
+└── 降级时使用透传模式
 
 MaskStage.process_file()
-├── 检查 _use_processor_adapter_mode = False
-├── _process_with_basic_mode()
-│   ├── 使用 rdpcap() 读取所有数据包
-│   ├── 检查 self._masker 是否存在
-│   │   ├── 如有掩码器：调用 masker.mask_packets()
-│   │   └── 如无掩码器：直接复制（透传模式）
-│   └── wrpcap() 写入文件
-└── 返回处理统计
+├── 检查 mode = "processor_adapter"
+├── _process_with_processor_adapter_mode()
+│   ├── adapter.process_file()
+│   │   └── TSharkEnhancedMaskProcessor 三阶段处理
+│   └── 返回完整统计信息
+└── 降级时：直接文件复制（透传模式）
 ```
 
 ### 2.3 降级触发条件

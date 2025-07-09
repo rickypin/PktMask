@@ -53,7 +53,7 @@ DEFAULT_LOGGING_CONFIG = {
 CONFIG_CONSTANTS = {
     'config_dir_name': '.pktmask',
     'default_config_file': 'config.yaml',
-    'legacy_config_files': ['config.json', 'app_config.yaml', 'pktconfig/default/mask_config.yaml'],
+    'legacy_config_files': ['config.json', 'app_config.yaml'],
     'log_file_name': 'pktmask.log',
     'supported_extensions': ['.pcap', '.pcapng'],
     'temp_dir_prefix': 'pktmask_temp_',

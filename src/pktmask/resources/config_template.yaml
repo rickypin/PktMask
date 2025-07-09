@@ -43,10 +43,11 @@ processing:
   dedup_algorithm: "hash_based"           # 去重算法: hash_based, content_based, hybrid
   dedup_threshold: 0.95                   # 去重相似度阈值 (0.0-1.0)
   
-  # 裁切设置
+  # 掩码设置
+  mask_mode: "enhanced"                   # 掩码模式: enhanced(智能协议分析), basic(透传)
   preserve_tls_handshake: true            # 保留TLS握手数据
-  trim_application_data: true             # 裁切应用数据
-  max_payload_size: 1024                  # 最大载荷大小 (0-65535)
+  preserve_tls_alerts: true               # 保留TLS告警数据
+  tls_header_preserve_bytes: 5            # TLS头部保留字节数
 
 # 性能配置
 performance:

@@ -239,33 +239,33 @@ from pktmask.core.trim.stages.tcp_payload_masker_adapter import TcpPayloadMasker
 
 
 class MaskStage(StageBase):
-    \"\"\"完整功能的载荷掩码阶段
-    
-    整合 EnhancedTrimmer 的智能处理能力：
-    - 多阶段处理 (TShark → PyShark → Scapy)
+    \"\"\"载荷掩码处理阶段
+
+    基于 TSharkEnhancedMaskProcessor 的智能处理能力：
+    - 三阶段处理 (TShark TLS分析 → 规则生成 → Scapy掩码应用)
     - 智能协议识别和策略应用
     - 完整统计和事件集成
+    - 自动降级到透传模式
     \"\"\"
-    
+
     name: str = "MaskStage"
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self._config: Dict[str, Any] = config or {}
-        self._use_enhanced_mode = True  # 默认使用完整功能
-        self._executor: Optional[MultiStageExecutor] = None
-        self._masker: Optional[BlindPacketMasker] = None  # 降级备选方案
+        self._mode = config.get("mode", "processor_adapter")  # 默认使用processor_adapter模式
+        self._adapter: Optional[ProcessorStageAdapter] = None
         super().__init__()
 
     def initialize(self, config: Optional[Dict[str, Any]] = None) -> None:
         super().initialize(config)
-        
+
         if config:
             self._config.update(config)
-        
-        if self._use_enhanced_mode:
-            self._initialize_enhanced_mode()
+
+        if self._mode == "processor_adapter":
+            self._initialize_processor_adapter_mode()
         else:
-            self._initialize_basic_mode()  # 保留原有逻辑作为降级方案
+            self._initialize_basic_mode()  # 透传模式作为降级方案
 
     def _initialize_enhanced_mode(self):
         \"\"\"初始化增强模式（EnhancedTrimmer 功能）\"\"\"

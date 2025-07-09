@@ -32,7 +32,7 @@
       "duration_seconds": 0.000403,
       "changes_made": [
         "统一基类已存在",
-        "备份原有base_step.py: migration_backups/20250709_171949/base_step.py.backup"
+        "备份原有base_step.py: temp_backups/20250709_171949/base_step.py.backup"
       ],
       "error_message": null,
       "rollback_info": null
@@ -86,6 +86,6 @@
       "rollback_info": null
     }
   ],
-  "backup_location": "migration_backups/20250709_171949",
+  "backup_location": "temp_backups/20250709_171949",
   "timestamp": "2025-07-09T17:19:50.224960"
 }

@@ -57,9 +57,9 @@
 
 ### ⚠️ 废弃警告
 
-以下配置项已废弃，将在 v1.0.0 版本中移除：
-- `recipe_dict` → 使用 `processor_adapter` 模式或直接传入 `MaskingRecipe` 对象
-- `recipe_path` → 使用 `processor_adapter` 模式进行智能协议分析
+以下配置项已废弃并移除：
+- `recipe_path` → 已移除，现在使用 `processor_adapter` 模式进行智能协议分析
+- `recipe_dict` → 仍支持，但推荐使用智能协议分析
 
 ### 📋 兼容性矩阵
 
