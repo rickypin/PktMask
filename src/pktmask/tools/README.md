@@ -37,6 +37,31 @@ python -m pktmask.tools.tls23_marker --pcap input.pcapng --decode-as 8443,tls --
 ```bash
 # 增强分析
 python -m pktmask.tools.enhanced_tls_marker --pcap input.pcapng --deep-analysis
+```
+
+### tls_flow_analyzer.py
+全面的 TLS 流量分析工具
+
+**功能**：
+- TCP 流向识别：准确区分 TCP 五元组的两个传输方向
+- TLS 消息类型识别：识别并分类所有 TLS 消息类型（20-24）
+- 跨 TCP 段处理：正确处理单个 TLS 消息被分割到多个 TCP 段的情况
+- 协议层级分析：显示每个数据包的协议封装层级
+- 详细的消息结构分析和统计信息
+
+**使用示例**：
+```bash
+# 基本分析
+python -m pktmask.tools.tls_flow_analyzer --pcap input.pcapng
+
+# 详细分析模式
+python -m pktmask.tools.tls_flow_analyzer --pcap input.pcapng --detailed --verbose
+
+# 指定输出格式和目录
+python -m pktmask.tools.tls_flow_analyzer --pcap input.pcapng --formats json,tsv --output-dir ./results
+
+# 使用自定义端口解码
+python -m pktmask.tools.tls_flow_analyzer --pcap input.pcapng --decode-as 8443,tls --decode-as 9443,tls
 
 # 带统计报告
 python -m pktmask.tools.enhanced_tls_marker --pcap input.pcapng --stats

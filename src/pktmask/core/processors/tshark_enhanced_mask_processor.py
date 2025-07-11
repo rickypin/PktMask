@@ -924,7 +924,11 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
         # Stage 3: Scapy应用掩码 - 不捕获异常，直接抛出
         stage3_start = time.time()
         self._logger.info(f"🚀 [TLS-23 Cross-Packet Processing] Starting Stage 3: Scapy Mask Application")
-        apply_result = self._scapy_applier.apply_masks(input_path, output_path, mask_rules)
+
+        # 构建包号到TLS类型的映射，用于跨包分段识别
+        packet_tls_type_map = self._build_packet_tls_type_map(tls_records)
+
+        apply_result = self._scapy_applier.apply_masks(input_path, output_path, mask_rules, packet_tls_type_map)
         stage3_duration = time.time() - stage3_start
         
         self._logger.info(f"🚀 [TLS-23 Cross-Packet Statistics] Mask application results:")
@@ -1007,8 +1011,31 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
         except Exception as e:
             self._logger.error(f"收集TCP包信息失败: {e}")
             return None
-            
-    def _process_with_fallback(self, input_path: str, output_path: str, start_time: float, 
+
+    def _build_packet_tls_type_map(self, tls_records: List) -> Dict[int, int]:
+        """构建包号到TLS类型的映射
+
+        Args:
+            tls_records: TLS记录列表
+
+        Returns:
+            包号到TLS类型的映射字典 {packet_number: tls_content_type}
+        """
+        packet_tls_type_map = {}
+
+        for record in tls_records:
+            # 主包
+            packet_tls_type_map[record.packet_number] = record.content_type
+
+            # 跨包分段
+            if hasattr(record, 'spans_packets') and len(record.spans_packets) > 1:
+                for packet_num in record.spans_packets:
+                    packet_tls_type_map[packet_num] = record.content_type
+
+        self._logger.debug(f"构建包号到TLS类型映射: {len(packet_tls_type_map)}个包")
+        return packet_tls_type_map
+
+    def _process_with_fallback(self, input_path: str, output_path: str, start_time: float,
                               error_context: Optional[str] = None) -> ProcessorResult:
         """使用降级机制处理文件"""
         

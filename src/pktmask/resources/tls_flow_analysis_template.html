@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TLS 流量分析报告 - {{ pcap_name }}</title>
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --secondary-color: #6E6E73;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --info-color: #3498db;
+            --light-bg: #f8f9fa;
+            --white: #ffffff;
+            --border-color: #e1e5e9;
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: var(--white);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+
+        h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 1.5em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .header-info {
+            background: linear-gradient(135deg, var(--light-bg) 0%, #e8f4fd 100%);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .timestamp {
+            color: var(--secondary-color);
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .pcap-info {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        /* 统计卡片样式 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: var(--secondary-color);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        /* TLS 消息类型颜色编码 */
+        .tls-type-20 { color: var(--info-color); }      /* ChangeCipherSpec */
+        .tls-type-21 { color: var(--danger-color); }    /* Alert */
+        .tls-type-22 { color: var(--success-color); }   /* Handshake */
+        .tls-type-23 { color: var(--warning-color); }   /* ApplicationData */
+        .tls-type-24 { color: #9b59b6; }                /* Heartbeat */
+
+        .tls-type-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+            color: white;
+            margin-right: 5px;
+        }
+
+        .tls-type-badge.type-20 { background-color: var(--info-color); }
+        .tls-type-badge.type-21 { background-color: var(--danger-color); }
+        .tls-type-badge.type-22 { background-color: var(--success-color); }
+        .tls-type-badge.type-23 { background-color: var(--warning-color); }
+        .tls-type-badge.type-24 { background-color: #9b59b6; }
+
+        /* 表格样式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: var(--white);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .data-table th {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+
+        .data-table tr:hover {
+            background-color: var(--light-bg);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* 可折叠部分 */
+        .collapsible {
+            background-color: var(--light-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .collapsible-header {
+            background: linear-gradient(135deg, var(--light-bg) 0%, #e8f4fd 100%);
+            padding: 15px 20px;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #2c3e50;
+            transition: background-color 0.2s ease;
+        }
+
+        .collapsible-header:hover {
+            background: linear-gradient(135deg, #e8f4fd 0%, #d1ecf1 100%);
+        }
+
+        .collapsible-content {
+            padding: 20px;
+            display: none;
+            background-color: var(--white);
+        }
+
+        .collapsible.active .collapsible-content {
+            display: block;
+        }
+
+        .collapsible-toggle {
+            font-size: 1.2em;
+            transition: transform 0.2s ease;
+        }
+
+        .collapsible.active .collapsible-toggle {
+            transform: rotate(180deg);
+        }
+
+        /* 代码样式 */
+        .code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background-color: var(--light-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        /* 流向指示器 */
+        .flow-direction {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .flow-arrow {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        /* 处理策略标签 */
+        .strategy-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .strategy-keep_all {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .strategy-mask_payload {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .data-table {
+                font-size: 0.9em;
+            }
+            
+            .data-table th,
+            .data-table td {
+                padding: 8px;
+            }
+        }
+
+        /* 打印样式 */
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+            
+            .collapsible-content {
+                display: block !important;
+            }
+            
+            .stat-card {
+                break-inside: avoid;
+            }
+        }
+    </style>
+    <script>
+        function toggleCollapsible(element) {
+            element.classList.toggle('active');
+        }
+        
+        function expandAll() {
+            document.querySelectorAll('.collapsible').forEach(el => {
+                el.classList.add('active');
+            });
+        }
+        
+        function collapseAll() {
+            document.querySelectorAll('.collapsible').forEach(el => {
+                el.classList.remove('active');
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>TLS 流量分析报告</h1>
+        
+        <div class="header-info">
+            <div class="timestamp">生成时间: {{ analysis_timestamp }}</div>
+            <div class="pcap-info">分析文件: {{ pcap_name }}</div>
+        </div>
+
+        <!-- 控制按钮 -->
+        <div style="margin-bottom: 20px;">
+            <button onclick="expandAll()" style="margin-right: 10px; padding: 8px 16px; background-color: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;">展开全部</button>
+            <button onclick="collapseAll()" style="padding: 8px 16px; background-color: var(--secondary-color); color: white; border: none; border-radius: 4px; cursor: pointer;">折叠全部</button>
+        </div>
+
+        <!-- 基础统计 -->
+        <h2>📊 基础统计</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">包含 TLS 的数据帧</div>
+                <div class="stat-value">{{ global_statistics.frames_containing_tls }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">TLS 记录总数</div>
+                <div class="stat-value">{{ global_statistics.tls_records_total }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">TCP 流总数</div>
+                <div class="stat-value">{{ global_statistics.tcp_streams_analyzed }}</div>
+            </div>
+        </div>
+
+        <!-- TLS 消息类型统计 -->
+        <h2>🔐 TLS 消息类型统计</h2>
+        <div class="collapsible active">
+            <div class="collapsible-header" onclick="toggleCollapsible(this.parentElement)">
+                <span>按消息类型分类统计</span>
+                <span class="collapsible-toggle">▼</span>
+            </div>
+            <div class="collapsible-content">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>消息类型</th>
+                            <th>类型名称</th>
+                            <th>数据帧数</th>
+                            <th>记录数</th>
+                            <th>处理策略</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for content_type, stats in protocol_type_statistics.items() %}
+                        <tr>
+                            <td>
+                                <span class="tls-type-badge type-{{ content_type }}">TLS-{{ content_type }}</span>
+                            </td>
+                            <td>{{ tls_content_types[content_type|int] }}</td>
+                            <td>{{ stats.frames }}</td>
+                            <td>{{ stats.records }}</td>
+                            <td>
+                                <span class="strategy-badge strategy-{{ processing_strategies[content_type|int] }}">
+                                    {{ processing_strategies[content_type|int] }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TCP 流分析 -->
+        <h2>🌐 TCP 流分析</h2>
+        <div class="collapsible">
+            <div class="collapsible-header" onclick="toggleCollapsible(this.parentElement)">
+                <span>TCP 流详细信息 ({{ tcp_flow_analysis|length }} 个流)</span>
+                <span class="collapsible-toggle">▼</span>
+            </div>
+            <div class="collapsible-content">
+                {% for stream_id, flow_info in tcp_flow_analysis.items() %}
+                <div style="margin-bottom: 25px; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px;">
+                    <h3 style="margin-top: 0; color: var(--primary-color);">TCP 流 {{ stream_id }}</h3>
+                    <p><strong>数据包总数:</strong> {{ flow_info.packet_count }}</p>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>方向</th>
+                                <th>源地址</th>
+                                <th>目标地址</th>
+                                <th>数据包数</th>
+                                <th>载荷大小</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for direction, dir_info in flow_info.directions.items() %}
+                            <tr>
+                                <td><strong>{{ direction }}</strong></td>
+                                <td>
+                                    <div class="flow-direction">
+                                        <span class="code">{{ dir_info.src_ip }}:{{ dir_info.src_port }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="flow-direction">
+                                        <span class="flow-arrow">→</span>
+                                        <span class="code">{{ dir_info.dst_ip }}:{{ dir_info.dst_port }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ dir_info.packet_count }}</td>
+                                <td>{{ dir_info.payload_size }} 字节</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 详细数据帧信息 -->
+        <h2>📦 详细数据帧信息</h2>
+        <div class="collapsible">
+            <div class="collapsible-header" onclick="toggleCollapsible(this.parentElement)">
+                <span>数据帧详细列表 ({{ detailed_frames|length }} 个帧)</span>
+                <span class="collapsible-toggle">▼</span>
+            </div>
+            <div class="collapsible-content">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>帧号</th>
+                            <th>协议层级</th>
+                            <th>TLS 类型</th>
+                            <th>TCP 流</th>
+                            <th>源地址</th>
+                            <th>目标地址</th>
+                            <th>TCP 序列号</th>
+                            <th>时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for frame in detailed_frames %}
+                        <tr>
+                            <td><strong>{{ frame.frame }}</strong></td>
+                            <td><span class="code">{{ frame.protocol_layers|join(':') }}</span></td>
+                            <td>
+                                {% for ptype in frame.protocol_types %}
+                                <span class="tls-type-badge type-{{ ptype }}">{{ ptype }}</span>
+                                {% endfor %}
+                            </td>
+                            <td>{{ frame.tcp_stream }}</td>
+                            <td><span class="code">{{ frame.src_ip }}:{{ frame.src_port }}</span></td>
+                            <td><span class="code">{{ frame.dst_ip }}:{{ frame.dst_port }}</span></td>
+                            <td><span class="code">{{ frame.tcp_seq }}</span></td>
+                            <td>{{ "%.3f"|format(frame.time_relative|float) }}s</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 重组消息分析 -->
+        {% if reassembled_messages %}
+        <h2>🔧 重组消息分析</h2>
+        <div class="collapsible">
+            <div class="collapsible-header" onclick="toggleCollapsible(this.parentElement)">
+                <span>重组的 TLS 消息 ({{ reassembled_messages|length }} 个消息)</span>
+                <span class="collapsible-toggle">▼</span>
+            </div>
+            <div class="collapsible-content">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>流 ID</th>
+                            <th>方向</th>
+                            <th>内容类型</th>
+                            <th>版本</th>
+                            <th>消息头长度</th>
+                            <th>消息体长度</th>
+                            <th>头部序列号范围</th>
+                            <th>载荷序列号范围</th>
+                            <th>完整性</th>
+                            <th>跨段</th>
+                            <th>处理策略</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for message in reassembled_messages %}
+                        <tr>
+                            <td>{{ message.stream_id }}</td>
+                            <td>{{ message.direction }}</td>
+                            <td>
+                                <span class="tls-type-badge type-{{ message.content_type }}">
+                                    {{ message.content_type_name }}
+                                </span>
+                            </td>
+                            <td><span class="code">{{ message.version[0] }}.{{ message.version[1] }}</span></td>
+                            <td>5</td>
+                            <td>{{ message.length }}</td>
+                            <td><span class="code">{{ message.tls_header_seq_start|default(message.tls_seq_start) }}-{{ message.tls_header_seq_end|default(message.tls_seq_start + 5) }}</span></td>
+                            <td><span class="code">{{ message.tls_payload_seq_start|default(message.tls_seq_start + 5) }}-{{ message.tls_payload_seq_end|default(message.tls_seq_end) }}</span></td>
+                            <td>
+                                {% if message.is_complete %}
+                                <span style="color: var(--success-color);">✓ 完整</span>
+                                {% else %}
+                                <span style="color: var(--warning-color);">⚠ 不完整</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if message.is_cross_segment %}
+                                <span style="color: var(--info-color);">✓ 跨段</span>
+                                {% else %}
+                                <span style="color: var(--secondary-color);">- 单段</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="strategy-badge strategy-{{ message.processing_strategy }}">
+                                    {{ message.processing_strategy }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 分析元数据 -->
+        <h2>ℹ️ 分析元数据</h2>
+        <div class="collapsible">
+            <div class="collapsible-header" onclick="toggleCollapsible(this.parentElement)">
+                <span>技术信息和配置</span>
+                <span class="collapsible-toggle">▼</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">分析时间戳</div>
+                        <div class="stat-value" style="font-size: 1.2em;">{{ analysis_timestamp }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">支持的 TLS 类型</div>
+                        <div class="stat-value" style="font-size: 1.2em;">{{ tls_content_types|length }}</div>
+                    </div>
+                </div>
+
+                <h3>TLS 内容类型映射</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>类型代码</th>
+                            <th>类型名称</th>
+                            <th>处理策略</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for type_code, type_name in tls_content_types.items() %}
+                        <tr>
+                            <td><span class="tls-type-badge type-{{ type_code }}">{{ type_code }}</span></td>
+                            <td>{{ type_name }}</td>
+                            <td>
+                                <span class="strategy-badge strategy-{{ processing_strategies[type_code|int] }}">
+                                    {{ processing_strategies[type_code|int] }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid var(--border-color); text-align: center; color: var(--secondary-color);">
+            <p>由 <strong>PktMask TLS 流量分析工具</strong> 生成 |
+            <a href="https://github.com/yourusername/pktmask" style="color: var(--primary-color); text-decoration: none;">项目主页</a></p>
+        </div>
+    </div>
+</body>
+</html>

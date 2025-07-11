@@ -122,6 +122,9 @@ class TLSMaskRuleGenerator:
         if tcp_packets_info:
             self.logger.info(f"TCP包信息：{len(tcp_packets_info)}个包")
 
+        # 保存TLS记录信息，供非TLS规则生成使用
+        self._last_processed_tls_records = tls_records
+
         # 首先生成TLS掩码规则
         tls_rules = self.generate_rules(tls_records)
 
@@ -770,7 +773,16 @@ class TLSMaskRuleGenerator:
         # 获取已有TLS规则覆盖的包编号
         tls_covered_packets = set(rule.packet_number for rule in tls_rules)
 
-        self.logger.info(f"TLS规则已覆盖{len(tls_covered_packets)}个包：{sorted(tls_covered_packets)}")
+        # 修正：添加所有跨包TLS消息的分段包到覆盖列表
+        # 从原始TLS记录中获取跨包信息，而不是解析规则字符串
+        if hasattr(self, '_last_processed_tls_records'):
+            for record in self._last_processed_tls_records:
+                if len(record.spans_packets) > 1:
+                    # 这是跨包记录，添加所有分段包到覆盖列表
+                    tls_covered_packets.update(record.spans_packets)
+                    self.logger.debug(f"添加TLS-{record.content_type}跨包分段到覆盖列表: {record.spans_packets}")
+
+        self.logger.info(f"TLS规则已覆盖{len(tls_covered_packets)}个包（包括跨包分段）：{sorted(tls_covered_packets)}")
 
         # 为没有TLS规则的TCP包生成非TLS掩码规则
         for packet_number, packet_info in tcp_packets_info.items():
