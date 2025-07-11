@@ -123,13 +123,17 @@ class TSharkEnhancedConfig:
     enable_tls_processing: bool = True
     enable_cross_segment_detection: bool = True
     
-    # TLS协议策略配置  
+    # TLS协议策略配置
     tls_20_strategy: str = "keep_all"  # ChangeCipherSpec完全保留
     tls_21_strategy: str = "keep_all"  # Alert完全保留
     tls_22_strategy: str = "keep_all"  # Handshake完全保留
     tls_23_strategy: str = "mask_payload"  # ApplicationData智能掩码
     tls_24_strategy: str = "keep_all"  # Heartbeat完全保留
     tls_23_header_preserve_bytes: int = 5
+
+    # 非TLS TCP载荷策略配置
+    enable_non_tls_tcp_masking: bool = True
+    non_tls_tcp_strategy: str = "mask_all_payload"
     
     # 性能和资源配置
     chunk_size: int = 1000
@@ -746,7 +750,10 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
             'tls_24_strategy': self.enhanced_config.tls_24_strategy,
             'tls_23_header_preserve_bytes': self.enhanced_config.tls_23_header_preserve_bytes,
             'enable_boundary_safety': self.enhanced_config.enable_boundary_safety,
-            'enable_detailed_logging': self.enhanced_config.enable_detailed_logging
+            'enable_detailed_logging': self.enhanced_config.enable_detailed_logging,
+            # 非TLS TCP载荷处理配置
+            'enable_non_tls_tcp_masking': getattr(self.enhanced_config, 'enable_non_tls_tcp_masking', True),
+            'non_tls_tcp_strategy': getattr(self.enhanced_config, 'non_tls_tcp_strategy', 'mask_all_payload')
         }
         
     def _create_applier_config(self) -> Dict[str, Any]:
@@ -875,22 +882,42 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
             
         self._logger.info(f"Stage 1 completed: Found {len(tls_records)} TLS records, took {stage1_duration:.2f} seconds")
         
-        # Stage 2: 生成掩码规则 - 不捕获异常，直接抛出
+        # Stage 1.5: 收集TCP包信息（如果启用非TLS TCP载荷掩码）
+        tcp_packets_info = None
+        if self.enhanced_config.enable_non_tls_tcp_masking:
+            tcp_info_start = time.time()
+            self._logger.info(f"🚀 [Enhanced Masking] Collecting TCP packet information for non-TLS masking")
+            tcp_packets_info = self._collect_tcp_packets_info(input_path)
+            tcp_info_duration = time.time() - tcp_info_start
+            self._logger.info(f"TCP info collection completed: Found {len(tcp_packets_info) if tcp_packets_info else 0} TCP packets, took {tcp_info_duration:.2f} seconds")
+
+        # Stage 2: 生成增强掩码规则 - 不捕获异常，直接抛出
         stage2_start = time.time()
-        self._logger.info(f"🚀 [TLS-23 Cross-Packet Processing] Starting Stage 2: Mask Rule Generation")
-        mask_rules = self._rule_generator.generate_rules(tls_records)
+        self._logger.info(f"🚀 [Enhanced Masking] Starting Stage 2: Enhanced Mask Rule Generation")
+
+        if tcp_packets_info and hasattr(self._rule_generator, 'generate_enhanced_rules'):
+            # 使用增强规则生成（包括非TLS TCP载荷）
+            mask_rules = self._rule_generator.generate_enhanced_rules(tls_records, tcp_packets_info)
+        else:
+            # 使用标准TLS规则生成
+            mask_rules = self._rule_generator.generate_rules(tls_records)
+
         stage2_duration = time.time() - stage2_start
         
         # 统计掩码规则
         tls_23_rules = [r for r in mask_rules if r.tls_record_type == 23]
         mask_payload_rules = [r for r in mask_rules if r.action.value == "mask_payload"]
+        mask_all_payload_rules = [r for r in mask_rules if r.action.value == "mask_all_payload"]
         segment_rules = [r for r in mask_rules if "分段掩码" in r.reason]
-        
-        self._logger.info(f"🚀 [TLS-23 Cross-Packet Statistics] Mask rule generation results:")
+        non_tls_rules = [r for r in mask_rules if r.tls_record_type is None]
+
+        self._logger.info(f"🚀 [Enhanced Masking Statistics] Mask rule generation results:")
         self._logger.info(f"🚀   Total mask rules: {len(mask_rules)}")
         self._logger.info(f"🚀   TLS-23 rules: {len(tls_23_rules)}")
-        self._logger.info(f"🚀   Mask payload rules: {len(mask_payload_rules)}")
+        self._logger.info(f"🚀   TLS mask payload rules: {len(mask_payload_rules)}")
+        self._logger.info(f"🚀   Non-TLS mask all payload rules: {len(mask_all_payload_rules)}")
         self._logger.info(f"🚀   Segment mask rules: {len(segment_rules)}")
+        self._logger.info(f"🚀   Non-TLS TCP rules: {len(non_tls_rules)}")
         
         self._logger.info(f"Stage 2 completed: Generated {len(mask_rules)} mask rules, took {stage2_duration:.2f} seconds")
         
@@ -915,17 +942,71 @@ class TSharkEnhancedMaskProcessor(BaseProcessor):
             stats={
                 'tls_records_found': len(tls_records),
                 'mask_rules_generated': len(mask_rules),
+                'non_tls_rules_generated': len(non_tls_rules),
                 'packets_processed': apply_result.get('packets_processed', 0),
                 'packets_modified': apply_result.get('packets_modified', 0),
                 'processing_mode': 'tshark_enhanced_forced',  # 标记为强制协议适配模式
                 'stage_performance': {
                     'stage1_tshark_analysis': stage1_duration,
-                    'stage2_rule_generation': stage2_duration,  
+                    'stage2_rule_generation': stage2_duration,
                     'stage3_scapy_application': stage3_duration,
                     'total_duration': total_duration
                 }
             }
         )
+
+    def _collect_tcp_packets_info(self, pcap_file: Path) -> Optional[Dict[int, Dict[str, Any]]]:
+        """收集TCP包信息用于非TLS载荷掩码
+
+        Args:
+            pcap_file: PCAP文件路径
+
+        Returns:
+            TCP包信息字典，格式为 {packet_number: {"tcp_stream_id": str, "has_payload": bool}}
+        """
+        try:
+            from scapy.all import rdpcap, TCP
+
+            self._logger.info(f"开始收集TCP包信息: {pcap_file}")
+
+            # 读取PCAP文件
+            packets = rdpcap(str(pcap_file))
+            tcp_packets_info = {}
+
+            for i, packet in enumerate(packets):
+                packet_number = i + 1
+
+                # 检查是否有TCP层
+                if packet.haslayer(TCP):
+                    tcp_layer = packet[TCP]
+
+                    # 构建TCP流标识
+                    if hasattr(packet, 'src') and hasattr(packet, 'dst'):
+                        tcp_stream_id = f"TCP_{packet.src}:{tcp_layer.sport}_{packet.dst}:{tcp_layer.dport}"
+                    else:
+                        tcp_stream_id = f"TCP_unknown_stream_{packet_number}"
+
+                    # 检查是否有TCP载荷
+                    tcp_payload = bytes(tcp_layer.payload) if tcp_layer.payload else b''
+                    has_payload = len(tcp_payload) > 0
+
+                    tcp_packets_info[packet_number] = {
+                        'tcp_stream_id': tcp_stream_id,
+                        'has_payload': has_payload,
+                        'payload_length': len(tcp_payload)
+                    }
+
+                    if has_payload:
+                        self._logger.debug(f"TCP包{packet_number}: 流={tcp_stream_id}, 载荷长度={len(tcp_payload)}")
+
+            tcp_with_payload = sum(1 for info in tcp_packets_info.values() if info['has_payload'])
+            self._logger.info(f"TCP包信息收集完成: 总TCP包{len(tcp_packets_info)}个, 有载荷{tcp_with_payload}个")
+
+            return tcp_packets_info
+
+        except Exception as e:
+            self._logger.error(f"收集TCP包信息失败: {e}")
+            return None
             
     def _process_with_fallback(self, input_path: str, output_path: str, start_time: float, 
                               error_context: Optional[str] = None) -> ProcessorResult:

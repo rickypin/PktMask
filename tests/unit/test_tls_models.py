@@ -29,7 +29,7 @@ class TestTLSProcessingStrategy:
     
     def test_strategy_count(self):
         """测试策略数量"""
-        assert len(TLSProcessingStrategy) == 2
+        assert len(TLSProcessingStrategy) == 3  # 新增了MASK_ALL_PAYLOAD
 
 
 class TestMaskAction:
@@ -42,7 +42,7 @@ class TestMaskAction:
     
     def test_action_count(self):
         """测试操作数量"""
-        assert len(MaskAction) == 2
+        assert len(MaskAction) == 3  # 新增了MASK_ALL_PAYLOAD
 
 
 class TestTLSRecordInfo:
@@ -283,9 +283,9 @@ class TestMaskRule:
         with pytest.raises(ValueError, match="掩码偏移量不能为负数"):
             MaskRule(**{**base_params, "mask_offset": -1})
         
-        # 测试负数掩码长度
-        with pytest.raises(ValueError, match="掩码长度不能为负数"):
-            MaskRule(**{**base_params, "mask_length": -1})
+        # 测试负数掩码长度（-1是特殊值，允许；-2及以下不允许）
+        with pytest.raises(ValueError, match="掩码长度不能小于-1"):
+            MaskRule(**{**base_params, "mask_length": -2})
     
     def test_boundary_validation(self):
         """测试边界验证"""
@@ -542,7 +542,7 @@ class TestUtilityFunctions:
         
         assert rule.action == MaskAction.MASK_PAYLOAD
         assert rule.mask_offset == 5  # 保留5字节头部
-        assert rule.mask_length == 95  # 100 - 5
+        assert rule.mask_length == 100  # 掩码整个消息体
         assert rule.tls_record_type == 23
         assert "TLS-23 智能掩码：保留头部，掩码载荷" == rule.reason
     
@@ -565,7 +565,7 @@ class TestUtilityFunctions:
         assert rule.mask_offset == 0
         assert rule.mask_length == 0
         assert rule.tls_record_type == 23
-        assert "TLS-23 不完整记录或纯头部：完全保留" == rule.reason
+        assert "TLS-23 不完整记录或无消息体：完全保留" == rule.reason
     
     def test_create_mask_rule_for_application_data_header_only(self):
         """测试为纯头部ApplicationData记录创建掩码规则"""
@@ -582,11 +582,11 @@ class TestUtilityFunctions:
         
         rule = create_mask_rule_for_tls_record(header_only_record)
         
-        assert rule.action == MaskAction.KEEP_ALL
-        assert rule.mask_offset == 0
-        assert rule.mask_length == 0
+        assert rule.action == MaskAction.MASK_PAYLOAD
+        assert rule.mask_offset == 5  # 保留头部
+        assert rule.mask_length == 5  # 掩码消息体
         assert rule.tls_record_type == 23
-        assert "TLS-23 不完整记录或纯头部：完全保留" == rule.reason
+        assert "TLS-23 智能掩码：保留头部，掩码载荷" == rule.reason
     
     def test_validate_tls_record_boundary_valid(self):
         """测试有效TLS记录边界"""

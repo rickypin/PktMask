@@ -17,11 +17,12 @@ from collections import defaultdict
 from typing import Dict, List, Optional, Set, Tuple, Any
 
 from ..trim.models.tls_models import (
-    TLSRecordInfo, 
-    MaskRule, 
+    TLSRecordInfo,
+    MaskRule,
     MaskAction,
     TLSAnalysisResult,
     create_mask_rule_for_tls_record,
+    create_non_tls_tcp_mask_rule,
     validate_tls_record_boundary
 )
 
@@ -46,7 +47,11 @@ class TLSMaskRuleGenerator:
         self._enable_cross_packet_detection = self.config.get('enable_cross_packet_detection', True)
         self._max_rules_per_packet = self.config.get('max_rules_per_packet', 10)
         self._validate_boundaries = self.config.get('validate_boundaries', True)
-        
+
+        # 非TLS TCP载荷处理配置
+        self._enable_non_tls_tcp_masking = self.config.get('enable_non_tls_tcp_masking', True)
+        self._non_tls_tcp_strategy = self.config.get('non_tls_tcp_strategy', 'mask_all_payload')
+
         # 调试配置
         self._verbose = self.config.get('verbose', False)
         self._debug_packet_numbers = self.config.get('debug_packet_numbers', [])
@@ -58,13 +63,13 @@ class TLSMaskRuleGenerator:
         
     def generate_rules(self, tls_records: List[TLSRecordInfo]) -> List[MaskRule]:
         """为TLS记录列表生成掩码规则
-        
+
         Args:
             tls_records: TLS记录列表
-            
+
         Returns:
             生成的掩码规则列表
-            
+
         Raises:
             ValueError: 输入数据无效时抛出
             RuntimeError: 规则生成失败时抛出
@@ -72,31 +77,68 @@ class TLSMaskRuleGenerator:
         if not tls_records:
             self.logger.info("输入TLS记录列表为空，返回空规则列表")
             return []
-        
+
         self.logger.info(f"开始为{len(tls_records)}个TLS记录生成掩码规则")
         self._reset_statistics()
-        
+
         try:
             # 按包编号分组TLS记录，包括跨包记录的所有分段包
             packet_groups = self._group_records_by_packet_with_spans(tls_records)
-            
+
             # 为每个包生成掩码规则
             all_rules = []
             for packet_number, records in packet_groups.items():
                 packet_rules = self._generate_rules_for_packet(packet_number, records)
                 all_rules.extend(packet_rules)
-            
+
             # 验证和优化规则
             optimized_rules = self._optimize_rules(all_rules)
-            
+
             self._log_generation_statistics(optimized_rules)
             self.logger.info(f"掩码规则生成完成：生成{len(optimized_rules)}条规则")
-            
+
             return optimized_rules
-            
+
         except Exception as e:
             self.logger.error(f"TLS掩码规则生成失败: {e}")
             raise RuntimeError(f"掩码规则生成失败: {e}") from e
+
+    def generate_enhanced_rules(self, tls_records: List[TLSRecordInfo],
+                               tcp_packets_info: Optional[Dict[int, Dict[str, Any]]] = None) -> List[MaskRule]:
+        """生成增强掩码规则，包括非TLS TCP载荷处理
+
+        Args:
+            tls_records: TLS记录列表
+            tcp_packets_info: TCP包信息字典，格式为 {packet_number: {"tcp_stream_id": str, "has_payload": bool}}
+
+        Returns:
+            生成的完整掩码规则列表（包括TLS和非TLS TCP载荷）
+
+        Raises:
+            ValueError: 输入数据无效时抛出
+            RuntimeError: 规则生成失败时抛出
+        """
+        self.logger.info(f"开始生成增强掩码规则：{len(tls_records)}个TLS记录")
+        if tcp_packets_info:
+            self.logger.info(f"TCP包信息：{len(tcp_packets_info)}个包")
+
+        # 首先生成TLS掩码规则
+        tls_rules = self.generate_rules(tls_records)
+
+        # 如果禁用非TLS TCP载荷掩码，直接返回TLS规则
+        if not self._enable_non_tls_tcp_masking or not tcp_packets_info:
+            self.logger.info("非TLS TCP载荷掩码已禁用或无TCP包信息，仅返回TLS规则")
+            return tls_rules
+
+        # 生成非TLS TCP载荷掩码规则
+        non_tls_rules = self._generate_non_tls_tcp_rules(tls_rules, tcp_packets_info)
+
+        # 合并规则
+        all_rules = tls_rules + non_tls_rules
+
+        self.logger.info(f"增强掩码规则生成完成：TLS规则{len(tls_rules)}条，非TLS规则{len(non_tls_rules)}条，总计{len(all_rules)}条")
+
+        return all_rules
     
     def _group_records_by_packet_with_spans(self, tls_records: List[TLSRecordInfo]) -> Dict[int, List[TLSRecordInfo]]:
         """将TLS记录按包编号分组，包括跨包记录的所有分段包
@@ -222,93 +264,57 @@ class TLSMaskRuleGenerator:
         
         for record in records:
             try:
-                # 检查是否是跨包记录，需要特殊处理
-                if len(record.spans_packets) > 1 and record.content_type == 23:
-                    # 为跨包的 TLS-23 ApplicationData 记录生成分段掩码规则
-                    self.logger.info(f"🔧 [TLS-23跨包规则] 处理跨包ApplicationData: 包{record.packet_number}, 跨包{record.spans_packets}, 总长度={record.length}")
-                    
+                # 检查是否是跨包记录，需要特殊处理（支持所有TLS类型）
+                if len(record.spans_packets) > 1:
+                    # 为跨包TLS记录生成统一的分段掩码规则（支持所有TLS类型）
+                    self.logger.info(f"🔧 [TLS跨包规则] 处理跨包TLS记录: 包{record.packet_number}, 类型=TLS-{record.content_type}, 跨包{record.spans_packets}, 总长度={record.length}")
+
                     # 确定当前包在跨包序列中的角色
                     if packet_number in record.spans_packets:
                         span_index = record.spans_packets.index(packet_number)
                         is_first_segment = span_index == 0
                         is_reassembly_target = packet_number == record.packet_number
                         is_intermediate_segment = span_index > 0 and not is_reassembly_target
-                        
-                        self.logger.info(f"🔧 [TLS-23跨包分析] 包{packet_number}: 跨包位置={span_index}, 首段={is_first_segment}, 重组目标={is_reassembly_target}, 中间段={is_intermediate_segment}")
-                        
-                        if is_reassembly_target:
-                            # 重组目标包：这个包包含了TShark重组后的完整TLS记录
-                            # 需要保留TLS头部5字节，掩码剩余的ApplicationData载荷
-                            rule = MaskRule(
-                                packet_number=packet_number,
-                                tcp_stream_id=record.tcp_stream_id,
-                                tls_record_offset=record.record_offset,
-                                tls_record_length=record.length + 5,  # TLS头部5字节 + ApplicationData长度
-                                mask_offset=5,  # 保留TLS头部5字节
-                                mask_length=record.length,  # 掩码整个ApplicationData载荷
-                                action=MaskAction.MASK_PAYLOAD,
-                                reason=f"TLS-23 跨包重组包掩码：保留5字节头部，掩码{record.length}字节载荷 (跨包{record.spans_packets})",
-                                tls_record_type=23
-                            )
+
+                        self.logger.info(f"🔧 [TLS跨包分析] 包{packet_number}: 类型=TLS-{record.content_type}, 跨包位置={span_index}, 首段={is_first_segment}, 重组目标={is_reassembly_target}, 中间段={is_intermediate_segment}")
+
+                        # 根据TLS类型和包位置生成统一的掩码规则
+                        rule = self._generate_cross_packet_rule(
+                            packet_number, record, span_index,
+                            is_first_segment, is_reassembly_target, is_intermediate_segment
+                        )
+
+                        if rule:
                             rules.append(rule)
-                            self.logger.info(f"🔧 [TLS-23重组] 重组包{packet_number}掩码规则: 偏移{record.record_offset}, 长度{record.length + 5}, 掩码载荷{record.length}字节")
-                            
-                        elif is_first_segment:
-                            # 第一个分段包：可能包含TLS头部的开始部分，但ApplicationData被分割了
-                            # 策略：掩码整个TCP载荷，因为难以精确定位TLS头部和载荷边界
-                            rule = MaskRule(
-                                packet_number=packet_number,
-                                tcp_stream_id=record.tcp_stream_id,
-                                tls_record_offset=0,  # 从TCP载荷开始
-                                tls_record_length=0,  # 特殊值：让Scapy在运行时确定实际长度
-                                mask_offset=0,        # 掩码整个载荷
-                                mask_length=-1,       # 特殊值：表示掩码到TCP载荷结束
-                                action=MaskAction.MASK_PAYLOAD,
-                                reason=f"TLS-23 跨包首段掩码：掩码整个载荷 (分段{span_index+1}/{len(record.spans_packets)}, 重组到包{record.packet_number})",
-                                tls_record_type=23
-                            )
-                            rules.append(rule)
-                            self.logger.info(f"🔧 [TLS-23首段] 首段包{packet_number}掩码规则: 掩码整个TCP载荷")
-                            
-                        else:
-                            # 中间分段包：纯ApplicationData内容，掩码整个TCP载荷
-                            rule = MaskRule(
-                                packet_number=packet_number,
-                                tcp_stream_id=record.tcp_stream_id,
-                                tls_record_offset=0,  # 从TCP载荷开始
-                                tls_record_length=0,  # 特殊值：让Scapy在运行时确定实际长度
-                                mask_offset=0,        # 掩码整个载荷
-                                mask_length=-1,       # 特殊值：表示掩码到TCP载荷结束
-                                action=MaskAction.MASK_PAYLOAD,
-                                reason=f"TLS-23 跨包中间段掩码：掩码整个载荷 (分段{span_index+1}/{len(record.spans_packets)}, 重组到包{record.packet_number})",
-                                tls_record_type=23
-                            )
-                            rules.append(rule)
-                            self.logger.info(f"🔧 [TLS-23中间段] 中间段包{packet_number}掩码规则: 掩码整个TCP载荷")
-                        
+
                         # 记录详细的跨包掩码策略
-                        self.logger.info(f"🔧 [TLS-23跨包策略] 包{packet_number}:")
+                        strategy_desc = "完全保留" if record.content_type != 23 else ("保留TLS头部5字节" if is_reassembly_target else "掩码整个TCP载荷")
+                        self.logger.info(f"🔧 [TLS-{record.content_type}跨包策略] 包{packet_number}:")
+                        self.logger.info(f"🔧   TLS类型: {record.content_type}")
                         self.logger.info(f"🔧   分段位置: {span_index+1}/{len(record.spans_packets)}")
                         self.logger.info(f"🔧   重组目标: 包{record.packet_number}")
-                        self.logger.info(f"🔧   掩码策略: {'保留TLS头部5字节' if is_reassembly_target else '掩码整个TCP载荷'}")
-                        self.logger.info(f"🔧   总ApplicationData长度: {record.length}字节")
-                        
+                        self.logger.info(f"🔧   掩码策略: {strategy_desc}")
+                        self.logger.info(f"🔧   记录长度: {record.length}字节")
+                    else:
+                        self.logger.warning(f"🔧 [TLS跨包警告] 包{packet_number}不在跨包列表{record.spans_packets}中")
+
                 else:
-                    # 普通记录或非ApplicationData记录：正常处理
+                    # 普通单包记录：正常处理
                     if record.packet_number == packet_number:
                         rule = self._generate_rule_for_record(record)
                         rules.append(rule)
-                
+                        self.logger.debug(f"🔧 [单包规则] 包{packet_number}: TLS-{record.content_type}单包记录，使用标准规则")
+
             except Exception as e:
                 self.logger.error(f"为包{packet_number}记录生成掩码规则失败: {e}")
-                # 对于关键的TLS-23跨包记录，尝试生成备用规则
-                if len(record.spans_packets) > 1 and record.content_type == 23:
+                # 对于关键的跨包记录，尝试生成备用规则（支持所有TLS类型）
+                if len(record.spans_packets) > 1:
                     try:
-                        self.logger.warning(f"尝试为TLS-23跨包记录{packet_number}生成备用掩码规则")
+                        self.logger.warning(f"尝试为TLS-{record.content_type}跨包记录{packet_number}生成备用掩码规则")
                         backup_rule = self._generate_backup_cross_packet_rule(packet_number, record)
                         if backup_rule:
                             rules.append(backup_rule)
-                            self.logger.info(f"🔧 [TLS-23备用规则] 包{packet_number}: 生成备用掩码规则成功")
+                            self.logger.info(f"🔧 [TLS备用规则] 包{packet_number}: 生成备用掩码规则成功")
                     except Exception as backup_error:
                         self.logger.error(f"生成备用掩码规则也失败: {backup_error}")
                 continue
@@ -618,29 +624,182 @@ class TLSMaskRuleGenerator:
             'cross_packet_detection_enabled': self._enable_cross_packet_detection
         }
     
+    def _generate_cross_packet_rule(self, packet_number: int, record: TLSRecordInfo,
+                                   span_index: int, is_first_segment: bool,
+                                   is_reassembly_target: bool, is_intermediate_segment: bool) -> Optional[MaskRule]:
+        """为跨包TLS记录生成统一的掩码规则
+
+        Args:
+            packet_number: 包编号
+            record: TLS记录信息
+            span_index: 在跨包序列中的索引
+            is_first_segment: 是否为首段
+            is_reassembly_target: 是否为重组目标包
+            is_intermediate_segment: 是否为中间段
+
+        Returns:
+            掩码规则，如果无法生成则返回None
+        """
+        try:
+            # 根据TLS类型确定处理策略
+            if record.content_type == 23:  # ApplicationData
+                return self._generate_tls23_cross_packet_rule(
+                    packet_number, record, span_index, is_first_segment,
+                    is_reassembly_target, is_intermediate_segment
+                )
+            else:  # TLS-20/21/22/24 - 完全保留策略
+                return self._generate_preserve_cross_packet_rule(
+                    packet_number, record, span_index, is_first_segment,
+                    is_reassembly_target, is_intermediate_segment
+                )
+        except Exception as e:
+            self.logger.error(f"生成跨包掩码规则失败: {e}")
+            return None
+
+    def _generate_tls23_cross_packet_rule(self, packet_number: int, record: TLSRecordInfo,
+                                         span_index: int, is_first_segment: bool,
+                                         is_reassembly_target: bool, is_intermediate_segment: bool) -> MaskRule:
+        """为TLS-23跨包记录生成掩码规则（智能掩码策略）"""
+        if is_reassembly_target:
+            # 重组目标包：保留TLS头部5字节，掩码ApplicationData载荷
+            rule = MaskRule(
+                packet_number=packet_number,
+                tcp_stream_id=record.tcp_stream_id,
+                tls_record_offset=record.record_offset,
+                tls_record_length=record.length + 5,  # TLS头部5字节 + ApplicationData长度
+                mask_offset=5,  # 保留TLS头部5字节
+                mask_length=record.length,  # 掩码整个ApplicationData载荷
+                action=MaskAction.MASK_PAYLOAD,
+                reason=f"TLS-23 跨包重组包掩码：保留5字节头部，掩码{record.length}字节载荷 (跨包{record.spans_packets})",
+                tls_record_type=23
+            )
+            self.logger.info(f"🔧 [TLS-23重组] 重组包{packet_number}掩码规则: 偏移{record.record_offset}, 长度{record.length + 5}, 掩码载荷{record.length}字节")
+        else:
+            # 分段包：掩码整个TCP载荷
+            rule = MaskRule(
+                packet_number=packet_number,
+                tcp_stream_id=record.tcp_stream_id,
+                tls_record_offset=0,  # 从TCP载荷开始
+                tls_record_length=0,  # 特殊值：让Scapy在运行时确定实际长度
+                mask_offset=0,        # 掩码整个载荷
+                mask_length=-1,       # 特殊值：表示掩码到TCP载荷结束
+                action=MaskAction.MASK_PAYLOAD,
+                reason=f"TLS-23 跨包分段掩码：掩码整个载荷 (分段{span_index+1}/{len(record.spans_packets)}, 重组到包{record.packet_number})",
+                tls_record_type=23
+            )
+            segment_type = "首段" if is_first_segment else "中间段"
+            self.logger.info(f"🔧 [TLS-23{segment_type}] {segment_type}包{packet_number}掩码规则: 掩码整个TCP载荷")
+
+        return rule
+
+    def _generate_preserve_cross_packet_rule(self, packet_number: int, record: TLSRecordInfo,
+                                           span_index: int, is_first_segment: bool,
+                                           is_reassembly_target: bool, is_intermediate_segment: bool) -> MaskRule:
+        """为TLS-20/21/22/24跨包记录生成掩码规则（完全保留策略）"""
+        # 对于需要完全保留的TLS类型，所有相关包都完全保留
+        rule = MaskRule(
+            packet_number=packet_number,
+            tcp_stream_id=record.tcp_stream_id,
+            tls_record_offset=0,  # 从TCP载荷开始
+            tls_record_length=0,  # 特殊值：保留整个载荷
+            mask_offset=0,        # 不掩码
+            mask_length=0,        # 不掩码
+            action=MaskAction.KEEP_ALL,
+            reason=f"TLS-{record.content_type} 跨包完全保留：保留整个载荷 (分段{span_index+1}/{len(record.spans_packets)}, 重组到包{record.packet_number})",
+            tls_record_type=record.content_type
+        )
+
+        segment_type = "重组包" if is_reassembly_target else ("首段" if is_first_segment else "中间段")
+        self.logger.info(f"🔧 [TLS-{record.content_type}{segment_type}] {segment_type}包{packet_number}完全保留规则: 保留整个TCP载荷")
+
+        return rule
+
     def _generate_backup_cross_packet_rule(self, packet_number: int, record: TLSRecordInfo) -> Optional[MaskRule]:
-        """为跨包TLS-23记录生成备用掩码规则
-        
+        """为跨包TLS记录生成备用掩码规则（支持所有TLS类型）
+
         Args:
             packet_number: 包编号
             record: TLS记录
-            
+
         Returns:
             备用掩码规则，如果无法生成则返回None
         """
         try:
-            # 备用策略：掩码整个TCP载荷
-            return MaskRule(
-                packet_number=packet_number,
-                tcp_stream_id=record.tcp_stream_id,
-                tls_record_offset=0,
-                tls_record_length=0,  # 特殊值
-                mask_offset=0,
-                mask_length=-1,  # 掩码到载荷结束
-                action=MaskAction.MASK_PAYLOAD,
-                reason=f"TLS-23 跨包备用掩码：掩码整个载荷 (备用策略，重组到包{record.packet_number})",
-                tls_record_type=23
-            )
+            # 根据TLS类型确定备用策略
+            if record.content_type == 23:  # ApplicationData - 掩码整个载荷
+                return MaskRule(
+                    packet_number=packet_number,
+                    tcp_stream_id=record.tcp_stream_id,
+                    tls_record_offset=0,
+                    tls_record_length=0,  # 特殊值
+                    mask_offset=0,
+                    mask_length=-1,  # 掩码到载荷结束
+                    action=MaskAction.MASK_PAYLOAD,
+                    reason=f"TLS-23 跨包备用掩码：掩码整个载荷 (备用策略，重组到包{record.packet_number})",
+                    tls_record_type=23
+                )
+            else:  # TLS-20/21/22/24 - 完全保留
+                return MaskRule(
+                    packet_number=packet_number,
+                    tcp_stream_id=record.tcp_stream_id,
+                    tls_record_offset=0,
+                    tls_record_length=0,  # 特殊值
+                    mask_offset=0,
+                    mask_length=0,  # 不掩码
+                    action=MaskAction.KEEP_ALL,
+                    reason=f"TLS-{record.content_type} 跨包备用保留：完全保留载荷 (备用策略，重组到包{record.packet_number})",
+                    tls_record_type=record.content_type
+                )
         except Exception as e:
             self.logger.error(f"生成备用掩码规则失败: {e}")
-            return None 
+            return None
+
+    def _generate_non_tls_tcp_rules(self, tls_rules: List[MaskRule],
+                                   tcp_packets_info: Dict[int, Dict[str, Any]]) -> List[MaskRule]:
+        """为非TLS TCP载荷生成掩码规则
+
+        Args:
+            tls_rules: 已生成的TLS掩码规则列表
+            tcp_packets_info: TCP包信息字典
+
+        Returns:
+            非TLS TCP载荷的掩码规则列表
+        """
+        non_tls_rules = []
+
+        # 获取已有TLS规则覆盖的包编号
+        tls_covered_packets = set(rule.packet_number for rule in tls_rules)
+
+        self.logger.info(f"TLS规则已覆盖{len(tls_covered_packets)}个包：{sorted(tls_covered_packets)}")
+
+        # 为没有TLS规则的TCP包生成非TLS掩码规则
+        for packet_number, packet_info in tcp_packets_info.items():
+            # 跳过已有TLS规则的包
+            if packet_number in tls_covered_packets:
+                continue
+
+            # 检查是否有TCP载荷
+            if not packet_info.get('has_payload', False):
+                self.logger.debug(f"包{packet_number}无TCP载荷，跳过非TLS掩码规则生成")
+                continue
+
+            # 获取TCP流标识
+            tcp_stream_id = packet_info.get('tcp_stream_id', f'unknown_stream_{packet_number}')
+
+            try:
+                # 根据策略生成掩码规则
+                if self._non_tls_tcp_strategy == 'mask_all_payload':
+                    rule = create_non_tls_tcp_mask_rule(packet_number, tcp_stream_id)
+                    non_tls_rules.append(rule)
+
+                    self.logger.debug(f"为包{packet_number}生成非TLS TCP全掩码规则")
+                else:
+                    self.logger.warning(f"不支持的非TLS TCP策略: {self._non_tls_tcp_strategy}")
+
+            except Exception as e:
+                self.logger.error(f"为包{packet_number}生成非TLS TCP掩码规则失败: {e}")
+                continue
+
+        self.logger.info(f"生成{len(non_tls_rules)}条非TLS TCP载荷掩码规则")
+
+        return non_tls_rules

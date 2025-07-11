@@ -14,12 +14,14 @@ class TLSProcessingStrategy(Enum):
     """TLS处理策略枚举"""
     KEEP_ALL = "keep_all"              # 20,21,22,24类型：完全保留
     MASK_PAYLOAD = "mask_payload"      # 23类型：保留头部(5字节)，掩码载荷
+    MASK_ALL_PAYLOAD = "mask_all_payload"  # 非TLS TCP载荷：全部掩码
 
 
 class MaskAction(Enum):
     """掩码操作类型"""
     KEEP_ALL = "keep_all"
     MASK_PAYLOAD = "mask_payload"
+    MASK_ALL_PAYLOAD = "mask_all_payload"
 
 
 @dataclass(frozen=True)
@@ -114,16 +116,22 @@ class MaskRule:
         if self.tls_record_offset < 0:
             raise ValueError(f"TLS记录偏移量不能为负数: {self.tls_record_offset}")
         
-        # 特殊处理跨包分段掩码规则
+        # 特殊处理跨包分段掩码规则和非TLS规则
         is_cross_packet_rule = (
             "跨包" in self.reason and (
                 self.tls_record_length == 0 or  # 旧版兼容
                 self.mask_length == -1          # 新版特殊值
             )
         )
-        
-        if is_cross_packet_rule:
-            # 跨包规则的特殊情况，允许特殊长度值
+
+        is_non_tls_rule = (
+            self.tls_record_type is None and
+            self.action == MaskAction.MASK_ALL_PAYLOAD and
+            "非TLS" in self.reason
+        )
+
+        if is_cross_packet_rule or is_non_tls_rule:
+            # 跨包规则和非TLS规则的特殊情况，允许特殊长度值
             pass
         elif self.tls_record_length <= 0:
             raise ValueError(f"TLS记录长度必须为正数: {self.tls_record_length}")
@@ -156,22 +164,38 @@ class MaskRule:
     @property
     def is_mask_operation(self) -> bool:
         """判断是否为实际的掩码操作"""
-        if self.action != MaskAction.MASK_PAYLOAD:
+        if self.action == MaskAction.KEEP_ALL:
             return False
-        
-        # 跨包规则：mask_length=-1 或包含"跨包"的原因
-        if self.mask_length == -1 or "跨包" in self.reason:
+
+        if self.action == MaskAction.MASK_ALL_PAYLOAD:
+            # 非TLS TCP载荷全掩码：总是执行掩码操作
             return True
-        
-        # 普通规则：mask_length > 0
-        return self.mask_length > 0
+
+        if self.action == MaskAction.MASK_PAYLOAD:
+            # TLS载荷掩码：检查具体条件
+            # 跨包规则：mask_length=-1 或包含"跨包"的原因
+            if self.mask_length == -1 or "跨包" in self.reason:
+                return True
+
+            # 普通规则：mask_length > 0
+            return self.mask_length > 0
+
+        return False
     
     def get_description(self) -> str:
         """获取规则描述"""
         if self.action == MaskAction.KEEP_ALL:
-            return f"TLS-{self.tls_record_type} 完全保留: {self.reason}"
+            if self.tls_record_type is not None:
+                return f"TLS-{self.tls_record_type} 完全保留: {self.reason}"
+            else:
+                return f"完全保留: {self.reason}"
+        elif self.action == MaskAction.MASK_ALL_PAYLOAD:
+            return f"非TLS TCP载荷全掩码: {self.reason}"
         else:
-            return f"TLS-{self.tls_record_type} 掩码[{self.mask_offset}:{self.mask_offset + self.mask_length}]: {self.reason}"
+            if self.tls_record_type is not None:
+                return f"TLS-{self.tls_record_type} 掩码[{self.mask_offset}:{self.mask_offset + self.mask_length}]: {self.reason}"
+            else:
+                return f"掩码[{self.mask_offset}:{self.mask_offset + self.mask_length}]: {self.reason}"
 
 
 @dataclass
@@ -284,10 +308,10 @@ def validate_tls_record_boundary(record: TLSRecordInfo, tcp_payload_length: int)
 
 def get_tls_processing_strategy(content_type: int) -> TLSProcessingStrategy:
     """根据TLS内容类型获取处理策略
-    
+
     Args:
         content_type: TLS内容类型
-        
+
     Returns:
         对应的处理策略
     """
@@ -296,4 +320,27 @@ def get_tls_processing_strategy(content_type: int) -> TLSProcessingStrategy:
     elif content_type in [20, 21, 22, 24]:  # ChangeCipherSpec, Alert, Handshake, Heartbeat
         return TLSProcessingStrategy.KEEP_ALL
     else:
-        raise ValueError(f"不支持的TLS内容类型: {content_type}") 
+        raise ValueError(f"不支持的TLS内容类型: {content_type}")
+
+
+def create_non_tls_tcp_mask_rule(packet_number: int, tcp_stream_id: str) -> MaskRule:
+    """为非TLS TCP载荷创建全掩码规则
+
+    Args:
+        packet_number: 包编号
+        tcp_stream_id: TCP流标识
+
+    Returns:
+        非TLS TCP载荷的全掩码规则
+    """
+    return MaskRule(
+        packet_number=packet_number,
+        tcp_stream_id=tcp_stream_id,
+        tls_record_offset=0,           # 从TCP载荷开始
+        tls_record_length=0,           # 特殊值，表示整个载荷
+        mask_offset=0,                 # 从载荷开始掩码
+        mask_length=-1,                # 特殊值，表示掩码到载荷结束
+        action=MaskAction.MASK_ALL_PAYLOAD,
+        reason="非TLS TCP载荷全掩码策略：保护未识别协议的敏感数据",
+        tls_record_type=None           # 非TLS记录
+    )

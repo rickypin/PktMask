@@ -452,52 +452,8 @@ class TSharkTLSAnalyzer:
         record_lengths = self._extract_field_list(layers, 'tls.record.length')
         tls_versions = self._extract_field_list(layers, 'tls.record.version')
         
-        # 提取关键的分段检测信息
-        tls_reassembled_in = self._extract_field_list(layers, 'tls.reassembled_in')
-        tcp_reassembled_in = self._extract_field_list(layers, 'tcp.reassembled_in')
-        has_tls_segment = bool(self._extract_field_list(layers, 'tls.segment'))
-        has_tcp_segment = bool(self._extract_field_list(layers, 'tcp.segment'))
-        
         records = []
         record_offset = 0
-        
-        # 检查这个包是否是分段的一部分
-        is_segment_packet = has_tls_segment or has_tcp_segment
-        reassembled_in_packet = None
-        
-        # 确定重组目标包编号
-        if tls_reassembled_in:
-            try:
-                reassembled_in_packet = int(tls_reassembled_in[0])
-            except (ValueError, IndexError):
-                pass
-        elif tcp_reassembled_in:
-            try:
-                reassembled_in_packet = int(tcp_reassembled_in[0])
-            except (ValueError, IndexError):
-                pass
-        
-        # 如果这是一个分段包且不是重组目标包，则为分段创建记录
-        if is_segment_packet and reassembled_in_packet and reassembled_in_packet != frame_number:
-            # 这是一个分段包，创建分段记录
-            self.logger.info(f"🔍 [TLS跨包分析] 检测到分段包 {frame_number} → 重组到包 {reassembled_in_packet}")
-            self.logger.info(f"🔍 [TLS跨包分析] 包{frame_number} TLS分段信息: has_tls_segment={has_tls_segment}, has_tcp_segment={has_tcp_segment}")
-            self.logger.info(f"🔍 [TLS跨包分析] 包{frame_number} 重组信息: tls_reassembled_in={tls_reassembled_in}, tcp_reassembled_in={tcp_reassembled_in}")
-            
-            # 为分段创建占位记录，标记需要被掩码但没有完整TLS信息
-            segment_record = TLSRecordInfo(
-                packet_number=frame_number,
-                content_type=23,  # 假设是ApplicationData分段
-                version=(3, 1),   # 默认版本
-                length=0,         # 分段长度暂时为0
-                is_complete=False,
-                spans_packets=[frame_number, reassembled_in_packet],  # 包含原包和重组包
-                tcp_stream_id=f"TCP_{tcp_stream}",
-                record_offset=0
-            )
-            records.append(segment_record)
-            self.logger.info(f"🔍 [TLS跨包分析] 为分段包{frame_number}创建占位记录: content_type=23, spans_packets={segment_record.spans_packets}")
-            return records
         
         # 确定最大记录数 - 基于所有TLS字段的最大长度
         max_records = max(len(content_types), len(opaque_types), len(record_lengths), len(tls_versions)) if any([content_types, opaque_types, record_lengths, tls_versions]) else 0
@@ -550,19 +506,11 @@ class TSharkTLSAnalyzer:
                     except ValueError:
                         pass
                 
-                # 确定跨段信息
+                # 简化的记录创建：所有记录都标记为完整，跨包检测由后续的长度检测处理
                 spans_packets = [frame_number]
                 is_complete = True
-                
-                # 如果这个包是重组目标，可能需要标记跨段信息
-                if is_segment_packet or reassembled_in_packet == frame_number:
-                    # 这是一个重组后的记录，标记为跨包
-                    is_complete = True  # TShark已经重组完成
-                    # spans_packets 会在后续的 _detect_cross_packet_records 中更新
-                    
-                    self.logger.info(f"🔍 [TLS跨包分析] 包{frame_number}包含重组的TLS记录: 类型={content_type}, 长度={record_length}, 字段来源={tls_field_source}")
-                    if content_type == 23:
-                        self.logger.info(f"🔍 [TLS-23跨包] 重组包{frame_number}: ApplicationData长度={record_length}, 字段来源={tls_field_source}, 需要智能掩码处理")
+
+                self.logger.debug(f"🔍 [TLS记录解析] 包{frame_number}: 类型=TLS-{content_type}, 长度={record_length}字节, 字段来源={tls_field_source}")
                 
                 # 创建TLS记录信息
                 record = TLSRecordInfo(
@@ -662,260 +610,110 @@ class TSharkTLSAnalyzer:
             return []
     
     def _detect_cross_packet_records(self, tls_records: List[TLSRecordInfo]) -> List[TLSRecordInfo]:
-        """检测跨TCP段的TLS记录
-        
+        """基于记录长度的简化跨包检测
+
         Args:
             tls_records: 原始TLS记录列表
-            
+
         Returns:
-            增强的TLS记录列表，包含跨段检测结果
+            增强的TLS记录列表，包含跨包检测结果
         """
-        # 按TCP流分组
-        stream_records = {}
+        enhanced_records = []
+        cross_packet_count = 0
+
+        self.logger.info(f"🔍 [TLS跨包检测] 开始基于长度的跨包检测，共{len(tls_records)}个记录")
+
         for record in tls_records:
-            stream_id = record.tcp_stream_id
-            if stream_id not in stream_records:
-                stream_records[stream_id] = []
-            stream_records[stream_id].append(record)
-        
-        enhanced_records = []
-        
-        # 对每个流进行跨段检测
-        for stream_id, records in stream_records.items():
-            # 按包编号排序
-            records.sort(key=lambda r: r.packet_number)
-            
-            # 检测跨段记录
-            enhanced_stream_records = self._detect_cross_packet_in_stream(records)
-            enhanced_records.extend(enhanced_stream_records)
-        
-        return enhanced_records
-    
-    def _detect_cross_packet_in_stream(self, records: List[TLSRecordInfo]) -> List[TLSRecordInfo]:
-        """在单个流中检测跨段TLS记录
-        
-        基于TShark的重组信息和TLS记录长度分析，检测跨TCP段的TLS记录
-        
-        Args:
-            records: 单个流的TLS记录列表
-            
-        Returns:
-            增强的TLS记录列表，包含跨段信息
-        """
-        enhanced_records = []
-        segment_map = {}  # reassembled_packet -> [segment_packets]
-        large_records = {}  # packet -> large_record_info
-        
-        # 第一遍：收集分段信息和大记录信息
-        for record in records:
-            # 检查显式分段记录
-            if not record.is_complete and len(record.spans_packets) > 1:
-                # 这是一个分段记录
-                segment_packet = record.spans_packets[0]
-                reassembled_packet = record.spans_packets[1]
-                
-                if reassembled_packet not in segment_map:
-                    segment_map[reassembled_packet] = []
-                segment_map[reassembled_packet].append(segment_packet)
-                
-                self.logger.info(f"🔍 [TLS跨包检测] 显式分段记录：包{segment_packet} → 重组到包{reassembled_packet}, 类型={record.content_type}")
-                if record.content_type == 23:
-                    self.logger.info(f"🔍 [TLS-23跨包] 发现ApplicationData分段：包{segment_packet}将在包{reassembled_packet}中重组")
-            
-            # 增强的大记录检测（针对ApplicationData）
-            elif record.is_complete and record.content_type == 23:
-                # ApplicationData记录，使用更精确的跨包检测标准
-                typical_mtu_payload = 1460  # 典型的以太网MTU减去IP/TCP头部
-                tcp_overhead = 60  # TCP头部和选项的最大开销
-                effective_payload_limit = typical_mtu_payload - tcp_overhead  # ~1400字节
-                
-                # 多级检测标准
-                is_definitely_cross_packet = record.length > typical_mtu_payload  # >1460字节
-                is_probably_cross_packet = record.length > effective_payload_limit  # >1400字节
-                is_possibly_cross_packet = record.length > 1200  # 保守估计
-                
-                if is_definitely_cross_packet or is_probably_cross_packet:
-                    large_records[record.packet_number] = record
-                    confidence = "确定" if is_definitely_cross_packet else "很可能" if is_probably_cross_packet else "可能"
-                    self.logger.info(f"🔍 [TLS跨包检测] 检测到大ApplicationData记录：包{record.packet_number}, 长度={record.length}字节, {confidence}跨包")
-                    self.logger.info(f"🔍 [TLS-23跨包] 大消息体检测：包{record.packet_number}, ApplicationData长度={record.length}, 需要分段掩码处理")
-        
-        # 第二遍：为大记录推断跨包信息，使用增强的检测算法
-        packets_by_number = {r.packet_number: r for r in records}
-        tcp_segments_analysis = self._analyze_tcp_segments_for_cross_packet(records)
-        
-        for packet_num, large_record in large_records.items():
-            # 查找可能的前置包（分段包）
-            segment_packets = []
-            
-            # 方法1：查找前面的包，看是否有指向当前包的重组信息
-            for check_packet in range(max(1, packet_num - 15), packet_num):  # 扩大搜索范围
-                if check_packet in packets_by_number:
-                    check_record = packets_by_number[check_packet]
-                    # 如果是不完整记录且有重组信息，可能是分段
-                    if (not check_record.is_complete and 
-                        len(check_record.spans_packets) > 1 and 
-                        check_record.spans_packets[1] == packet_num):
-                        segment_packets.append(check_packet)
-            
-            # 方法2：基于TCP序列号连续性分析（如果有相关信息）
-            if packet_num in tcp_segments_analysis:
-                additional_segments = tcp_segments_analysis[packet_num]
-                segment_packets.extend(additional_segments)
-                segment_packets = sorted(list(set(segment_packets)))  # 去重排序
-            
-            # 方法3：基于数据包时间间隔和载荷大小的启发式分析
-            if not segment_packets:
-                heuristic_segments = self._heuristic_segment_detection(
-                    large_record, packets_by_number, packet_num
+            if self._is_cross_packet_by_length(record):
+                # 创建跨包版本
+                spans = self._estimate_packet_spans(record)
+                enhanced_record = TLSRecordInfo(
+                    packet_number=record.packet_number,
+                    content_type=record.content_type,
+                    version=record.version,
+                    length=record.length,
+                    is_complete=True,
+                    spans_packets=spans,
+                    tcp_stream_id=record.tcp_stream_id,
+                    record_offset=record.record_offset
                 )
-                segment_packets.extend(heuristic_segments)
-            
-            # 如果找到分段包，则这是跨包记录
-            if segment_packets:
-                if packet_num not in segment_map:
-                    segment_map[packet_num] = []
-                segment_map[packet_num].extend(segment_packets)
-                segment_map[packet_num] = sorted(list(set(segment_map[packet_num])))  # 去重排序
-                self.logger.info(f"🔍 [TLS跨包检测] 基于多方法推断跨包：包{packet_num}, 前置分段={segment_map[packet_num]}")
-                self.logger.info(f"🔍 [TLS-23跨包] 推断ApplicationData跨包：包{packet_num}, 跨包={segment_map[packet_num] + [packet_num]}, 总长度={large_record.length}")
+                enhanced_records.append(enhanced_record)
+                cross_packet_count += 1
+
+                self.logger.info(f"🔍 [TLS跨包检测] 检测到跨包记录：包{record.packet_number}, 类型=TLS-{record.content_type}, 长度={record.length}字节, 跨包{spans}")
             else:
-                # 没有明确的分段包，但仍然是大记录，基于长度进行保守估算
-                if large_record.length > 1460:  # 使用更严格的阈值
-                    # 估算可能的分段包数量，基于典型MTU
-                    estimated_segments = (large_record.length // 1400) + 1
-                    estimated_start = max(1, packet_num - estimated_segments + 1)
-                    
-                    # 验证估算范围内是否有合适的候选包
-                    valid_candidates = []
-                    for candidate in range(estimated_start, packet_num):
-                        if candidate in packets_by_number:
-                            candidate_record = packets_by_number[candidate]
-                            # 检查是否是同一TCP流且时间接近
-                            if (candidate_record.tcp_stream_id == large_record.tcp_stream_id and
-                                abs(candidate - packet_num) <= estimated_segments):
-                                valid_candidates.append(candidate)
-                    
-                    if valid_candidates:
-                        segment_map[packet_num] = valid_candidates
-                        estimated_spans = valid_candidates + [packet_num]
-                        self.logger.info(f"🔍 [TLS跨包检测] 估算跨包记录：包{packet_num}, 估算跨包={estimated_spans}, 基于长度{large_record.length}")
-                        self.logger.info(f"🔍 [TLS-23跨包] 估算ApplicationData跨包：长度={large_record.length}字节, 估算需要{len(estimated_spans)}个包")
-        
-        # 第三遍：生成增强记录
-        for record in records:
-            if record.is_complete:
-                # 检查这是否是一个重组目标包
-                if record.packet_number in segment_map:
-                    # 这是重组后的完整记录，更新spans_packets
-                    all_spans = segment_map[record.packet_number] + [record.packet_number]
-                    all_spans = sorted(list(set(all_spans)))  # 去重并排序
-                    
-                    enhanced_record = TLSRecordInfo(
-                        packet_number=record.packet_number,
-                        content_type=record.content_type,
-                        version=record.version,
-                        length=record.length,
-                        is_complete=True,
-                        spans_packets=all_spans,  # 包含所有相关的包
-                        tcp_stream_id=record.tcp_stream_id,
-                        record_offset=record.record_offset
-                    )
-                    
-                    enhanced_records.append(enhanced_record)
-                    
-                    self.logger.info(f"🔍 [TLS跨包检测] 跨包记录创建完成：类型{record.content_type}, 跨包{all_spans}, 总长度{record.length}")
-                    if record.content_type == 23:
-                        self.logger.info(f"🔍 [TLS-23跨包] ApplicationData跨包记录：跨包{all_spans}, 消息体长度={record.length}, 需要分段掩码")
-                else:
-                    # 普通的单包记录
-                    enhanced_records.append(record)
-            # 分段记录不添加到最终结果中，因为它们已经合并到重组记录中
-        
-        cross_packet_count = sum(1 for r in enhanced_records if len(r.spans_packets) > 1)
+                # 保持原记录
+                enhanced_records.append(record)
+
         self.logger.info(f"🔍 [TLS跨包检测] 跨包检测完成：发现 {cross_packet_count} 个跨包记录")
-        
         return enhanced_records
-    
-    def _analyze_tcp_segments_for_cross_packet(self, records: List[TLSRecordInfo]) -> Dict[int, List[int]]:
-        """分析TCP段以检测跨包TLS记录
-        
+
+    def _is_cross_packet_by_length(self, record: TLSRecordInfo, threshold: int = 1200) -> bool:
+        """基于记录长度判断是否跨包
+
         Args:
-            records: TLS记录列表
-            
+            record: TLS记录信息
+            threshold: 跨包检测阈值（字节）
+
         Returns:
-            包编号到前置分段包列表的映射
+            是否为跨包记录
         """
-        # 按包编号排序记录
-        sorted_records = sorted(records, key=lambda r: r.packet_number)
-        segment_analysis = {}
-        
-        # 分析相邻记录之间的关系
-        for i in range(1, len(sorted_records)):
-            current = sorted_records[i]
-            previous = sorted_records[i-1]
-            
-            # 只分析ApplicationData记录
-            if current.content_type != 23:
-                continue
-            
-            # 检查是否在同一TCP流中
-            if current.tcp_stream_id != previous.tcp_stream_id:
-                continue
-            
-            # 检查包编号是否连续或接近
-            packet_gap = current.packet_number - previous.packet_number
-            if packet_gap > 10:  # 包间隔太大，不太可能是分段
-                continue
-            
-            # 检查记录特征
-            if (current.is_complete and current.length > 1400 and  # 当前是大记录
-                (not previous.is_complete or previous.length < 1400)):  # 前一个是小记录或不完整
-                # 可能的分段关系
-                if current.packet_number not in segment_analysis:
-                    segment_analysis[current.packet_number] = []
-                segment_analysis[current.packet_number].append(previous.packet_number)
-        
-        return segment_analysis
-    
-    def _heuristic_segment_detection(
-        self, 
-        large_record: TLSRecordInfo, 
-        packets_by_number: Dict[int, TLSRecordInfo],
-        target_packet: int
-    ) -> List[int]:
-        """启发式分段检测
-        
+        # TLS记录总大小 = 头部5字节 + 载荷长度
+        total_size = record.length + 5
+
+        # 考虑网络开销的保守阈值
+        is_cross_packet = total_size > threshold
+
+        if is_cross_packet:
+            self.logger.debug(f"🔍 [长度检测] TLS-{record.content_type}记录总大小{total_size}字节 > 阈值{threshold}字节，判定为跨包")
+
+        return is_cross_packet
+
+    def _estimate_packet_spans(self, record: TLSRecordInfo, conservative_range: int = 20) -> List[int]:
+        """保守的跨包记录包范围估算
+
+        由于网络环境的复杂性（重传、间隔包、非连续分段等），精确估算跨包范围
+        非常困难。因此采用保守策略：为大记录生成一个保守的包范围，确保不遗漏
+        可能的分段包。
+
         Args:
-            large_record: 大记录
-            packets_by_number: 包编号到记录的映射
-            target_packet: 目标包编号
-            
+            record: TLS记录信息
+            conservative_range: 保守的向前搜索范围
+
         Returns:
-            可能的分段包列表
+            估算的包编号列表
         """
-        candidates = []
-        
-        # 搜索范围：基于记录大小估算
-        max_segments = min(10, (large_record.length // 1200) + 3)
-        search_start = max(1, target_packet - max_segments)
-        
-        for packet_num in range(search_start, target_packet):
-            if packet_num in packets_by_number:
-                candidate = packets_by_number[packet_num]
-                
-                # 检查基本条件
-                if (candidate.tcp_stream_id == large_record.tcp_stream_id and
-                    candidate.content_type == 23):  # 同流的ApplicationData
-                    
-                    # 启发式条件：小记录或不完整记录
-                    if (not candidate.is_complete or 
-                        candidate.length < 1200 or
-                        len(candidate.spans_packets) <= 1):
-                        candidates.append(packet_num)
-        
-        # 返回最多5个最接近的候选包
-        return candidates[-5:] if candidates else []
+        total_size = record.length + 5
+
+        # 基于记录大小确定保守范围
+        if total_size <= 1500:
+            # 小记录：可能跨2-3个包
+            search_range = 5
+        elif total_size <= 3000:
+            # 中等记录：可能跨3-5个包
+            search_range = 10
+        else:
+            # 大记录：可能跨更多包
+            search_range = conservative_range
+
+        # 向前搜索，生成保守的包范围
+        start_packet = max(1, record.packet_number - search_range + 1)
+        spans = list(range(start_packet, record.packet_number + 1))
+
+        self.logger.debug(f"🔍 [保守包范围估算] TLS-{record.content_type}总大小{total_size}字节，"
+                         f"保守搜索范围{search_range}，包范围{spans}")
+
+        return spans
+
+    def _detect_cross_packet_in_stream(self, records: List[TLSRecordInfo]) -> List[TLSRecordInfo]:
+        """已废弃：旧的复杂跨包检测方法
+
+        该方法已被基于长度的简化检测替代，保留仅为兼容性
+        """
+        self.logger.warning("调用了已废弃的_detect_cross_packet_in_stream方法，请使用新的基于长度的检测")
+        return records
+
+
     
     def get_analysis_result(self, tls_records: List[TLSRecordInfo], total_packets: int) -> TLSAnalysisResult:
         """生成TLS分析结果

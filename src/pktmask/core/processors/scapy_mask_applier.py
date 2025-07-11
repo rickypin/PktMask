@@ -318,11 +318,19 @@ class ScapyMaskApplier:
         is_cross_packet_rule = ("跨包" in rule.reason or rule.mask_length == -1)
         is_segment_rule = ("分段" in rule.reason or "首段" in rule.reason or "中间段" in rule.reason)
         is_reassembly_rule = ("重组" in rule.reason)
-        
-        self.logger.info(f"⚡ [掩码规则分析] 包{packet_number}: 跨包={is_cross_packet_rule}, 分段={is_segment_rule}, 重组={is_reassembly_rule}")
-        
+        is_non_tls_rule = (rule.tls_record_type is None and "非TLS" in rule.reason)
+
+        self.logger.info(f"⚡ [掩码规则分析] 包{packet_number}: 跨包={is_cross_packet_rule}, 分段={is_segment_rule}, 重组={is_reassembly_rule}, 非TLS={is_non_tls_rule}")
+
         # 计算掩码范围
-        if rule.mask_length == -1:
+        if rule.action.value == "mask_all_payload":
+            # 非TLS TCP载荷全掩码：掩码整个TCP载荷
+            abs_start = 0
+            abs_end = payload_length
+            self.logger.info(f"⚡ [非TLS全掩码] 包{packet_number}: 非TLS TCP载荷全掩码，掩码整个载荷 0-{payload_length}")
+            self.logger.info(f"⚡ [非TLS全掩码] 包{packet_number}: 原因={rule.reason}")
+
+        elif rule.mask_length == -1:
             # 特殊处理：mask_length=-1 表示掩码到TCP载荷结束
             if rule.mask_offset == 0 and rule.tls_record_offset == 0:
                 # 掩码整个TCP载荷（分段包）
@@ -433,15 +441,24 @@ class ScapyMaskApplier:
                         f"偏移{actual_start}-{actual_end}, 掩码{masked_bytes}字节，新置零{newly_masked}字节"
                     )
                 
-                # 额外验证TLS-23的掩码完整性
+                # 额外验证掩码完整性
                 if rule.tls_record_type == 23:
                     zero_count = sum(1 for b in payload_buffer[actual_start:actual_end] if b == self._mask_byte_value)
                     zero_percentage = (zero_count / masked_bytes * 100) if masked_bytes > 0 else 0
                     self.logger.info(f"⚡ [TLS-23掩码验证] 包{packet_number}: ApplicationData载荷，{zero_count}/{masked_bytes}字节已正确置零 ({zero_percentage:.1f}%)")
-                    
+
                     # 如果掩码完整性不足，记录警告
                     if zero_percentage < 95 and masked_bytes > 10:  # 对于小载荷放宽要求
                         self.logger.warning(f"⚡ [掩码完整性警告] 包{packet_number}: 置零率{zero_percentage:.1f}%低于预期，可能存在掩码重叠或其他问题")
+
+                elif rule.action.value == "mask_all_payload":
+                    zero_count = sum(1 for b in payload_buffer[actual_start:actual_end] if b == self._mask_byte_value)
+                    zero_percentage = (zero_count / masked_bytes * 100) if masked_bytes > 0 else 0
+                    self.logger.info(f"⚡ [非TLS掩码验证] 包{packet_number}: 非TLS TCP载荷，{zero_count}/{masked_bytes}字节已正确置零 ({zero_percentage:.1f}%)")
+
+                    # 如果掩码完整性不足，记录警告
+                    if zero_percentage < 95 and masked_bytes > 10:
+                        self.logger.warning(f"⚡ [非TLS掩码完整性警告] 包{packet_number}: 置零率{zero_percentage:.1f}%低于预期，可能存在掩码重叠或其他问题")
                 
                 return True
             else:

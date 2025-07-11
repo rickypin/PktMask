@@ -44,9 +44,13 @@ tools:
       tshark_check_timeout: 5.0
     keep_intermediate_files: false
     temp_dir: null
+    # TLS协议掩码策略配置
     tls_20_strategy: keep_all
     tls_21_strategy: keep_all
     tls_22_strategy: keep_all
     tls_23_header_preserve_bytes: 5
     tls_23_strategy: mask_payload
     tls_24_strategy: keep_all
+    # 非TLS TCP载荷掩码策略配置
+    non_tls_tcp_strategy: mask_all_payload
+    enable_non_tls_tcp_masking: true
