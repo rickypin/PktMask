@@ -1,0 +1,885 @@
+"""
+通用载荷掩码处理器
+
+基于 TCP_MARKER_REFERENCE 算法的通用载荷掩码处理器。
+"""
+
+from __future__ import annotations
+
+import logging
+import time
+from bisect import bisect_left
+from collections import defaultdict
+from typing import Any, Dict, List, Optional, Tuple
+
+try:
+    from scapy.all import PcapReader, PcapWriter, IP, TCP, Raw
+    SCAPY_AVAILABLE = True
+except ImportError:
+    # 在测试环境中可能没有 scapy
+    PcapReader = PcapWriter = IP = TCP = Raw = None
+    SCAPY_AVAILABLE = False
+
+# 尝试导入隧道协议支持（可选）
+try:
+    from scapy.contrib import vxlan, geneve
+except ImportError:
+    vxlan = geneve = None
+
+from ..marker.types import KeepRule, KeepRuleSet
+from .stats import MaskingStats
+from .memory_optimizer import MemoryOptimizer
+from .error_handler import ErrorRecoveryHandler, ErrorSeverity, ErrorCategory
+from .data_validator import DataValidator
+from .fallback_handler import FallbackHandler, FallbackMode
+
+
+class PayloadMasker:
+    """载荷掩码处理器
+
+    基于 TCP_MARKER_REFERENCE.md 算法实现的通用载荷掩码处理器。
+    支持多层封装、序列号回绕处理和精确的保留规则应用。
+    """
+
+    def __init__(self, config: Dict[str, Any]):
+        """初始化载荷掩码处理器
+
+        Args:
+            config: 配置字典
+        """
+        self.config = config
+        self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
+
+        # 序列号状态管理 - 每个流方向独立维护
+        self.seq_state = defaultdict(lambda: {"last": None, "epoch": 0})
+
+        # 配置参数
+        self.chunk_size = config.get('chunk_size', 1000)
+        self.verify_checksums = config.get('verify_checksums', True)
+        self.mask_byte_value = config.get('mask_byte_value', 0x00)
+
+        # 性能优化配置
+        self.enable_performance_monitoring = config.get('enable_performance_monitoring', True)
+        self.max_memory_usage = config.get('max_memory_usage', 2 * 1024 * 1024 * 1024)  # 2GB
+
+        # 初始化内存优化器
+        memory_config = config.get('memory_optimizer', {})
+        memory_config.setdefault('max_memory_mb', self.max_memory_usage // (1024 * 1024))
+        self.memory_optimizer = MemoryOptimizer(memory_config)
+
+        # 初始化错误处理器
+        error_config = config.get('error_handler', {})
+        error_config.setdefault('max_retry_attempts', 3)
+        error_config.setdefault('enable_auto_recovery', True)
+        self.error_handler = ErrorRecoveryHandler(error_config)
+
+        # 初始化数据验证器
+        validator_config = config.get('data_validator', {})
+        validator_config.setdefault('enable_checksum_validation', self.verify_checksums)
+        self.data_validator = DataValidator(validator_config)
+
+        # 初始化降级处理器
+        fallback_config = config.get('fallback_handler', {})
+        fallback_config.setdefault('enable_fallback', True)
+        self.fallback_handler = FallbackHandler(fallback_config)
+
+        # 注册内存压力回调
+        self.memory_optimizer.register_memory_callback(self._handle_memory_pressure)
+
+        # 注册自定义错误恢复处理器
+        self._register_custom_recovery_handlers()
+
+        self.logger.info(f"PayloadMasker 初始化: chunk_size={self.chunk_size}, "
+                        f"verify_checksums={self.verify_checksums}, "
+                        f"内存限制={memory_config['max_memory_mb']}MB")
+
+        # 检查 scapy 可用性
+        if not SCAPY_AVAILABLE:
+            self.logger.warning("Scapy 不可用，某些功能可能受限")
+    
+    def apply_masking(self, input_path: str, output_path: str,
+                     keep_rules: KeepRuleSet) -> MaskingStats:
+        """应用掩码规则
+
+        基于 TCP_MARKER_REFERENCE.md 算法实现的完整掩码处理流程：
+        1. 预处理保留规则，构建高效查找结构
+        2. 逐包处理载荷，支持多层封装剥离
+        3. 应用序列号匹配，处理32位回绕
+        4. 执行精确掩码操作，保持载荷长度不变
+
+        Args:
+            input_path: 输入文件路径
+            output_path: 输出文件路径
+            keep_rules: 保留规则集合
+
+        Returns:
+            MaskingStats: 掩码处理统计信息
+        """
+        self.logger.info(f"开始应用掩码: {input_path} -> {output_path}")
+        start_time = time.time()
+
+        # 创建统计信息
+        stats = MaskingStats(
+            success=True,
+            input_file=input_path,
+            output_file=output_path
+        )
+
+        try:
+            # 1. 验证输入文件
+            self.logger.info("验证输入文件...")
+            input_validation = self.data_validator.validate_input_file(input_path)
+            if not input_validation.is_valid:
+                error_msg = f"输入文件验证失败: {input_validation.error_message}"
+                self.error_handler.handle_error(
+                    error_msg,
+                    ErrorSeverity.HIGH,
+                    ErrorCategory.INPUT_ERROR,
+                    {"input_file": input_path, "validation_details": input_validation.details}
+                )
+                raise ValueError(error_msg)
+
+            # 记录验证警告
+            for warning in input_validation.warnings:
+                self.logger.warning(f"输入文件警告: {warning}")
+
+            # 检查 scapy 可用性
+            if not SCAPY_AVAILABLE:
+                error_msg = "Scapy 不可用，无法处理 pcap 文件"
+                self.error_handler.handle_error(
+                    error_msg,
+                    ErrorSeverity.CRITICAL,
+                    ErrorCategory.SYSTEM_ERROR,
+                    {"input_file": input_path, "output_file": output_path}
+                )
+                raise RuntimeError(error_msg)
+
+            # 1. 预处理保留规则
+            self.logger.info("预处理保留规则...")
+            rule_lookup = self.error_handler.retry_operation(
+                lambda: self._preprocess_keep_rules(keep_rules),
+                error_category=ErrorCategory.PROCESSING_ERROR
+            )
+            self.logger.info(f"预处理完成，共 {len(rule_lookup)} 个流方向")
+
+            # 2. 逐包处理载荷 - 优化的流式处理
+            self.logger.info("开始逐包处理...")
+
+            # 性能监控
+            if self.enable_performance_monitoring:
+                import psutil
+                process = psutil.Process()
+                initial_memory = process.memory_info().rss
+
+            packet_buffer = []
+            buffer_size = min(self.chunk_size, 100)  # 批处理缓冲区大小
+
+            # 使用错误处理包装文件操作
+            def process_file():
+                with PcapReader(input_path) as reader, PcapWriter(output_path, sync=True) as writer:
+                    for packet in reader:
+                        stats.processed_packets += 1
+
+                        try:
+                            # 处理单个数据包
+                            modified_packet, packet_modified = self._process_packet(packet, rule_lookup)
+
+                            if packet_modified:
+                                stats.modified_packets += 1
+
+                            # 添加到缓冲区
+                            packet_buffer.append(modified_packet)
+
+                        except Exception as e:
+                            # 处理单个数据包的错误
+                            self.error_handler.handle_error(
+                                e,
+                                ErrorSeverity.MEDIUM,
+                                ErrorCategory.PROCESSING_ERROR,
+                                {"packet_number": stats.processed_packets}
+                            )
+                            # 对于单个数据包错误，添加原始数据包以保持完整性
+                            packet_buffer.append(packet)
+
+                        # 内存压力检查
+                        if self.memory_optimizer.check_memory_pressure():
+                            # 如果内存压力过高，立即写入缓冲区并清理
+                            self._flush_packet_buffer(packet_buffer, writer)
+
+                        # 批量写入以提高性能
+                        elif len(packet_buffer) >= buffer_size:
+                            self._flush_packet_buffer(packet_buffer, writer)
+
+                        # 定期报告进度
+                        if stats.processed_packets % self.chunk_size == 0:
+                            if self.enable_performance_monitoring:
+                                current_memory = process.memory_info().rss
+                                memory_usage_mb = current_memory / 1024 / 1024
+                                self.logger.info(f"已处理 {stats.processed_packets} 个数据包, "
+                                               f"内存使用: {memory_usage_mb:.1f}MB")
+                            else:
+                                self.logger.debug(f"已处理 {stats.processed_packets} 个数据包")
+
+                    # 写入剩余的缓冲区数据包
+                    self._flush_packet_buffer(packet_buffer, writer)
+
+            # 执行文件处理，带重试机制
+            self.error_handler.retry_operation(
+                process_file,
+                error_category=ErrorCategory.INPUT_ERROR
+            )
+
+            # 3. 验证处理状态
+            self.logger.info("验证处理状态...")
+            processing_validation = self.data_validator.validate_processing_state(
+                stats.processed_packets,
+                stats.modified_packets,
+                len(stats.errors)
+            )
+
+            if not processing_validation.is_valid:
+                error_msg = f"处理状态验证失败: {processing_validation.error_message}"
+                self.error_handler.handle_error(
+                    error_msg,
+                    ErrorSeverity.HIGH,
+                    ErrorCategory.VALIDATION_ERROR,
+                    processing_validation.details
+                )
+                stats.add_error(error_msg)
+
+            # 记录处理状态警告
+            for warning in processing_validation.warnings:
+                self.logger.warning(f"处理状态警告: {warning}")
+
+            # 4. 验证输出文件
+            self.logger.info("验证输出文件...")
+            output_validation = self.data_validator.validate_output_file(
+                output_path,
+                expected_packet_count=stats.processed_packets
+            )
+
+            if not output_validation.is_valid:
+                error_msg = f"输出文件验证失败: {output_validation.error_message}"
+                self.error_handler.handle_error(
+                    error_msg,
+                    ErrorSeverity.HIGH,
+                    ErrorCategory.OUTPUT_ERROR,
+                    {"output_file": output_path, "validation_details": output_validation.details}
+                )
+                stats.add_error(error_msg)
+
+            # 记录输出验证警告
+            for warning in output_validation.warnings:
+                self.logger.warning(f"输出文件警告: {warning}")
+
+            # 5. 计算执行时间和统计信息
+            stats.execution_time = time.time() - start_time
+
+            # 添加验证结果到统计信息
+            stats.validation_results = {
+                'input_validation': input_validation.details,
+                'processing_validation': processing_validation.details,
+                'output_validation': output_validation.details
+            }
+
+            # 生成性能报告
+            if self.enable_performance_monitoring:
+                memory_report = self.memory_optimizer.get_optimization_report()
+                self.logger.info(f"掩码应用完成: 处理包数={stats.processed_packets}, "
+                               f"修改包数={stats.modified_packets}, "
+                               f"执行时间={stats.execution_time:.2f}秒, "
+                               f"峰值内存={memory_report['peak_memory_mb']:.1f}MB, "
+                               f"GC次数={memory_report['gc_collections']}")
+            else:
+                self.logger.info(f"掩码应用完成: 处理包数={stats.processed_packets}, "
+                               f"修改包数={stats.modified_packets}, "
+                               f"执行时间={stats.execution_time:.2f}秒")
+
+        except Exception as e:
+            # 处理顶级异常
+            error_info = self.error_handler.handle_error(
+                e,
+                ErrorSeverity.HIGH,
+                ErrorCategory.PROCESSING_ERROR,
+                {"input_file": input_path, "output_file": output_path}
+            )
+
+            self.logger.error(f"掩码应用失败: {e}")
+
+            # 尝试降级处理
+            fallback_mode = self.fallback_handler.get_recommended_fallback_mode({
+                'error_category': ErrorCategory.PROCESSING_ERROR.value,
+                'error_severity': ErrorSeverity.HIGH.value,
+                'error_message': str(e)
+            })
+
+            self.logger.warning(f"尝试降级处理: {fallback_mode.value}")
+
+            fallback_result = self.fallback_handler.execute_fallback(
+                input_path,
+                output_path,
+                fallback_mode,
+                {"original_error": str(e)}
+            )
+
+            if fallback_result.success:
+                self.logger.info(f"降级处理成功: {fallback_result.message}")
+                stats.success = True  # 降级处理成功
+                stats.add_error(f"原始处理失败，降级处理成功: {fallback_result.message}")
+                stats.fallback_used = True
+                stats.fallback_mode = fallback_mode.value
+                stats.fallback_details = fallback_result.details
+            else:
+                self.logger.error(f"降级处理也失败: {fallback_result.message}")
+                stats.success = False
+                stats.add_error(str(e))
+                stats.add_error(f"降级处理失败: {fallback_result.message}")
+
+            # 添加错误摘要到统计信息
+            error_summary = self.error_handler.get_error_summary()
+            stats.error_details = error_summary
+
+        return stats
+    
+    def _preprocess_keep_rules(self, keep_rules: KeepRuleSet) -> Dict[str, Dict[str, Dict]]:
+        """预处理保留规则，构建高效查找结构
+
+        基于 TCP_MARKER_REFERENCE.md 的区间预编算法，为每个流方向构建优化的查找结构。
+
+        Args:
+            keep_rules: 保留规则集合
+
+        Returns:
+            Dict[流标识, Dict[方向, 查找结构]]
+        """
+        rule_lookup = defaultdict(lambda: defaultdict(list))
+
+        # 按流和方向分组规则
+        for rule in keep_rules.rules:
+            rule_lookup[rule.stream_id][rule.direction].append((rule.seq_start, rule.seq_end))
+
+        # 为每个流方向构建优化的查找结构
+        processed_lookup = {}
+        for stream_id, directions in rule_lookup.items():
+            processed_lookup[stream_id] = {}
+
+            for direction, ranges in directions.items():
+                # 合并重叠区间以优化查找
+                merged_ranges = self._merge_overlapping_ranges(ranges)
+
+                # 构建排序的区间列表用于二分查找
+                sorted_ranges = sorted(merged_ranges)
+
+                # 构建边界点集合（保持向后兼容）
+                bounds = sorted(set(
+                    point for start, end in merged_ranges
+                    for point in [start, end]
+                ))
+
+                # 构建保留区间集合（保持向后兼容）
+                keep_set = set(merged_ranges)
+
+                processed_lookup[stream_id][direction] = {
+                    'bounds': bounds,
+                    'keep_set': keep_set,
+                    'sorted_ranges': sorted_ranges,  # 新增：用于二分查找
+                    'range_count': len(merged_ranges)
+                }
+
+                self.logger.debug(f"流 {stream_id}:{direction} - "
+                                f"原始区间: {len(ranges)}, 合并后: {len(merged_ranges)}, "
+                                f"边界点: {len(bounds)}")
+
+        return processed_lookup
+
+    def _merge_overlapping_ranges(self, ranges: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        """合并重叠的区间以优化查找性能
+
+        Args:
+            ranges: 原始区间列表
+
+        Returns:
+            合并后的区间列表
+        """
+        if not ranges:
+            return []
+
+        # 按起始位置排序
+        sorted_ranges = sorted(ranges)
+        merged = [sorted_ranges[0]]
+
+        for current_start, current_end in sorted_ranges[1:]:
+            last_start, last_end = merged[-1]
+
+            # 如果当前区间与上一个区间重叠或相邻
+            if current_start <= last_end:
+                # 合并区间
+                merged[-1] = (last_start, max(last_end, current_end))
+            else:
+                # 添加新区间
+                merged.append((current_start, current_end))
+
+        return merged
+
+    def _process_packet(self, packet, rule_lookup: Dict) -> Tuple[Any, bool]:
+        """处理单个数据包
+
+        Args:
+            packet: 原始数据包
+            rule_lookup: 预处理的规则查找结构
+
+        Returns:
+            Tuple[处理后的数据包, 是否被修改]
+        """
+        try:
+            # 查找最内层的 TCP/IP
+            tcp_layer, ip_layer = self._find_innermost_tcp(packet)
+
+            if tcp_layer is None or ip_layer is None:
+                # 非 TCP 包，原样返回
+                return packet, False
+
+            # 构建流标识
+            stream_id = self._build_stream_id(ip_layer, tcp_layer)
+
+            # 确定流方向
+            direction = self._determine_flow_direction(ip_layer, tcp_layer, stream_id)
+
+            # 检查是否有匹配的规则
+            if stream_id not in rule_lookup or direction not in rule_lookup[stream_id]:
+                # 没有匹配的规则，原样返回
+                return packet, False
+
+            # 获取 TCP 载荷
+            payload = bytes(tcp_layer.payload) if tcp_layer.payload else b''
+            if not payload:
+                # 无载荷，原样返回
+                return packet, False
+
+            # 计算64位逻辑序列号
+            flow_key = f"{stream_id}:{direction}"
+            seq64 = self.logical_seq(tcp_layer.seq, flow_key)
+
+            # 应用保留规则
+            new_payload = self._apply_keep_rules(
+                payload, seq64, seq64 + len(payload),
+                rule_lookup[stream_id][direction]
+            )
+
+            if new_payload is None:
+                # 没有修改，原样返回
+                return packet, False
+
+            # 修改数据包载荷
+            modified_packet = self._modify_packet_payload(packet, tcp_layer, new_payload)
+            return modified_packet, True
+
+        except Exception as e:
+            self.logger.warning(f"处理数据包失败: {e}")
+            return packet, False
+
+    def _find_innermost_tcp(self, packet) -> Tuple[Optional[Any], Optional[Any]]:
+        """递归查找最内层的 TCP/IP 层
+
+        支持多层封装剥离：VLAN/QinQ、MPLS、GRE、ERSPAN、NVGRE、VXLAN、GENEVE 等
+
+        Args:
+            packet: 数据包
+
+        Returns:
+            Tuple[TCP层, IP层] 或 (None, None)
+        """
+        if not packet:
+            return (None, None)
+
+        current = packet
+        ip_layer = None
+        tcp_layer = None
+        max_depth = 10  # 防止无限递归
+        depth = 0
+
+        # 递归遍历所有层，支持多种隧道协议
+        while current and depth < max_depth:
+            depth += 1
+
+            # 检查是否找到 IP 层
+            if hasattr(current, 'haslayer') and IP and current.haslayer(IP):
+                ip_layer = current[IP]
+
+            # 检查是否找到 TCP 层
+            if hasattr(current, 'haslayer') and TCP and current.haslayer(TCP):
+                tcp_layer = current[TCP]
+                break
+
+            # 处理特殊的隧道协议
+            if hasattr(current, 'name'):
+                layer_name = current.name
+
+                # VXLAN 隧道
+                if layer_name == 'VXLAN' and hasattr(current, 'payload'):
+                    current = current.payload
+                    continue
+
+                # GENEVE 隧道
+                elif layer_name == 'GENEVE' and hasattr(current, 'payload'):
+                    current = current.payload
+                    continue
+
+                # GRE 隧道
+                elif layer_name == 'GRE' and hasattr(current, 'payload'):
+                    current = current.payload
+                    continue
+
+                # MPLS 标签
+                elif layer_name == 'MPLS' and hasattr(current, 'payload'):
+                    current = current.payload
+                    continue
+
+                # VLAN 标签
+                elif layer_name in ('Dot1Q', 'Dot1AD') and hasattr(current, 'payload'):
+                    current = current.payload
+                    continue
+
+            # 继续到下一层
+            if hasattr(current, 'payload') and current.payload:
+                current = current.payload
+            else:
+                break
+
+        if depth >= max_depth:
+            self.logger.warning(f"达到最大递归深度 {max_depth}，可能存在循环引用")
+
+        return (tcp_layer, ip_layer) if tcp_layer and ip_layer else (None, None)
+
+    def _build_stream_id(self, ip_layer, tcp_layer) -> str:
+        """构建 TCP 流标识
+
+        Args:
+            ip_layer: IP 层
+            tcp_layer: TCP 层
+
+        Returns:
+            流标识字符串
+        """
+        # 使用五元组构建流标识，按字典序排序确保一致性
+        src_ip = str(ip_layer.src)
+        dst_ip = str(ip_layer.dst)
+        src_port = tcp_layer.sport
+        dst_port = tcp_layer.dport
+
+        # 标准化流标识（较小的IP:端口在前）
+        if (src_ip, src_port) < (dst_ip, dst_port):
+            return f"{src_ip}:{src_port}-{dst_ip}:{dst_port}"
+        else:
+            return f"{dst_ip}:{dst_port}-{src_ip}:{src_port}"
+
+    def _determine_flow_direction(self, ip_layer, tcp_layer, stream_id: str) -> str:
+        """确定流方向
+
+        Args:
+            ip_layer: IP 层
+            tcp_layer: TCP 层
+            stream_id: 流标识
+
+        Returns:
+            'forward' 或 'reverse'
+        """
+        current_tuple = f"{ip_layer.src}:{tcp_layer.sport}-{ip_layer.dst}:{tcp_layer.dport}"
+
+        # 如果当前元组与流标识匹配，则为正向；否则为反向
+        if current_tuple == stream_id:
+            return 'forward'
+        else:
+            return 'reverse'
+
+    def _apply_keep_rules(self, payload: bytes, seg_start: int, seg_end: int,
+                         rule_data: Dict) -> Optional[bytes]:
+        """应用保留规则到载荷
+
+        基于 TCP_MARKER_REFERENCE.md 的核心算法实现，使用优化的二分查找。
+
+        Args:
+            payload: 原始载荷
+            seg_start: 段起始序列号
+            seg_end: 段结束序列号
+            rule_data: 规则数据
+
+        Returns:
+            修改后的载荷，如果没有修改则返回 None
+        """
+        if not payload:
+            return None
+
+        # 使用优化的查找算法
+        if 'sorted_ranges' in rule_data and rule_data['range_count'] > 10:
+            # 对于大量规则，使用二分查找优化
+            return self._apply_keep_rules_optimized(payload, seg_start, seg_end, rule_data)
+        else:
+            # 对于少量规则，使用简单遍历
+            return self._apply_keep_rules_simple(payload, seg_start, seg_end, rule_data)
+
+    def _apply_keep_rules_simple(self, payload: bytes, seg_start: int, seg_end: int,
+                                rule_data: Dict) -> Optional[bytes]:
+        """简单的保留规则应用（适用于少量规则）"""
+        keep_set = rule_data['keep_set']
+
+        # 创建全零缓冲区
+        buf = bytearray(len(payload))
+        changed = False
+
+        # 直接遍历保留集合中的每个区间
+        for keep_start, keep_end in keep_set:
+            # 计算与当前段的重叠部分
+            overlap_start = max(keep_start, seg_start)
+            overlap_end = min(keep_end, seg_end)
+
+            if overlap_start < overlap_end:
+                # 有重叠，计算在载荷中的偏移
+                offset_left = overlap_start - seg_start
+                offset_right = overlap_end - seg_start
+
+                # 确保偏移在载荷范围内
+                offset_left = max(0, offset_left)
+                offset_right = min(len(payload), offset_right)
+
+                if offset_left < offset_right:
+                    # 恢复保留区间的原始数据
+                    buf[offset_left:offset_right] = payload[offset_left:offset_right]
+                    changed = True
+
+        return bytes(buf) if changed else None
+
+    def _apply_keep_rules_optimized(self, payload: bytes, seg_start: int, seg_end: int,
+                                   rule_data: Dict) -> Optional[bytes]:
+        """优化的保留规则应用（使用二分查找，适用于大量规则）"""
+        sorted_ranges = rule_data['sorted_ranges']
+
+        # 创建全零缓冲区
+        buf = bytearray(len(payload))
+        changed = False
+
+        # 使用二分查找找到可能重叠的区间
+        overlapping_ranges = self._find_overlapping_ranges(sorted_ranges, seg_start, seg_end)
+
+        for keep_start, keep_end in overlapping_ranges:
+            # 计算与当前段的重叠部分
+            overlap_start = max(keep_start, seg_start)
+            overlap_end = min(keep_end, seg_end)
+
+            if overlap_start < overlap_end:
+                # 有重叠，计算在载荷中的偏移
+                offset_left = overlap_start - seg_start
+                offset_right = overlap_end - seg_start
+
+                # 确保偏移在载荷范围内
+                offset_left = max(0, offset_left)
+                offset_right = min(len(payload), offset_right)
+
+                if offset_left < offset_right:
+                    # 恢复保留区间的原始数据
+                    buf[offset_left:offset_right] = payload[offset_left:offset_right]
+                    changed = True
+
+        return bytes(buf) if changed else None
+
+    def _find_overlapping_ranges(self, sorted_ranges: List[Tuple[int, int]],
+                                seg_start: int, seg_end: int) -> List[Tuple[int, int]]:
+        """使用二分查找找到与给定段重叠的所有区间"""
+        if not sorted_ranges:
+            return []
+
+        overlapping = []
+
+        # 找到第一个可能重叠的区间
+        left = 0
+        right = len(sorted_ranges)
+
+        # 二分查找第一个结束位置 >= seg_start 的区间
+        while left < right:
+            mid = (left + right) // 2
+            if sorted_ranges[mid][1] >= seg_start:
+                right = mid
+            else:
+                left = mid + 1
+
+        # 从找到的位置开始，收集所有重叠的区间
+        for i in range(left, len(sorted_ranges)):
+            range_start, range_end = sorted_ranges[i]
+
+            # 如果区间开始位置已经超过段结束位置，则后续区间都不会重叠
+            if range_start >= seg_end:
+                break
+
+            # 检查是否重叠
+            if range_end > seg_start and range_start < seg_end:
+                overlapping.append((range_start, range_end))
+
+        return overlapping
+
+    def _modify_packet_payload(self, packet, tcp_layer, new_payload: bytes):
+        """修改数据包的 TCP 载荷
+
+        Args:
+            packet: 原始数据包
+            tcp_layer: TCP 层
+            new_payload: 新的载荷数据
+
+        Returns:
+            修改后的数据包
+        """
+        # 确保载荷长度不变
+        original_length = len(bytes(tcp_layer.payload)) if tcp_layer.payload else 0
+        if len(new_payload) != original_length:
+            raise ValueError(f"载荷长度不能改变: {original_length} -> {len(new_payload)}")
+
+        # 创建数据包副本
+        import copy
+        modified_packet = copy.deepcopy(packet)
+
+        # 找到修改后数据包中的 TCP 层
+        modified_tcp, _ = self._find_innermost_tcp(modified_packet)
+        if modified_tcp is None:
+            raise ValueError("无法在修改后的数据包中找到 TCP 层")
+
+        # 更新载荷
+        modified_tcp.payload = Raw(load=new_payload)
+
+        # 删除 TCP 校验和，让 Scapy 自动重新计算
+        if hasattr(modified_tcp, 'chksum'):
+            del modified_tcp.chksum
+
+        return modified_packet
+
+    def logical_seq(self, seq32: int, flow_key: str) -> int:
+        """处理32位序列号回绕，返回64位逻辑序号
+
+        基于 TCP_MARKER_REFERENCE.md 的序列号回绕处理算法。
+
+        Args:
+            seq32: 32位序列号
+            flow_key: 流标识
+
+        Returns:
+            64位逻辑序号
+        """
+        state = self.seq_state[flow_key]
+        if state["last"] is not None and (state["last"] - seq32) > 0x7FFFFFFF:
+            state["epoch"] += 1
+        state["last"] = seq32
+        return (state["epoch"] << 32) | seq32
+
+    def _handle_memory_pressure(self, memory_stats):
+        """处理内存压力回调
+
+        Args:
+            memory_stats: 内存统计信息
+        """
+        self.logger.warning(f"内存压力警告: 使用率={memory_stats.memory_pressure*100:.1f}%, "
+                          f"当前内存={memory_stats.current_usage/1024/1024:.1f}MB")
+
+        # 可以在这里实现额外的内存压力处理逻辑
+        # 例如：减少缓冲区大小、强制垃圾回收等
+        if memory_stats.memory_pressure > 0.9:  # 90%以上内存使用率
+            self.logger.error("内存使用率过高，建议减少chunk_size或增加内存限制")
+
+            # 触发内存错误处理
+            self.error_handler.handle_error(
+                "内存使用率过高",
+                ErrorSeverity.HIGH,
+                ErrorCategory.MEMORY_ERROR,
+                {"memory_pressure": memory_stats.memory_pressure}
+            )
+
+    def get_performance_stats(self) -> Dict[str, Any]:
+        """获取性能统计信息
+
+        Returns:
+            性能统计字典
+        """
+        if hasattr(self, 'memory_optimizer'):
+            return self.memory_optimizer.get_optimization_report()
+        else:
+            return {
+                'memory_optimizer_available': False,
+                'seq_state_flows': len(self.seq_state)
+            }
+
+    def _flush_packet_buffer(self, packet_buffer: list, writer):
+        """刷新数据包缓冲区
+
+        Args:
+            packet_buffer: 数据包缓冲区
+            writer: PcapWriter实例
+        """
+        try:
+            for buffered_packet in packet_buffer:
+                writer.write(buffered_packet)
+            packet_buffer.clear()
+        except Exception as e:
+            self.error_handler.handle_error(
+                e,
+                ErrorSeverity.HIGH,
+                ErrorCategory.OUTPUT_ERROR,
+                {"buffer_size": len(packet_buffer)}
+            )
+            raise
+
+    def _register_custom_recovery_handlers(self):
+        """注册自定义错误恢复处理器"""
+
+        def pcap_file_recovery(error_info) -> bool:
+            """PCAP文件错误恢复"""
+            try:
+                if 'input_file' in error_info.context:
+                    input_file = Path(error_info.context['input_file'])
+                    if not input_file.exists():
+                        self.logger.error(f"输入文件不存在: {input_file}")
+                        return False
+
+                    # 检查文件大小
+                    if input_file.stat().st_size == 0:
+                        self.logger.error(f"输入文件为空: {input_file}")
+                        return False
+
+                    # 尝试简单的文件读取测试
+                    with open(input_file, 'rb') as f:
+                        header = f.read(24)  # PCAP文件头
+                        if len(header) < 24:
+                            self.logger.error(f"PCAP文件头不完整: {input_file}")
+                            return False
+
+                return True
+            except Exception as e:
+                self.logger.warning(f"PCAP文件恢复检查失败: {e}")
+                return False
+
+        def processing_error_recovery(error_info) -> bool:
+            """处理错误恢复"""
+            try:
+                # 清理序列号状态，重新开始
+                if hasattr(self, 'seq_state'):
+                    self.seq_state.clear()
+                    self.logger.info("清理序列号状态以恢复处理")
+                    return True
+                return False
+            except Exception:
+                return False
+
+        # 注册自定义处理器
+        self.error_handler.register_recovery_handler(
+            ErrorCategory.INPUT_ERROR, pcap_file_recovery
+        )
+        self.error_handler.register_recovery_handler(
+            ErrorCategory.PROCESSING_ERROR, processing_error_recovery
+        )
+
+    def get_error_summary(self) -> Dict[str, Any]:
+        """获取错误摘要
+
+        Returns:
+            错误摘要字典
+        """
+        if hasattr(self, 'error_handler'):
+            return self.error_handler.get_error_summary()
+        else:
+            return {'error_handler_available': False}

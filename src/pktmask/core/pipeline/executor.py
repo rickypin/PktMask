@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import shutil
 import tempfile
 import time
@@ -44,6 +45,7 @@ class PipelineExecutor:
     # ---------------------------------------------------------------------
     def __init__(self, config: Optional[Dict] | None = None):
         self._config: Dict = config or {}
+        self._logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
         self.stages: List[StageBase] = self._build_pipeline(self._config)
 
     # ------------------------------------------------------------------
@@ -176,13 +178,29 @@ class PipelineExecutor:
             stages.append(stage)
 
         # ------------------------------------------------------------------
-        # Mask Stage - Enhanced MaskStage (Phase 2完整实现)
+        # Mask Stage - 新一代双模块架构 (Phase 5实施)
         # ------------------------------------------------------------------
         mask_cfg = config.get("mask", {})
         if mask_cfg.get("enabled", False):
-            from pktmask.core.pipeline.stages.mask_payload.stage import MaskPayloadStage as MaskStage
-            
-            # 创建 Enhanced MaskStage 实例
+            # 渐进式替换机制：支持配置开关选择新旧实现
+            use_new_implementation = mask_cfg.get("use_new_implementation", True)
+
+            if use_new_implementation:
+                # 使用新一代双模块架构
+                try:
+                    from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage as MaskStage
+                    self._logger.info("使用新一代双模块架构 MaskPayloadStage")
+                except ImportError as e:
+                    self._logger.warning(f"无法导入新版实现，降级到旧版: {e}")
+                    # 降级到旧版实现
+                    from pktmask.core.pipeline.stages.mask_payload.stage import MaskPayloadStage as MaskStage
+                    self._logger.info("降级使用旧版 MaskPayloadStage")
+            else:
+                # 显式使用旧版实现
+                from pktmask.core.pipeline.stages.mask_payload.stage import MaskPayloadStage as MaskStage
+                self._logger.info("配置指定使用旧版 MaskPayloadStage")
+
+            # 创建 MaskStage 实例
             stage = MaskStage(mask_cfg)
             stage.initialize()
             stages.append(stage)
