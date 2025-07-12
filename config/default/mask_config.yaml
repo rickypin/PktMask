@@ -1,10 +1,26 @@
-keep_range_rules:
-- keep_ranges:
-  - - 0
-    - 5
-  sequence_end: 2422050299
-  sequence_start: 2422049782
-  stream_id: TCP_10.171.250.80:33492_10.50.50.161:443_forward
+# 新版双模块架构配置
+protocol: tls
+mode: enhanced
+
+# Marker模块配置
+marker_config:
+  tls:
+    preserve_handshake: true
+    preserve_application_data: false
+    preserve_alert: true
+    preserve_change_cipher_spec: true
+    preserve_heartbeat: true
+  tshark_path: null  # 自动检测
+  decode_as: []
+
+# Masker模块配置
+masker_config:
+  chunk_size: 1000
+  verify_checksums: true
+  enable_performance_monitoring: true
+  enable_error_recovery: true
+
+# TShark工具配置
 tools:
   tshark:
     custom_executable: null
@@ -20,37 +36,3 @@ tools:
     max_memory_mb: 1024
     quiet_mode: true
     timeout_seconds: 300
-  tshark_enhanced:
-    chunk_size: 1000
-    cleanup_temp_files: true
-    enable_boundary_safety: true
-    enable_cross_segment_detection: true
-    enable_detailed_logging: true
-    enable_error_analytics: true
-    enable_parallel_processing: false
-    enable_performance_monitoring: true
-    enable_stage_timing: true
-    enable_tls_processing: true
-    error_report_detail_level: verbose
-    fallback_config:
-      enable_fallback: true
-      fallback_on_other_errors: true
-      fallback_on_parse_error: true
-      fallback_on_tshark_unavailable: true
-      max_retries: 2
-      preferred_fallback_order:
-      - mask_stage
-      retry_delay_seconds: 1.0
-      tshark_check_timeout: 5.0
-    keep_intermediate_files: false
-    temp_dir: null
-    # TLS协议掩码策略配置
-    tls_20_strategy: keep_all
-    tls_21_strategy: keep_all
-    tls_22_strategy: keep_all
-    tls_23_header_preserve_bytes: 5
-    tls_23_strategy: mask_payload
-    tls_24_strategy: keep_all
-    # 非TLS TCP载荷掩码策略配置
-    non_tls_tcp_strategy: mask_all_payload
-    enable_non_tls_tcp_masking: true

@@ -338,7 +338,7 @@ class MainWindow(QMainWindow):
         # 保存处理选项的默认状态
         self.config.ui.default_dedup = self.dedup_packet_cb.isChecked()
         self.config.ui.default_mask_ip = self.mask_ip_cb.isChecked()
-        self.config.ui.default_mask = self.trim_packet_cb.isChecked()
+        self.config.ui.default_mask = self.mask_payload_cb.isChecked()
         
         # 保存最后使用的目录
         if self.base_dir and self.config.ui.remember_last_dir:
@@ -624,7 +624,7 @@ class MainWindow(QMainWindow):
             enabled_steps.append("MaskIP")
         if self.dedup_packet_cb.isChecked():
             enabled_steps.append("Dedup")
-        if self.trim_packet_cb.isChecked():
+        if self.mask_payload_cb.isChecked():
             enabled_steps.append("Trim")
         
         steps_suffix = "_".join(enabled_steps) if enabled_steps else "NoSteps"

@@ -180,23 +180,22 @@ def validate_file(original_json: Path, masked_json: Path) -> Dict[str, Any]:
 # ---------------------- 后端处理函数 --------------------------
 
 def run_pktmask_trim_internal(input_path: Path, output_path: Path, verbose: bool = False) -> None:
-    """使用内部 EnhancedTrimmer 处理文件，避免启动 GUI。"""
+    """使用双模块架构处理文件，避免启动 GUI。"""
     if verbose:
-        logger.info("使用 EnhancedTrimmer 后端处理: %s -> %s", input_path, output_path)
+        logger.info("使用双模块架构处理: %s -> %s", input_path, output_path)
 
     try:
-        from pktmask.core.processors.tshark_enhanced_mask_processor import TSharkEnhancedMaskProcessor
-        from pktmask.core.processors.base_processor import ProcessorConfig
+        from pktmask.core.pipeline.executor import PipelineExecutor
     except ImportError as imp_err:
-        raise RuntimeError(f"无法导入 TSharkEnhancedMaskProcessor: {imp_err}")
+        raise RuntimeError(f"无法导入 PipelineExecutor: {imp_err}")
 
-    processor = TSharkEnhancedMaskProcessor(config=ProcessorConfig(enabled=True, name="TSharkEnhancedMaskProcessor", priority=0))
-    if not processor.initialize():
-        raise RuntimeError("TSharkEnhancedMaskProcessor 初始化失败")
+    # 使用双模块架构配置
+    config = {"mask": {"enabled": True, "protocol": "tls", "mode": "enhanced"}}
+    executor = PipelineExecutor(config)
 
-    result = processor.process_file(str(input_path), str(output_path))
+    result = executor.run(str(input_path), str(output_path))
     if not result.success:
-        raise RuntimeError(f"TSharkEnhancedMaskProcessor 处理失败: {result.error or '未知错误'}")
+        raise RuntimeError(f"双模块架构处理失败: {result.errors}")
 
     if verbose:
         # 优先尝试从处理详情中提取批量掩码统计

@@ -1,11 +1,11 @@
 """
-NewMaskPayloadStage API 兼容性验证测试
+NewMaskPayloadStage 功能测试
 
-验证新一代掩码处理阶段的 API 完全兼容性，包括：
-- 方法签名兼容性
-- 返回值兼容性
-- 异常处理兼容性
-- 配置参数兼容性
+验证双模块架构掩码处理阶段的功能，包括：
+- 基本功能测试
+- 配置参数验证
+- 错误处理测试
+- 性能验证
 """
 
 import pytest
@@ -15,9 +15,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage
-from pktmask.core.pipeline.stages.mask_payload.stage import MaskPayloadStage
 from pktmask.core.pipeline.models import StageStats
-from pktmask.core.tcp_payload_masker.api.types import MaskingRecipe
 
 
 class TestAPICompatibility:

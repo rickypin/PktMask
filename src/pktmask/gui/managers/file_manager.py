@@ -158,7 +158,7 @@ class FileManager:
             enabled_steps.append("MaskIP")
         if hasattr(self.main_window, 'dedup_packet_cb') and self.main_window.dedup_packet_cb.isChecked():
             enabled_steps.append("Dedup")
-        if hasattr(self.main_window, 'trim_packet_cb') and self.main_window.trim_packet_cb.isChecked():
+        if hasattr(self.main_window, 'mask_payload_cb') and self.main_window.mask_payload_cb.isChecked():
             enabled_steps.append("Trim")
         
         steps_suffix = "_".join(enabled_steps) if enabled_steps else "NoSteps"

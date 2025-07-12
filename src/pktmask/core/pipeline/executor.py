@@ -21,7 +21,7 @@ class PipelineExecutor:
 
     该执行器遵循 **REFACTOR_PLAN.md** 中定义的目标：GUI、CLI、MCP
     共享同一套执行逻辑，通过传入 `config` 动态装配 Stage。
-    
+
     Config 格式示例::
 
         config = {
@@ -29,13 +29,12 @@ class PipelineExecutor:
             "anon": {"enabled": True},
             "mask": {
                 "enabled": True,
-                "mode": "processor_adapter"  # 使用智能协议分析模式
+                "protocol": "tls",
+                "mode": "enhanced"
             },
         }
-        
-    注意：使用智能协议分析进行掩码处理。
-    新版本使用 processor_adapter 模式进行智能协议分析，
-    或通过编程接口直接传入 MaskingRecipe 对象。
+
+    注意：掩码处理使用双模块架构（Marker + Masker）进行智能协议分析。
 
     缺失的键或 `enabled=False` 将导致对应 Stage 被跳过。
     """
@@ -178,30 +177,15 @@ class PipelineExecutor:
             stages.append(stage)
 
         # ------------------------------------------------------------------
-        # Mask Stage - 新一代双模块架构 (Phase 5实施)
+        # Mask Stage - 双模块架构
         # ------------------------------------------------------------------
         mask_cfg = config.get("mask", {})
         if mask_cfg.get("enabled", False):
-            # 渐进式替换机制：支持配置开关选择新旧实现
-            use_new_implementation = mask_cfg.get("use_new_implementation", True)
-
-            if use_new_implementation:
-                # 使用新一代双模块架构
-                try:
-                    from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage as MaskStage
-                    self._logger.info("使用新一代双模块架构 MaskPayloadStage")
-                except ImportError as e:
-                    self._logger.warning(f"无法导入新版实现，降级到旧版: {e}")
-                    # 降级到旧版实现
-                    from pktmask.core.pipeline.stages.mask_payload.stage import MaskPayloadStage as MaskStage
-                    self._logger.info("降级使用旧版 MaskPayloadStage")
-            else:
-                # 显式使用旧版实现
-                from pktmask.core.pipeline.stages.mask_payload.stage import MaskPayloadStage as MaskStage
-                self._logger.info("配置指定使用旧版 MaskPayloadStage")
+            # 直接使用新一代双模块架构
+            from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage
 
             # 创建 MaskStage 实例
-            stage = MaskStage(mask_cfg)
+            stage = NewMaskPayloadStage(mask_cfg)
             stage.initialize()
             stages.append(stage)
 

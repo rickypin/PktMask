@@ -167,29 +167,29 @@ class UIManager:
         
         self.main_window.dedup_packet_cb = QCheckBox("Remove Dupes")
         self.main_window.mask_ip_cb = QCheckBox("Anonymize IPs")
-        self.main_window.trim_packet_cb = QCheckBox("Mask Payloads")
+        self.main_window.mask_payload_cb = QCheckBox("Mask Payloads")
         self.main_window.web_focused_cb = QCheckBox("Web-Focused Traffic Only (Coming Soon)")
         
-        self.main_window.trim_packet_cb.setToolTip("Intelligently masks packet payloads while preserving TLS handshake data.")
+        self.main_window.mask_payload_cb.setToolTip("Intelligently masks packet payloads while preserving TLS handshake data.")
         self.main_window.web_focused_cb.setToolTip(
             "HTTP协议处理功能将在未来版本中提供。仅支持TLS、IP匿名化和去重功能。"
         )
         
         # 设置手型光标
-        for cb in [self.main_window.dedup_packet_cb, self.main_window.mask_ip_cb, 
-                  self.main_window.trim_packet_cb, self.main_window.web_focused_cb]:
+        for cb in [self.main_window.dedup_packet_cb, self.main_window.mask_ip_cb,
+                  self.main_window.mask_payload_cb, self.main_window.web_focused_cb]:
             cb.setCursor(Qt.CursorShape.PointingHandCursor)
         
         # 使用配置中的默认状态
         self.main_window.dedup_packet_cb.setChecked(self.config.ui.default_dedup)
         self.main_window.mask_ip_cb.setChecked(self.config.ui.default_mask_ip)
-        self.main_window.trim_packet_cb.setChecked(self.config.ui.default_mask)
+        self.main_window.mask_payload_cb.setChecked(self.config.ui.default_mask)
         self.main_window.web_focused_cb.setChecked(False)
         self.main_window.web_focused_cb.setEnabled(False)
         
         pipeline_layout.addWidget(self.main_window.dedup_packet_cb)
         pipeline_layout.addWidget(self.main_window.mask_ip_cb)
-        pipeline_layout.addWidget(self.main_window.trim_packet_cb)
+        pipeline_layout.addWidget(self.main_window.mask_payload_cb)
         pipeline_layout.addWidget(self.main_window.web_focused_cb)
         pipeline_layout.addStretch()
 
@@ -319,7 +319,7 @@ class UIManager:
         # checkbox状态变化信号 - 正确调用UIManager的方法
         self.main_window.mask_ip_cb.stateChanged.connect(self._update_start_button_state)
         self.main_window.dedup_packet_cb.stateChanged.connect(self._update_start_button_state)
-        self.main_window.trim_packet_cb.stateChanged.connect(self._update_start_button_state)
+        self.main_window.mask_payload_cb.stateChanged.connect(self._update_start_button_state)
     
     def _apply_initial_styles(self):
         """应用初始样式"""
@@ -626,7 +626,7 @@ class UIManager:
         has_input_dir = self.main_window.base_dir is not None
         has_any_action = (self.main_window.mask_ip_cb.isChecked() or
                          self.main_window.dedup_packet_cb.isChecked() or
-                         self.main_window.trim_packet_cb.isChecked())
+                         self.main_window.mask_payload_cb.isChecked())
 
         # 检查是否正在处理中
         processing_thread = getattr(self.main_window.pipeline_manager, 'processing_thread', None)

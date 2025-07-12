@@ -1,0 +1,187 @@
+2025-07-13 07:27:09,457 - __main__ - INFO - ================================================================================
+2025-07-13 07:27:09,457 - __main__ - INFO - 分析原始TLS数据
+2025-07-13 07:27:09,457 - __main__ - INFO - ================================================================================
+2025-07-13 07:27:10,204 - __main__ - INFO - TLS流量分析完成
+2025-07-13 07:27:10,205 - __main__ - INFO - TLS消息统计:
+2025-07-13 07:27:10,205 - __main__ - INFO -   TLS-22 (Handshake, keep_all): 4 帧, 5 记录
+2025-07-13 07:27:10,205 - __main__ - INFO -   TLS-20 (ChangeCipherSpec, keep_all): 2 帧, 2 记录
+2025-07-13 07:27:10,205 - __main__ - INFO -   TLS-23 (ApplicationData, mask_payload): 2 帧, 3 记录
+2025-07-13 07:27:10,205 - __main__ - INFO -   TLS-21 (Alert, keep_all): 2 帧, 2 记录
+2025-07-13 07:27:10,205 - __main__ - INFO - 
+详细帧分析:
+2025-07-13 07:27:10,205 - __main__ - INFO - 
+发现 0 个ApplicationData消息
+2025-07-13 07:27:10,205 - __main__ - INFO - ================================================================================
+2025-07-13 07:27:10,205 - __main__ - INFO - 分析Marker模块保留规则
+2025-07-13 07:27:10,205 - __main__ - INFO - ================================================================================
+2025-07-13 07:27:10,387 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 检测到 tshark 4.4.7 于 tshark
+2025-07-13 07:27:10,387 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLS分析器初始化完成，使用tshark: tshark
+2025-07-13 07:27:10,387 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLSProtocolMarker 初始化成功
+2025-07-13 07:27:10,387 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - 开始分析TLS流量: tests/samples/tls-single/tls_sample.pcap
+2025-07-13 07:27:10,387 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 扫描TLS消息
+2025-07-13 07:27:10,494 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 发现 9 个包含TLS消息的数据包
+2025-07-13 07:27:10,494 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 分析TCP流
+2025-07-13 07:27:10,601 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 分析了 1 个TCP流
+2025-07-13 07:27:10,601 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成保留规则
+2025-07-13 07:27:10,601 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLS分析完成，耗时 0.21 秒，生成 4 条保留规则
+2025-07-13 07:27:10,601 - __main__ - INFO - 生成的保留规则数量: 4
+2025-07-13 07:27:10,601 - __main__ - INFO - 
+规则 1:
+2025-07-13 07:27:10,601 - __main__ - INFO -   流ID: 0
+2025-07-13 07:27:10,601 - __main__ - INFO -   方向: forward
+2025-07-13 07:27:10,601 - __main__ - INFO -   序列号范围: 1 - 644
+2025-07-13 07:27:10,601 - __main__ - INFO -   长度: 643
+2025-07-13 07:27:10,601 - __main__ - INFO -   规则类型: tls_handshake+tls_handshake+tls_changecipherspec+tls_handshake
+2025-07-13 07:27:10,601 - __main__ - INFO -   元数据:
+2025-07-13 07:27:10,601 - __main__ - INFO -     tls_content_type: 22
+2025-07-13 07:27:10,601 - __main__ - INFO -     tls_type_name: Handshake
+2025-07-13 07:27:10,601 - __main__ - INFO -     frame_number: 9
+2025-07-13 07:27:10,601 - __main__ - INFO -     tcp_seq_32bit: 518
+2025-07-13 07:27:10,601 - __main__ - INFO -     tcp_len: 126
+2025-07-13 07:27:10,601 - __main__ - INFO -     merged_from: ['unknown', 'unknown']
+2025-07-13 07:27:10,601 - __main__ - INFO - 
+规则 2:
+2025-07-13 07:27:10,601 - __main__ - INFO -   流ID: 0
+2025-07-13 07:27:10,601 - __main__ - INFO -   方向: forward
+2025-07-13 07:27:10,601 - __main__ - INFO -   序列号范围: 849 - 880
+2025-07-13 07:27:10,601 - __main__ - INFO -   长度: 31
+2025-07-13 07:27:10,601 - __main__ - INFO -   规则类型: tls_alert
+2025-07-13 07:27:10,601 - __main__ - INFO -   元数据:
+2025-07-13 07:27:10,601 - __main__ - INFO -     tls_content_type: 21
+2025-07-13 07:27:10,601 - __main__ - INFO -     tls_type_name: Alert
+2025-07-13 07:27:10,601 - __main__ - INFO -     frame_number: 16
+2025-07-13 07:27:10,601 - __main__ - INFO -     tcp_seq_32bit: 849
+2025-07-13 07:27:10,601 - __main__ - INFO -     tcp_len: 31
+2025-07-13 07:27:10,601 - __main__ - INFO - 
+规则 3:
+2025-07-13 07:27:10,601 - __main__ - INFO -   流ID: 0
+2025-07-13 07:27:10,601 - __main__ - INFO -   方向: reverse
+2025-07-13 07:27:10,601 - __main__ - INFO -   序列号范围: 1343 - 1865
+2025-07-13 07:27:10,601 - __main__ - INFO -   长度: 522
+2025-07-13 07:27:10,601 - __main__ - INFO -   规则类型: tls_handshake+tls_changecipherspec+tls_handshake
+2025-07-13 07:27:10,601 - __main__ - INFO -   元数据:
+2025-07-13 07:27:10,601 - __main__ - INFO -     tls_content_type: 22
+2025-07-13 07:27:10,601 - __main__ - INFO -     tls_type_name: Handshake
+2025-07-13 07:27:10,601 - __main__ - INFO -     frame_number: 12
+2025-07-13 07:27:10,602 - __main__ - INFO -     tcp_seq_32bit: 1820
+2025-07-13 07:27:10,602 - __main__ - INFO -     tcp_len: 45
+2025-07-13 07:27:10,602 - __main__ - INFO -     merged_from: ['unknown', 'unknown']
+2025-07-13 07:27:10,602 - __main__ - INFO - 
+规则 4:
+2025-07-13 07:27:10,602 - __main__ - INFO -   流ID: 0
+2025-07-13 07:27:10,602 - __main__ - INFO -   方向: reverse
+2025-07-13 07:27:10,602 - __main__ - INFO -   序列号范围: 1976 - 2007
+2025-07-13 07:27:10,602 - __main__ - INFO -   长度: 31
+2025-07-13 07:27:10,602 - __main__ - INFO -   规则类型: tls_alert
+2025-07-13 07:27:10,602 - __main__ - INFO -   元数据:
+2025-07-13 07:27:10,602 - __main__ - INFO -     tls_content_type: 21
+2025-07-13 07:27:10,602 - __main__ - INFO -     tls_type_name: Alert
+2025-07-13 07:27:10,602 - __main__ - INFO -     frame_number: 19
+2025-07-13 07:27:10,602 - __main__ - INFO -     tcp_seq_32bit: 1976
+2025-07-13 07:27:10,602 - __main__ - INFO -     tcp_len: 31
+2025-07-13 07:27:10,602 - __main__ - INFO - 
+规则合并分析:
+2025-07-13 07:27:10,602 - __main__ - WARNING - 发现 2 个大的保留区间（>500字节）:
+2025-07-13 07:27:10,602 - __main__ - WARNING -   流0:forward - 1:644 (长度: 643)
+2025-07-13 07:27:10,602 - __main__ - WARNING -   规则类型: tls_handshake+tls_handshake+tls_changecipherspec+tls_handshake
+2025-07-13 07:27:10,602 - __main__ - WARNING -   ⚠️  这个规则合并了多种TLS消息类型，可能包含了ApplicationData
+2025-07-13 07:27:10,602 - __main__ - WARNING -   流0:reverse - 1343:1865 (长度: 522)
+2025-07-13 07:27:10,602 - __main__ - WARNING -   规则类型: tls_handshake+tls_changecipherspec+tls_handshake
+2025-07-13 07:27:10,602 - __main__ - WARNING -   ⚠️  这个规则合并了多种TLS消息类型，可能包含了ApplicationData
+2025-07-13 07:27:10,602 - __main__ - INFO - ================================================================================
+2025-07-13 07:27:10,602 - __main__ - INFO - 分析Masker模块处理逻辑
+2025-07-13 07:27:10,602 - __main__ - INFO - ================================================================================
+2025-07-13 07:27:10,602 - __main__ - INFO - ================================================================================
+2025-07-13 07:27:10,602 - __main__ - INFO - 分析Marker模块保留规则
+2025-07-13 07:27:10,602 - __main__ - INFO - ================================================================================
+2025-07-13 07:27:10,707 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 检测到 tshark 4.4.7 于 tshark
+2025-07-13 07:27:10,707 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLS分析器初始化完成，使用tshark: tshark
+2025-07-13 07:27:10,707 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLSProtocolMarker 初始化成功
+2025-07-13 07:27:10,707 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - 开始分析TLS流量: tests/samples/tls-single/tls_sample.pcap
+2025-07-13 07:27:10,707 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 扫描TLS消息
+2025-07-13 07:27:10,815 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 发现 9 个包含TLS消息的数据包
+2025-07-13 07:27:10,815 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 分析TCP流
+2025-07-13 07:27:10,922 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 分析了 1 个TCP流
+2025-07-13 07:27:10,922 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成保留规则
+2025-07-13 07:27:10,922 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLS分析完成，耗时 0.21 秒，生成 4 条保留规则
+2025-07-13 07:27:10,922 - __main__ - INFO - 生成的保留规则数量: 4
+2025-07-13 07:27:10,922 - __main__ - INFO - 
+规则 1:
+2025-07-13 07:27:10,922 - __main__ - INFO -   流ID: 0
+2025-07-13 07:27:10,922 - __main__ - INFO -   方向: forward
+2025-07-13 07:27:10,922 - __main__ - INFO -   序列号范围: 1 - 644
+2025-07-13 07:27:10,922 - __main__ - INFO -   长度: 643
+2025-07-13 07:27:10,922 - __main__ - INFO -   规则类型: tls_handshake+tls_handshake+tls_changecipherspec+tls_handshake
+2025-07-13 07:27:10,922 - __main__ - INFO -   元数据:
+2025-07-13 07:27:10,922 - __main__ - INFO -     tls_content_type: 22
+2025-07-13 07:27:10,922 - __main__ - INFO -     tls_type_name: Handshake
+2025-07-13 07:27:10,922 - __main__ - INFO -     frame_number: 9
+2025-07-13 07:27:10,922 - __main__ - INFO -     tcp_seq_32bit: 518
+2025-07-13 07:27:10,922 - __main__ - INFO -     tcp_len: 126
+2025-07-13 07:27:10,922 - __main__ - INFO -     merged_from: ['unknown', 'unknown']
+2025-07-13 07:27:10,922 - __main__ - INFO - 
+规则 2:
+2025-07-13 07:27:10,922 - __main__ - INFO -   流ID: 0
+2025-07-13 07:27:10,922 - __main__ - INFO -   方向: forward
+2025-07-13 07:27:10,922 - __main__ - INFO -   序列号范围: 849 - 880
+2025-07-13 07:27:10,922 - __main__ - INFO -   长度: 31
+2025-07-13 07:27:10,922 - __main__ - INFO -   规则类型: tls_alert
+2025-07-13 07:27:10,922 - __main__ - INFO -   元数据:
+2025-07-13 07:27:10,922 - __main__ - INFO -     tls_content_type: 21
+2025-07-13 07:27:10,922 - __main__ - INFO -     tls_type_name: Alert
+2025-07-13 07:27:10,922 - __main__ - INFO -     frame_number: 16
+2025-07-13 07:27:10,922 - __main__ - INFO -     tcp_seq_32bit: 849
+2025-07-13 07:27:10,922 - __main__ - INFO -     tcp_len: 31
+2025-07-13 07:27:10,922 - __main__ - INFO - 
+规则 3:
+2025-07-13 07:27:10,922 - __main__ - INFO -   流ID: 0
+2025-07-13 07:27:10,922 - __main__ - INFO -   方向: reverse
+2025-07-13 07:27:10,922 - __main__ - INFO -   序列号范围: 1343 - 1865
+2025-07-13 07:27:10,922 - __main__ - INFO -   长度: 522
+2025-07-13 07:27:10,922 - __main__ - INFO -   规则类型: tls_handshake+tls_changecipherspec+tls_handshake
+2025-07-13 07:27:10,922 - __main__ - INFO -   元数据:
+2025-07-13 07:27:10,922 - __main__ - INFO -     tls_content_type: 22
+2025-07-13 07:27:10,922 - __main__ - INFO -     tls_type_name: Handshake
+2025-07-13 07:27:10,922 - __main__ - INFO -     frame_number: 12
+2025-07-13 07:27:10,922 - __main__ - INFO -     tcp_seq_32bit: 1820
+2025-07-13 07:27:10,922 - __main__ - INFO -     tcp_len: 45
+2025-07-13 07:27:10,922 - __main__ - INFO -     merged_from: ['unknown', 'unknown']
+2025-07-13 07:27:10,922 - __main__ - INFO - 
+规则 4:
+2025-07-13 07:27:10,922 - __main__ - INFO -   流ID: 0
+2025-07-13 07:27:10,922 - __main__ - INFO -   方向: reverse
+2025-07-13 07:27:10,922 - __main__ - INFO -   序列号范围: 1976 - 2007
+2025-07-13 07:27:10,922 - __main__ - INFO -   长度: 31
+2025-07-13 07:27:10,922 - __main__ - INFO -   规则类型: tls_alert
+2025-07-13 07:27:10,922 - __main__ - INFO -   元数据:
+2025-07-13 07:27:10,922 - __main__ - INFO -     tls_content_type: 21
+2025-07-13 07:27:10,923 - __main__ - INFO -     tls_type_name: Alert
+2025-07-13 07:27:10,923 - __main__ - INFO -     frame_number: 19
+2025-07-13 07:27:10,923 - __main__ - INFO -     tcp_seq_32bit: 1976
+2025-07-13 07:27:10,923 - __main__ - INFO -     tcp_len: 31
+2025-07-13 07:27:10,923 - __main__ - INFO - 
+规则合并分析:
+2025-07-13 07:27:10,923 - __main__ - WARNING - 发现 2 个大的保留区间（>500字节）:
+2025-07-13 07:27:10,923 - __main__ - WARNING -   流0:forward - 1:644 (长度: 643)
+2025-07-13 07:27:10,923 - __main__ - WARNING -   规则类型: tls_handshake+tls_handshake+tls_changecipherspec+tls_handshake
+2025-07-13 07:27:10,923 - __main__ - WARNING -   ⚠️  这个规则合并了多种TLS消息类型，可能包含了ApplicationData
+2025-07-13 07:27:10,923 - __main__ - WARNING -   流0:reverse - 1343:1865 (长度: 522)
+2025-07-13 07:27:10,923 - __main__ - WARNING -   规则类型: tls_handshake+tls_changecipherspec+tls_handshake
+2025-07-13 07:27:10,923 - __main__ - WARNING -   ⚠️  这个规则合并了多种TLS消息类型，可能包含了ApplicationData
+2025-07-13 07:27:11,153 - pktmask.core.pipeline.stages.mask_payload_v2.masker.memory_optimizer.MemoryOptimizer - INFO - 内存优化器初始化: 最大内存=2048MB, GC阈值=80.0%
+2025-07-13 07:27:11,153 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: memory_error
+2025-07-13 07:27:11,153 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: input_error
+2025-07-13 07:27:11,153 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: output_error
+2025-07-13 07:27:11,153 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - INFO - 错误处理器初始化: 最大重试=3, 自动恢复=启用
+2025-07-13 07:27:11,153 - pktmask.core.pipeline.stages.mask_payload_v2.masker.data_validator.DataValidator - INFO - 数据验证器初始化: 校验和验证=启用
+2025-07-13 07:27:11,153 - pktmask.core.pipeline.stages.mask_payload_v2.masker.fallback_handler.FallbackHandler - INFO - 降级处理器初始化: 默认模式=copy_original, 启用=是
+2025-07-13 07:27:11,153 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: input_error
+2025-07-13 07:27:11,153 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: processing_error
+2025-07-13 07:27:11,153 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - PayloadMasker 初始化: chunk_size=1000, verify_checksums=True, 内存限制=2048MB
+2025-07-13 07:27:11,153 - __main__ - ERROR - 分析Masker处理失败: 'PayloadMasker' object has no attribute 'initialize'
+2025-07-13 07:27:11,153 - __main__ - ERROR - Traceback (most recent call last):
+  File "/Users/ricky/Downloads/PktMask/diagnose_maskstage_issue.py", line 196, in analyze_masker_processing
+    masker.initialize()
+    ^^^^^^^^^^^^^^^^^
+AttributeError: 'PayloadMasker' object has no attribute 'initialize'
+

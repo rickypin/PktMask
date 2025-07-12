@@ -137,7 +137,7 @@ class AppController(QObject):
         config = {
             'mask_ip': getattr(self.main_window, 'mask_ip_cb', None) and self.main_window.mask_ip_cb.isChecked(),
             'dedup_packet': getattr(self.main_window, 'dedup_packet_cb', None) and self.main_window.dedup_packet_cb.isChecked(),
-            'trim_packet': getattr(self.main_window, 'trim_packet_cb', None) and self.main_window.trim_packet_cb.isChecked(),
+            'trim_packet': getattr(self.main_window, 'mask_payload_cb', None) and self.main_window.mask_payload_cb.isChecked(),
         }
         return config
     

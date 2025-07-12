@@ -4,8 +4,9 @@ from importlib import import_module
 
 def __getattr__(name: str):
     if name == "MaskStage":
-        module = import_module("pktmask.core.pipeline.stages.mask_payload.stage")
-        return getattr(module, "MaskPayloadStage")
+        # 直接使用新版双模块架构实现
+        module = import_module("pktmask.core.pipeline.stages.mask_payload_v2.stage")
+        return getattr(module, "NewMaskPayloadStage")
     if name == "DedupStage":
         module = import_module("pktmask.core.pipeline.stages.dedup")
         return getattr(module, name)

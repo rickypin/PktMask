@@ -8,7 +8,7 @@
 - TLS-23: ApplicationData
 - TLS-24: Heartbeat
 
-主要用于 TSharkEnhancedMaskProcessor 的验证和测试。
+主要用于双模块架构(Marker + Masker)的验证和测试。
 
 使用示例：
     python -m pktmask.tools.enhanced_tls_marker --pcap input.pcapng

@@ -90,7 +90,7 @@ class ReportManager:
             enabled_steps.append("IP Anonymization")
         if self.main_window.dedup_packet_cb.isChecked():
             enabled_steps.append("Deduplication")
-        if self.main_window.trim_packet_cb.isChecked():
+        if self.main_window.mask_payload_cb.isChecked():
             enabled_steps.append("Payload Masking")
         
         stop_report += f"🔧 Configured Processing Steps: {', '.join(enabled_steps)}\n"
@@ -143,7 +143,7 @@ class ReportManager:
                 expected_steps.add("IP Anonymization")
             if self.main_window.dedup_packet_cb.isChecked():
                 expected_steps.add("Deduplication")
-            if self.main_window.trim_packet_cb.isChecked():
+            if self.main_window.mask_payload_cb.isChecked():
                 expected_steps.add("Payload Masking")
             
             completed_steps = set(steps_data.keys())
@@ -254,7 +254,7 @@ class ReportManager:
                 expected_steps.add("IP Anonymization")
             if self.main_window.dedup_packet_cb.isChecked():
                 expected_steps.add("Deduplication")
-            if self.main_window.trim_packet_cb.isChecked():
+            if self.main_window.mask_payload_cb.isChecked():
                 expected_steps.add("Payload Masking")
             
             completed_steps = set(file_result['steps'].keys())
@@ -431,7 +431,7 @@ class ReportManager:
             enabled_steps.append("Deduplication")
         if self.main_window.mask_ip_cb.isChecked():
             enabled_steps.append("IP Anonymization")
-        if self.main_window.trim_packet_cb.isChecked():
+        if self.main_window.mask_payload_cb.isChecked():
             enabled_steps.append("Payload Masking")
             
         completion_report = f"\n{'='*separator_length}\n🎉 PROCESSING COMPLETED!\n{'='*separator_length}\n"
@@ -764,10 +764,8 @@ class ReportManager:
                 step_type = 'mask_ip'  # 统一使用mask_ip作为IP匿名化的类型
             elif step_name_raw in ['DedupStage', 'DeduplicationStage']:
                 step_type = 'remove_dupes'
-            elif step_name_raw in ['MaskStage', 'MaskPayloadStage']:
+            elif step_name_raw in ['MaskStage', 'MaskPayloadStage', 'NewMaskPayloadStage']:
                 step_type = 'trim_payloads'
-            elif step_name_raw == 'Adapter_TSharkEnhancedMaskProcessor':
-                step_type = 'trim_payloads'  # 协议适配模式也是载荷掩码
             else:
                 step_type = step_name_raw.lower()
         
@@ -785,10 +783,9 @@ class ReportManager:
         step_display_names = {
             'mask_ip': 'IP Anonymization',
             'mask_ips': 'IP Anonymization',  # 修复：Pipeline发送的是复数形式
-            'remove_dupes': 'Deduplication', 
+            'remove_dupes': 'Deduplication',
             'intelligent_trim': 'Payload Masking',
             'trim_payloads': 'Payload Masking',  # 修复：Pipeline发送的是trim_payloads
-            'adapter_tsharkenhancedmaskprocessor': 'Payload Masking'  # 协议适配模式
         }
         
         step_name = step_display_names.get(step_type, step_type)
@@ -842,11 +839,8 @@ class ReportManager:
             self._logger.debug(f"非IP匿名化步骤: {step_name_raw}")
 
     def _is_enhanced_trimming(self, data: Dict[str, Any]) -> bool:
-        """检查是否是Enhanced Trimmer的智能处理结果"""
-        # 首先排除协议适配模式 - 如果step_name是协议适配模式，不是Enhanced Trimmer
+        """检查是否是增强掩码处理结果 - 基于双模块架构"""
         step_name = data.get('step_name', '')
-        if step_name == 'Adapter_TSharkEnhancedMaskProcessor':
-            return False
         
         # 检查Enhanced Trimmer特有的字段组合 - 必须是真正的Enhanced Intelligent Mode
         enhanced_indicators = [

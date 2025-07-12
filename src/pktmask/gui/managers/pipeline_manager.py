@@ -99,20 +99,20 @@ class PipelineManager:
         # 通过事件协调器禁用控件
         if hasattr(self.main_window, 'event_coordinator'):
             self.main_window.event_coordinator.request_ui_update('enable_controls', 
-                controls=['dir_path_label', 'output_path_label', 'mask_ip_cb', 'dedup_packet_cb', 'trim_packet_cb'], 
+                controls=['dir_path_label', 'output_path_label', 'mask_ip_cb', 'dedup_packet_cb', 'mask_payload_cb'],
                 enabled=False)
         else:
             # 备用方案：直接操作
             self.main_window.dir_path_label.setEnabled(False)
             self.main_window.output_path_label.setEnabled(False)
-            for cb in [self.main_window.mask_ip_cb, self.main_window.dedup_packet_cb, self.main_window.trim_packet_cb]:
+            for cb in [self.main_window.mask_ip_cb, self.main_window.dedup_packet_cb, self.main_window.mask_payload_cb]:
                 cb.setEnabled(False)
 
         # 创建并配置新的 PipelineExecutor
         config = build_pipeline_config(
             enable_anon=self.main_window.mask_ip_cb.isChecked(),
             enable_dedup=self.main_window.dedup_packet_cb.isChecked(),
-            enable_mask=self.main_window.trim_packet_cb.isChecked()
+            enable_mask=self.main_window.mask_payload_cb.isChecked()
         )
         if not config:
             self._logger.warning("未选择任何处理步骤")
@@ -147,7 +147,7 @@ class PipelineManager:
         # 通过事件协调器重新启用控件
         if hasattr(self.main_window, 'event_coordinator'):
             self.main_window.event_coordinator.request_ui_update('enable_controls', 
-                controls=['dir_path_label', 'output_path_label', 'mask_ip_cb', 'dedup_packet_cb', 'trim_packet_cb', 'start_proc_btn'], 
+                controls=['dir_path_label', 'output_path_label', 'mask_ip_cb', 'dedup_packet_cb', 'mask_payload_cb', 'start_proc_btn'],
                 enabled=True)
             self.main_window.event_coordinator.request_ui_update('update_button_text', 
                 button='start_proc_btn', text='Start')
@@ -155,7 +155,7 @@ class PipelineManager:
             # 备用方案：直接操作
             self.main_window.dir_path_label.setEnabled(True)
             self.main_window.output_path_label.setEnabled(True)
-            for cb in [self.main_window.mask_ip_cb, self.main_window.dedup_packet_cb, self.main_window.trim_packet_cb]:
+            for cb in [self.main_window.mask_ip_cb, self.main_window.dedup_packet_cb, self.main_window.mask_payload_cb]:
                 cb.setEnabled(True)
             # web_focused_cb 保持禁用状态，因为功能未完成
             self.main_window.start_proc_btn.setEnabled(True)
@@ -313,7 +313,7 @@ class PipelineManager:
             # 启用其他控件
             self.main_window.dir_path_label.setEnabled(True)
             self.main_window.output_path_label.setEnabled(True)
-            for cb in [self.main_window.mask_ip_cb, self.main_window.dedup_packet_cb, self.main_window.trim_packet_cb]:
+            for cb in [self.main_window.mask_ip_cb, self.main_window.dedup_packet_cb, self.main_window.mask_payload_cb]:
                 cb.setEnabled(True)
 
             # 更新按钮样式

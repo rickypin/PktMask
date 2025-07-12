@@ -103,8 +103,8 @@ class SimplifiedMainWindow(QMainWindow):
                 self.mask_ip_cb.stateChanged.connect(self.ui_builder.update_start_button_state)
             if hasattr(self, 'dedup_packet_cb'):
                 self.dedup_packet_cb.stateChanged.connect(self.ui_builder.update_start_button_state)
-            if hasattr(self, 'trim_packet_cb'):
-                self.trim_packet_cb.stateChanged.connect(self.ui_builder.update_start_button_state)
+            if hasattr(self, 'mask_payload_cb'):
+                self.mask_payload_cb.stateChanged.connect(self.ui_builder.update_start_button_state)
             
             self._logger.debug("信号连接完成")
             

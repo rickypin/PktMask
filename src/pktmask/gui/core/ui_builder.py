@@ -20,7 +20,7 @@ from PyQt6.QtCore import Qt, QEvent
 from PyQt6.QtGui import QAction, QFont
 
 from pktmask.infrastructure.logging import get_logger
-from pktmask.infrastructure.config import get_app_config
+from pktmask.config import get_app_config
 from ..styles.stylesheet import generate_stylesheet
 from ..constants import UIConstants
 
@@ -163,12 +163,12 @@ class UIBuilder:
         self.main_window.dedup_packet_cb = QCheckBox("Packet Deduplication")
         self.main_window.dedup_packet_cb.setChecked(True)
         
-        self.main_window.trim_packet_cb = QCheckBox("Payload Masking")
-        self.main_window.trim_packet_cb.setChecked(True)
+        self.main_window.mask_payload_cb = QCheckBox("Payload Masking")
+        self.main_window.mask_payload_cb.setChecked(True)
         
         layout.addWidget(self.main_window.mask_ip_cb)
         layout.addWidget(self.main_window.dedup_packet_cb)
-        layout.addWidget(self.main_window.trim_packet_cb)
+        layout.addWidget(self.main_window.mask_payload_cb)
         
         # 开始按钮
         self.main_window.start_proc_btn = QPushButton("Start Processing")
@@ -323,7 +323,7 @@ class UIBuilder:
         has_options = (
             self.main_window.mask_ip_cb.isChecked() or
             self.main_window.dedup_packet_cb.isChecked() or
-            self.main_window.trim_packet_cb.isChecked()
+            self.main_window.mask_payload_cb.isChecked()
         )
         
         # 更新按钮状态

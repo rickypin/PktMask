@@ -30,7 +30,8 @@ class ProcessorRegistry:
             from .ip_anonymizer import IPAnonymizer
             from .deduplicator import Deduplicator  
             from .trimmer import Trimmer
-            from .tshark_enhanced_mask_processor import TSharkEnhancedMaskProcessor as MaskingProcessor
+            # 旧版处理器已移除，使用新版双模块架构
+            from ..pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage as MaskingProcessor
             
             cls._processors.update({
                 # 新正式键 (见 REFACTOR_PLAN §3)
@@ -46,12 +47,7 @@ class ProcessorRegistry:
             
         except ImportError as e:
             print(f"加载内置处理器时出错: {e}")
-            try:
-                from .trimmer import Trimmer
-                cls._processors['trim_packet'] = Trimmer
-                print("降级使用原版Trimmer处理器")
-            except ImportError:
-                print("警告: 无法加载任何载荷裁切处理器")
+            print("警告: 无法加载载荷裁切处理器")
     
     @classmethod
     def get_processor(cls, name: str, config: ProcessorConfig) -> BaseProcessor:
@@ -142,9 +138,6 @@ class ProcessorRegistry:
         
     @classmethod
     def is_enhanced_mode_enabled(cls) -> bool:
-        """检查是否启用了增强模式"""
-        cls._load_builtin_processors()
-        trimmer_class = cls._processors.get('trim_packet', None)
-        if trimmer_class:
-            return trimmer_class.__name__ == 'TSharkEnhancedMaskProcessor'
-        return False 
+        """检查是否启用了增强模式 - 现在基于双模块架构"""
+        # 双模块架构(NewMaskPayloadStage)始终为增强模式
+        return True

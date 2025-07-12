@@ -8,14 +8,12 @@ from .base_processor import BaseProcessor, ProcessorConfig, ProcessorResult
 from .registry import ProcessorRegistry
 from .ip_anonymizer import IPAnonymizer
 from .deduplicator import Deduplicator
-from .trimmer import Trimmer
 
 __all__ = [
     'BaseProcessor',
-    'ProcessorConfig', 
+    'ProcessorConfig',
     'ProcessorResult',
     'ProcessorRegistry',
     'IPAnonymizer',
     'Deduplicator',
-    'Trimmer',
 ]

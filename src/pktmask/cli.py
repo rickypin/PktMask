@@ -67,7 +67,7 @@ def cmd_mask(
     mode: str = typer.Option("enhanced", "--mode", help="Mask mode: enhanced|basic"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose progress output"),
 ):
-    """Execute payload masking pipeline using TSharkEnhancedMaskProcessor."""
+    """Execute payload masking pipeline using dual-module architecture (Marker + Masker)."""
 
     _run_pipeline(
         input_file=input_path,

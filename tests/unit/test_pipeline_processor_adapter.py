@@ -211,7 +211,7 @@ class TestMaskStagePipelineProcessorAdapterIntegration(unittest.TestCase):
         # 配置：不提供 recipe，使用默认 processor_adapter 模式
         config = {"mode": "processor_adapter"}
         
-        with patch('pktmask.core.processors.tshark_enhanced_mask_processor.TSharkEnhancedMaskProcessor') as mock_processor_class:
+        with patch('pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage') as mock_processor_class:
             with patch('pktmask.core.adapters.processor_adapter.PipelineProcessorAdapter') as mock_adapter_class:
                 # 设置 mock 返回值
                 mock_processor = Mock()
@@ -256,7 +256,7 @@ class TestMaskStagePipelineProcessorAdapterIntegration(unittest.TestCase):
         """测试用例2: processor_adapter 抛异常 → 降级，验证透传且 log 捕获"""
         config = {"mode": "processor_adapter"}
         
-        with patch('pktmask.core.processors.tshark_enhanced_mask_processor.TSharkEnhancedMaskProcessor') as mock_processor_class:
+        with patch('pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage') as mock_processor_class:
             with patch('pktmask.core.adapters.processor_adapter.PipelineProcessorAdapter') as mock_adapter_class:
                 with patch('pktmask.core.pipeline.stages.mask_payload.stage.rdpcap') as mock_rdpcap:
                     with patch('pktmask.core.pipeline.stages.mask_payload.stage.wrpcap') as mock_wrpcap:
@@ -352,7 +352,7 @@ class TestMaskStagePipelineProcessorAdapterIntegration(unittest.TestCase):
         """测试用例2补充: 使用 caplog 检查降级日志"""
         config = {"mode": "processor_adapter"}
         
-        with patch('pktmask.core.processors.tshark_enhanced_mask_processor.TSharkEnhancedMaskProcessor', side_effect=ImportError("TShark不可用")):
+        with patch('pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage', side_effect=ImportError("双模块架构不可用")):
             # 直接使用 caplog fixture (需要在 pytest 环境中)
             import logging
             
