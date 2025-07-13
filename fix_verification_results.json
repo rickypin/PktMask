@@ -1,0 +1,165 @@
+{
+  "fix_1_protocol_confusion": {
+    "fixed": false,
+    "remaining_issues": 14,
+    "details": [
+      {
+        "rule_index": 0,
+        "rule_type": "tls_handshake+tls_handshake+tls_changecipherspec+tls_handshake",
+        "issue": "规则类型仍包含协议标识符"
+      },
+      {
+        "rule_index": 0,
+        "protocol_metadata": [
+          "tls_content_type",
+          "tls_type_name"
+        ],
+        "issue": "元数据仍包含协议相关信息"
+      },
+      {
+        "rule_index": 1,
+        "rule_type": "tls_applicationdata_header",
+        "issue": "规则类型仍包含协议标识符"
+      },
+      {
+        "rule_index": 1,
+        "protocol_metadata": [
+          "tls_content_type",
+          "tls_type_name"
+        ],
+        "issue": "元数据仍包含协议相关信息"
+      },
+      {
+        "rule_index": 2,
+        "rule_type": "tls_applicationdata_header",
+        "issue": "规则类型仍包含协议标识符"
+      },
+      {
+        "rule_index": 2,
+        "protocol_metadata": [
+          "tls_content_type",
+          "tls_type_name"
+        ],
+        "issue": "元数据仍包含协议相关信息"
+      },
+      {
+        "rule_index": 3,
+        "rule_type": "tls_alert",
+        "issue": "规则类型仍包含协议标识符"
+      },
+      {
+        "rule_index": 3,
+        "protocol_metadata": [
+          "tls_content_type",
+          "tls_type_name"
+        ],
+        "issue": "元数据仍包含协议相关信息"
+      },
+      {
+        "rule_index": 4,
+        "rule_type": "tls_handshake+tls_handshake+tls_changecipherspec+tls_handshake",
+        "issue": "规则类型仍包含协议标识符"
+      },
+      {
+        "rule_index": 4,
+        "protocol_metadata": [
+          "tls_content_type",
+          "tls_type_name"
+        ],
+        "issue": "元数据仍包含协议相关信息"
+      },
+      {
+        "rule_index": 5,
+        "rule_type": "tls_applicationdata_header",
+        "issue": "规则类型仍包含协议标识符"
+      },
+      {
+        "rule_index": 5,
+        "protocol_metadata": [
+          "tls_content_type",
+          "tls_type_name"
+        ],
+        "issue": "元数据仍包含协议相关信息"
+      },
+      {
+        "rule_index": 6,
+        "rule_type": "tls_alert",
+        "issue": "规则类型仍包含协议标识符"
+      },
+      {
+        "rule_index": 6,
+        "protocol_metadata": [
+          "tls_content_type",
+          "tls_type_name"
+        ],
+        "issue": "元数据仍包含协议相关信息"
+      }
+    ]
+  },
+  "fix_2_frame_info_accuracy": {
+    "fixed": false,
+    "remaining_issues": 8,
+    "details": [
+      {
+        "rule_index": 0,
+        "issue": "仍使用单帧记录格式，未使用covered_frames"
+      },
+      {
+        "rule_index": 1,
+        "issue": "仍使用单帧记录格式，未使用covered_frames"
+      },
+      {
+        "rule_index": 2,
+        "issue": "仍使用单帧记录格式，未使用covered_frames"
+      },
+      {
+        "rule_index": 3,
+        "issue": "仍使用单帧记录格式，未使用covered_frames"
+      },
+      {
+        "rule_index": 4,
+        "issue": "仍使用单帧记录格式，未使用covered_frames"
+      },
+      {
+        "rule_index": 4,
+        "unnecessary_fields": [
+          "tcp_seq_raw",
+          "tcp_len"
+        ],
+        "issue": "仍记录不必要的单帧详细信息"
+      },
+      {
+        "rule_index": 5,
+        "issue": "仍使用单帧记录格式，未使用covered_frames"
+      },
+      {
+        "rule_index": 6,
+        "issue": "仍使用单帧记录格式，未使用covered_frames"
+      }
+    ]
+  },
+  "fix_3_tls23_header_preservation": {
+    "fixed": true,
+    "header_rules_count": 3,
+    "correct_header_rules": 3,
+    "total_related_rules": 3,
+    "expected_frames": [
+      14,
+      15
+    ]
+  },
+  "overall_verification": {
+    "total_rules": 7,
+    "total_flows": 1,
+    "rule_type_distribution": {
+      "tls_handshake+tls_handshake+tls_changecipherspec+tls_handshake": 2,
+      "tls_applicationdata_header": 3,
+      "tls_alert": 2
+    },
+    "protocol_agnostic": false,
+    "ruleset_statistics": {
+      "rules_before_optimization": 7,
+      "rules_after_optimization": 7
+    }
+  }
+}

@@ -65,21 +65,38 @@ class KeepRule:
         return not (self.seq_end < other.seq_start or other.seq_end < self.seq_start)
     
     def merge_with(self, other: KeepRule) -> Optional[KeepRule]:
-        """尝试与另一个规则合并"""
+        """尝试与另一个规则合并
+
+        注意：不合并具有不同保留策略的规则，特别是TLS-23头部保留规则
+        应该保持独立，以确保精确的掩码控制。
+        """
         if not self.overlaps_with(other):
             return None
-        
+
+        # 检查保留策略是否兼容
+        self_strategy = self.metadata.get('preserve_strategy')
+        other_strategy = other.metadata.get('preserve_strategy')
+
+        # 如果任一规则是TLS-23头部保留规则，不进行合并
+        if (self_strategy == 'header_only' or other_strategy == 'header_only'):
+            return None
+
+        # 如果保留策略不同，不进行合并
+        if (self_strategy is not None and other_strategy is not None and
+            self_strategy != other_strategy):
+            return None
+
         # 合并重叠或相邻的规则
         new_start = min(self.seq_start, other.seq_start)
         new_end = max(self.seq_end, other.seq_end)
-        
+
         # 合并元数据
         merged_metadata = {**self.metadata, **other.metadata}
         merged_metadata['merged_from'] = [
             self.metadata.get('rule_id', 'unknown'),
             other.metadata.get('rule_id', 'unknown')
         ]
-        
+
         return KeepRule(
             stream_id=self.stream_id,
             direction=self.direction,

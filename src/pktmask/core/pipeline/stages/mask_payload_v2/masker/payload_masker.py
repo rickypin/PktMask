@@ -50,8 +50,14 @@ class PayloadMasker:
         self.config = config
         self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
 
-        # 序列号状态管理 - 每个流方向独立维护
-        self.seq_state = defaultdict(lambda: {"last": None, "epoch": 0})
+        # 注释：移除序列号状态管理，直接使用绝对序列号
+        # self.seq_state = defaultdict(lambda: {"last": None, "epoch": 0})
+
+        # 流方向识别状态管理（与Marker模块保持一致）
+        self.flow_directions = {}  # 存储每个流的方向信息
+        self.stream_id_cache = {}  # 缓存数据包的stream_id
+        self.flow_id_counter = 0  # 流ID计数器，模拟tshark的tcp.stream
+        self.tuple_to_stream_id = {}  # 五元组到stream_id的映射
 
         # 配置参数
         self.chunk_size = config.get('chunk_size', 1000)
@@ -124,6 +130,9 @@ class PayloadMasker:
             input_file=input_path,
             output_file=output_path
         )
+
+        # 设置当前统计信息，以便在掩码处理过程中更新
+        self._current_stats = stats
 
         try:
             # 1. 验证输入文件
@@ -339,6 +348,10 @@ class PayloadMasker:
             error_summary = self.error_handler.get_error_summary()
             stats.error_details = error_summary
 
+        finally:
+            # 清理当前统计信息引用
+            self._current_stats = None
+
         return stats
     
     def _preprocess_keep_rules(self, keep_rules: KeepRuleSet) -> Dict[str, Dict[str, Dict]]:
@@ -352,42 +365,56 @@ class PayloadMasker:
         Returns:
             Dict[流标识, Dict[方向, 查找结构]]
         """
-        rule_lookup = defaultdict(lambda: defaultdict(list))
+        rule_lookup = defaultdict(lambda: defaultdict(lambda: {'header_only': [], 'full_preserve': []}))
 
-        # 按流和方向分组规则
+        # 按流、方向和保留策略分组规则
         for rule in keep_rules.rules:
-            rule_lookup[rule.stream_id][rule.direction].append((rule.seq_start, rule.seq_end))
+            preserve_strategy = rule.metadata.get('preserve_strategy', 'full_preserve')
+            rule_lookup[rule.stream_id][rule.direction][preserve_strategy].append((rule.seq_start, rule.seq_end))
 
         # 为每个流方向构建优化的查找结构
         processed_lookup = {}
         for stream_id, directions in rule_lookup.items():
             processed_lookup[stream_id] = {}
 
-            for direction, ranges in directions.items():
-                # 合并重叠区间以优化查找
-                merged_ranges = self._merge_overlapping_ranges(ranges)
+            for direction, strategy_groups in directions.items():
+                # 分别处理不同保留策略的规则
+                header_only_ranges = strategy_groups['header_only']
+                full_preserve_ranges = strategy_groups['full_preserve']
 
-                # 构建排序的区间列表用于二分查找
-                sorted_ranges = sorted(merged_ranges)
+                # 处理full_preserve规则（可以合并）
+                if full_preserve_ranges:
+                    merged_full_ranges = self._merge_overlapping_ranges(full_preserve_ranges)
+                else:
+                    merged_full_ranges = []
+
+                # 构建分离的查找结构
+                all_ranges = header_only_ranges + merged_full_ranges
+                sorted_ranges = sorted(all_ranges)
 
                 # 构建边界点集合（保持向后兼容）
                 bounds = sorted(set(
-                    point for start, end in merged_ranges
+                    point for start, end in all_ranges
                     for point in [start, end]
                 ))
 
                 # 构建保留区间集合（保持向后兼容）
-                keep_set = set(merged_ranges)
+                keep_set = set(all_ranges)
 
                 processed_lookup[stream_id][direction] = {
                     'bounds': bounds,
                     'keep_set': keep_set,
-                    'sorted_ranges': sorted_ranges,  # 新增：用于二分查找
-                    'range_count': len(merged_ranges)
+                    'sorted_ranges': sorted_ranges,
+                    'range_count': len(all_ranges),
+                    # 新增：分离的策略组
+                    'header_only_ranges': header_only_ranges,
+                    'full_preserve_ranges': merged_full_ranges
                 }
 
+                total_original_ranges = len(header_only_ranges) + len(full_preserve_ranges)
                 self.logger.debug(f"流 {stream_id}:{direction} - "
-                                f"原始区间: {len(ranges)}, 合并后: {len(merged_ranges)}, "
+                                f"原始区间: {total_original_ranges}, 合并后: {len(all_ranges)}, "
+                                f"header_only: {len(header_only_ranges)}, full_preserve: {len(merged_full_ranges)}, "
                                 f"边界点: {len(bounds)}")
 
         return processed_lookup
@@ -445,9 +472,22 @@ class PayloadMasker:
             # 确定流方向
             direction = self._determine_flow_direction(ip_layer, tcp_layer, stream_id)
 
+            # 添加调试日志
+            src_info = f"{ip_layer.src}:{tcp_layer.sport}"
+            dst_info = f"{ip_layer.dst}:{tcp_layer.dport}"
+            self.logger.debug(f"处理数据包: {src_info}->{dst_info}, stream_id={stream_id}, direction={direction}")
+
             # 检查是否有匹配的规则
             if stream_id not in rule_lookup or direction not in rule_lookup[stream_id]:
-                # 没有匹配的规则，原样返回
+                # 没有匹配的规则，记录调试信息
+                available_streams = list(rule_lookup.keys())
+                available_directions = {}
+                for sid in available_streams:
+                    available_directions[sid] = list(rule_lookup[sid].keys())
+
+                self.logger.debug(f"无匹配规则: stream_id={stream_id}, direction={direction}")
+                self.logger.debug(f"可用流: {available_streams}")
+                self.logger.debug(f"可用方向: {available_directions}")
                 return packet, False
 
             # 获取 TCP 载荷
@@ -456,17 +496,18 @@ class PayloadMasker:
                 # 无载荷，原样返回
                 return packet, False
 
-            # 计算64位逻辑序列号
-            flow_key = f"{stream_id}:{direction}"
-            seq64 = self.logical_seq(tcp_layer.seq, flow_key)
+            # 直接使用绝对序列号，不进行64位转换
+            seq_start = tcp_layer.seq
+            seq_end = tcp_layer.seq + len(payload)
 
             # 应用保留规则
             new_payload = self._apply_keep_rules(
-                payload, seq64, seq64 + len(payload),
+                payload, seq_start, seq_end,
                 rule_lookup[stream_id][direction]
             )
 
-            if new_payload is None:
+            # 检查载荷是否发生变化
+            if new_payload == payload:
                 # 没有修改，原样返回
                 return packet, False
 
@@ -552,29 +593,44 @@ class PayloadMasker:
         return (tcp_layer, ip_layer) if tcp_layer and ip_layer else (None, None)
 
     def _build_stream_id(self, ip_layer, tcp_layer) -> str:
-        """构建 TCP 流标识
+        """构建 TCP 流标识（与Marker模块保持一致）
 
         Args:
             ip_layer: IP 层
             tcp_layer: TCP 层
 
         Returns:
-            流标识字符串
+            流标识字符串（数字形式，如"0", "1"等）
         """
-        # 使用五元组构建流标识，按字典序排序确保一致性
+        # Marker模块使用tshark的tcp.stream字段，返回数字形式的stream_id
+        # 我们需要模拟相同的逻辑：为每个唯一的TCP流分配一个递增的数字ID
+
         src_ip = str(ip_layer.src)
         dst_ip = str(ip_layer.dst)
         src_port = tcp_layer.sport
         dst_port = tcp_layer.dport
 
-        # 标准化流标识（较小的IP:端口在前）
+        # 构建标准化的五元组（较小的IP:端口在前）
         if (src_ip, src_port) < (dst_ip, dst_port):
-            return f"{src_ip}:{src_port}-{dst_ip}:{dst_port}"
+            tuple_key = f"{src_ip}:{src_port}-{dst_ip}:{dst_port}"
         else:
-            return f"{dst_ip}:{dst_port}-{src_ip}:{src_port}"
+            tuple_key = f"{dst_ip}:{dst_port}-{src_ip}:{src_port}"
+
+        # 检查是否已为此流分配了stream_id
+        if tuple_key in self.tuple_to_stream_id:
+            return self.tuple_to_stream_id[tuple_key]
+
+        # 为新流分配数字ID
+        stream_id = str(self.flow_id_counter)
+        self.tuple_to_stream_id[tuple_key] = stream_id
+        self.flow_id_counter += 1
+
+        self.logger.debug(f"分配新流ID: {tuple_key} -> {stream_id}")
+
+        return stream_id
 
     def _determine_flow_direction(self, ip_layer, tcp_layer, stream_id: str) -> str:
-        """确定流方向
+        """确定流方向（与Marker模块保持一致）
 
         Args:
             ip_layer: IP 层
@@ -584,10 +640,39 @@ class PayloadMasker:
         Returns:
             'forward' 或 'reverse'
         """
-        current_tuple = f"{ip_layer.src}:{tcp_layer.sport}-{ip_layer.dst}:{tcp_layer.dport}"
+        src_ip = str(ip_layer.src)
+        dst_ip = str(ip_layer.dst)
+        src_port = tcp_layer.sport
+        dst_port = tcp_layer.dport
 
-        # 如果当前元组与流标识匹配，则为正向；否则为反向
-        if current_tuple == stream_id:
+        # 检查是否已经建立了此流的方向信息
+        if stream_id not in self.flow_directions:
+            # 第一次遇到此流，建立方向信息（模拟Marker模块的逻辑）
+            self.flow_directions[stream_id] = {
+                "forward": {
+                    "src_ip": src_ip,
+                    "dst_ip": dst_ip,
+                    "src_port": src_port,
+                    "dst_port": dst_port
+                },
+                "reverse": {
+                    "src_ip": dst_ip,
+                    "dst_ip": src_ip,
+                    "src_port": dst_port,
+                    "dst_port": src_port
+                }
+            }
+
+            self.logger.debug(f"建立流方向信息 {stream_id}: forward={src_ip}:{src_port}->{dst_ip}:{dst_port}")
+            return 'forward'  # 第一个包定义为forward方向
+
+        # 根据已建立的方向信息判断当前包的方向
+        forward_info = self.flow_directions[stream_id]["forward"]
+
+        if (src_ip == forward_info["src_ip"] and
+            src_port == forward_info["src_port"] and
+            dst_ip == forward_info["dst_ip"] and
+            dst_port == forward_info["dst_port"]):
             return 'forward'
         else:
             return 'reverse'
@@ -620,67 +705,193 @@ class PayloadMasker:
 
     def _apply_keep_rules_simple(self, payload: bytes, seg_start: int, seg_end: int,
                                 rule_data: Dict) -> Optional[bytes]:
-        """简单的保留规则应用（适用于少量规则）"""
-        keep_set = rule_data['keep_set']
+        """简单的保留规则应用（适用于少量规则）
+
+        使用规则类型优先级策略处理重叠规则：
+        1. TLS头部保留规则 (header_only) 具有最高优先级
+        2. 完全保留规则 (full_preserve) 不能覆盖头部保留规则
+        3. 避免跨包TLS消息规则覆盖精确的TLS-23头部规则
+        """
+        # 使用预处理的分离策略组
+        header_only_ranges = rule_data.get('header_only_ranges', [])
+        full_preserve_ranges = rule_data.get('full_preserve_ranges', [])
 
         # 创建全零缓冲区
         buf = bytearray(len(payload))
-        changed = False
 
-        # 直接遍历保留集合中的每个区间
-        for keep_start, keep_end in keep_set:
+        # 处理header_only规则
+        header_range_infos = []
+        for keep_start, keep_end in header_only_ranges:
             # 计算与当前段的重叠部分
             overlap_start = max(keep_start, seg_start)
             overlap_end = min(keep_end, seg_end)
 
             if overlap_start < overlap_end:
-                # 有重叠，计算在载荷中的偏移
-                offset_left = overlap_start - seg_start
-                offset_right = overlap_end - seg_start
-
-                # 确保偏移在载荷范围内
-                offset_left = max(0, offset_left)
-                offset_right = min(len(payload), offset_right)
+                # 计算在载荷中的偏移
+                offset_left = max(0, overlap_start - seg_start)
+                offset_right = min(len(payload), overlap_end - seg_start)
 
                 if offset_left < offset_right:
-                    # 恢复保留区间的原始数据
-                    buf[offset_left:offset_right] = payload[offset_left:offset_right]
-                    changed = True
+                    header_range_infos.append({
+                        "offset_left": offset_left,
+                        "offset_right": offset_right,
+                        "rule_range": (keep_start, keep_end)
+                    })
 
-        return bytes(buf) if changed else None
+        # 处理full_preserve规则
+        full_range_infos = []
+        for keep_start, keep_end in full_preserve_ranges:
+            # 计算与当前段的重叠部分
+            overlap_start = max(keep_start, seg_start)
+            overlap_end = min(keep_end, seg_end)
+
+            if overlap_start < overlap_end:
+                # 计算在载荷中的偏移
+                offset_left = max(0, overlap_start - seg_start)
+                offset_right = min(len(payload), overlap_end - seg_start)
+
+                if offset_left < offset_right:
+                    full_range_infos.append({
+                        "offset_left": offset_left,
+                        "offset_right": offset_right,
+                        "rule_range": (keep_start, keep_end)
+                    })
+
+        # 创建保留映射，记录每个字节是否已被保留
+        preserved_map = [False] * len(payload)
+        preserved_bytes = 0
+
+        # 第一阶段：优先应用头部保留规则（最高优先级）
+        for range_info in header_range_infos:
+            offset_left = range_info["offset_left"]
+            offset_right = range_info["offset_right"]
+
+            # 头部保留规则无条件应用
+            buf[offset_left:offset_right] = payload[offset_left:offset_right]
+            for i in range(offset_left, offset_right):
+                preserved_map[i] = True
+            preserved_bytes += offset_right - offset_left
+
+        # 第二阶段：应用完全保留规则，但不能覆盖已保留的头部区域
+        for range_info in full_range_infos:
+            offset_left = range_info["offset_left"]
+            offset_right = range_info["offset_right"]
+
+            # 只保留未被头部规则占用的部分
+            for i in range(offset_left, offset_right):
+                if not preserved_map[i]:
+                    buf[i] = payload[i]
+                    preserved_map[i] = True
+                    preserved_bytes += 1
+
+        # 计算掩码字节数
+        masked_bytes = len(payload) - preserved_bytes
+
+        # 更新统计信息（如果有的话）
+        if hasattr(self, '_current_stats') and self._current_stats:
+            self._current_stats.preserved_bytes += preserved_bytes
+            self._current_stats.masked_bytes += masked_bytes
+
+        # 总是返回处理后的载荷（全零缓冲区 + 保留区间的原始数据）
+        return bytes(buf)
 
     def _apply_keep_rules_optimized(self, payload: bytes, seg_start: int, seg_end: int,
                                    rule_data: Dict) -> Optional[bytes]:
-        """优化的保留规则应用（使用二分查找，适用于大量规则）"""
-        sorted_ranges = rule_data['sorted_ranges']
+        """优化的保留规则应用（使用二分查找，适用于大量规则）
+
+        使用规则类型优先级策略处理重叠规则：
+        1. TLS头部保留规则 (header_only) 具有最高优先级
+        2. 完全保留规则 (full_preserve) 不能覆盖头部保留规则
+        3. 避免跨包TLS消息规则覆盖精确的TLS-23头部规则
+        """
+        # 使用预处理的分离策略组
+        header_only_ranges = rule_data.get('header_only_ranges', [])
+        full_preserve_ranges = rule_data.get('full_preserve_ranges', [])
 
         # 创建全零缓冲区
         buf = bytearray(len(payload))
-        changed = False
 
-        # 使用二分查找找到可能重叠的区间
-        overlapping_ranges = self._find_overlapping_ranges(sorted_ranges, seg_start, seg_end)
+        # 使用二分查找找到可能重叠的header_only区间
+        header_overlapping = self._find_overlapping_ranges(header_only_ranges, seg_start, seg_end)
 
-        for keep_start, keep_end in overlapping_ranges:
+        # 使用二分查找找到可能重叠的full_preserve区间
+        full_overlapping = self._find_overlapping_ranges(full_preserve_ranges, seg_start, seg_end)
+
+        # 处理header_only规则
+        header_range_infos = []
+        for keep_start, keep_end in header_overlapping:
             # 计算与当前段的重叠部分
             overlap_start = max(keep_start, seg_start)
             overlap_end = min(keep_end, seg_end)
 
             if overlap_start < overlap_end:
-                # 有重叠，计算在载荷中的偏移
-                offset_left = overlap_start - seg_start
-                offset_right = overlap_end - seg_start
-
-                # 确保偏移在载荷范围内
-                offset_left = max(0, offset_left)
-                offset_right = min(len(payload), offset_right)
+                # 计算在载荷中的偏移
+                offset_left = max(0, overlap_start - seg_start)
+                offset_right = min(len(payload), overlap_end - seg_start)
 
                 if offset_left < offset_right:
-                    # 恢复保留区间的原始数据
-                    buf[offset_left:offset_right] = payload[offset_left:offset_right]
-                    changed = True
+                    header_range_infos.append({
+                        "offset_left": offset_left,
+                        "offset_right": offset_right,
+                        "rule_range": (keep_start, keep_end)
+                    })
 
-        return bytes(buf) if changed else None
+        # 处理full_preserve规则
+        full_range_infos = []
+        for keep_start, keep_end in full_overlapping:
+            # 计算与当前段的重叠部分
+            overlap_start = max(keep_start, seg_start)
+            overlap_end = min(keep_end, seg_end)
+
+            if overlap_start < overlap_end:
+                # 计算在载荷中的偏移
+                offset_left = max(0, overlap_start - seg_start)
+                offset_right = min(len(payload), overlap_end - seg_start)
+
+                if offset_left < offset_right:
+                    full_range_infos.append({
+                        "offset_left": offset_left,
+                        "offset_right": offset_right,
+                        "rule_range": (keep_start, keep_end)
+                    })
+
+        # 创建保留映射，记录每个字节是否已被保留
+        preserved_map = [False] * len(payload)
+        preserved_bytes = 0
+
+        # 第一阶段：优先应用头部保留规则（最高优先级）
+        for range_info in header_range_infos:
+            offset_left = range_info["offset_left"]
+            offset_right = range_info["offset_right"]
+
+            # 头部保留规则无条件应用
+            buf[offset_left:offset_right] = payload[offset_left:offset_right]
+            for i in range(offset_left, offset_right):
+                preserved_map[i] = True
+            preserved_bytes += offset_right - offset_left
+
+        # 第二阶段：应用完全保留规则，但不能覆盖已保留的头部区域
+        for range_info in full_range_infos:
+            offset_left = range_info["offset_left"]
+            offset_right = range_info["offset_right"]
+
+            # 只保留未被头部规则占用的部分
+            for i in range(offset_left, offset_right):
+                if not preserved_map[i]:
+                    buf[i] = payload[i]
+                    preserved_map[i] = True
+                    preserved_bytes += 1
+
+        # 计算掩码字节数
+        masked_bytes = len(payload) - preserved_bytes
+
+        # 更新统计信息（如果有的话）
+        if hasattr(self, '_current_stats') and self._current_stats:
+            self._current_stats.preserved_bytes += preserved_bytes
+            self._current_stats.masked_bytes += masked_bytes
+
+        # 总是返回处理后的载荷（全零缓冲区 + 保留区间的原始数据）
+        return bytes(buf)
 
     def _find_overlapping_ranges(self, sorted_ranges: List[Tuple[int, int]],
                                 seg_start: int, seg_end: int) -> List[Tuple[int, int]]:
@@ -750,23 +961,24 @@ class PayloadMasker:
 
         return modified_packet
 
-    def logical_seq(self, seq32: int, flow_key: str) -> int:
-        """处理32位序列号回绕，返回64位逻辑序号
-
-        基于 TCP_MARKER_REFERENCE.md 的序列号回绕处理算法。
-
-        Args:
-            seq32: 32位序列号
-            flow_key: 流标识
-
-        Returns:
-            64位逻辑序号
-        """
-        state = self.seq_state[flow_key]
-        if state["last"] is not None and (state["last"] - seq32) > 0x7FFFFFFF:
-            state["epoch"] += 1
-        state["last"] = seq32
-        return (state["epoch"] << 32) | seq32
+    # 注释：移除32位序列号回绕处理，直接使用绝对序列号
+    # def logical_seq(self, seq32: int, flow_key: str) -> int:
+    #     """处理32位序列号回绕，返回64位逻辑序号
+    #
+    #     基于 TCP_MARKER_REFERENCE.md 的序列号回绕处理算法。
+    #
+    #     Args:
+    #         seq32: 32位序列号
+    #         flow_key: 流标识
+    #
+    #     Returns:
+    #         64位逻辑序号
+    #     """
+    #     state = self.seq_state[flow_key]
+    #     if state["last"] is not None and (state["last"] - seq32) > 0x7FFFFFFF:
+    #         state["epoch"] += 1
+    #     state["last"] = seq32
+    #     return (state["epoch"] << 32) | seq32
 
     def _handle_memory_pressure(self, memory_stats):
         """处理内存压力回调

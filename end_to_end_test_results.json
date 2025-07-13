@@ -1,0 +1,328 @@
+{
+  "original_analysis": {
+    "total_tls_packets": 10,
+    "tls_message_types": {
+      "22": 5,
+      "20": 2,
+      "23": 3,
+      "21": 2
+    },
+    "tls23_packets": [
+      {
+        "frame": "14",
+        "tcp_seq": "2422050425",
+        "tls23_count": 2,
+        "content_types": [
+          "23",
+          "23"
+        ],
+        "record_lengths": [
+          "169",
+          "26"
+        ]
+      },
+      {
+        "frame": "15",
+        "tcp_seq": "3913404815",
+        "tls23_count": 1,
+        "content_types": [
+          "23"
+        ],
+        "record_lengths": [
+          "106"
+        ]
+      }
+    ],
+    "tls23_messages": [
+      {
+        "frame": "14",
+        "message_index": 1,
+        "tcp_seq": 2422050425,
+        "message_start_seq": 2422050425,
+        "record_length": 169,
+        "header_start": 2422050425,
+        "header_end": 2422050430
+      },
+      {
+        "frame": "14",
+        "message_index": 2,
+        "tcp_seq": 2422050425,
+        "message_start_seq": 2422050599,
+        "record_length": 26,
+        "header_start": 2422050599,
+        "header_end": 2422050604
+      },
+      {
+        "frame": "15",
+        "message_index": 1,
+        "tcp_seq": 3913404815,
+        "message_start_seq": 3913404815,
+        "record_length": 106,
+        "header_start": 3913404815,
+        "header_end": 3913404820
+      }
+    ]
+  },
+  "mask_processing": {
+    "success": true,
+    "output_file": "/var/folders/wz/ql3l9vh10z3c4kt7h9c1ydvh0000gn/T/tmpakw_w5hu.pcap",
+    "stats": {
+      "status": true,
+      "processing_time": 0.012132883071899414,
+      "packets_processed": 22,
+      "packets_modified": 2,
+      "masked_bytes": 1549,
+      "preserved_bytes": 1348
+    }
+  },
+  "masked_analysis": {
+    "total_identifiable_tls": 10,
+    "tls23_identifiable": 2,
+    "tls_data": [
+      {
+        "_index": "packets-2025-02-19",
+        "_type": "doc",
+        "_score": null,
+        "_source": {
+          "layers": {
+            "frame.number": [
+              "4"
+            ],
+            "tcp.seq_raw": [
+              "2422049782"
+            ],
+            "tcp.len": [
+              "517"
+            ],
+            "tls.record.content_type": [
+              "22"
+            ],
+            "tls.record.length": [
+              "512"
+            ]
+          }
+        }
+      },
+      {
+        "_index": "packets-2025-02-19",
+        "_type": "doc",
+        "_score": null,
+        "_source": {
+          "layers": {
+            "frame.number": [
+              "6"
+            ],
+            "tcp.seq_raw": [
+              "3913402951"
+            ],
+            "tcp.len": [
+              "1342"
+            ]
+          }
+        }
+      },
+      {
+        "_index": "packets-2025-02-19",
+        "_type": "doc",
+        "_score": null,
+        "_source": {
+          "layers": {
+            "frame.number": [
+              "7"
+            ],
+            "tcp.seq_raw": [
+              "3913404293"
+            ],
+            "tcp.len": [
+              "471"
+            ]
+          }
+        }
+      },
+      {
+        "_index": "packets-2025-02-19",
+        "_type": "doc",
+        "_score": null,
+        "_source": {
+          "layers": {
+            "frame.number": [
+              "9"
+            ],
+            "tcp.seq_raw": [
+              "2422050299"
+            ],
+            "tcp.len": [
+              "126"
+            ],
+            "tls.record.content_type": [
+              "22",
+              "20",
+              "22"
+            ],
+            "tls.record.length": [
+              "70",
+              "1",
+              "40"
+            ]
+          }
+        }
+      },
+      {
+        "_index": "packets-2025-02-19",
+        "_type": "doc",
+        "_score": null,
+        "_source": {
+          "layers": {
+            "frame.number": [
+              "10"
+            ],
+            "tcp.seq_raw": [
+              "3913404764"
+            ],
+            "tcp.len": [
+              "6"
+            ],
+            "tls.record.content_type": [
+              "20"
+            ],
+            "tls.record.length": [
+              "1"
+            ]
+          }
+        }
+      },
+      {
+        "_index": "packets-2025-02-19",
+        "_type": "doc",
+        "_score": null,
+        "_source": {
+          "layers": {
+            "frame.number": [
+              "12"
+            ],
+            "tcp.seq_raw": [
+              "3913404770"
+            ],
+            "tcp.len": [
+              "45"
+            ],
+            "tls.record.content_type": [
+              "22"
+            ],
+            "tls.record.length": [
+              "40"
+            ]
+          }
+        }
+      },
+      {
+        "_index": "packets-2025-02-19",
+        "_type": "doc",
+        "_score": null,
+        "_source": {
+          "layers": {
+            "frame.number": [
+              "14"
+            ],
+            "tcp.seq_raw": [
+              "2422050425"
+            ],
+            "tcp.len": [
+              "205"
+            ],
+            "tls.record.content_type": [
+              "23",
+              "23"
+            ],
+            "tls.record.length": [
+              "169",
+              "26"
+            ]
+          }
+        }
+      },
+      {
+        "_index": "packets-2025-02-19",
+        "_type": "doc",
+        "_score": null,
+        "_source": {
+          "layers": {
+            "frame.number": [
+              "15"
+            ],
+            "tcp.seq_raw": [
+              "3913404815"
+            ],
+            "tcp.len": [
+              "111"
+            ],
+            "tls.record.content_type": [
+              "23"
+            ],
+            "tls.record.length": [
+              "106"
+            ]
+          }
+        }
+      },
+      {
+        "_index": "packets-2025-02-19",
+        "_type": "doc",
+        "_score": null,
+        "_source": {
+          "layers": {
+            "frame.number": [
+              "16"
+            ],
+            "tcp.seq_raw": [
+              "2422050630"
+            ],
+            "tcp.len": [
+              "31"
+            ],
+            "tls.record.content_type": [
+              "21"
+            ],
+            "tls.record.length": [
+              "26"
+            ]
+          }
+        }
+      },
+      {
+        "_index": "packets-2025-02-19",
+        "_type": "doc",
+        "_score": null,
+        "_source": {
+          "layers": {
+            "frame.number": [
+              "19"
+            ],
+            "tcp.seq_raw": [
+              "3913404926"
+            ],
+            "tcp.len": [
+              "31"
+            ],
+            "tls.record.content_type": [
+              "21"
+            ],
+            "tls.record.length": [
+              "26"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "comparison": {
+    "tls_structure_preserved": true,
+    "tls23_headers_preserved": true,
+    "application_data_masked": true
+  },
+  "validation": {
+    "overall_success": true,
+    "issues": [],
+    "recommendations": []
+  }
+}

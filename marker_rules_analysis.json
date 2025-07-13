@@ -1,0 +1,291 @@
+{
+  "pcap_path": "tests/samples/tls-single/tls_sample.pcap",
+  "config": {
+    "preserve_config": {
+      "handshake": true,
+      "change_cipher_spec": true,
+      "alert": true,
+      "heartbeat": true,
+      "application_data": false
+    }
+  },
+  "rules_before_optimization": [
+    {
+      "stream_id": "0",
+      "direction": "forward",
+      "seq_start": 2422049782,
+      "seq_end": 2422050425,
+      "length": 643,
+      "rule_type": "tls_handshake+tls_handshake+tls_changecipherspec+tls_handshake",
+      "metadata": {
+        "tls_content_type": 22,
+        "tls_type_name": "Handshake",
+        "frame_number": "9",
+        "message_index": 3,
+        "message_start_seq": 2422050380,
+        "record_length": 40,
+        "total_message_size": 45,
+        "merged_from": [
+          "unknown",
+          "unknown"
+        ]
+      }
+    },
+    {
+      "stream_id": "0",
+      "direction": "forward",
+      "seq_start": 2422050425,
+      "seq_end": 2422050430,
+      "length": 5,
+      "rule_type": "tls_applicationdata_header",
+      "metadata": {
+        "tls_content_type": 23,
+        "tls_type_name": "ApplicationData",
+        "frame_number": "14",
+        "message_index": 1,
+        "message_start_seq": 2422050425,
+        "record_length": 169,
+        "preserve_reason": "tls_record_header",
+        "header_size": 5,
+        "preserve_strategy": "header_only"
+      }
+    },
+    {
+      "stream_id": "0",
+      "direction": "forward",
+      "seq_start": 2422050599,
+      "seq_end": 2422050604,
+      "length": 5,
+      "rule_type": "tls_applicationdata_header",
+      "metadata": {
+        "tls_content_type": 23,
+        "tls_type_name": "ApplicationData",
+        "frame_number": "14",
+        "message_index": 2,
+        "message_start_seq": 2422050599,
+        "record_length": 26,
+        "preserve_reason": "tls_record_header",
+        "header_size": 5,
+        "preserve_strategy": "header_only"
+      }
+    },
+    {
+      "stream_id": "0",
+      "direction": "forward",
+      "seq_start": 2422050630,
+      "seq_end": 2422050661,
+      "length": 31,
+      "rule_type": "tls_alert",
+      "metadata": {
+        "tls_content_type": 21,
+        "tls_type_name": "Alert",
+        "frame_number": "16",
+        "message_index": 1,
+        "message_start_seq": 2422050630,
+        "record_length": 26,
+        "total_message_size": 31
+      }
+    },
+    {
+      "stream_id": "0",
+      "direction": "reverse",
+      "seq_start": 3913402951,
+      "seq_end": 3913406106,
+      "length": 3155,
+      "rule_type": "tls_handshake+tls_handshake+tls_changecipherspec+tls_handshake",
+      "metadata": {
+        "tls_content_type": 22,
+        "tls_type_name": "Handshake",
+        "frame_number": "12",
+        "tcp_seq_raw": 3913402951,
+        "tcp_len": 1342,
+        "message_index": 1,
+        "message_start_seq": 3913404770,
+        "record_length": 40,
+        "total_message_size": 45,
+        "merged_from": [
+          "unknown",
+          "unknown"
+        ]
+      }
+    },
+    {
+      "stream_id": "0",
+      "direction": "reverse",
+      "seq_start": 3913404815,
+      "seq_end": 3913404820,
+      "length": 5,
+      "rule_type": "tls_applicationdata_header",
+      "metadata": {
+        "tls_content_type": 23,
+        "tls_type_name": "ApplicationData",
+        "frame_number": "15",
+        "message_index": 1,
+        "message_start_seq": 3913404815,
+        "record_length": 106,
+        "preserve_reason": "tls_record_header",
+        "header_size": 5,
+        "preserve_strategy": "header_only"
+      }
+    },
+    {
+      "stream_id": "0",
+      "direction": "reverse",
+      "seq_start": 3913404926,
+      "seq_end": 3913404957,
+      "length": 31,
+      "rule_type": "tls_alert",
+      "metadata": {
+        "tls_content_type": 21,
+        "tls_type_name": "Alert",
+        "frame_number": "19",
+        "message_index": 1,
+        "message_start_seq": 3913404926,
+        "record_length": 26,
+        "total_message_size": 31
+      }
+    }
+  ],
+  "rules_after_optimization": [
+    {
+      "stream_id": "0",
+      "direction": "forward",
+      "seq_start": 2422049782,
+      "seq_end": 2422050425,
+      "length": 643,
+      "rule_type": "tls_handshake+tls_handshake+tls_changecipherspec+tls_handshake",
+      "metadata": {
+        "tls_content_type": 22,
+        "tls_type_name": "Handshake",
+        "frame_number": "9",
+        "message_index": 3,
+        "message_start_seq": 2422050380,
+        "record_length": 40,
+        "total_message_size": 45,
+        "merged_from": [
+          "unknown",
+          "unknown"
+        ]
+      }
+    },
+    {
+      "stream_id": "0",
+      "direction": "forward",
+      "seq_start": 2422050425,
+      "seq_end": 2422050430,
+      "length": 5,
+      "rule_type": "tls_applicationdata_header",
+      "metadata": {
+        "tls_content_type": 23,
+        "tls_type_name": "ApplicationData",
+        "frame_number": "14",
+        "message_index": 1,
+        "message_start_seq": 2422050425,
+        "record_length": 169,
+        "preserve_reason": "tls_record_header",
+        "header_size": 5,
+        "preserve_strategy": "header_only"
+      }
+    },
+    {
+      "stream_id": "0",
+      "direction": "forward",
+      "seq_start": 2422050599,
+      "seq_end": 2422050604,
+      "length": 5,
+      "rule_type": "tls_applicationdata_header",
+      "metadata": {
+        "tls_content_type": 23,
+        "tls_type_name": "ApplicationData",
+        "frame_number": "14",
+        "message_index": 2,
+        "message_start_seq": 2422050599,
+        "record_length": 26,
+        "preserve_reason": "tls_record_header",
+        "header_size": 5,
+        "preserve_strategy": "header_only"
+      }
+    },
+    {
+      "stream_id": "0",
+      "direction": "forward",
+      "seq_start": 2422050630,
+      "seq_end": 2422050661,
+      "length": 31,
+      "rule_type": "tls_alert",
+      "metadata": {
+        "tls_content_type": 21,
+        "tls_type_name": "Alert",
+        "frame_number": "16",
+        "message_index": 1,
+        "message_start_seq": 2422050630,
+        "record_length": 26,
+        "total_message_size": 31
+      }
+    },
+    {
+      "stream_id": "0",
+      "direction": "reverse",
+      "seq_start": 3913402951,
+      "seq_end": 3913406106,
+      "length": 3155,
+      "rule_type": "tls_handshake+tls_handshake+tls_changecipherspec+tls_handshake",
+      "metadata": {
+        "tls_content_type": 22,
+        "tls_type_name": "Handshake",
+        "frame_number": "12",
+        "tcp_seq_raw": 3913402951,
+        "tcp_len": 1342,
+        "message_index": 1,
+        "message_start_seq": 3913404770,
+        "record_length": 40,
+        "total_message_size": 45,
+        "merged_from": [
+          "unknown",
+          "unknown"
+        ]
+      }
+    },
+    {
+      "stream_id": "0",
+      "direction": "reverse",
+      "seq_start": 3913404815,
+      "seq_end": 3913404820,
+      "length": 5,
+      "rule_type": "tls_applicationdata_header",
+      "metadata": {
+        "tls_content_type": 23,
+        "tls_type_name": "ApplicationData",
+        "frame_number": "15",
+        "message_index": 1,
+        "message_start_seq": 3913404815,
+        "record_length": 106,
+        "preserve_reason": "tls_record_header",
+        "header_size": 5,
+        "preserve_strategy": "header_only"
+      }
+    },
+    {
+      "stream_id": "0",
+      "direction": "reverse",
+      "seq_start": 3913404926,
+      "seq_end": 3913404957,
+      "length": 31,
+      "rule_type": "tls_alert",
+      "metadata": {
+        "tls_content_type": 21,
+        "tls_type_name": "Alert",
+        "frame_number": "19",
+        "message_index": 1,
+        "message_start_seq": 3913404926,
+        "record_length": 26,
+        "total_message_size": 31
+      }
+    }
+  ],
+  "statistics": {
+    "original_rule_count": 7,
+    "optimized_rule_count": 7,
+    "rules_merged": 0
+  }
+}

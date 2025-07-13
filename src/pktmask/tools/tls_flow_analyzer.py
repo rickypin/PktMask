@@ -554,9 +554,10 @@ class TLSFlowAnalyzer:
         return cleaned
 
     def _reassemble_tcp_payloads(self, packets: List[Dict[str, Any]],
-                                directions: Dict[str, Any]) -> Dict[str, bytes]:
-        """重组 TCP 载荷"""
-        reassembled = {"forward": b"", "reverse": b""}
+                                directions: Dict[str, Any]) -> Dict[str, Any]:
+        """重组 TCP 载荷并记录序列号映射"""
+        reassembled = {"forward": {"payload": b"", "seq_mapping": []},
+                      "reverse": {"payload": b"", "seq_mapping": []}}
 
         for direction_name, direction_info in directions.items():
             # 按序列号排序数据包
@@ -567,25 +568,58 @@ class TLSFlowAnalyzer:
                 ))
             )
 
-            # 重组载荷
+            # 重组载荷并记录序列号映射
             payload_data = b""
+            seq_mapping = []
+            current_offset = 0
+
             for packet in direction_packets:
                 layers = packet.get("_source", {}).get("layers", {})
                 tcp_payload = layers.get("tcp.payload")
-                if tcp_payload:
+                tcp_seq_raw = self._get_first_value(layers.get("tcp.seq_raw"))
+
+                if tcp_payload and tcp_seq_raw:
                     payload_hex = self._get_first_value(tcp_payload)
                     if payload_hex:
                         try:
                             # 清理十六进制字符串
                             clean_hex = payload_hex.replace(":", "").replace(" ", "")
                             payload_bytes = bytes.fromhex(clean_hex)
-                            payload_data += payload_bytes
+
+                            # 记录这段载荷在重组数据中的位置和对应的序列号
+                            if len(payload_bytes) > 0:
+                                seq_mapping.append({
+                                    "offset_start": current_offset,
+                                    "offset_end": current_offset + len(payload_bytes) - 1,
+                                    "tcp_seq_raw": int(tcp_seq_raw),
+                                    "payload_length": len(payload_bytes)
+                                })
+
+                                payload_data += payload_bytes
+                                current_offset += len(payload_bytes)
                         except ValueError:
                             continue
 
-            reassembled[direction_name] = payload_data
+            reassembled[direction_name]["payload"] = payload_data
+            reassembled[direction_name]["seq_mapping"] = seq_mapping
 
         return reassembled
+
+    def _find_actual_seq_for_offset(self, tls_offset: int, seq_mapping: List[Dict[str, Any]]) -> int:
+        """根据TLS记录在重组载荷中的偏移位置，查找对应的实际TCP序列号"""
+        for mapping in seq_mapping:
+            offset_start = mapping["offset_start"]
+            offset_end = mapping["offset_end"]
+            tcp_seq_raw = mapping["tcp_seq_raw"]
+
+            if offset_start <= tls_offset <= offset_end:
+                # TLS记录在这个TCP包的载荷中
+                # 计算TLS记录在该TCP包载荷中的相对偏移
+                relative_offset = tls_offset - offset_start
+                return tcp_seq_raw + relative_offset
+
+        # 如果没有找到匹配的映射，返回0（这种情况不应该发生）
+        return 0
 
     def _reassemble_cross_segment_messages(self, tcp_flows: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
         """重组跨 TCP 段的 TLS 消息并解析单包中的完整 TLS 消息"""
@@ -595,23 +629,16 @@ class TLSFlowAnalyzer:
 
         # 处理跨TCP段的重组消息
         for stream_id, flow_info in tcp_flows.items():
-            for direction_name, payload_data in flow_info["reassembled_payloads"].items():
+            for direction_name, reassembled_info in flow_info["reassembled_payloads"].items():
+                payload_data = reassembled_info["payload"]
+                seq_mapping = reassembled_info["seq_mapping"]
+
                 if len(payload_data) < 5:  # TLS 记录头至少 5 字节
                     continue
 
-                # 计算该方向的基础序列号（第一个包的序列号）
-                direction_info = flow_info["directions"][direction_name]
-                base_seq = 0
-                if direction_info["packets"]:
-                    first_packet = direction_info["packets"][0]
-                    layers = first_packet.get("_source", {}).get("layers", {})
-                    tcp_seq_raw = self._get_first_value(layers.get("tcp.seq_raw"))
-                    if tcp_seq_raw:
-                        base_seq = int(tcp_seq_raw)
-
-                # 解析 TLS 记录
+                # 解析 TLS 记录，传入序列号映射信息
                 tls_records = self._parse_tls_records_from_payload(
-                    payload_data, stream_id, direction_name, base_seq
+                    payload_data, stream_id, direction_name, seq_mapping=seq_mapping
                 )
                 reassembled_messages.extend(tls_records)
 
@@ -720,7 +747,8 @@ class TLSFlowAnalyzer:
         return single_packet_messages
 
     def _parse_tls_records_from_payload(self, payload: bytes, stream_id: str,
-                                       direction: str, base_seq: int = 0) -> List[Dict[str, Any]]:
+                                       direction: str, base_seq: int = 0,
+                                       seq_mapping: List[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """从 TCP 载荷中解析 TLS 记录"""
         records = []
         offset = 0
@@ -741,13 +769,24 @@ class TLSFlowAnalyzer:
             record_end = offset + 5 + length
 
             # 计算TLS消息的绝对序列号位置
-            tls_header_seq_start = base_seq + offset
+            if seq_mapping:
+                # 使用序列号映射查找实际的TCP序列号
+                tls_header_seq_start = self._find_actual_seq_for_offset(offset, seq_mapping)
+            else:
+                # 兼容旧的计算方式（用于单包解析）
+                tls_header_seq_start = base_seq + offset
+
             tls_header_seq_end = tls_header_seq_start + 5
             tls_payload_seq_start = tls_header_seq_end
 
             if record_end > len(payload):
                 # 记录不完整，可能跨段
-                tls_payload_seq_end = base_seq + len(payload)  # 实际载荷结束位置
+                if seq_mapping:
+                    # 使用序列号映射查找实际的结束序列号
+                    tls_payload_seq_end = self._find_actual_seq_for_offset(len(payload) - 1, seq_mapping) + 1
+                else:
+                    # 兼容旧的计算方式
+                    tls_payload_seq_end = base_seq + len(payload)
                 records.append({
                     "stream_id": stream_id,
                     "direction": direction,
@@ -757,7 +796,7 @@ class TLSFlowAnalyzer:
                     "length": length,
                     "declared_length": length,  # 声明的长度
                     "actual_length": len(payload) - offset - 5,  # 实际可用长度
-                    "tcp_seq_base": base_seq,
+                    "tcp_seq_base": tls_header_seq_start if seq_mapping else base_seq,
                     "tls_seq_start": tls_header_seq_start,
                     "tls_seq_end": tls_header_seq_start + 5 + length,  # 完整消息的预期结束位置
                     "tls_seq_actual_end": tls_payload_seq_end,  # 实际结束位置
@@ -788,7 +827,7 @@ class TLSFlowAnalyzer:
                     "length": length,
                     "declared_length": length,
                     "actual_length": length,
-                    "tcp_seq_base": base_seq,
+                    "tcp_seq_base": tls_header_seq_start if seq_mapping else base_seq,
                     "tls_seq_start": tls_header_seq_start,
                     "tls_seq_end": tls_payload_seq_end,
                     # 新增：分离的头部和载荷序列号范围

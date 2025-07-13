@@ -1,0 +1,991 @@
+{
+  "metadata": {
+    "analysis_timestamp": 1752406445.878819,
+    "total_frames_with_tls": 10,
+    "total_tls_records": 12,
+    "total_tcp_streams": 1,
+    "tls_content_types": {
+      "20": "ChangeCipherSpec",
+      "21": "Alert",
+      "22": "Handshake",
+      "23": "ApplicationData",
+      "24": "Heartbeat"
+    },
+    "processing_strategies": {
+      "20": "keep_all",
+      "21": "keep_all",
+      "22": "keep_all",
+      "23": "mask_payload",
+      "24": "keep_all"
+    }
+  },
+  "global_statistics": {
+    "frames_containing_tls": 10,
+    "tls_records_total": 12,
+    "tcp_streams_analyzed": 1
+  },
+  "protocol_type_statistics": {
+    "22": {
+      "frames": 4,
+      "records": 5
+    },
+    "20": {
+      "frames": 2,
+      "records": 2
+    },
+    "23": {
+      "frames": 2,
+      "records": 3
+    },
+    "21": {
+      "frames": 2,
+      "records": 2
+    }
+  },
+  "detailed_frames": [
+    {
+      "frame": 4,
+      "protocol_layers": [
+        "eth",
+        "ethertype",
+        "ip",
+        "tcp",
+        "tls"
+      ],
+      "protocol_types": [
+        22
+      ],
+      "tcp_stream": "0",
+      "src_ip": "10.171.250.80",
+      "dst_ip": "10.50.50.161",
+      "src_port": "33492",
+      "dst_port": "443",
+      "tcp_seq": "1",
+      "tcp_seq_raw": "2422049782",
+      "tcp_len": "517",
+      "time_relative": "0.295915000"
+    },
+    {
+      "frame": 6,
+      "protocol_layers": [
+        "eth",
+        "ethertype",
+        "ip",
+        "tcp"
+      ],
+      "protocol_types": [
+        22
+      ],
+      "tcp_stream": "0",
+      "src_ip": "10.50.50.161",
+      "dst_ip": "10.171.250.80",
+      "src_port": "443",
+      "dst_port": "33492",
+      "tcp_seq": "1",
+      "tcp_seq_raw": "3913402951",
+      "tcp_len": "1342",
+      "time_relative": "0.378564000",
+      "is_tls_segment": true,
+      "tls_segment_data_length": 1342
+    },
+    {
+      "frame": 7,
+      "protocol_layers": [
+        "eth",
+        "ethertype",
+        "ip",
+        "tcp",
+        "tls",
+        "x509sat"
+      ],
+      "protocol_types": [
+        22
+      ],
+      "tcp_stream": "0",
+      "src_ip": "10.50.50.161",
+      "dst_ip": "10.171.250.80",
+      "src_port": "443",
+      "dst_port": "33492",
+      "tcp_seq": "1343",
+      "tcp_seq_raw": "3913404293",
+      "tcp_len": "471",
+      "time_relative": "0.378795000"
+    },
+    {
+      "frame": 9,
+      "protocol_layers": [
+        "eth",
+        "ethertype",
+        "ip",
+        "tcp",
+        "tls"
+      ],
+      "protocol_types": [
+        22,
+        20,
+        22
+      ],
+      "tcp_stream": "0",
+      "src_ip": "10.171.250.80",
+      "dst_ip": "10.50.50.161",
+      "src_port": "33492",
+      "dst_port": "443",
+      "tcp_seq": "518",
+      "tcp_seq_raw": "2422050299",
+      "tcp_len": "126",
+      "time_relative": "0.381457000"
+    },
+    {
+      "frame": 10,
+      "protocol_layers": [
+        "eth",
+        "ethertype",
+        "ip",
+        "tcp",
+        "tls"
+      ],
+      "protocol_types": [
+        20
+      ],
+      "tcp_stream": "0",
+      "src_ip": "10.50.50.161",
+      "dst_ip": "10.171.250.80",
+      "src_port": "443",
+      "dst_port": "33492",
+      "tcp_seq": "1814",
+      "tcp_seq_raw": "3913404764",
+      "tcp_len": "6",
+      "time_relative": "0.456492000"
+    },
+    {
+      "frame": 12,
+      "protocol_layers": [
+        "eth",
+        "ethertype",
+        "ip",
+        "tcp",
+        "tls"
+      ],
+      "protocol_types": [
+        22
+      ],
+      "tcp_stream": "0",
+      "src_ip": "10.50.50.161",
+      "dst_ip": "10.171.250.80",
+      "src_port": "443",
+      "dst_port": "33492",
+      "tcp_seq": "1820",
+      "tcp_seq_raw": "3913404770",
+      "tcp_len": "45",
+      "time_relative": "0.561157000"
+    },
+    {
+      "frame": 14,
+      "protocol_layers": [
+        "eth",
+        "ethertype",
+        "ip",
+        "tcp",
+        "tls"
+      ],
+      "protocol_types": [
+        23,
+        23
+      ],
+      "tcp_stream": "0",
+      "src_ip": "10.171.250.80",
+      "dst_ip": "10.50.50.161",
+      "src_port": "33492",
+      "dst_port": "443",
+      "tcp_seq": "644",
+      "tcp_seq_raw": "2422050425",
+      "tcp_len": "205",
+      "time_relative": "0.561157000"
+    },
+    {
+      "frame": 15,
+      "protocol_layers": [
+        "eth",
+        "ethertype",
+        "ip",
+        "tcp",
+        "tls"
+      ],
+      "protocol_types": [
+        23
+      ],
+      "tcp_stream": "0",
+      "src_ip": "10.50.50.161",
+      "dst_ip": "10.171.250.80",
+      "src_port": "443",
+      "dst_port": "33492",
+      "tcp_seq": "1865",
+      "tcp_seq_raw": "3913404815",
+      "tcp_len": "111",
+      "time_relative": "0.615082000"
+    },
+    {
+      "frame": 16,
+      "protocol_layers": [
+        "eth",
+        "ethertype",
+        "ip",
+        "tcp",
+        "tls"
+      ],
+      "protocol_types": [
+        21
+      ],
+      "tcp_stream": "0",
+      "src_ip": "10.171.250.80",
+      "dst_ip": "10.50.50.161",
+      "src_port": "33492",
+      "dst_port": "443",
+      "tcp_seq": "849",
+      "tcp_seq_raw": "2422050630",
+      "tcp_len": "31",
+      "time_relative": "0.616631000"
+    },
+    {
+      "frame": 19,
+      "protocol_layers": [
+        "eth",
+        "ethertype",
+        "ip",
+        "tcp",
+        "tls"
+      ],
+      "protocol_types": [
+        21
+      ],
+      "tcp_stream": "0",
+      "src_ip": "10.50.50.161",
+      "dst_ip": "10.171.250.80",
+      "src_port": "443",
+      "dst_port": "33492",
+      "tcp_seq": "1976",
+      "tcp_seq_raw": "3913404926",
+      "tcp_len": "31",
+      "time_relative": "0.681639000"
+    }
+  ],
+  "reassembled_messages": [
+    {
+      "stream_id": "0",
+      "direction": "forward",
+      "content_type": 22,
+      "content_type_name": "Handshake",
+      "version": [
+        3,
+        1
+      ],
+      "length": 512,
+      "declared_length": 512,
+      "actual_length": 512,
+      "tcp_seq_base": 2422049782,
+      "tls_seq_start": 2422049782,
+      "tls_seq_end": 2422050299,
+      "tls_header_seq_start": 2422049782,
+      "tls_header_seq_end": 2422049787,
+      "tls_payload_seq_start": 2422049787,
+      "tls_payload_seq_end": 2422050299,
+      "header_start": 0,
+      "header_end": 5,
+      "payload_start": 5,
+      "payload_end": 517,
+      "is_complete": true,
+      "is_cross_segment": false,
+      "processing_strategy": "keep_all"
+    },
+    {
+      "stream_id": "0",
+      "direction": "forward",
+      "content_type": 22,
+      "content_type_name": "Handshake",
+      "version": [
+        3,
+        3
+      ],
+      "length": 70,
+      "declared_length": 70,
+      "actual_length": 70,
+      "tcp_seq_base": 2422050299,
+      "tls_seq_start": 2422050299,
+      "tls_seq_end": 2422050374,
+      "tls_header_seq_start": 2422050299,
+      "tls_header_seq_end": 2422050304,
+      "tls_payload_seq_start": 2422050304,
+      "tls_payload_seq_end": 2422050374,
+      "header_start": 517,
+      "header_end": 522,
+      "payload_start": 522,
+      "payload_end": 592,
+      "is_complete": true,
+      "is_cross_segment": false,
+      "processing_strategy": "keep_all"
+    },
+    {
+      "stream_id": "0",
+      "direction": "forward",
+      "content_type": 20,
+      "content_type_name": "ChangeCipherSpec",
+      "version": [
+        3,
+        3
+      ],
+      "length": 1,
+      "declared_length": 1,
+      "actual_length": 1,
+      "tcp_seq_base": 2422050374,
+      "tls_seq_start": 2422050374,
+      "tls_seq_end": 2422050380,
+      "tls_header_seq_start": 2422050374,
+      "tls_header_seq_end": 2422050379,
+      "tls_payload_seq_start": 2422050379,
+      "tls_payload_seq_end": 2422050380,
+      "header_start": 592,
+      "header_end": 597,
+      "payload_start": 597,
+      "payload_end": 598,
+      "is_complete": true,
+      "is_cross_segment": false,
+      "processing_strategy": "keep_all"
+    },
+    {
+      "stream_id": "0",
+      "direction": "forward",
+      "content_type": 22,
+      "content_type_name": "Handshake",
+      "version": [
+        3,
+        3
+      ],
+      "length": 40,
+      "declared_length": 40,
+      "actual_length": 40,
+      "tcp_seq_base": 2422050380,
+      "tls_seq_start": 2422050380,
+      "tls_seq_end": 2422050425,
+      "tls_header_seq_start": 2422050380,
+      "tls_header_seq_end": 2422050385,
+      "tls_payload_seq_start": 2422050385,
+      "tls_payload_seq_end": 2422050425,
+      "header_start": 598,
+      "header_end": 603,
+      "payload_start": 603,
+      "payload_end": 643,
+      "is_complete": true,
+      "is_cross_segment": false,
+      "processing_strategy": "keep_all"
+    },
+    {
+      "stream_id": "0",
+      "direction": "forward",
+      "content_type": 23,
+      "content_type_name": "ApplicationData",
+      "version": [
+        3,
+        3
+      ],
+      "length": 169,
+      "declared_length": 169,
+      "actual_length": 169,
+      "tcp_seq_base": 2422050425,
+      "tls_seq_start": 2422050425,
+      "tls_seq_end": 2422050599,
+      "tls_header_seq_start": 2422050425,
+      "tls_header_seq_end": 2422050430,
+      "tls_payload_seq_start": 2422050430,
+      "tls_payload_seq_end": 2422050599,
+      "header_start": 643,
+      "header_end": 648,
+      "payload_start": 648,
+      "payload_end": 817,
+      "is_complete": true,
+      "is_cross_segment": false,
+      "processing_strategy": "mask_payload"
+    },
+    {
+      "stream_id": "0",
+      "direction": "forward",
+      "content_type": 23,
+      "content_type_name": "ApplicationData",
+      "version": [
+        3,
+        3
+      ],
+      "length": 26,
+      "declared_length": 26,
+      "actual_length": 26,
+      "tcp_seq_base": 2422050599,
+      "tls_seq_start": 2422050599,
+      "tls_seq_end": 2422050630,
+      "tls_header_seq_start": 2422050599,
+      "tls_header_seq_end": 2422050604,
+      "tls_payload_seq_start": 2422050604,
+      "tls_payload_seq_end": 2422050630,
+      "header_start": 817,
+      "header_end": 822,
+      "payload_start": 822,
+      "payload_end": 848,
+      "is_complete": true,
+      "is_cross_segment": false,
+      "processing_strategy": "mask_payload"
+    },
+    {
+      "stream_id": "0",
+      "direction": "forward",
+      "content_type": 21,
+      "content_type_name": "Alert",
+      "version": [
+        3,
+        3
+      ],
+      "length": 26,
+      "declared_length": 26,
+      "actual_length": 26,
+      "tcp_seq_base": 2422050630,
+      "tls_seq_start": 2422050630,
+      "tls_seq_end": 2422050661,
+      "tls_header_seq_start": 2422050630,
+      "tls_header_seq_end": 2422050635,
+      "tls_payload_seq_start": 2422050635,
+      "tls_payload_seq_end": 2422050661,
+      "header_start": 848,
+      "header_end": 853,
+      "payload_start": 853,
+      "payload_end": 879,
+      "is_complete": true,
+      "is_cross_segment": false,
+      "processing_strategy": "keep_all"
+    },
+    {
+      "stream_id": "0",
+      "direction": "reverse",
+      "content_type": 22,
+      "content_type_name": "Handshake",
+      "version": [
+        3,
+        3
+      ],
+      "length": 1808,
+      "declared_length": 1808,
+      "actual_length": 1808,
+      "tcp_seq_base": 3913402951,
+      "tls_seq_start": 3913402951,
+      "tls_seq_end": 3913404764,
+      "tls_header_seq_start": 3913402951,
+      "tls_header_seq_end": 3913402956,
+      "tls_payload_seq_start": 3913402956,
+      "tls_payload_seq_end": 3913404764,
+      "header_start": 0,
+      "header_end": 5,
+      "payload_start": 5,
+      "payload_end": 1813,
+      "is_complete": true,
+      "is_cross_segment": false,
+      "processing_strategy": "keep_all"
+    },
+    {
+      "stream_id": "0",
+      "direction": "reverse",
+      "content_type": 20,
+      "content_type_name": "ChangeCipherSpec",
+      "version": [
+        3,
+        3
+      ],
+      "length": 1,
+      "declared_length": 1,
+      "actual_length": 1,
+      "tcp_seq_base": 3913404764,
+      "tls_seq_start": 3913404764,
+      "tls_seq_end": 3913404770,
+      "tls_header_seq_start": 3913404764,
+      "tls_header_seq_end": 3913404769,
+      "tls_payload_seq_start": 3913404769,
+      "tls_payload_seq_end": 3913404770,
+      "header_start": 1813,
+      "header_end": 1818,
+      "payload_start": 1818,
+      "payload_end": 1819,
+      "is_complete": true,
+      "is_cross_segment": false,
+      "processing_strategy": "keep_all"
+    },
+    {
+      "stream_id": "0",
+      "direction": "reverse",
+      "content_type": 22,
+      "content_type_name": "Handshake",
+      "version": [
+        3,
+        3
+      ],
+      "length": 40,
+      "declared_length": 40,
+      "actual_length": 40,
+      "tcp_seq_base": 3913404770,
+      "tls_seq_start": 3913404770,
+      "tls_seq_end": 3913404815,
+      "tls_header_seq_start": 3913404770,
+      "tls_header_seq_end": 3913404775,
+      "tls_payload_seq_start": 3913404775,
+      "tls_payload_seq_end": 3913404815,
+      "header_start": 1819,
+      "header_end": 1824,
+      "payload_start": 1824,
+      "payload_end": 1864,
+      "is_complete": true,
+      "is_cross_segment": false,
+      "processing_strategy": "keep_all"
+    },
+    {
+      "stream_id": "0",
+      "direction": "reverse",
+      "content_type": 23,
+      "content_type_name": "ApplicationData",
+      "version": [
+        3,
+        3
+      ],
+      "length": 106,
+      "declared_length": 106,
+      "actual_length": 106,
+      "tcp_seq_base": 3913404815,
+      "tls_seq_start": 3913404815,
+      "tls_seq_end": 3913404926,
+      "tls_header_seq_start": 3913404815,
+      "tls_header_seq_end": 3913404820,
+      "tls_payload_seq_start": 3913404820,
+      "tls_payload_seq_end": 3913404926,
+      "header_start": 1864,
+      "header_end": 1869,
+      "payload_start": 1869,
+      "payload_end": 1975,
+      "is_complete": true,
+      "is_cross_segment": false,
+      "processing_strategy": "mask_payload"
+    },
+    {
+      "stream_id": "0",
+      "direction": "reverse",
+      "content_type": 21,
+      "content_type_name": "Alert",
+      "version": [
+        3,
+        3
+      ],
+      "length": 26,
+      "declared_length": 26,
+      "actual_length": 26,
+      "tcp_seq_base": 3913404926,
+      "tls_seq_start": 3913404926,
+      "tls_seq_end": 3913404957,
+      "tls_header_seq_start": 3913404926,
+      "tls_header_seq_end": 3913404931,
+      "tls_payload_seq_start": 3913404931,
+      "tls_payload_seq_end": 3913404957,
+      "header_start": 1975,
+      "header_end": 1980,
+      "payload_start": 1980,
+      "payload_end": 2006,
+      "is_complete": true,
+      "is_cross_segment": false,
+      "processing_strategy": "keep_all"
+    }
+  ],
+  "tcp_flow_analysis": {
+    "0": {
+      "packet_count": 22,
+      "directions": {
+        "forward": {
+          "src_ip": "10.171.250.80",
+          "dst_ip": "10.50.50.161",
+          "src_port": "33492",
+          "dst_port": "443",
+          "packet_count": 12,
+          "payload_size": 2
+        },
+        "reverse": {
+          "src_ip": "10.50.50.161",
+          "dst_ip": "10.171.250.80",
+          "src_port": "443",
+          "dst_port": "33492",
+          "packet_count": 10,
+          "payload_size": 2
+        }
+      }
+    }
+  },
+  "detailed_analysis": {
+    "message_structure_analysis": [
+      {
+        "stream_id": "0",
+        "direction": "forward",
+        "content_type": 22,
+        "content_type_name": "Handshake",
+        "version": [
+          3,
+          1
+        ],
+        "version_string": "TLS 1.0",
+        "header_info": {
+          "start_position": 0,
+          "end_position": 5,
+          "length": 5,
+          "seq_start": 2422049782,
+          "seq_end": 2422049787
+        },
+        "payload_info": {
+          "start_position": 5,
+          "end_position": 517,
+          "length": 512,
+          "declared_length": 512,
+          "seq_start": 2422049787,
+          "seq_end": 2422050299
+        },
+        "is_complete": true,
+        "is_cross_segment": false,
+        "processing_strategy": "keep_all"
+      },
+      {
+        "stream_id": "0",
+        "direction": "forward",
+        "content_type": 22,
+        "content_type_name": "Handshake",
+        "version": [
+          3,
+          3
+        ],
+        "version_string": "TLS 1.2",
+        "header_info": {
+          "start_position": 517,
+          "end_position": 522,
+          "length": 5,
+          "seq_start": 2422050299,
+          "seq_end": 2422050304
+        },
+        "payload_info": {
+          "start_position": 522,
+          "end_position": 592,
+          "length": 70,
+          "declared_length": 70,
+          "seq_start": 2422050304,
+          "seq_end": 2422050374
+        },
+        "is_complete": true,
+        "is_cross_segment": false,
+        "processing_strategy": "keep_all"
+      },
+      {
+        "stream_id": "0",
+        "direction": "forward",
+        "content_type": 20,
+        "content_type_name": "ChangeCipherSpec",
+        "version": [
+          3,
+          3
+        ],
+        "version_string": "TLS 1.2",
+        "header_info": {
+          "start_position": 592,
+          "end_position": 597,
+          "length": 5,
+          "seq_start": 2422050374,
+          "seq_end": 2422050379
+        },
+        "payload_info": {
+          "start_position": 597,
+          "end_position": 598,
+          "length": 1,
+          "declared_length": 1,
+          "seq_start": 2422050379,
+          "seq_end": 2422050380
+        },
+        "is_complete": true,
+        "is_cross_segment": false,
+        "processing_strategy": "keep_all"
+      },
+      {
+        "stream_id": "0",
+        "direction": "forward",
+        "content_type": 22,
+        "content_type_name": "Handshake",
+        "version": [
+          3,
+          3
+        ],
+        "version_string": "TLS 1.2",
+        "header_info": {
+          "start_position": 598,
+          "end_position": 603,
+          "length": 5,
+          "seq_start": 2422050380,
+          "seq_end": 2422050385
+        },
+        "payload_info": {
+          "start_position": 603,
+          "end_position": 643,
+          "length": 40,
+          "declared_length": 40,
+          "seq_start": 2422050385,
+          "seq_end": 2422050425
+        },
+        "is_complete": true,
+        "is_cross_segment": false,
+        "processing_strategy": "keep_all"
+      },
+      {
+        "stream_id": "0",
+        "direction": "forward",
+        "content_type": 23,
+        "content_type_name": "ApplicationData",
+        "version": [
+          3,
+          3
+        ],
+        "version_string": "TLS 1.2",
+        "header_info": {
+          "start_position": 643,
+          "end_position": 648,
+          "length": 5,
+          "seq_start": 2422050425,
+          "seq_end": 2422050430
+        },
+        "payload_info": {
+          "start_position": 648,
+          "end_position": 817,
+          "length": 169,
+          "declared_length": 169,
+          "seq_start": 2422050430,
+          "seq_end": 2422050599
+        },
+        "is_complete": true,
+        "is_cross_segment": false,
+        "processing_strategy": "mask_payload"
+      },
+      {
+        "stream_id": "0",
+        "direction": "forward",
+        "content_type": 23,
+        "content_type_name": "ApplicationData",
+        "version": [
+          3,
+          3
+        ],
+        "version_string": "TLS 1.2",
+        "header_info": {
+          "start_position": 817,
+          "end_position": 822,
+          "length": 5,
+          "seq_start": 2422050599,
+          "seq_end": 2422050604
+        },
+        "payload_info": {
+          "start_position": 822,
+          "end_position": 848,
+          "length": 26,
+          "declared_length": 26,
+          "seq_start": 2422050604,
+          "seq_end": 2422050630
+        },
+        "is_complete": true,
+        "is_cross_segment": false,
+        "processing_strategy": "mask_payload"
+      },
+      {
+        "stream_id": "0",
+        "direction": "forward",
+        "content_type": 21,
+        "content_type_name": "Alert",
+        "version": [
+          3,
+          3
+        ],
+        "version_string": "TLS 1.2",
+        "header_info": {
+          "start_position": 848,
+          "end_position": 853,
+          "length": 5,
+          "seq_start": 2422050630,
+          "seq_end": 2422050635
+        },
+        "payload_info": {
+          "start_position": 853,
+          "end_position": 879,
+          "length": 26,
+          "declared_length": 26,
+          "seq_start": 2422050635,
+          "seq_end": 2422050661
+        },
+        "is_complete": true,
+        "is_cross_segment": false,
+        "processing_strategy": "keep_all"
+      },
+      {
+        "stream_id": "0",
+        "direction": "reverse",
+        "content_type": 22,
+        "content_type_name": "Handshake",
+        "version": [
+          3,
+          3
+        ],
+        "version_string": "TLS 1.2",
+        "header_info": {
+          "start_position": 0,
+          "end_position": 5,
+          "length": 5,
+          "seq_start": 3913402951,
+          "seq_end": 3913402956
+        },
+        "payload_info": {
+          "start_position": 5,
+          "end_position": 1813,
+          "length": 1808,
+          "declared_length": 1808,
+          "seq_start": 3913402956,
+          "seq_end": 3913404764
+        },
+        "is_complete": true,
+        "is_cross_segment": false,
+        "processing_strategy": "keep_all"
+      },
+      {
+        "stream_id": "0",
+        "direction": "reverse",
+        "content_type": 20,
+        "content_type_name": "ChangeCipherSpec",
+        "version": [
+          3,
+          3
+        ],
+        "version_string": "TLS 1.2",
+        "header_info": {
+          "start_position": 1813,
+          "end_position": 1818,
+          "length": 5,
+          "seq_start": 3913404764,
+          "seq_end": 3913404769
+        },
+        "payload_info": {
+          "start_position": 1818,
+          "end_position": 1819,
+          "length": 1,
+          "declared_length": 1,
+          "seq_start": 3913404769,
+          "seq_end": 3913404770
+        },
+        "is_complete": true,
+        "is_cross_segment": false,
+        "processing_strategy": "keep_all"
+      },
+      {
+        "stream_id": "0",
+        "direction": "reverse",
+        "content_type": 22,
+        "content_type_name": "Handshake",
+        "version": [
+          3,
+          3
+        ],
+        "version_string": "TLS 1.2",
+        "header_info": {
+          "start_position": 1819,
+          "end_position": 1824,
+          "length": 5,
+          "seq_start": 3913404770,
+          "seq_end": 3913404775
+        },
+        "payload_info": {
+          "start_position": 1824,
+          "end_position": 1864,
+          "length": 40,
+          "declared_length": 40,
+          "seq_start": 3913404775,
+          "seq_end": 3913404815
+        },
+        "is_complete": true,
+        "is_cross_segment": false,
+        "processing_strategy": "keep_all"
+      },
+      {
+        "stream_id": "0",
+        "direction": "reverse",
+        "content_type": 23,
+        "content_type_name": "ApplicationData",
+        "version": [
+          3,
+          3
+        ],
+        "version_string": "TLS 1.2",
+        "header_info": {
+          "start_position": 1864,
+          "end_position": 1869,
+          "length": 5,
+          "seq_start": 3913404815,
+          "seq_end": 3913404820
+        },
+        "payload_info": {
+          "start_position": 1869,
+          "end_position": 1975,
+          "length": 106,
+          "declared_length": 106,
+          "seq_start": 3913404820,
+          "seq_end": 3913404926
+        },
+        "is_complete": true,
+        "is_cross_segment": false,
+        "processing_strategy": "mask_payload"
+      },
+      {
+        "stream_id": "0",
+        "direction": "reverse",
+        "content_type": 21,
+        "content_type_name": "Alert",
+        "version": [
+          3,
+          3
+        ],
+        "version_string": "TLS 1.2",
+        "header_info": {
+          "start_position": 1975,
+          "end_position": 1980,
+          "length": 5,
+          "seq_start": 3913404926,
+          "seq_end": 3913404931
+        },
+        "payload_info": {
+          "start_position": 1980,
+          "end_position": 2006,
+          "length": 26,
+          "declared_length": 26,
+          "seq_start": 3913404931,
+          "seq_end": 3913404957
+        },
+        "is_complete": true,
+        "is_cross_segment": false,
+        "processing_strategy": "keep_all"
+      }
+    ],
+    "cross_segment_analysis": [],
+    "sequence_analysis": {
+      "0": {
+        "total_packets": 22,
+        "directions": {
+          "forward": {
+            "endpoint": "10.171.250.80:33492 -> 10.50.50.161:443",
+            "packet_count": 12,
+            "payload_size": 2
+          },
+          "reverse": {
+            "endpoint": "10.50.50.161:443 -> 10.171.250.80:33492",
+            "packet_count": 10,
+            "payload_size": 2
+          }
+        }
+      }
+    }
+  }
+}

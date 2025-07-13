@@ -1,0 +1,157 @@
+{
+  "problem_1_protocol_confusion": {
+    "issues_found": 8,
+    "details": [
+      {
+        "rule_index": 0,
+        "rule_type": "tls_handshake+tls_handshake",
+        "issue": "规则类型包含TLS协议标识符",
+        "expected": "应为纯TCP层面的序列号保留规则"
+      },
+      {
+        "rule_index": 0,
+        "metadata_keys": [
+          "tls_content_type",
+          "tls_type_name"
+        ],
+        "issue": "元数据包含TLS协议相关信息",
+        "expected": "应为协议无关的TCP序列号信息"
+      },
+      {
+        "rule_index": 1,
+        "rule_type": "tls_alert",
+        "issue": "规则类型包含TLS协议标识符",
+        "expected": "应为纯TCP层面的序列号保留规则"
+      },
+      {
+        "rule_index": 1,
+        "metadata_keys": [
+          "tls_content_type",
+          "tls_type_name"
+        ],
+        "issue": "元数据包含TLS协议相关信息",
+        "expected": "应为协议无关的TCP序列号信息"
+      },
+      {
+        "rule_index": 2,
+        "rule_type": "tls_handshake+tls_handshake+tls_changecipherspec+tls_handshake",
+        "issue": "规则类型包含TLS协议标识符",
+        "expected": "应为纯TCP层面的序列号保留规则"
+      },
+      {
+        "rule_index": 2,
+        "metadata_keys": [
+          "tls_content_type",
+          "tls_type_name"
+        ],
+        "issue": "元数据包含TLS协议相关信息",
+        "expected": "应为协议无关的TCP序列号信息"
+      },
+      {
+        "rule_index": 3,
+        "rule_type": "tls_alert",
+        "issue": "规则类型包含TLS协议标识符",
+        "expected": "应为纯TCP层面的序列号保留规则"
+      },
+      {
+        "rule_index": 3,
+        "metadata_keys": [
+          "tls_content_type",
+          "tls_type_name"
+        ],
+        "issue": "元数据包含TLS协议相关信息",
+        "expected": "应为协议无关的TCP序列号信息"
+      }
+    ],
+    "severity": "HIGH",
+    "recommendation": "修改Marker模块生成协议无关的TCP序列号保留规则"
+  },
+  "problem_2_frame_info_inaccuracy": {
+    "issues_found": 6,
+    "details": [
+      {
+        "rule_index": 0,
+        "single_frame": "9",
+        "rule_length": 643,
+        "single_frame_tcp_len": 126,
+        "issue": "规则长度超过单帧TCP载荷长度，可能涉及多帧",
+        "expected": "应记录所有涉及帧的帧号"
+      },
+      {
+        "rule_index": 0,
+        "unnecessary_fields": [
+          "tcp_seq_raw",
+          "tcp_len"
+        ],
+        "issue": "记录了单帧的原始TCP序列号和载荷长度",
+        "expected": "应移除单帧详细信息，仅记录规则覆盖的序列号区段"
+      },
+      {
+        "rule_index": 1,
+        "unnecessary_fields": [
+          "tcp_seq_raw",
+          "tcp_len"
+        ],
+        "issue": "记录了单帧的原始TCP序列号和载荷长度",
+        "expected": "应移除单帧详细信息，仅记录规则覆盖的序列号区段"
+      },
+      {
+        "rule_index": 2,
+        "single_frame": "12",
+        "rule_length": 1864,
+        "single_frame_tcp_len": 45,
+        "issue": "规则长度超过单帧TCP载荷长度，可能涉及多帧",
+        "expected": "应记录所有涉及帧的帧号"
+      },
+      {
+        "rule_index": 2,
+        "unnecessary_fields": [
+          "tcp_seq_raw",
+          "tcp_len"
+        ],
+        "issue": "记录了单帧的原始TCP序列号和载荷长度",
+        "expected": "应移除单帧详细信息，仅记录规则覆盖的序列号区段"
+      },
+      {
+        "rule_index": 3,
+        "unnecessary_fields": [
+          "tcp_seq_raw",
+          "tcp_len"
+        ],
+        "issue": "记录了单帧的原始TCP序列号和载荷长度",
+        "expected": "应移除单帧详细信息，仅记录规则覆盖的序列号区段"
+      }
+    ],
+    "severity": "MEDIUM",
+    "recommendation": "修改规则生成逻辑，记录涉及的所有帧号，移除单帧详细信息"
+  },
+  "problem_3_tls23_header_missing": {
+    "issues_found": 1,
+    "details": [
+      {
+        "issue": "完全缺少TLS-23 ApplicationData的保留规则",
+        "expected_frames": [
+          14,
+          15
+        ],
+        "current_rules": 0,
+        "expected": "应为每个TLS-23消息生成头部保留规则(5字节)"
+      }
+    ],
+    "severity": "HIGH",
+    "recommendation": "修复TLS-23处理逻辑，为每个ApplicationData消息生成5字节头部保留规则"
+  },
+  "overall_assessment": {
+    "total_rules": 4,
+    "total_flows": 1,
+    "rule_type_distribution": {
+      "tls_handshake+tls_handshake": 1,
+      "tls_alert": 2,
+      "tls_handshake+tls_handshake+tls_changecipherspec+tls_handshake": 1
+    },
+    "ruleset_statistics": {
+      "rules_before_optimization": 4,
+      "rules_after_optimization": 4
+    }
+  }
+}
