@@ -49,7 +49,23 @@ class TestPipelineService(unittest.TestCase):
         expected = {
             "anon": {"enabled": True},
             "dedup": {"enabled": True},
-            "mask": {"enabled": True, "mode": "enhanced"}
+            "mask": {
+                "enabled": True,
+                "protocol": "tls",
+                "mode": "enhanced",
+                "marker_config": {
+                    "preserve": {
+                        "application_data": False,
+                        "handshake": True,
+                        "alert": True,
+                        "change_cipher_spec": True,
+                        "heartbeat": True
+                    }
+                },
+                "masker_config": {
+                    "preserve_ratio": 0.3
+                }
+            }
         }
         
         self.assertEqual(config, expected)

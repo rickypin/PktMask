@@ -28,6 +28,33 @@
     ```
   - **验证结果**: 修复后GUI多文件处理与命令行脚本结果完全一致。关键测试文件`ssl_3.pcap`从修改0个包恢复到正确修改59个包，所有12个测试文件均能正确处理。
 
+- **GUI配置结构不匹配问题** (2025-07-14)
+  - **问题描述**: GUI界面的TLS协议配置无法被TLSProtocolMarker正确读取，导致用户在GUI中设置的TLS消息处理策略（如application_data保留选项）被完全忽略，系统总是使用硬编码的默认值。
+  - **根本原因**: `src/pktmask/services/pipeline_service.py`中的`build_pipeline_config()`函数生成的配置结构缺少`preserve`嵌套层级。TLSProtocolMarker期望配置格式为`marker_config.preserve.{配置项}`，但GUI生成的是`marker_config.{配置项}`的扁平结构。
+  - **配置结构对比**:
+    ```python
+    # 修复前（❌ 错误 - 配置被忽略）
+    "marker_config": {
+        "application_data": False,  # 直接在顶层，无法被读取
+        "handshake": True,
+        # ...
+    }
+
+    # 修复后（✅ 正确 - 配置正确生效）
+    "marker_config": {
+        "preserve": {                    # TLSProtocolMarker期望的嵌套结构
+            "application_data": False,   # 用户配置能被正确读取
+            "handshake": True,
+            "alert": True,
+            "change_cipher_spec": True,
+            "heartbeat": True
+        }
+    }
+    ```
+  - **修复方案**: 在`build_pipeline_config()`函数中为`marker_config`添加正确的`preserve`嵌套层级，确保配置结构与TLSProtocolMarker的解析逻辑匹配。
+  - **功能影响**: 修复前用户的所有TLS配置选择都被忽略，修复后用户可以真正控制各种TLS消息类型的处理策略。这是从"配置无效"到"配置有效"的根本性功能修复。
+  - **验证结果**: 通过测试确认TLSProtocolMarker能正确读取GUI配置，用户设置的`application_data`等参数能够正确生效。同时更新了相关测试文件以匹配修复后的配置结构。
+
 ### Changed
 - 统一入口点：所有功能通过 `pktmask` 命令访问
 - GUI 成为默认模式（无参数启动）

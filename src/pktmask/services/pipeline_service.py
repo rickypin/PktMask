@@ -194,9 +194,9 @@ def build_pipeline_config(
             "protocol": "tls",  # 协议类型
             "mode": "enhanced",  # 使用增强模式
             "marker_config": {
-                "preserve": {
+                "preserve": {                    # 修复：添加 preserve 嵌套层级
+                    "application_data": False,   # TLSProtocolMarker 期望的配置结构
                     "handshake": True,
-                    "application_data": False,
                     "alert": True,
                     "change_cipher_spec": True,
                     "heartbeat": True
