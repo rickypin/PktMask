@@ -902,60 +902,6 @@ class TLSProtocolMarker(ProtocolMarker):
             self.logger.warning(f"创建简化包规则失败: {e}")
             return None
 
-    def _find_cross_packet_start_seq(self, tls_packets: List[Dict[str, Any]],
-                                    stream_id: str, direction: str,
-                                    current_seq: int, total_tls_size: int) -> int:
-        """查找跨包TLS消息的真正起始序列号
-
-        对于Frame 7的情况：
-        - current_seq = 3913404293 (Frame 7开始)
-        - total_tls_size = 1813 (TLS消息总大小)
-        - 需要找到Frame 6的起始位置 3913402951
-        """
-        # 简化逻辑：直接查找紧邻的前一个包
-        # 如果前一个包的结束位置正好是当前包的开始位置，且有足够的长度，就使用前一个包的开始位置
-
-        for packet in tls_packets:
-            layers = packet.get("_source", {}).get("layers", {})
-
-            # 检查是否为同一流
-            pkt_stream_id = str(self._get_first_value(layers.get("tcp.stream", "")))
-            if pkt_stream_id != stream_id:
-                continue
-
-            # 获取包的序列号和长度
-            pkt_seq_raw = self._get_first_value(layers.get("tcp.seq_raw"))
-            pkt_len_raw = self._get_first_value(layers.get("tcp.len", 0))
-
-            if pkt_seq_raw is None:
-                continue
-
-            try:
-                pkt_seq = int(pkt_seq_raw)
-                pkt_len = int(pkt_len_raw) if pkt_len_raw else 0
-            except (ValueError, TypeError):
-                continue
-
-            pkt_end_seq = pkt_seq + pkt_len
-
-            # 检查是否为紧邻的前一个包
-            if pkt_end_seq == current_seq:
-                # 检查方向是否匹配（简化检查）
-                src_ip = self._get_first_value(layers.get("ip.src", ""))
-                is_reverse = (src_ip == "10.50.50.161")  # 硬编码检查reverse方向
-
-                if (direction == "reverse" and is_reverse) or (direction == "forward" and not is_reverse):
-                    # 检查是否有TLS段数据（表明是跨包TLS消息的一部分）
-                    if self._has_tls_segment_data(layers):
-                        self.logger.debug(f"找到跨包TLS消息起始位置: {pkt_seq} "
-                                        f"(前一包Frame {self._get_first_value(layers.get('frame.number'))}, "
-                                        f"长度: {pkt_len}, 结束于: {pkt_end_seq})")
-                        return pkt_seq
-
-        # 如果没有找到合适的起始位置，返回当前序列号
-        self.logger.warning(f"未找到跨包TLS消息的起始位置，使用当前序列号: {current_seq}")
-        return current_seq
-
     def _determine_packet_direction(self, packet: Dict[str, Any],
                                   flow_info: Optional[Dict[str, Any]]) -> Optional[str]:
         """确定数据包的流方向"""
