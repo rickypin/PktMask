@@ -28,6 +28,7 @@ from .types import (
     EncapsulationType, ParsingError
 )
 from .detector import EncapsulationDetector
+from ...config import get_app_config
 
 
 class ProtocolStackParser:
@@ -45,7 +46,16 @@ class ProtocolStackParser:
         """初始化解析器"""
         self.logger = logging.getLogger(__name__)
         self.detector = EncapsulationDetector()
-        
+
+        # 获取配置以控制日志输出
+        try:
+            self.config = get_app_config()
+            self.enable_parsing_logs = self.config.logging.enable_protocol_parsing_logs
+        except Exception as e:
+            # 如果配置获取失败，默认关闭详细日志
+            self.logger.warning(f"获取配置失败，使用默认日志设置: {e}")
+            self.enable_parsing_logs = False
+
         # 协议层解析器映射
         self._layer_parsers = {
             'Ether': self._parse_ethernet,
@@ -131,7 +141,9 @@ class ProtocolStackParser:
                 parsing_success=True
             )
             
-            self.logger.info(f"协议栈解析完成: {len(layers)}层, {len(ip_layers)}个IP层")
+            # 根据配置决定是否输出详细日志
+            if self.enable_parsing_logs:
+                self.logger.info(f"协议栈解析完成: {len(layers)}层, {len(ip_layers)}个IP层")
             return result
             
         except Exception as e:

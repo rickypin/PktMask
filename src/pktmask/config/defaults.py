@@ -46,7 +46,8 @@ DEFAULT_LOGGING_CONFIG = {
     'log_to_file': True,
     'log_file_max_size': 10 * 1024 * 1024,  # 10MB
     'log_backup_count': 5,
-    'performance_logging': False
+    'performance_logging': False,
+    'enable_protocol_parsing_logs': False  # 默认关闭协议栈解析详细日志
 }
 
 # 文件和路径常量

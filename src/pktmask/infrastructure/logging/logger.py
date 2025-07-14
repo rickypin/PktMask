@@ -39,14 +39,25 @@ class PktMaskLogger:
         """设置根日志记录器"""
         root_logger = logging.getLogger('pktmask')
         root_logger.setLevel(logging.DEBUG)
-        
+
         # 避免重复添加handler
         if root_logger.handlers:
             return
-        
+
+        # 尝试从配置获取日志级别
+        console_level = logging.INFO  # 默认级别
+        try:
+            from ...config import get_app_config
+            config = get_app_config()
+            level_str = config.logging.log_level.upper()
+            console_level = getattr(logging, level_str, logging.INFO)
+        except Exception:
+            # 如果配置获取失败，使用默认级别
+            pass
+
         # 控制台处理器
         console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(logging.INFO)
+        console_handler.setLevel(console_level)
         console_formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
@@ -90,6 +101,27 @@ class PktMaskLogger:
         """设置日志级别"""
         for logger in self._loggers.values():
             logger.setLevel(level.value)
+
+    def reconfigure_from_config(self):
+        """根据配置重新配置日志系统"""
+        try:
+            from ...config import get_app_config
+            config = get_app_config()
+
+            # 获取配置的日志级别
+            level_str = config.logging.log_level.upper()
+            console_level = getattr(logging, level_str, logging.INFO)
+
+            # 更新所有现有处理器的级别
+            pktmask_logger = logging.getLogger('pktmask')
+            for handler in pktmask_logger.handlers:
+                if isinstance(handler, logging.StreamHandler) and handler.stream == sys.stdout:
+                    # 这是控制台处理器
+                    handler.setLevel(console_level)
+
+        except Exception as e:
+            # 如果重新配置失败，记录警告但不中断程序
+            logging.getLogger('pktmask').warning(f"重新配置日志系统失败: {e}")
     
     def log_exception(self, logger_name: str, exc: Exception, context: Optional[Dict[str, Any]] = None):
         """记录异常信息"""
@@ -118,6 +150,11 @@ def get_logger(name: str = 'root') -> logging.Logger:
 def set_log_level(level: LogLevel):
     """设置全局日志级别的便利函数"""
     _logger_manager.set_level(level)
+
+
+def reconfigure_logging():
+    """根据当前配置重新配置日志系统的便利函数"""
+    _logger_manager.reconfigure_from_config()
 
 
 def log_exception(exc: Exception, logger_name: str = 'root', context: Optional[Dict[str, Any]] = None):

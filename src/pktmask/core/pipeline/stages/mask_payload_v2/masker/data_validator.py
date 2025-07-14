@@ -171,7 +171,10 @@ class DataValidator:
             
             # 4. 验证数据包数量
             if self.enable_packet_count_validation and expected_packet_count is not None:
-                actual_count = result.details.get('packet_count', 0)
+                # 重新完整计算包数量，而不是使用格式验证时的部分计数
+                actual_count = self._count_packets_in_file(file_path)
+                result.details['packet_count'] = actual_count
+
                 if actual_count != expected_packet_count:
                     result.warnings.append(
                         f"数据包数量不匹配: 期望{expected_packet_count}, 实际{actual_count}"
@@ -300,11 +303,12 @@ class DataValidator:
                             packet_count += 1
                             if packet_count > 10:  # 只检查前10个包
                                 break
-                    
-                    result.details['packet_count'] = packet_count
+
+                    # 注意：这只是格式验证时的部分计数，不是完整的包数量
+                    result.details['format_validation_packet_count'] = packet_count
                     if packet_count == 0:
                         result.warnings.append("文件中没有找到数据包")
-                        
+
                 except Exception as e:
                     result.warnings.append(f"Scapy验证失败: {e}")
             
@@ -315,7 +319,31 @@ class DataValidator:
             )
         
         return result
-    
+
+    def _count_packets_in_file(self, file_path: Path) -> int:
+        """完整计算文件中的数据包数量
+
+        Args:
+            file_path: PCAP文件路径
+
+        Returns:
+            数据包数量
+        """
+        try:
+            if PcapReader is not None:
+                packet_count = 0
+                with PcapReader(str(file_path)) as reader:
+                    for packet in reader:
+                        packet_count += 1
+                return packet_count
+            else:
+                # 如果没有scapy，返回0
+                self.logger.warning("Scapy不可用，无法计算包数量")
+                return 0
+        except Exception as e:
+            self.logger.warning(f"计算包数量失败: {e}")
+            return 0
+
     def _calculate_file_checksum(self, file_path: Path) -> str:
         """计算文件校验和"""
         hash_md5 = hashlib.md5()

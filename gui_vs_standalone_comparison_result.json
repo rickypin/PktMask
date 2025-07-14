@@ -1,0 +1,96 @@
+{
+  "input_file": "tests/data/tls/tls_1_2_double_vlan.pcap",
+  "gui_result": {
+    "success": true,
+    "config": {
+      "mask": {
+        "enabled": true,
+        "protocol": "tls",
+        "mode": "enhanced",
+        "marker_config": {
+          "preserve": {
+            "handshake": true,
+            "application_data": false,
+            "alert": true,
+            "change_cipher_spec": true,
+            "heartbeat": true
+          }
+        },
+        "masker_config": {
+          "preserve_ratio": 0.3
+        }
+      }
+    },
+    "stats": {
+      "stage_name": "unknown",
+      "packets_processed": 0,
+      "packets_modified": 0,
+      "duration_ms": 3598.233938217163,
+      "stage_stats": [
+        {
+          "stage_name": "Mask Payloads (v2)",
+          "packets_processed": 854,
+          "packets_modified": 70,
+          "extra_metrics": {
+            "masked_bytes": 35203,
+            "preserved_bytes": 267885,
+            "masking_ratio": 0.1161477854616481,
+            "preservation_ratio": 0.8838522145383519,
+            "processing_speed_mbps": 1.159151579124502,
+            "protocol": "tls",
+            "mode": "enhanced",
+            "success": true,
+            "errors": [],
+            "warnings": []
+          }
+        }
+      ]
+    }
+  },
+  "standalone_result": {
+    "success": true,
+    "config": {
+      "protocol": "tls",
+      "mode": "enhanced",
+      "marker_config": {
+        "tls": {
+          "preserve_handshake": true,
+          "preserve_application_data": false
+        }
+      },
+      "masker_config": {
+        "preserve_ratio": 0.3
+      }
+    },
+    "stats": {
+      "stage_name": "Mask Payloads (v2)",
+      "packets_processed": 854,
+      "packets_modified": 70,
+      "duration_ms": 260.6527805328369,
+      "extra_metrics": {
+        "masked_bytes": 35203,
+        "preserved_bytes": 267885,
+        "masking_ratio": 0.1161477854616481,
+        "preservation_ratio": 0.8838522145383519,
+        "processing_speed_mbps": 1.1089359592483743,
+        "protocol": "tls",
+        "mode": "enhanced",
+        "success": true,
+        "errors": [],
+        "warnings": []
+      }
+    }
+  },
+  "gui_verification": {
+    "error": "No JSON output found"
+  },
+  "standalone_verification": {
+    "error": "No JSON output found"
+  },
+  "analysis": {
+    "gui_success_rate": 0,
+    "standalone_success_rate": 0,
+    "rate_difference": 0,
+    "conclusion": "consistent"
+  }
+}

@@ -96,16 +96,19 @@ logging:
   # 日志级别
   console_level: "INFO"       # 控制台日志级别: DEBUG, INFO, WARNING, ERROR, CRITICAL
   file_level: "DEBUG"         # 文件日志级别: DEBUG, INFO, WARNING, ERROR, CRITICAL
-  
+
   # 日志文件设置
   log_file_path: null         # 日志文件路径 (null表示使用默认路径)
   max_log_size_mb: 10         # 最大日志文件大小(MB) (1-100)
   log_backup_count: 5         # 日志备份文件数量 (1-20)
-  
+
   # 日志格式
   include_timestamp: true     # 包含时间戳
   include_module_name: true   # 包含模块名
   include_line_number: false  # 包含行号
+
+  # 详细日志控制
+  enable_protocol_parsing_logs: false  # 启用协议栈解析详细日志 (调试用)
 
 # 元数据 (自动生成，请勿手动修改)
 created_at: null

@@ -1,7 +1,0 @@
-# total_frames	4
-# total_records	4
-# eth:ethertype:ip:tcp:tls	4
-17	eth:ethertype:ip:tcp:tls	1	29	0
-19	eth:ethertype:ip:tcp:tls	1	107	1
-29	eth:ethertype:ip:tcp:tls	1	29	2
-31	eth:ethertype:ip:tcp:tls	1	107	1

@@ -85,6 +85,7 @@ class LoggingSettings:
     log_file_max_size: int = 10 * 1024 * 1024  # 10MB
     log_backup_count: int = 5
     performance_logging: bool = False
+    enable_protocol_parsing_logs: bool = False  # 控制协议栈解析详细日志输出
 
 
 @dataclass
