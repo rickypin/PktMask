@@ -592,6 +592,14 @@ class TLSProtocolMarker(ProtocolMarker):
 
             if record_end > len(payload):
                 # 记录不完整，可能跨段
+                actual_length = len(payload) - offset - 5
+
+                # 【修复1】：验证跨段消息的合理性
+                if not self._validate_cross_segment_record(content_type, length, actual_length):
+                    self.logger.warning(f"跨段TLS消息验证失败: 类型{content_type}, 声明长度{length}, 实际长度{actual_length}")
+                    offset += 1  # 跳过这个字节，继续寻找下一个TLS记录
+                    continue
+
                 tls_payload_seq_end = self._find_actual_seq_for_offset(len(payload) - 1, seq_mapping) + 1
                 records.append({
                     "stream_id": stream_id,
@@ -601,7 +609,7 @@ class TLSProtocolMarker(ProtocolMarker):
                     "version": (version_major, version_minor),
                     "length": length,
                     "declared_length": length,  # 声明的长度
-                    "actual_length": len(payload) - offset - 5,  # 实际可用长度
+                    "actual_length": actual_length,  # 实际可用长度
                     "tls_header_seq_start": tls_header_seq_start,
                     "tls_header_seq_end": tls_header_seq_end,
                     "tls_payload_seq_start": tls_payload_seq_start,
@@ -662,10 +670,16 @@ class TLSProtocolMarker(ProtocolMarker):
                 for record in tls_records:
                     rule = self._create_keep_rule_from_tls_record(record)
                     if rule:
-                        ruleset.add_rule(rule)
-                        self.logger.debug(f"生成精确保留规则: 流{stream_id}-{direction_name} "
-                                        f"TLS-{record['content_type']} "
-                                        f"序列号{rule.seq_start}-{rule.seq_end}")
+                        # 【修复2】：对跨段消息规则进行合理性验证
+                        if self._validate_cross_segment_rule(rule, record):
+                            ruleset.add_rule(rule)
+                            self.logger.debug(f"生成精确保留规则: 流{stream_id}-{direction_name} "
+                                            f"TLS-{record['content_type']} "
+                                            f"序列号{rule.seq_start}-{rule.seq_end}")
+                        else:
+                            self.logger.warning(f"跨段规则验证失败，跳过: 流{stream_id}-{direction_name} "
+                                              f"TLS-{record['content_type']} "
+                                              f"序列号{rule.seq_start}-{rule.seq_end}")
 
         # 第二阶段：处理无法重组的单包TLS消息（回退机制）
         self._generate_fallback_rules_from_packets(tls_packets, tcp_flows, ruleset)
@@ -757,21 +771,61 @@ class TLSProtocolMarker(ProtocolMarker):
             if any(rule.seq_start <= tcp_seq < rule.seq_end for rule in existing_rules):
                 continue
 
-            # 处理单包TLS消息（简化版本）
-            content_types = layers.get("tls.record.content_type", [])
-            if content_types and not isinstance(content_types, list):
-                content_types = [content_types]
+            # 【解决方案1&2&3】：增强TLS片段检测和规则生成逻辑
+            # 获取TCP载荷用于TLS记录开始检测
+            tcp_payload = self._get_tcp_payload_hex(packet)
 
-            for content_type in content_types:
-                if content_type and str(content_type).isdigit():
-                    type_num = int(content_type)
-                    if self._should_preserve_tls_type(type_num):
-                        # 创建简化的单包规则
-                        rule = self._create_simple_packet_rule(packet, tcp_flows, type_num)
-                        if rule:
-                            ruleset.add_rule(rule)
-                            self.logger.debug(f"生成回退规则: Frame {frame_number} "
-                                            f"TLS-{type_num} 序列号{rule.seq_start}-{rule.seq_end}")
+            # 检测TLS片段类型
+            if self._is_tls_fragment(packet):
+                # 这是TLS记录片段，需要特殊处理
+                self.logger.debug(f"检测到TLS片段: Frame {frame_number}")
+
+                if self._is_applicationdata_fragment(packet):
+                    # ApplicationData片段：完全掩码（不生成保留规则）
+                    self.logger.debug(f"ApplicationData片段，跳过规则生成: Frame {frame_number}")
+                    continue
+                else:
+                    # 其他类型片段：完全保留
+                    rule = self._create_full_preserve_rule(packet, tcp_flows)
+                    if rule:
+                        ruleset.add_rule(rule)
+                        self.logger.debug(f"生成片段完全保留规则: Frame {frame_number} "
+                                        f"序列号{rule.seq_start}-{rule.seq_end}")
+                    continue
+
+            elif self._is_tls_record_start(packet, tcp_payload):
+                # TLS记录开始：按正常逻辑处理
+                self.logger.debug(f"检测到TLS记录开始: Frame {frame_number}")
+
+                # 【解决方案3A】：验证TLS内容类型与载荷的一致性
+                content_types = layers.get("tls.record.content_type", [])
+                if content_types and not isinstance(content_types, list):
+                    content_types = [content_types]
+
+                for content_type in content_types:
+                    if content_type and str(content_type).isdigit():
+                        type_num = int(content_type)
+
+                        # 验证TLS类型与载荷头部的一致性
+                        if not self._validate_tls_type_consistency(tcp_payload, type_num):
+                            self.logger.warning(f"Frame {frame_number}: TLS类型{type_num}与载荷不一致，跳过")
+                            continue
+
+                        if self._should_preserve_tls_type(type_num):
+                            # 创建简化的单包规则
+                            rule = self._create_simple_packet_rule(packet, tcp_flows, type_num)
+                            if rule:
+                                # 【解决方案3B】：验证规则的合理性
+                                if self._validate_rule_reasonableness(rule, packet, tcp_payload):
+                                    ruleset.add_rule(rule)
+                                    self.logger.debug(f"生成TLS记录规则: Frame {frame_number} "
+                                                    f"TLS-{type_num} 序列号{rule.seq_start}-{rule.seq_end}")
+                                else:
+                                    self.logger.warning(f"Frame {frame_number}: 规则验证失败，跳过")
+            else:
+                # 非TLS数据或无法识别：完全掩码（不生成保留规则）
+                self.logger.debug(f"非TLS数据，跳过规则生成: Frame {frame_number}")
+                continue
 
     def _create_simple_packet_rule(self, packet: Dict[str, Any],
                                  tcp_flows: Dict[str, Dict[str, Any]],
@@ -1200,3 +1254,354 @@ class TLSProtocolMarker(ProtocolMarker):
                 errors.append(f"TLS消息类型{tls_type}的配置必须是布尔值")
 
         return errors
+
+    def _is_tls_record_start(self, packet_info: Dict[str, Any], payload_hex: str) -> bool:
+        """检测是否为TLS记录的开始
+
+        Args:
+            packet_info: 包信息字典
+            payload_hex: TCP载荷的十六进制字符串
+
+        Returns:
+            bool: True如果是TLS记录开始，False如果是片段或非TLS数据
+        """
+        if not payload_hex or len(payload_hex) < 10:
+            return False
+
+        try:
+            # 解析前5字节作为TLS记录头
+            content_type = int(payload_hex[0:2], 16)
+            version_major = int(payload_hex[2:4], 16)
+            version_minor = int(payload_hex[4:6], 16)
+            length = int(payload_hex[6:10], 16)
+
+            # 验证TLS头的有效性
+            valid_types = [20, 21, 22, 23, 24]  # TLS内容类型
+            valid_versions = [(3, 0), (3, 1), (3, 2), (3, 3)]  # SSL 3.0, TLS 1.0, 1.1, 1.2
+
+            # 检查内容类型和版本
+            if content_type not in valid_types:
+                return False
+            if (version_major, version_minor) not in valid_versions:
+                return False
+
+            # 检查长度合理性（TLS记录最大长度16384字节）
+            if length <= 0 or length > 16384:
+                return False
+
+            # 检查载荷长度是否足够包含声明的TLS记录
+            actual_payload_len = len(payload_hex) // 2
+            if length + 5 > actual_payload_len:
+                # 载荷不足以包含完整的TLS记录，但这可能是跨段消息的开始
+                # 只要头部有效就认为是记录开始
+                pass
+
+            return True
+
+        except (ValueError, TypeError):
+            return False
+
+    def _is_tls_fragment(self, packet_info: Dict[str, Any]) -> bool:
+        """检测是否为TLS记录片段
+
+        Args:
+            packet_info: 包信息字典，包含layers信息
+
+        Returns:
+            bool: True如果是TLS片段，False如果是完整记录或非TLS数据
+        """
+        layers = packet_info.get("_source", {}).get("layers", {})
+
+        # 检查Wireshark是否将其标记为tls.segment.data
+        if 'tls.segment.data' in layers:
+            return True
+
+        # 检查是否有tcp.segments字段（表明TCP层面的重组）
+        if 'tcp.segments' in layers:
+            # 进一步检查是否有TLS相关的段信息
+            return self._has_tls_segment_data(layers)
+
+        return False
+
+    def _is_applicationdata_fragment(self, packet_info: Dict[str, Any]) -> bool:
+        """检测是否为ApplicationData记录的片段
+
+        Args:
+            packet_info: 包信息字典
+
+        Returns:
+            bool: True如果是ApplicationData片段
+        """
+        layers = packet_info.get("_source", {}).get("layers", {})
+
+        # 如果有明确的TLS内容类型且为23，则是ApplicationData
+        content_types = layers.get("tls.record.content_type", [])
+        if content_types:
+            if not isinstance(content_types, list):
+                content_types = [content_types]
+            return any(str(ct) == "23" for ct in content_types)
+
+        # 如果是TLS片段，假设是ApplicationData（因为大部分跨段消息都是ApplicationData）
+        if self._is_tls_fragment(packet_info):
+            return True
+
+        return False
+
+    def _get_tcp_payload_hex(self, packet: Dict[str, Any]) -> str:
+        """获取TCP载荷的十六进制字符串
+
+        Args:
+            packet: 包信息字典
+
+        Returns:
+            str: TCP载荷的十六进制字符串，如果没有载荷则返回空字符串
+        """
+        layers = packet.get("_source", {}).get("layers", {})
+        tcp_payload = layers.get("tcp.payload", "")
+
+        if isinstance(tcp_payload, list):
+            # 如果是列表，取第一个元素
+            tcp_payload = tcp_payload[0] if tcp_payload else ""
+
+        return str(tcp_payload) if tcp_payload else ""
+
+    def _create_full_preserve_rule(self, packet: Dict[str, Any],
+                                 tcp_flows: Dict[str, Dict[str, Any]]) -> Optional[KeepRule]:
+        """为TLS片段创建完全保留规则
+
+        Args:
+            packet: 包信息字典
+            tcp_flows: TCP流信息
+
+        Returns:
+            KeepRule: 完全保留规则，如果创建失败则返回None
+        """
+        try:
+            layers = packet.get("_source", {}).get("layers", {})
+
+            stream_id = str(self._get_first_value(layers.get("tcp.stream", "")))
+            frame_number = self._get_first_value(layers.get("frame.number"))
+            tcp_seq_raw = self._get_first_value(layers.get("tcp.seq_raw"))
+            tcp_len_raw = self._get_first_value(layers.get("tcp.len", 0))
+
+            tcp_seq = int(tcp_seq_raw) if tcp_seq_raw is not None else 0
+            tcp_len = int(tcp_len_raw) if tcp_len_raw is not None else 0
+
+            direction = self._determine_packet_direction(packet, tcp_flows.get(stream_id))
+            if not direction:
+                return None
+
+            # 创建完全保留规则（保留整个TCP载荷）
+            rule = KeepRule(
+                stream_id=stream_id,
+                direction=direction,
+                seq_start=tcp_seq,
+                seq_end=tcp_seq + tcp_len,  # 左闭右开区间
+                rule_type="tls_fragment_full_preserve",
+                metadata={
+                    "frame_number": frame_number,
+                    "tcp_seq_raw": tcp_seq,
+                    "tcp_len": tcp_len,
+                    "preserve_strategy": "full",
+                    "rule_source": "tls_fragment_handler"
+                }
+            )
+
+            return rule
+
+        except Exception as e:
+            self.logger.warning(f"创建完全保留规则失败: {e}")
+            return None
+
+    def _validate_tls_type_consistency(self, payload_hex: str, expected_type: int) -> bool:
+        """验证TLS类型与载荷头部的一致性
+
+        Args:
+            payload_hex: TCP载荷的十六进制字符串
+            expected_type: 期望的TLS内容类型
+
+        Returns:
+            bool: True如果一致，False如果不一致
+        """
+        if not payload_hex or len(payload_hex) < 2:
+            return False
+
+        try:
+            # 解析载荷的第一个字节作为TLS内容类型
+            actual_type = int(payload_hex[0:2], 16)
+
+            # 检查是否匹配
+            if actual_type == expected_type:
+                return True
+
+            # 对于某些特殊情况，允许一定的容错
+            # 例如，如果Wireshark解析为TLS-23，但载荷第一字节不是23，
+            # 可能是因为这是一个跨段消息的片段
+            self.logger.debug(f"TLS类型不一致: 期望{expected_type}, 实际{actual_type}")
+            return False
+
+        except (ValueError, TypeError):
+            return False
+
+    def _validate_rule_reasonableness(self, rule: KeepRule, packet: Dict[str, Any],
+                                    payload_hex: str) -> bool:
+        """验证规则的合理性
+
+        Args:
+            rule: 生成的保留规则
+            packet: 原始包信息
+            payload_hex: TCP载荷十六进制
+
+        Returns:
+            bool: True如果规则合理，False如果不合理
+        """
+        try:
+            layers = packet.get("_source", {}).get("layers", {})
+            tcp_len = int(self._get_first_value(layers.get("tcp.len", 0)))
+
+            # 1. 检查规则长度的合理性
+            rule_length = rule.seq_end - rule.seq_start
+
+            # 对于header_only规则，长度应该是5字节
+            if rule.metadata.get('preserve_strategy') == 'header_only':
+                if rule_length != 5:
+                    self.logger.warning(f"Header_only规则长度异常: {rule_length} (期望5)")
+                    return False
+
+            # 对于full_message规则，长度不应该超过TCP载荷长度
+            elif rule.metadata.get('preserve_strategy') == 'full_message':
+                if rule_length > tcp_len:
+                    self.logger.warning(f"Full_message规则长度超出TCP载荷: {rule_length} > {tcp_len}")
+                    return False
+
+            # 2. 检查TLS-23规则的特殊性
+            if rule.rule_type == 'tls_applicationdata_header':
+                # ApplicationData头部规则必须是5字节
+                if rule_length != 5:
+                    self.logger.warning(f"ApplicationData头部规则长度错误: {rule_length}")
+                    return False
+
+                # 验证载荷确实以TLS-23开头
+                if payload_hex and len(payload_hex) >= 2:
+                    first_byte = int(payload_hex[0:2], 16)
+                    if first_byte != 23:
+                        self.logger.warning(f"ApplicationData规则但载荷不以23开头: {first_byte}")
+                        return False
+
+            # 3. 检查ChangeCipherSpec规则的特殊性
+            elif rule.rule_type == 'tls_changecipherspec':
+                # ChangeCipherSpec消息通常很短（6字节：5字节头+1字节载荷）
+                if rule_length > 50:  # 给一些容错空间
+                    self.logger.warning(f"ChangeCipherSpec规则长度异常: {rule_length}")
+                    return False
+
+                # 验证载荷确实以TLS-20开头
+                if payload_hex and len(payload_hex) >= 2:
+                    first_byte = int(payload_hex[0:2], 16)
+                    if first_byte != 20:
+                        self.logger.warning(f"ChangeCipherSpec规则但载荷不以20开头: {first_byte}")
+                        return False
+
+            return True
+
+        except Exception as e:
+            self.logger.warning(f"规则合理性验证失败: {e}")
+            return False
+
+    def _validate_cross_segment_record(self, content_type: int, declared_length: int, actual_length: int) -> bool:
+        """验证跨段TLS记录的合理性
+
+        Args:
+            content_type: TLS内容类型
+            declared_length: TLS记录声明的长度
+            actual_length: 实际可用的载荷长度
+
+        Returns:
+            bool: True如果跨段记录合理，False如果不合理
+        """
+        try:
+            # 1. 检查声明长度是否合理
+            MAX_TLS_RECORD_LENGTH = 16384  # TLS标准最大记录长度
+            if declared_length > MAX_TLS_RECORD_LENGTH:
+                self.logger.warning(f"TLS记录声明长度过大: {declared_length} > {MAX_TLS_RECORD_LENGTH}")
+                return False
+
+            # 2. 针对不同TLS类型的特殊检查
+            if content_type == 20:  # ChangeCipherSpec
+                # ChangeCipherSpec消息载荷通常只有1字节
+                if declared_length > 10:  # 给一些容错空间
+                    self.logger.warning(f"ChangeCipherSpec声明长度异常: {declared_length}")
+                    return False
+
+            elif content_type == 21:  # Alert
+                # Alert消息载荷通常只有2字节
+                if declared_length > 10:  # 给一些容错空间
+                    self.logger.warning(f"Alert声明长度异常: {declared_length}")
+                    return False
+
+            # 3. 检查实际长度与声明长度的差异
+            if actual_length > declared_length:
+                self.logger.warning(f"实际长度超过声明长度: {actual_length} > {declared_length}")
+                return False
+
+            # 4. 检查跨段的合理性（实际长度不应该太小）
+            if actual_length < declared_length * 0.1:  # 实际长度不应该小于声明长度的10%
+                self.logger.warning(f"跨段记录实际长度过小: {actual_length} < {declared_length * 0.1}")
+                return False
+
+            return True
+
+        except Exception as e:
+            self.logger.warning(f"跨段记录验证失败: {e}")
+            return False
+
+    def _validate_cross_segment_rule(self, rule: KeepRule, record: Dict[str, Any]) -> bool:
+        """验证跨段消息生成的规则的合理性
+
+        Args:
+            rule: 生成的保留规则
+            record: 原始TLS记录信息
+
+        Returns:
+            bool: True如果规则合理，False如果不合理
+        """
+        try:
+            rule_length = rule.seq_end - rule.seq_start
+            content_type = record.get("content_type", 0)
+            is_cross_segment = record.get("is_cross_segment", False)
+            declared_length = record.get("declared_length", 0)
+            actual_length = record.get("actual_length", 0)
+
+            # 1. 对于跨段消息，进行额外的大小检查
+            if is_cross_segment:
+                # 跨段规则的长度不应该过大
+                MAX_CROSS_SEGMENT_RULE_LENGTH = 2048  # 2KB限制
+                if rule_length > MAX_CROSS_SEGMENT_RULE_LENGTH:
+                    self.logger.warning(f"跨段规则长度过大: {rule_length} > {MAX_CROSS_SEGMENT_RULE_LENGTH}")
+                    return False
+
+                # 针对特定TLS类型的严格限制
+                if content_type == 20:  # ChangeCipherSpec
+                    # ChangeCipherSpec规则不应该超过100字节
+                    if rule_length > 100:
+                        self.logger.warning(f"跨段ChangeCipherSpec规则长度异常: {rule_length}")
+                        return False
+
+                elif content_type == 21:  # Alert
+                    # Alert规则不应该超过50字节
+                    if rule_length > 50:
+                        self.logger.warning(f"跨段Alert规则长度异常: {rule_length}")
+                        return False
+
+            # 2. 检查声明长度与实际规则长度的一致性
+            if rule.metadata.get('preserve_strategy') == 'full_message':
+                expected_length = 5 + actual_length  # 5字节头部 + 实际载荷长度
+                if abs(rule_length - expected_length) > 10:  # 允许一些误差
+                    self.logger.warning(f"规则长度与期望不符: {rule_length} vs {expected_length}")
+                    return False
+
+            return True
+
+        except Exception as e:
+            self.logger.warning(f"跨段规则验证失败: {e}")
+            return False

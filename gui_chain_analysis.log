@@ -1,0 +1,272 @@
+2025-07-14 14:24:53,957 - __main__ - INFO - 开始GUI处理链条分析
+2025-07-14 14:24:53,957 - __main__ - INFO - 使用测试文件: tests/data/tls/tls_1_3_0-RTT-2_22_23_mix.pcap
+2025-07-14 14:24:53,957 - __main__ - INFO - === 模拟GUI调用链条 ===
+2025-07-14 14:24:53,957 - __main__ - DEBUG - 步骤1: 模拟MainWindow复选框状态
+2025-07-14 14:24:53,957 - __main__ - DEBUG - 复选框状态: mask_ip=False, dedup=False, mask_payload=True
+2025-07-14 14:24:53,957 - __main__ - DEBUG - 步骤2: 模拟PipelineManager配置构建
+2025-07-14 14:24:53,990 - __main__ - DEBUG - GUI配置构建结果: {
+  "mask": {
+    "enabled": true,
+    "protocol": "tls",
+    "mode": "enhanced",
+    "marker_config": {
+      "tls": {
+        "preserve_handshake": true,
+        "preserve_application_data": false
+      }
+    },
+    "masker_config": {
+      "preserve_ratio": 0.3
+    }
+  }
+}
+2025-07-14 14:24:53,990 - __main__ - DEBUG - 步骤3: 模拟PipelineExecutor创建
+2025-07-14 14:24:54,088 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - NewMaskPayloadStage 创建: protocol=tls, mode=enhanced
+2025-07-14 14:24:54,088 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - 开始初始化 NewMaskPayloadStage
+2025-07-14 14:24:54,515 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 检测到 tshark 4.4.7 于 tshark
+2025-07-14 14:24:54,515 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLS分析器初始化完成，使用tshark: tshark
+2025-07-14 14:24:54,515 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLSProtocolMarker 初始化成功
+2025-07-14 14:24:54,896 - pktmask.core.pipeline.stages.mask_payload_v2.masker.memory_optimizer.MemoryOptimizer - INFO - 内存优化器初始化: 最大内存=2048MB, GC阈值=80.0%
+2025-07-14 14:24:54,896 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: memory_error
+2025-07-14 14:24:54,896 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: input_error
+2025-07-14 14:24:54,896 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: output_error
+2025-07-14 14:24:54,896 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - INFO - 错误处理器初始化: 最大重试=3, 自动恢复=启用
+2025-07-14 14:24:54,896 - pktmask.core.pipeline.stages.mask_payload_v2.masker.data_validator.DataValidator - INFO - 数据验证器初始化: 校验和验证=启用
+2025-07-14 14:24:54,896 - pktmask.core.pipeline.stages.mask_payload_v2.masker.fallback_handler.FallbackHandler - INFO - 降级处理器初始化: 默认模式=copy_original, 启用=是
+2025-07-14 14:24:54,896 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: input_error
+2025-07-14 14:24:54,897 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: processing_error
+2025-07-14 14:24:54,897 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - PayloadMasker 初始化: chunk_size=1000, verify_checksums=True, 内存限制=2048MB
+2025-07-14 14:24:54,897 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - NewMaskPayloadStage 初始化成功
+2025-07-14 14:24:54,897 - __main__ - DEBUG - 执行器创建成功，包含stages: ['NewMaskPayloadStage']
+2025-07-14 14:24:54,897 - __main__ - DEBUG - 步骤4: 检查NewMaskPayloadStage配置
+2025-07-14 14:24:54,897 - __main__ - DEBUG - 找到NewMaskPayloadStage: NewMaskPayloadStage
+2025-07-14 14:24:54,897 - __main__ - DEBUG - Stage配置: protocol=tls
+2025-07-14 14:24:54,897 - __main__ - DEBUG - Stage模式: mode=enhanced
+2025-07-14 14:24:54,897 - __main__ - DEBUG - Marker配置: {'tls': {'preserve_handshake': True, 'preserve_application_data': False}}
+2025-07-14 14:24:54,897 - __main__ - DEBUG - Masker配置: {'preserve_ratio': 0.3}
+2025-07-14 14:24:54,897 - __main__ - DEBUG - 步骤5: 模拟GUI文件处理
+2025-07-14 14:24:54,898 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - 开始处理文件: tests/data/tls/tls_1_3_0-RTT-2_22_23_mix.pcap -> /var/folders/wz/ql3l9vh10z3c4kt7h9c1ydvh0000gn/T/tmprluxq_jo.pcap
+2025-07-14 14:24:54,898 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - DEBUG - 使用双模块架构处理模式
+2025-07-14 14:24:54,898 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - DEBUG - 阶段1: 生成保留规则
+2025-07-14 14:24:54,898 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - 开始分析TLS流量: tests/data/tls/tls_1_3_0-RTT-2_22_23_mix.pcap
+2025-07-14 14:24:55,123 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 检测到 tshark 4.4.7 于 tshark
+2025-07-14 14:24:55,123 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLS分析器初始化完成，使用tshark: tshark
+2025-07-14 14:24:55,123 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 扫描TLS消息
+2025-07-14 14:24:55,495 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 合并扫描结果：重组包 31 个，段数据包 31 个，合并后 11 个
+2025-07-14 14:24:55,496 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 发现 11 个包含TLS消息的数据包
+2025-07-14 14:24:55,496 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 分析TCP流
+2025-07-14 14:24:55,860 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 分析了 2 个TCP流
+2025-07-14 14:24:55,860 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成保留规则（使用重组载荷分析）
+2025-07-14 14:24:55,860 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-forward TLS-22 序列号1098815776-1098816306
+2025-07-14 14:24:55,860 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-forward TLS-20 序列号1098816306-1098816312
+2025-07-14 14:24:55,860 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-forward TLS-23 序列号1098816312-1098816317
+2025-07-14 14:24:55,860 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-forward TLS-23 序列号1098816390-1098816395
+2025-07-14 14:24:55,860 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-forward TLS-23 序列号1098816416-1098816421
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-forward TLS-23 序列号1098816490-1098816495
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-reverse TLS-22 序列号952224567-952224700
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-reverse TLS-20 序列号952224700-952224706
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-reverse TLS-23 序列号952224706-952224711
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-reverse TLS-23 序列号952224738-952224743
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-reverse TLS-23 序列号952224812-952224817
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-forward TLS-22 序列号3760247995-3760248234
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-forward TLS-20 序列号3760248234-3760248240
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-forward TLS-23 序列号3760248240-3760248245
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-forward TLS-23 序列号3760248314-3760248319
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-reverse TLS-22 序列号1819905103-1819905230
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-reverse TLS-20 序列号1819905230-1819905236
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-reverse TLS-23 序列号1819905236-1819905241
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-reverse TLS-23 序列号1819905264-1819905269
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-reverse TLS-23 序列号1819905944-1819905949
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-reverse TLS-23 序列号1819906102-1819906107
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-reverse TLS-23 序列号1819906176-1819906181
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-reverse TLS-23 序列号1819906455-1819906460
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成回退保留规则（单包TLS消息）
+2025-07-14 14:24:55,861 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLS分析完成，耗时 0.96 秒，生成 23 条保留规则
+2025-07-14 14:24:55,862 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - DEBUG - 阶段2: 应用掩码规则
+2025-07-14 14:24:55,862 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - 开始应用掩码: tests/data/tls/tls_1_3_0-RTT-2_22_23_mix.pcap -> /var/folders/wz/ql3l9vh10z3c4kt7h9c1ydvh0000gn/T/tmprluxq_jo.pcap
+2025-07-14 14:24:55,862 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - 验证输入文件...
+2025-07-14 14:24:55,864 - pktmask.core.pipeline.stages.mask_payload_v2.masker.data_validator.DataValidator - DEBUG - 输入文件验证通过: tests/data/tls/tls_1_3_0-RTT-2_22_23_mix.pcap
+2025-07-14 14:24:55,864 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - 预处理保留规则...
+2025-07-14 14:24:55,864 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 流 1:forward - 原始区间: 6, 合并后: 5, header_only: 4, full_preserve: 1, 边界点: 9
+2025-07-14 14:24:55,864 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 流 1:reverse - 原始区间: 5, 合并后: 4, header_only: 3, full_preserve: 1, 边界点: 7
+2025-07-14 14:24:55,864 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 流 0:forward - 原始区间: 4, 合并后: 3, header_only: 2, full_preserve: 1, 边界点: 5
+2025-07-14 14:24:55,864 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 流 0:reverse - 原始区间: 8, 合并后: 7, header_only: 6, full_preserve: 1, 边界点: 13
+2025-07-14 14:24:55,864 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - 预处理完成，共 2 个流方向
+2025-07-14 14:24:55,864 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - 开始逐包处理...
+2025-07-14 14:24:55,874 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 分配新流ID: 172.16.1.117:35120-172.16.1.130:4433 -> 0
+2025-07-14 14:24:55,875 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 建立流方向信息 0: forward=172.16.1.117:35120->172.16.1.130:4433
+2025-07-14 14:24:55,875 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:55,875 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35120, stream_id=0, direction=reverse
+2025-07-14 14:24:55,875 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:55,875 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:55,875 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35120, stream_id=0, direction=reverse
+2025-07-14 14:24:55,876 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35120, stream_id=0, direction=reverse
+2025-07-14 14:24:55,876 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:55,877 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:55,877 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35120, stream_id=0, direction=reverse
+2025-07-14 14:24:55,878 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35120, stream_id=0, direction=reverse
+2025-07-14 14:24:55,878 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:55,878 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:55,879 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:55,879 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:55,879 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35120, stream_id=0, direction=reverse
+2025-07-14 14:24:55,879 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35120, stream_id=0, direction=reverse
+2025-07-14 14:24:55,879 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:55,879 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 分配新流ID: 172.16.1.117:35122-172.16.1.130:4433 -> 1
+2025-07-14 14:24:55,879 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 建立流方向信息 1: forward=172.16.1.117:35122->172.16.1.130:4433
+2025-07-14 14:24:55,880 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:55,880 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35122, stream_id=1, direction=reverse
+2025-07-14 14:24:55,880 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:55,880 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:55,881 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35122, stream_id=1, direction=reverse
+2025-07-14 14:24:55,881 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35122, stream_id=1, direction=reverse
+2025-07-14 14:24:55,881 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:55,882 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:55,882 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35122, stream_id=1, direction=reverse
+2025-07-14 14:24:55,882 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:55,883 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:55,883 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:55,883 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35122, stream_id=1, direction=reverse
+2025-07-14 14:24:55,883 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:55,889 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - 验证处理状态...
+2025-07-14 14:24:55,889 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - 验证输出文件...
+2025-07-14 14:24:55,891 - pktmask.core.pipeline.stages.mask_payload_v2.masker.data_validator.DataValidator - DEBUG - 输出文件验证通过: /var/folders/wz/ql3l9vh10z3c4kt7h9c1ydvh0000gn/T/tmprluxq_jo.pcap
+2025-07-14 14:24:55,891 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - WARNING - 输出文件警告: 数据包数量不匹配: 期望31, 实际11
+2025-07-14 14:24:55,891 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - 掩码应用完成: 处理包数=31, 修改包数=10, 执行时间=0.03秒, 峰值内存=83.3MB, GC次数=0
+2025-07-14 14:24:55,892 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - 双模块处理完成: 处理包数=31, 修改包数=10
+2025-07-14 14:24:55,892 - __main__ - INFO - GUI调用链条执行完成: success=True
+2025-07-14 14:24:55,892 - __main__ - INFO - === 直接后端接口调用 ===
+2025-07-14 14:24:55,892 - __main__ - DEBUG - 步骤1: 直接创建NewMaskPayloadStage配置
+2025-07-14 14:24:55,892 - __main__ - DEBUG - 直接配置: {
+  "enabled": true,
+  "protocol": "tls",
+  "mode": "enhanced",
+  "marker_config": {
+    "tls": {
+      "preserve_handshake": true,
+      "preserve_application_data": false
+    }
+  },
+  "masker_config": {
+    "preserve_ratio": 0.3
+  }
+}
+2025-07-14 14:24:55,892 - __main__ - DEBUG - 步骤2: 直接实例化NewMaskPayloadStage
+2025-07-14 14:24:55,892 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - NewMaskPayloadStage 创建: protocol=tls, mode=enhanced
+2025-07-14 14:24:55,892 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - 开始初始化 NewMaskPayloadStage
+2025-07-14 14:24:56,073 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 检测到 tshark 4.4.7 于 tshark
+2025-07-14 14:24:56,073 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLS分析器初始化完成，使用tshark: tshark
+2025-07-14 14:24:56,073 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLSProtocolMarker 初始化成功
+2025-07-14 14:24:56,074 - pktmask.core.pipeline.stages.mask_payload_v2.masker.memory_optimizer.MemoryOptimizer - INFO - 内存优化器初始化: 最大内存=2048MB, GC阈值=80.0%
+2025-07-14 14:24:56,074 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: memory_error
+2025-07-14 14:24:56,074 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: input_error
+2025-07-14 14:24:56,074 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: output_error
+2025-07-14 14:24:56,074 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - INFO - 错误处理器初始化: 最大重试=3, 自动恢复=启用
+2025-07-14 14:24:56,074 - pktmask.core.pipeline.stages.mask_payload_v2.masker.data_validator.DataValidator - INFO - 数据验证器初始化: 校验和验证=启用
+2025-07-14 14:24:56,074 - pktmask.core.pipeline.stages.mask_payload_v2.masker.fallback_handler.FallbackHandler - INFO - 降级处理器初始化: 默认模式=copy_original, 启用=是
+2025-07-14 14:24:56,074 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: input_error
+2025-07-14 14:24:56,074 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: processing_error
+2025-07-14 14:24:56,074 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - PayloadMasker 初始化: chunk_size=1000, verify_checksums=True, 内存限制=2048MB
+2025-07-14 14:24:56,074 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - NewMaskPayloadStage 初始化成功
+2025-07-14 14:24:56,074 - __main__ - DEBUG - Stage初始化成功: protocol=tls, mode=enhanced
+2025-07-14 14:24:56,074 - __main__ - DEBUG - 步骤3: 直接调用process_file
+2025-07-14 14:24:56,075 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - 开始处理文件: tests/data/tls/tls_1_3_0-RTT-2_22_23_mix.pcap -> /var/folders/wz/ql3l9vh10z3c4kt7h9c1ydvh0000gn/T/tmpp_hebsx0.pcap
+2025-07-14 14:24:56,075 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - DEBUG - 使用双模块架构处理模式
+2025-07-14 14:24:56,075 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - DEBUG - 阶段1: 生成保留规则
+2025-07-14 14:24:56,075 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - 开始分析TLS流量: tests/data/tls/tls_1_3_0-RTT-2_22_23_mix.pcap
+2025-07-14 14:24:56,261 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 检测到 tshark 4.4.7 于 tshark
+2025-07-14 14:24:56,261 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLS分析器初始化完成，使用tshark: tshark
+2025-07-14 14:24:56,261 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 扫描TLS消息
+2025-07-14 14:24:56,664 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 合并扫描结果：重组包 31 个，段数据包 31 个，合并后 11 个
+2025-07-14 14:24:56,665 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 发现 11 个包含TLS消息的数据包
+2025-07-14 14:24:56,665 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 分析TCP流
+2025-07-14 14:24:57,041 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 分析了 2 个TCP流
+2025-07-14 14:24:57,041 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成保留规则（使用重组载荷分析）
+2025-07-14 14:24:57,041 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-forward TLS-22 序列号1098815776-1098816306
+2025-07-14 14:24:57,041 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-forward TLS-20 序列号1098816306-1098816312
+2025-07-14 14:24:57,041 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-forward TLS-23 序列号1098816312-1098816317
+2025-07-14 14:24:57,041 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-forward TLS-23 序列号1098816390-1098816395
+2025-07-14 14:24:57,041 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-forward TLS-23 序列号1098816416-1098816421
+2025-07-14 14:24:57,041 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-forward TLS-23 序列号1098816490-1098816495
+2025-07-14 14:24:57,041 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-reverse TLS-22 序列号952224567-952224700
+2025-07-14 14:24:57,042 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-reverse TLS-20 序列号952224700-952224706
+2025-07-14 14:24:57,042 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-reverse TLS-23 序列号952224706-952224711
+2025-07-14 14:24:57,042 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-reverse TLS-23 序列号952224738-952224743
+2025-07-14 14:24:57,042 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流1-reverse TLS-23 序列号952224812-952224817
+2025-07-14 14:24:57,042 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-forward TLS-22 序列号3760247995-3760248234
+2025-07-14 14:24:57,042 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-forward TLS-20 序列号3760248234-3760248240
+2025-07-14 14:24:57,042 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-forward TLS-23 序列号3760248240-3760248245
+2025-07-14 14:24:57,042 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-forward TLS-23 序列号3760248314-3760248319
+2025-07-14 14:24:57,042 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-reverse TLS-22 序列号1819905103-1819905230
+2025-07-14 14:24:57,042 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-reverse TLS-20 序列号1819905230-1819905236
+2025-07-14 14:24:57,042 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-reverse TLS-23 序列号1819905236-1819905241
+2025-07-14 14:24:57,042 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-reverse TLS-23 序列号1819905264-1819905269
+2025-07-14 14:24:57,042 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-reverse TLS-23 序列号1819905944-1819905949
+2025-07-14 14:24:57,042 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-reverse TLS-23 序列号1819906102-1819906107
+2025-07-14 14:24:57,042 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-reverse TLS-23 序列号1819906176-1819906181
+2025-07-14 14:24:57,042 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成精确保留规则: 流0-reverse TLS-23 序列号1819906455-1819906460
+2025-07-14 14:24:57,043 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - 生成回退保留规则（单包TLS消息）
+2025-07-14 14:24:57,043 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLS分析完成，耗时 0.97 秒，生成 23 条保留规则
+2025-07-14 14:24:57,043 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - DEBUG - 阶段2: 应用掩码规则
+2025-07-14 14:24:57,043 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - 开始应用掩码: tests/data/tls/tls_1_3_0-RTT-2_22_23_mix.pcap -> /var/folders/wz/ql3l9vh10z3c4kt7h9c1ydvh0000gn/T/tmpp_hebsx0.pcap
+2025-07-14 14:24:57,043 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - 验证输入文件...
+2025-07-14 14:24:57,045 - pktmask.core.pipeline.stages.mask_payload_v2.masker.data_validator.DataValidator - DEBUG - 输入文件验证通过: tests/data/tls/tls_1_3_0-RTT-2_22_23_mix.pcap
+2025-07-14 14:24:57,045 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - 预处理保留规则...
+2025-07-14 14:24:57,046 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 流 1:forward - 原始区间: 6, 合并后: 5, header_only: 4, full_preserve: 1, 边界点: 9
+2025-07-14 14:24:57,046 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 流 1:reverse - 原始区间: 5, 合并后: 4, header_only: 3, full_preserve: 1, 边界点: 7
+2025-07-14 14:24:57,046 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 流 0:forward - 原始区间: 4, 合并后: 3, header_only: 2, full_preserve: 1, 边界点: 5
+2025-07-14 14:24:57,046 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 流 0:reverse - 原始区间: 8, 合并后: 7, header_only: 6, full_preserve: 1, 边界点: 13
+2025-07-14 14:24:57,046 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - 预处理完成，共 2 个流方向
+2025-07-14 14:24:57,046 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - 开始逐包处理...
+2025-07-14 14:24:57,046 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 分配新流ID: 172.16.1.117:35120-172.16.1.130:4433 -> 0
+2025-07-14 14:24:57,047 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 建立流方向信息 0: forward=172.16.1.117:35120->172.16.1.130:4433
+2025-07-14 14:24:57,047 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:57,047 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35120, stream_id=0, direction=reverse
+2025-07-14 14:24:57,047 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:57,047 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:57,047 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35120, stream_id=0, direction=reverse
+2025-07-14 14:24:57,048 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35120, stream_id=0, direction=reverse
+2025-07-14 14:24:57,048 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:57,048 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:57,049 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35120, stream_id=0, direction=reverse
+2025-07-14 14:24:57,049 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35120, stream_id=0, direction=reverse
+2025-07-14 14:24:57,049 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:57,050 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:57,050 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:57,050 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:57,050 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35120, stream_id=0, direction=reverse
+2025-07-14 14:24:57,051 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35120, stream_id=0, direction=reverse
+2025-07-14 14:24:57,051 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35120->172.16.1.130:4433, stream_id=0, direction=forward
+2025-07-14 14:24:57,051 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 分配新流ID: 172.16.1.117:35122-172.16.1.130:4433 -> 1
+2025-07-14 14:24:57,051 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 建立流方向信息 1: forward=172.16.1.117:35122->172.16.1.130:4433
+2025-07-14 14:24:57,052 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:57,052 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35122, stream_id=1, direction=reverse
+2025-07-14 14:24:57,052 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:57,052 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:57,053 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35122, stream_id=1, direction=reverse
+2025-07-14 14:24:57,053 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35122, stream_id=1, direction=reverse
+2025-07-14 14:24:57,053 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:57,054 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:57,054 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35122, stream_id=1, direction=reverse
+2025-07-14 14:24:57,054 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:57,055 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:57,055 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:57,055 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.130:4433->172.16.1.117:35122, stream_id=1, direction=reverse
+2025-07-14 14:24:57,055 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - DEBUG - 处理数据包: 172.16.1.117:35122->172.16.1.130:4433, stream_id=1, direction=forward
+2025-07-14 14:24:57,062 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - 验证处理状态...
+2025-07-14 14:24:57,062 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - 验证输出文件...
+2025-07-14 14:24:57,064 - pktmask.core.pipeline.stages.mask_payload_v2.masker.data_validator.DataValidator - DEBUG - 输出文件验证通过: /var/folders/wz/ql3l9vh10z3c4kt7h9c1ydvh0000gn/T/tmpp_hebsx0.pcap
+2025-07-14 14:24:57,064 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - WARNING - 输出文件警告: 数据包数量不匹配: 期望31, 实际11
+2025-07-14 14:24:57,064 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - 掩码应用完成: 处理包数=31, 修改包数=10, 执行时间=0.02秒, 峰值内存=83.7MB, GC次数=0
+2025-07-14 14:24:57,064 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - 双模块处理完成: 处理包数=31, 修改包数=10
+2025-07-14 14:24:57,064 - __main__ - INFO - 直接后端调用完成: success=True
+2025-07-14 14:24:57,065 - __main__ - INFO - === 分析调用差异 ===
+2025-07-14 14:24:57,065 - __main__ - DEBUG - 分析配置差异
+2025-07-14 14:24:57,065 - __main__ - WARNING - 发现配置差异
+2025-07-14 14:24:57,065 - __main__ - DEBUG - 分析Stage配置差异
+2025-07-14 14:24:57,065 - __main__ - DEBUG - Stage配置一致
+2025-07-14 14:24:57,065 - __main__ - DEBUG - 分析处理结果差异
+2025-07-14 14:24:57,065 - __main__ - INFO - === 分析结果汇总 ===
+2025-07-14 14:24:57,065 - __main__ - WARNING - 发现 1 个潜在问题:
+2025-07-14 14:24:57,065 - __main__ - WARNING -   1. 配置参数不一致
+2025-07-14 14:24:57,065 - __main__ - INFO - 详细分析结果已保存到: gui_chain_analysis_result.json

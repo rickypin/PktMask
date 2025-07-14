@@ -1,0 +1,146 @@
+{
+  "gui_result": {
+    "success": true,
+    "errors": [],
+    "stage_stats": [
+      {
+        "stage_name": "Mask Payloads (v2)",
+        "packets_processed": 31,
+        "packets_modified": 10,
+        "duration_ms": 29.20699119567871,
+        "extra_metrics": {
+          "masked_bytes": 2108,
+          "preserved_bytes": 1128,
+          "masking_ratio": 0.6514215080346106,
+          "preservation_ratio": 0.34857849196538937,
+          "processing_speed_mbps": 0.10566271846403762,
+          "protocol": "tls",
+          "mode": "enhanced",
+          "success": true,
+          "errors": [],
+          "warnings": []
+        }
+      }
+    ],
+    "total_duration_ms": 993.8418865203857,
+    "config_used": {
+      "mask": {
+        "enabled": true,
+        "protocol": "tls",
+        "mode": "enhanced",
+        "marker_config": {
+          "tls": {
+            "preserve_handshake": true,
+            "preserve_application_data": false
+          }
+        },
+        "masker_config": {
+          "preserve_ratio": 0.3
+        }
+      }
+    },
+    "mask_stage_config": {
+      "protocol": "tls",
+      "mode": "enhanced",
+      "marker_config": {
+        "tls": {
+          "preserve_handshake": true,
+          "preserve_application_data": false
+        }
+      },
+      "masker_config": {
+        "preserve_ratio": 0.3
+      }
+    }
+  },
+  "direct_result": {
+    "success": true,
+    "errors": [],
+    "stage_stats": [
+      {
+        "stage_name": "Mask Payloads (v2)",
+        "packets_processed": 31,
+        "packets_modified": 10,
+        "duration_ms": 20.778894424438477,
+        "extra_metrics": {
+          "masked_bytes": 2108,
+          "preserved_bytes": 1128,
+          "masking_ratio": 0.6514215080346106,
+          "preservation_ratio": 0.34857849196538937,
+          "processing_speed_mbps": 0.14852041811526856,
+          "protocol": "tls",
+          "mode": "enhanced",
+          "success": true,
+          "errors": [],
+          "warnings": []
+        }
+      }
+    ],
+    "total_duration_ms": 20.778894424438477,
+    "config_used": {
+      "enabled": true,
+      "protocol": "tls",
+      "mode": "enhanced",
+      "marker_config": {
+        "tls": {
+          "preserve_handshake": true,
+          "preserve_application_data": false
+        }
+      },
+      "masker_config": {
+        "preserve_ratio": 0.3
+      }
+    },
+    "mask_stage_config": {
+      "protocol": "tls",
+      "mode": "enhanced",
+      "marker_config": {
+        "tls": {
+          "preserve_handshake": true,
+          "preserve_application_data": false
+        }
+      },
+      "masker_config": {
+        "preserve_ratio": 0.3
+      }
+    }
+  },
+  "differences": {
+    "config_differences": {
+      "gui_config": {
+        "mask": {
+          "enabled": true,
+          "protocol": "tls",
+          "mode": "enhanced",
+          "marker_config": {
+            "tls": {
+              "preserve_handshake": true,
+              "preserve_application_data": false
+            }
+          },
+          "masker_config": {
+            "preserve_ratio": 0.3
+          }
+        }
+      },
+      "direct_config": {
+        "enabled": true,
+        "protocol": "tls",
+        "mode": "enhanced",
+        "marker_config": {
+          "tls": {
+            "preserve_handshake": true,
+            "preserve_application_data": false
+          }
+        },
+        "masker_config": {
+          "preserve_ratio": 0.3
+        }
+      }
+    },
+    "result_differences": {},
+    "potential_issues": [
+      "配置参数不一致"
+    ]
+  }
+}

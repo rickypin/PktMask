@@ -1,0 +1,7 @@
+{
+  "icmp_packets_found": 0,
+  "tcp_detection_results": [],
+  "innermost_tcp_tests": [],
+  "flow_id_tests": [],
+  "summary": {}
+}

@@ -764,7 +764,7 @@ class ReportManager:
                 step_type = 'mask_ip'  # 统一使用mask_ip作为IP匿名化的类型
             elif step_name_raw in ['DedupStage', 'DeduplicationStage']:
                 step_type = 'remove_dupes'
-            elif step_name_raw in ['MaskStage', 'MaskPayloadStage', 'NewMaskPayloadStage']:
+            elif step_name_raw in ['MaskStage', 'MaskPayloadStage', 'NewMaskPayloadStage', 'Mask Payloads (v2)']:
                 step_type = 'trim_payloads'
             else:
                 step_type = step_name_raw.lower()

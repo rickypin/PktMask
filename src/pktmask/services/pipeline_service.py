@@ -191,7 +191,20 @@ def build_pipeline_config(
     if enable_mask:
         config["mask"] = {
             "enabled": True,
-            "mode": "enhanced"  # 修复：使用重构后的enhanced模式
+            "protocol": "tls",  # 协议类型
+            "mode": "enhanced",  # 使用增强模式
+            "marker_config": {
+                "preserve": {
+                    "handshake": True,
+                    "application_data": False,
+                    "alert": True,
+                    "change_cipher_spec": True,
+                    "heartbeat": True
+                }
+            },
+            "masker_config": {
+                "preserve_ratio": 0.3
+            }
         }
     return config
 

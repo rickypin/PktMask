@@ -1,0 +1,180 @@
+{
+  "icmp_encap_packets": [
+    {
+      "frame_number": "807",
+      "protocols": "eth:ethertype:vlan:ethertype:ip:icmp:ip:tcp:tls",
+      "frame_len": "213",
+      "outer_ip": {
+        "src": "10.3.221.132",
+        "dst": "110.53.220.4",
+        "proto": "1",
+        "len": "195"
+      },
+      "icmp": {
+        "type": "3",
+        "code": "10"
+      },
+      "inner_ip": {
+        "src": "110.53.220.4",
+        "dst": "10.3.221.132",
+        "proto": "6",
+        "len": "167"
+      },
+      "tcp": {
+        "srcport": "50669",
+        "dstport": "18080",
+        "seq": "2958289485",
+        "ack": "1173849890",
+        "stream": "30",
+        "payload_len": 127
+      },
+      "tls": {
+        "content_type": "23",
+        "version": "0x0303",
+        "length": "122",
+        "is_application_data": true
+      }
+    },
+    {
+      "frame_number": "857",
+      "protocols": "eth:ethertype:vlan:ethertype:ip:icmp:ip:tcp:tls",
+      "frame_len": "239",
+      "outer_ip": {
+        "src": "10.3.221.132",
+        "dst": "110.53.220.4",
+        "proto": "1",
+        "len": "221"
+      },
+      "icmp": {
+        "type": "3",
+        "code": "10"
+      },
+      "inner_ip": {
+        "src": "110.53.220.4",
+        "dst": "10.3.221.132",
+        "proto": "6",
+        "len": "193"
+      },
+      "tcp": {
+        "srcport": "55352",
+        "dstport": "18080",
+        "seq": "2058247058",
+        "ack": "3074087444",
+        "stream": "1",
+        "payload_len": 153
+      },
+      "tls": {
+        "content_type": "23",
+        "version": "0x0303",
+        "length": "148",
+        "is_application_data": true
+      }
+    },
+    {
+      "frame_number": "859",
+      "protocols": "eth:ethertype:vlan:ethertype:ip:icmp:ip:tcp:tls",
+      "frame_len": "235",
+      "outer_ip": {
+        "src": "10.3.221.132",
+        "dst": "110.53.220.4",
+        "proto": "1",
+        "len": "217"
+      },
+      "icmp": {
+        "type": "3",
+        "code": "10"
+      },
+      "inner_ip": {
+        "src": "110.53.220.4",
+        "dst": "10.3.221.132",
+        "proto": "6",
+        "len": "189"
+      },
+      "tcp": {
+        "srcport": "55352",
+        "dstport": "18080",
+        "seq": "2058247211",
+        "ack": "3074087444",
+        "stream": "1",
+        "payload_len": 149
+      },
+      "tls": {
+        "content_type": "23",
+        "version": "0x0303",
+        "length": "144",
+        "is_application_data": true
+      }
+    }
+  ],
+  "protocol_layers": {
+    "patterns": {
+      "eth:ethertype:vlan:ethertype:ip:icmp:ip:tcp:tls": 3
+    },
+    "complexity": 1,
+    "most_common": [
+      "eth:ethertype:vlan:ethertype:ip:icmp:ip:tcp:tls",
+      3
+    ]
+  },
+  "tcp_streams": {
+    "30": {
+      "packets": [
+        "807"
+      ],
+      "seq_numbers": [
+        "2958289485"
+      ],
+      "ports": [
+        "50669-18080"
+      ]
+    },
+    "1": {
+      "packets": [
+        "857",
+        "859"
+      ],
+      "seq_numbers": [
+        "2058247058",
+        "2058247211"
+      ],
+      "ports": [
+        "55352-18080"
+      ]
+    }
+  },
+  "tls_messages": {
+    "types": {
+      "23": 3
+    },
+    "truncated_count": 0,
+    "total_count": 3
+  },
+  "architecture_impact": {
+    "marker_module_impact": {
+      "current_tcp_detection": "仅支持直接TCP流，不支持ICMP封装的TCP",
+      "tshark_filter_limitation": "当前tshark过滤器无法处理ICMP内的TCP流",
+      "sequence_number_issue": "ICMP载荷中的TCP序列号可能不完整",
+      "flow_reconstruction": "无法重组ICMP封装的TCP流"
+    },
+    "masker_module_impact": {
+      "packet_parsing": "scapy的_find_innermost_tcp可能支持ICMP封装",
+      "rule_matching": "保留规则基于TCP流ID，ICMP封装流ID可能不匹配",
+      "payload_modification": "ICMP载荷修改需要特殊处理",
+      "checksum_recalculation": "需要重新计算ICMP和内层TCP校验和"
+    },
+    "protocol_support_gap": {
+      "encapsulation_types": [
+        "ICMP错误消息封装",
+        "可能还有其他隧道协议"
+      ],
+      "detection_coverage": "当前架构未考虑多层封装场景",
+      "processing_complexity": "需要递归解析多层协议栈"
+    },
+    "recommendations": [
+      "方案1: 将ICMP封装场景排除在支持范围外（推荐）",
+      "方案2: 扩展Marker模块支持ICMP封装的TCP流分析",
+      "方案3: 在Masker模块中添加ICMP封装检测和处理逻辑",
+      "方案4: 创建专门的封装协议处理器"
+    ]
+  }
+}
