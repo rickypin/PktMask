@@ -53,14 +53,29 @@ class TLSProtocolMarker(ProtocolMarker):
         """
         super().__init__(config)
 
-        # TLS保留策略配置
-        self.preserve_config = config.get('preserve', {
-            'handshake': True,
-            'application_data': False,
-            'alert': True,
-            'change_cipher_spec': True,
-            'heartbeat': True
-        })
+        # TLS保留策略配置 - 支持多种配置格式
+        if 'preserve' in config:
+            # GUI格式：直接使用preserve配置
+            self.preserve_config = config['preserve']
+        elif 'tls' in config:
+            # 脚本格式：转换tls配置到内部格式
+            tls_config = config['tls']
+            self.preserve_config = {
+                'handshake': tls_config.get('preserve_handshake', True),
+                'application_data': tls_config.get('preserve_application_data', False),
+                'alert': tls_config.get('preserve_alert', True),
+                'change_cipher_spec': tls_config.get('preserve_change_cipher_spec', True),
+                'heartbeat': tls_config.get('preserve_heartbeat', True)
+            }
+        else:
+            # 默认配置
+            self.preserve_config = {
+                'handshake': True,
+                'application_data': False,
+                'alert': True,
+                'change_cipher_spec': True,
+                'heartbeat': True
+            }
 
         # tshark配置
         self.tshark_path = config.get('tshark_path')

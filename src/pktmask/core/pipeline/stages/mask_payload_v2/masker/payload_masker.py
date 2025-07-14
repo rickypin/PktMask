@@ -102,7 +102,42 @@ class PayloadMasker:
         # 检查 scapy 可用性
         if not SCAPY_AVAILABLE:
             self.logger.warning("Scapy 不可用，某些功能可能受限")
-    
+
+    def _reset_processing_state(self) -> None:
+        """重置处理状态以避免多文件处理时的状态污染
+
+        在每次apply_masking调用开始时重置所有可能导致状态污染的变量。
+        这确保了每个文件的处理都是独立的，不会受到之前文件处理的影响。
+        """
+        self.logger.debug("重置PayloadMasker处理状态")
+
+        # 重置流方向识别状态
+        self.flow_directions.clear()
+        self.stream_id_cache.clear()
+        self.tuple_to_stream_id.clear()
+
+        # 重置流ID计数器
+        self.flow_id_counter = 0
+
+        # 清除当前统计信息引用
+        self._current_stats = None
+
+        # 重置内存优化器状态
+        if hasattr(self.memory_optimizer, 'reset'):
+            self.memory_optimizer.reset()
+
+        # 重置错误处理器状态
+        if hasattr(self.error_handler, 'reset'):
+            self.error_handler.reset()
+
+        # 重置数据验证器状态
+        if hasattr(self.data_validator, 'reset'):
+            self.data_validator.reset()
+
+        # 重置降级处理器状态
+        if hasattr(self.fallback_handler, 'reset'):
+            self.fallback_handler.reset()
+
     def apply_masking(self, input_path: str, output_path: str,
                      keep_rules: KeepRuleSet) -> MaskingStats:
         """应用掩码规则
@@ -123,6 +158,9 @@ class PayloadMasker:
         """
         self.logger.info(f"开始应用掩码: {input_path} -> {output_path}")
         start_time = time.time()
+
+        # 重置状态以避免多文件处理时的状态污染
+        self._reset_processing_state()
 
         # 创建统计信息
         stats = MaskingStats(

@@ -1,5 +1,33 @@
 ## [Unreleased]
 
+### Fixed
+- **TLS-23消息掩码不一致性问题** (2025-07-14)
+  - **问题描述**: GUI界面和命令行脚本在处理多个TLS文件时产生不一致的掩码结果。在多文件场景下，GUI只能正确掩码少数文件，大多数文件的TLS-23消息体未被掩码，而命令行脚本能正确掩码所有文件。
+  - **根本原因**: `PayloadMasker`在多文件处理时存在状态污染问题。GUI使用`PipelineExecutor`重用同一个`NewMaskPayloadStage`实例处理多个文件，导致以下状态变量在文件间被重用：
+    - `self.flow_directions = {}` - 流方向识别状态
+    - `self.stream_id_cache = {}` - 流ID缓存
+    - `self.tuple_to_stream_id = {}` - 元组到流ID映射
+    - `self.flow_id_counter` - 流ID计数器
+  - **修复方案**: 在`PayloadMasker.apply_masking()`方法开始时添加`_reset_processing_state()`方法，确保每次处理文件时都重置所有可能导致状态污染的变量。
+  - **修复代码**: 在`src/pktmask/core/pipeline/stages/mask_payload_v2/masker/payload_masker.py`中添加：
+    ```python
+    def _reset_processing_state(self) -> None:
+        """重置处理状态以避免多文件处理时的状态污染"""
+        self.logger.debug("重置PayloadMasker处理状态")
+
+        # 重置流方向识别状态
+        self.flow_directions.clear()
+        self.stream_id_cache.clear()
+        self.tuple_to_stream_id.clear()
+
+        # 重置流ID计数器
+        self.flow_id_counter = 0
+
+        # 清除当前统计信息引用
+        self._current_stats = None
+    ```
+  - **验证结果**: 修复后GUI多文件处理与命令行脚本结果完全一致。关键测试文件`ssl_3.pcap`从修改0个包恢复到正确修改59个包，所有12个测试文件均能正确处理。
+
 ### Changed
 - 统一入口点：所有功能通过 `pktmask` 命令访问
 - GUI 成为默认模式（无参数启动）
