@@ -438,10 +438,14 @@ class TLSProtocolMarker(ProtocolMarker):
         # 分析流方向
         flow_directions = self._identify_flow_directions(packets)
 
+        # 重组 TCP 载荷（移植自 tls_flow_analyzer）
+        reassembled_payloads = self._reassemble_tcp_payloads(packets, flow_directions)
+
         return {
             "stream_id": stream_id,
             "packets": packets,
             "directions": flow_directions,
+            "reassembled_payloads": reassembled_payloads,
             "packet_count": len(packets)
         }
 
@@ -492,104 +496,342 @@ class TLSProtocolMarker(ProtocolMarker):
 
         return directions
 
+    def _reassemble_tcp_payloads(self, packets: List[Dict[str, Any]],
+                                directions: Dict[str, Any]) -> Dict[str, Any]:
+        """重组 TCP 载荷并记录序列号映射（移植自 tls_flow_analyzer）"""
+        reassembled = {"forward": {"payload": b"", "seq_mapping": []},
+                      "reverse": {"payload": b"", "seq_mapping": []}}
+
+        for direction_name, direction_info in directions.items():
+            # 按序列号排序数据包
+            direction_packets = sorted(
+                direction_info["packets"],
+                key=lambda p: int(self._get_first_value(
+                    p.get("_source", {}).get("layers", {}).get("tcp.seq", 0)
+                ))
+            )
+
+            # 重组载荷并记录序列号映射
+            payload_data = b""
+            seq_mapping = []
+            current_offset = 0
+
+            for packet in direction_packets:
+                layers = packet.get("_source", {}).get("layers", {})
+                tcp_payload = layers.get("tcp.payload")
+                tcp_seq_raw = self._get_first_value(layers.get("tcp.seq_raw"))
+
+                if tcp_payload and tcp_seq_raw:
+                    payload_hex = self._get_first_value(tcp_payload)
+                    if payload_hex:
+                        try:
+                            # 清理十六进制字符串
+                            clean_hex = payload_hex.replace(":", "").replace(" ", "")
+                            payload_bytes = bytes.fromhex(clean_hex)
+
+                            # 记录这段载荷在重组数据中的位置和对应的序列号
+                            if len(payload_bytes) > 0:
+                                seq_mapping.append({
+                                    "offset_start": current_offset,
+                                    "offset_end": current_offset + len(payload_bytes) - 1,
+                                    "tcp_seq_raw": int(tcp_seq_raw),
+                                    "payload_length": len(payload_bytes)
+                                })
+
+                                payload_data += payload_bytes
+                                current_offset += len(payload_bytes)
+                        except ValueError:
+                            continue
+
+            reassembled[direction_name]["payload"] = payload_data
+            reassembled[direction_name]["seq_mapping"] = seq_mapping
+
+        return reassembled
+
+    def _find_actual_seq_for_offset(self, tls_offset: int, seq_mapping: List[Dict[str, Any]]) -> int:
+        """根据TLS记录在重组载荷中的偏移位置，查找对应的实际TCP序列号（移植自 tls_flow_analyzer）"""
+        for mapping in seq_mapping:
+            offset_start = mapping["offset_start"]
+            offset_end = mapping["offset_end"]
+            tcp_seq_raw = mapping["tcp_seq_raw"]
+
+            if offset_start <= tls_offset <= offset_end:
+                # TLS记录在这个TCP包的载荷中
+                # 计算TLS记录在该TCP包载荷中的相对偏移
+                relative_offset = tls_offset - offset_start
+                return tcp_seq_raw + relative_offset
+
+        # 如果没有找到匹配的映射，返回0（这种情况不应该发生）
+        return 0
+
+    def _parse_tls_records_from_payload(self, payload: bytes, stream_id: str,
+                                       direction: str, seq_mapping: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """从 TCP 载荷中解析 TLS 记录（移植自 tls_flow_analyzer）"""
+        records = []
+        offset = 0
+
+        while offset + 5 <= len(payload):
+            # 解析 TLS 记录头 (5 字节)
+            content_type = payload[offset]
+            version_major = payload[offset + 1]
+            version_minor = payload[offset + 2]
+            length = int.from_bytes(payload[offset + 3:offset + 5], byteorder='big')
+
+            # 验证内容类型
+            if content_type not in TLS_CONTENT_TYPES:
+                offset += 1
+                continue
+
+            # 检查记录完整性
+            record_end = offset + 5 + length
+
+            # 计算TLS消息的绝对序列号位置
+            tls_header_seq_start = self._find_actual_seq_for_offset(offset, seq_mapping)
+            tls_header_seq_end = tls_header_seq_start + 5
+            tls_payload_seq_start = tls_header_seq_end
+
+            if record_end > len(payload):
+                # 记录不完整，可能跨段
+                tls_payload_seq_end = self._find_actual_seq_for_offset(len(payload) - 1, seq_mapping) + 1
+                records.append({
+                    "stream_id": stream_id,
+                    "direction": direction,
+                    "content_type": content_type,
+                    "content_type_name": TLS_CONTENT_TYPES[content_type],
+                    "version": (version_major, version_minor),
+                    "length": length,
+                    "declared_length": length,  # 声明的长度
+                    "actual_length": len(payload) - offset - 5,  # 实际可用长度
+                    "tls_header_seq_start": tls_header_seq_start,
+                    "tls_header_seq_end": tls_header_seq_end,
+                    "tls_payload_seq_start": tls_payload_seq_start,
+                    "tls_payload_seq_end": tls_payload_seq_end,
+                    "is_complete": False,
+                    "is_cross_segment": True,
+                    "processing_strategy": TLS_PROCESSING_STRATEGIES[content_type]
+                })
+                break
+            else:
+                # 完整记录
+                tls_payload_seq_end = tls_payload_seq_start + length
+                records.append({
+                    "stream_id": stream_id,
+                    "direction": direction,
+                    "content_type": content_type,
+                    "content_type_name": TLS_CONTENT_TYPES[content_type],
+                    "version": (version_major, version_minor),
+                    "length": length,
+                    "declared_length": length,
+                    "actual_length": length,
+                    "tls_header_seq_start": tls_header_seq_start,
+                    "tls_header_seq_end": tls_header_seq_end,
+                    "tls_payload_seq_start": tls_payload_seq_start,
+                    "tls_payload_seq_end": tls_payload_seq_end,
+                    "is_complete": True,
+                    "is_cross_segment": False,
+                    "processing_strategy": TLS_PROCESSING_STRATEGIES[content_type]
+                })
+                offset = record_end
+
+        return records
+
     def _generate_keep_rules(self, tls_packets: List[Dict[str, Any]],
                            tcp_flows: Dict[str, Dict[str, Any]]) -> KeepRuleSet:
-        """生成保留规则"""
-        self.logger.debug("生成保留规则")
+        """生成保留规则（重构版本，使用重组载荷和精确序列号计算）"""
+        self.logger.debug("生成保留规则（使用重组载荷分析）")
 
         ruleset = KeepRuleSet()
 
-        # 为每个TLS数据包生成保留规则
+        # 第一阶段：使用重组载荷生成精确的TLS消息规则
+        for stream_id, flow_info in tcp_flows.items():
+            reassembled_payloads = flow_info.get("reassembled_payloads", {})
+
+            for direction_name, reassembled_info in reassembled_payloads.items():
+                payload_data = reassembled_info["payload"]
+                seq_mapping = reassembled_info["seq_mapping"]
+
+                if len(payload_data) < 5:  # TLS 记录头至少 5 字节
+                    continue
+
+                # 解析 TLS 记录，传入序列号映射信息
+                tls_records = self._parse_tls_records_from_payload(
+                    payload_data, stream_id, direction_name, seq_mapping
+                )
+
+                # 为每个TLS记录生成保留规则
+                for record in tls_records:
+                    rule = self._create_keep_rule_from_tls_record(record)
+                    if rule:
+                        ruleset.add_rule(rule)
+                        self.logger.debug(f"生成精确保留规则: 流{stream_id}-{direction_name} "
+                                        f"TLS-{record['content_type']} "
+                                        f"序列号{rule.seq_start}-{rule.seq_end}")
+
+        # 第二阶段：处理无法重组的单包TLS消息（回退机制）
+        self._generate_fallback_rules_from_packets(tls_packets, tcp_flows, ruleset)
+
+        # 添加流信息
+        for stream_id, flow_info in tcp_flows.items():
+            if stream_id not in ruleset.tcp_flows:
+                flow_info_obj = self._create_flow_info(stream_id, flow_info)
+                if flow_info_obj:
+                    ruleset.tcp_flows[stream_id] = flow_info_obj
+
+        return ruleset
+
+    def _create_keep_rule_from_tls_record(self, record: Dict[str, Any]) -> Optional[KeepRule]:
+        """从TLS记录创建保留规则（支持精确序列号范围）"""
+        try:
+            stream_id = record["stream_id"]
+            direction = record["direction"]
+            content_type = record["content_type"]
+            tls_type_name = record["content_type_name"]
+
+            # 检查是否为TLS-23 ApplicationData且配置为只保留头部
+            is_application_data = (content_type == 23)
+            preserve_full_application_data = self.preserve_config.get('application_data', False)
+
+            if is_application_data and not preserve_full_application_data:
+                # TLS-23且配置为False：只保留5字节TLS记录头部
+                seq_start = record["tls_header_seq_start"]
+                seq_end = record["tls_header_seq_end"]  # 左闭右开区间
+                rule_type = "tls_applicationdata_header"
+                preserve_strategy = "header_only"
+            else:
+                # 其他情况：保留整个TLS消息（头部+载荷）
+                seq_start = record["tls_header_seq_start"]
+                seq_end = record["tls_payload_seq_end"]  # 左闭右开区间
+                rule_type = f"tls_{tls_type_name.lower()}"
+                preserve_strategy = "full_message"
+
+            rule = KeepRule(
+                stream_id=stream_id,
+                direction=direction,
+                seq_start=seq_start,
+                seq_end=seq_end,
+                rule_type=rule_type,
+                metadata={
+                    "tls_content_type": content_type,
+                    "tls_type_name": tls_type_name,
+                    "tls_header_seq_start": record["tls_header_seq_start"],
+                    "tls_header_seq_end": record["tls_header_seq_end"],
+                    "tls_payload_seq_start": record["tls_payload_seq_start"],
+                    "tls_payload_seq_end": record["tls_payload_seq_end"],
+                    "is_complete": record["is_complete"],
+                    "is_cross_segment": record["is_cross_segment"],
+                    "preserve_strategy": preserve_strategy,
+                    "declared_length": record["declared_length"],
+                    "actual_length": record["actual_length"]
+                }
+            )
+
+            return rule
+
+        except Exception as e:
+            self.logger.warning(f"从TLS记录创建保留规则失败: {e}")
+            return None
+
+    def _generate_fallback_rules_from_packets(self, tls_packets: List[Dict[str, Any]],
+                                            tcp_flows: Dict[str, Dict[str, Any]],
+                                            ruleset: KeepRuleSet) -> None:
+        """从单包TLS消息生成回退规则（保持向后兼容性）"""
+        self.logger.debug("生成回退保留规则（单包TLS消息）")
+
         for packet in tls_packets:
             layers = packet.get("_source", {}).get("layers", {})
 
             # 提取基础信息
             stream_id = str(self._get_first_value(layers.get("tcp.stream", "")))
             frame_number = self._get_first_value(layers.get("frame.number"))
-            # 使用绝对序列号而非相对序列号
             tcp_seq_raw = self._get_first_value(layers.get("tcp.seq_raw"))
-            tcp_len_raw = self._get_first_value(layers.get("tcp.len", 0))
 
             if not all([stream_id, frame_number, tcp_seq_raw is not None]):
                 continue
 
-            # 确保类型转换
-            try:
-                tcp_seq = int(tcp_seq_raw) if tcp_seq_raw is not None else 0
-                tcp_len = int(tcp_len_raw) if tcp_len_raw is not None else 0
-            except (ValueError, TypeError):
-                self.logger.warning(f"Frame {frame_number}: 无法转换TCP序列号或长度")
+            # 检查是否已经有重组规则覆盖了这个包
+            tcp_seq = int(tcp_seq_raw)
+            existing_rules = ruleset.get_rules_for_stream(stream_id,
+                self._determine_packet_direction(packet, tcp_flows.get(stream_id)) or "forward")
+
+            # 如果已有规则覆盖此序列号范围，跳过
+            if any(rule.seq_start <= tcp_seq < rule.seq_end for rule in existing_rules):
                 continue
 
-            # 确定流方向
+            # 处理单包TLS消息（简化版本）
+            content_types = layers.get("tls.record.content_type", [])
+            if content_types and not isinstance(content_types, list):
+                content_types = [content_types]
+
+            for content_type in content_types:
+                if content_type and str(content_type).isdigit():
+                    type_num = int(content_type)
+                    if self._should_preserve_tls_type(type_num):
+                        # 创建简化的单包规则
+                        rule = self._create_simple_packet_rule(packet, tcp_flows, type_num)
+                        if rule:
+                            ruleset.add_rule(rule)
+                            self.logger.debug(f"生成回退规则: Frame {frame_number} "
+                                            f"TLS-{type_num} 序列号{rule.seq_start}-{rule.seq_end}")
+
+    def _create_simple_packet_rule(self, packet: Dict[str, Any],
+                                 tcp_flows: Dict[str, Dict[str, Any]],
+                                 tls_type: int) -> Optional[KeepRule]:
+        """为单包TLS消息创建简化规则"""
+        try:
+            layers = packet.get("_source", {}).get("layers", {})
+
+            stream_id = str(self._get_first_value(layers.get("tcp.stream", "")))
+            frame_number = self._get_first_value(layers.get("frame.number"))
+            tcp_seq_raw = self._get_first_value(layers.get("tcp.seq_raw"))
+            tcp_len_raw = self._get_first_value(layers.get("tcp.len", 0))
+
+            tcp_seq = int(tcp_seq_raw) if tcp_seq_raw is not None else 0
+            tcp_len = int(tcp_len_raw) if tcp_len_raw is not None else 0
+
             direction = self._determine_packet_direction(packet, tcp_flows.get(stream_id))
             if not direction:
-                continue
+                return None
 
-            # 处理TLS内容类型 - 支持单个TCP数据包中的多条TLS消息
-            content_types = layers.get("tls.record.content_type", [])
-            record_lengths = layers.get("tls.record.length", [])
+            # 检查是否为TLS-23 ApplicationData且配置为只保留头部
+            tls_type_name = TLS_CONTENT_TYPES.get(tls_type, f"unknown_{tls_type}")
+            is_application_data = (tls_type == 23)
+            preserve_full_application_data = self.preserve_config.get('application_data', False)
 
-            if not isinstance(content_types, list):
-                content_types = [content_types] if content_types else []
-            if not isinstance(record_lengths, list):
-                record_lengths = [record_lengths] if record_lengths else []
-
-            # 处理多条TLS消息的情况
-            if content_types and record_lengths and len(content_types) == len(record_lengths):
-                # 为每个TLS消息生成独立的保留规则
-                current_offset = 0
-
-                for i, (content_type, record_length) in enumerate(zip(content_types, record_lengths)):
-                    if content_type and str(content_type).isdigit() and record_length and str(record_length).isdigit():
-                        type_num = int(content_type)
-                        length_num = int(record_length)
-
-                        if self._should_preserve_tls_type(type_num):
-                            # 检测跨包TLS消息并计算正确的起始序列号
-                            tls_header_size = 5  # TLS记录头部固定5字节
-                            total_tls_size = tls_header_size + length_num
-
-                            # 检查是否为跨包TLS消息
-                            if total_tls_size > tcp_len and current_offset == 0:
-                                # 跨包TLS消息：需要找到真正的起始位置
-                                actual_start_seq = self._find_cross_packet_start_seq(
-                                    tls_packets, stream_id, direction, tcp_seq, total_tls_size
-                                )
-                                message_start_seq = actual_start_seq
-                                self.logger.debug(f"Frame {frame_number}: 检测到跨包TLS消息(类型{type_num}), "
-                                                f"总大小{total_tls_size}字节 > TCP载荷{tcp_len}字节, "
-                                                f"起始序列号从 {tcp_seq} 修正为 {actual_start_seq}")
-                            else:
-                                # 单包TLS消息：使用当前包的序列号
-                                message_start_seq = tcp_seq + current_offset
-
-                            # 为当前TLS消息生成保留规则
-                            rule = self._create_keep_rule_for_tls_message(
-                                stream_id, direction, message_start_seq,
-                                length_num, type_num, frame_number, i + 1
-                            )
-                            if rule:
-                                ruleset.add_rule(rule)
-                                self.logger.debug(f"为Frame {frame_number}的TLS消息#{i+1} "
-                                                f"(类型{type_num})生成保留规则: "
-                                                f"{rule.seq_start}-{rule.seq_end}")
-
-                        # 更新偏移量：TLS头部(5字节) + TLS载荷
-                        current_offset += tls_header_size + length_num
-
+            if is_application_data and not preserve_full_application_data:
+                # 只保留5字节头部（左闭右开区间）
+                seq_start = tcp_seq
+                seq_end = tcp_seq + 5
+                rule_type = "tls_applicationdata_header"
+                preserve_strategy = "header_only"
             else:
-                # 简化策略：移除回退逻辑中的整包保留策略
-                # 只处理有明确TLS消息结构的情况，避免过度保留
-                self.logger.debug(f"Frame {frame_number}: 没有明确的TLS消息结构，跳过规则生成")
+                # 保留整个TCP载荷（左闭右开区间）
+                seq_start = tcp_seq
+                seq_end = tcp_seq + tcp_len
+                rule_type = f"tls_{tls_type_name.lower()}"
+                preserve_strategy = "full_message"
 
-            # 添加流信息
-            if stream_id not in ruleset.tcp_flows:
-                flow_info = self._create_flow_info(stream_id, tcp_flows.get(stream_id))
-                if flow_info:
-                    ruleset.tcp_flows[stream_id] = flow_info
+            rule = KeepRule(
+                stream_id=stream_id,
+                direction=direction,
+                seq_start=seq_start,
+                seq_end=seq_end,
+                rule_type=rule_type,
+                metadata={
+                    "tls_content_type": tls_type,
+                    "tls_type_name": tls_type_name,
+                    "frame_number": frame_number,
+                    "tcp_seq_raw": tcp_seq,
+                    "tcp_len": tcp_len,
+                    "preserve_strategy": preserve_strategy,
+                    "rule_source": "fallback_single_packet"
+                }
+            )
 
-        return ruleset
+            return rule
+
+        except Exception as e:
+            self.logger.warning(f"创建简化包规则失败: {e}")
+            return None
 
     def _find_cross_packet_start_seq(self, tls_packets: List[Dict[str, Any]],
                                     stream_id: str, direction: str,

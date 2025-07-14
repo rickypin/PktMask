@@ -741,7 +741,7 @@ def run_maskstage_internal(input_path: Path, output_path: Path, verbose: bool = 
 
     try:
         from pktmask.core.pipeline.executor import PipelineExecutor
-        from pktmask.core.pipeline.stages.mask_payload.stage import MaskPayloadStage as MaskStage
+        from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage as MaskStage
     except ImportError as imp_err:
         raise RuntimeError(f"无法导入 Enhanced MaskStage: {imp_err}")
 
@@ -751,10 +751,17 @@ def run_maskstage_internal(input_path: Path, output_path: Path, verbose: bool = 
         "anon": {"enabled": False},
         "mask": {
             "enabled": True,
+            "protocol": "tls",  # 协议类型
             "mode": "enhanced",  # 使用增强模式
-            "preserve_ratio": 0.3,
-            "tls_strategy_enabled": True,
-            "enable_tshark_preprocessing": True
+            "marker_config": {
+                "tls": {
+                    "preserve_handshake": True,
+                    "preserve_application_data": False
+                }
+            },
+            "masker_config": {
+                "preserve_ratio": 0.3
+            }
         }
     }
 
@@ -781,16 +788,23 @@ def run_maskstage_direct(input_path: Path, output_path: Path, verbose: bool = Fa
         logger.info("直接使用 Enhanced MaskStage 处理: %s -> %s", input_path, output_path)
 
     try:
-        from pktmask.core.pipeline.stages.mask_payload.stage import MaskPayloadStage as MaskStage
+        from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage as MaskStage
     except ImportError as imp_err:
         raise RuntimeError(f"无法导入 Enhanced MaskStage: {imp_err}")
 
-    # 配置Enhanced MaskStage（Processor Adapter 模式）
+    # 配置Enhanced MaskStage（直接调用模式）
     config = {
-        "mode": "processor_adapter",  # 使用处理器适配器模式
-        "preserve_ratio": 0.3,
-        "tls_strategy_enabled": True,
-        "enable_tshark_preprocessing": True
+        "protocol": "tls",  # 协议类型
+        "mode": "enhanced",  # 使用增强模式
+        "marker_config": {
+            "tls": {
+                "preserve_handshake": True,
+                "preserve_application_data": False
+            }
+        },
+        "masker_config": {
+            "preserve_ratio": 0.3
+        }
     }
 
     try:
@@ -802,7 +816,7 @@ def run_maskstage_direct(input_path: Path, output_path: Path, verbose: bool = Fa
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
         # 执行处理
-        stats = mask_stage.process_file(input_path, output_path)
+        stats = mask_stage.process_file(str(input_path), str(output_path))
         
         if verbose:
             logger.info("Enhanced MaskStage 直接处理完成: %s", stats)

@@ -30,17 +30,23 @@ class FlowInfo:
 @dataclass
 class KeepRule:
     """单个保留规则
-    
+
     定义了需要在掩码处理中保留的TCP载荷区段。
-    使用64位逻辑序列号来处理32位序列号回绕问题。
+    使用绝对TCP序列号，采用左闭右开区间 [seq_start, seq_end)。
+
+    序列号区间说明：
+    - seq_start: 包含此序列号位置的字节
+    - seq_end: 不包含此序列号位置的字节
+    - 实际保留范围: [seq_start, seq_end)
+    - 保留字节数: seq_end - seq_start
     """
     stream_id: str              # TCP流标识
     direction: str              # 流方向 (forward/reverse)
-    seq_start: int              # 起始序列号 (64-bit逻辑序号)
-    seq_end: int                # 结束序列号 (64-bit逻辑序号)
+    seq_start: int              # 起始序列号 (包含，左闭)
+    seq_end: int                # 结束序列号 (不包含，右开)
     rule_type: str              # 规则类型 (tls_header/tls_payload/etc)
     metadata: Dict[str, Any] = field(default_factory=dict)  # 附加信息
-    
+
     def __post_init__(self):
         """验证规则有效性"""
         if self.seq_start < 0 or self.seq_end < 0:
@@ -54,15 +60,17 @@ class KeepRule:
     
     @property
     def length(self) -> int:
-        """获取规则覆盖的字节长度"""
+        """获取规则覆盖的字节长度（左闭右开区间）"""
         return self.seq_end - self.seq_start
-    
+
     def overlaps_with(self, other: KeepRule) -> bool:
-        """检查是否与另一个规则重叠或相邻"""
+        """检查是否与另一个规则重叠或相邻（左闭右开区间）"""
         if self.stream_id != other.stream_id or self.direction != other.direction:
             return False
-        # 检查重叠或相邻（相邻规则也可以合并）
-        return not (self.seq_end < other.seq_start or other.seq_end < self.seq_start)
+        # 左闭右开区间的重叠检测：
+        # 重叠条件: max(start1, start2) < min(end1, end2)
+        # 相邻条件: end1 == start2 or end2 == start1
+        return not (self.seq_end <= other.seq_start or other.seq_end <= self.seq_start)
     
     def merge_with(self, other: KeepRule) -> Optional[KeepRule]:
         """尝试与另一个规则合并

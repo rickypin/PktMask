@@ -370,6 +370,15 @@ class PayloadMasker:
         # 按流、方向和保留策略分组规则
         for rule in keep_rules.rules:
             preserve_strategy = rule.metadata.get('preserve_strategy', 'full_preserve')
+
+            # 映射策略名称：将 'full_message' 映射到 'full_preserve'
+            if preserve_strategy == 'full_message':
+                preserve_strategy = 'full_preserve'
+            elif preserve_strategy not in ['header_only', 'full_preserve']:
+                # 对于未知策略，默认使用 full_preserve
+                self.logger.warning(f"未知的保留策略 '{preserve_strategy}'，使用 'full_preserve' 替代")
+                preserve_strategy = 'full_preserve'
+
             rule_lookup[rule.stream_id][rule.direction][preserve_strategy].append((rule.seq_start, rule.seq_end))
 
         # 为每个流方向构建优化的查找结构
@@ -895,7 +904,13 @@ class PayloadMasker:
 
     def _find_overlapping_ranges(self, sorted_ranges: List[Tuple[int, int]],
                                 seg_start: int, seg_end: int) -> List[Tuple[int, int]]:
-        """使用二分查找找到与给定段重叠的所有区间"""
+        """使用二分查找找到与给定段重叠的所有区间
+
+        所有区间都使用左闭右开格式 [start, end)：
+        - seg_start, seg_end: 当前TCP段的序列号范围 [seg_start, seg_end)
+        - range_start, range_end: 保留规则的序列号范围 [range_start, range_end)
+        - 重叠条件: range_end > seg_start and range_start < seg_end
+        """
         if not sorted_ranges:
             return []
 
@@ -905,10 +920,10 @@ class PayloadMasker:
         left = 0
         right = len(sorted_ranges)
 
-        # 二分查找第一个结束位置 >= seg_start 的区间
+        # 二分查找第一个结束位置 > seg_start 的区间（左闭右开区间）
         while left < right:
             mid = (left + right) // 2
-            if sorted_ranges[mid][1] >= seg_start:
+            if sorted_ranges[mid][1] > seg_start:
                 right = mid
             else:
                 left = mid + 1
@@ -921,7 +936,7 @@ class PayloadMasker:
             if range_start >= seg_end:
                 break
 
-            # 检查是否重叠
+            # 左闭右开区间重叠检测: range_end > seg_start and range_start < seg_end
             if range_end > seg_start and range_start < seg_end:
                 overlapping.append((range_start, range_end))
 
