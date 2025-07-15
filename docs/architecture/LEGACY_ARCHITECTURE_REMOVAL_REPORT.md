@@ -578,12 +578,38 @@ class NewMaskPayloadStage(StageBase):
 
 ---
 
+## 🧹 代码库清理记录 (2025-07-15)
+
+### 废弃文件清理
+在架构统一和bug修复完成后，执行了全面的代码库清理：
+
+#### 清理统计
+- **删除文件**: 55个废弃文件
+- **清理代码**: 1,112行冗余代码
+- **节省空间**: 8.8MB磁盘空间
+- **技术债务**: 显著减少
+
+#### 清理内容
+- **向后兼容代理文件**: 3个 (adapter.py, statistics_adapter.py, run_gui.py)
+- **临时调试脚本**: 5个 (分析和调试工具)
+- **废弃配置文件**: 1个 (mask_config.yaml)
+- **历史输出文件**: 46个 (output/目录)
+- **代码注释清理**: 移除旧架构引用
+
+#### 安全措施
+- 所有重要文件已备份到 `backup/deprecated_files/`
+- 保留了仍在使用的兼容性代码
+- 详细的清理记录: [代码库清理报告](../development/CODEBASE_CLEANUP_REPORT.md)
+
+---
+
 **报告完成日期**: 2025-07-15
 **实施人员**: Augment Agent
 **审核状态**: ✅ 已完成
 **存档位置**: `docs/architecture/LEGACY_ARCHITECTURE_REMOVAL_REPORT.md`
 **相关Issue**: PktMask架构统一第一阶段实施
 **下一步**: 进入第二阶段功能增强
-**文档版本**: v1.1
-**最后更新**: 2025-07-15 23:10
+**文档版本**: v1.2
+**最后更新**: 2025-07-15 (包含代码库清理)
 **后续修复**: 参考 [POST_MIGRATION_BUG_FIXES_REPORT.md](POST_MIGRATION_BUG_FIXES_REPORT.md)
+**清理记录**: 参考 [代码库清理报告](../development/CODEBASE_CLEANUP_REPORT.md)

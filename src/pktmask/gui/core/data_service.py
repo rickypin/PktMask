@@ -97,10 +97,10 @@ class DataService:
         # 报告管理
         self.log_messages: List[str] = []
         
-        self._logger.info("数据服务初始化完成")
+        self._logger.info("Data service initialization completed")
     
     def select_input_directory(self) -> bool:
-        """选择输入目录"""
+        """Select input directory"""
         try:
             dir_path = QFileDialog.getExistingDirectory(
                 self.main_window,
@@ -112,56 +112,56 @@ class DataService:
                 self.input_dir = dir_path
                 self.last_opened_dir = dir_path
                 
-                # 更新UI显示
+                # Update UI display
                 if hasattr(self.main_window, 'dir_path_label'):
                     self.main_window.dir_path_label.setText(os.path.basename(dir_path))
-                
-                # 自动生成输出路径
+
+                # Auto-generate output path
                 self._generate_default_output_path()
-                
-                # 更新主窗口属性（兼容性）
+
+                # Update main window properties (compatibility)
                 self.main_window.base_dir = dir_path
-                
-                # 更新按钮状态
+
+                # Update button state
                 if hasattr(self.main_window, 'ui_builder'):
                     self.main_window.ui_builder.update_start_button_state()
-                
-                self._logger.info(f"选择输入目录: {dir_path}")
+
+                self._logger.info(f"Selected input directory: {dir_path}")
                 return True
-            
+
             return False
-            
+
         except Exception as e:
-            self._logger.error(f"选择输入目录失败: {e}")
+            self._logger.error(f"Failed to select input directory: {e}")
             return False
     
     def select_output_directory(self) -> bool:
-        """选择自定义输出目录"""
+        """Select custom output directory"""
         try:
             dir_path = QFileDialog.getExistingDirectory(
                 self.main_window,
                 "Select Output Folder",
                 self.output_dir or self.last_opened_dir
             )
-            
+
             if dir_path:
                 self.output_dir = dir_path
-                
-                # 更新UI显示
+
+                # Update UI display
                 if hasattr(self.main_window, 'output_path_label'):
                     self.main_window.output_path_label.setText(f"Custom: {os.path.basename(dir_path)}")
-                
-                self._logger.info(f"选择输出目录: {dir_path}")
+
+                self._logger.info(f"Selected output directory: {dir_path}")
                 return True
-            
+
             return False
-            
+
         except Exception as e:
-            self._logger.error(f"选择输出目录失败: {e}")
+            self._logger.error(f"Failed to select output directory: {e}")
             return False
     
     def _generate_default_output_path(self):
-        """生成默认输出路径显示"""
+        """Generate default output path display"""
         if self.input_dir:
             input_name = os.path.basename(self.input_dir)
             display_text = f"Auto: {input_name}-Masked-[timestamp]"
@@ -170,30 +170,30 @@ class DataService:
                 self.main_window.output_path_label.setText(display_text)
     
     def generate_actual_output_path(self) -> str:
-        """生成实际的输出目录路径"""
+        """Generate actual output directory path"""
         timestamp = current_timestamp()
-        
-        # 生成输出目录名称
+
+        # Generate output directory name
         if self.input_dir:
             input_dir_name = os.path.basename(self.input_dir)
             output_name = f"{input_dir_name}-Masked-{timestamp}"
         else:
             output_name = f"PktMask-{timestamp}"
-        
-        # 确定输出路径
+
+        # Determine output path
         if self.output_dir:
-            # 自定义输出目录
+            # Custom output directory
             actual_path = os.path.join(self.output_dir, output_name)
         else:
-            # 默认输出目录
+            # Default output directory
             if self.config.ui.default_output_dir:
                 actual_path = os.path.join(self.config.ui.default_output_dir, output_name)
             else:
-                # 使用输入目录的子目录
+                # Use subdirectory of input directory
                 actual_path = os.path.join(self.input_dir, output_name)
         
         self.current_output_dir = actual_path
-        self._logger.info(f"生成实际输出路径: {actual_path}")
+        self._logger.info(f"Generated actual output path: {actual_path}")
         return actual_path
     
     def get_directory_info(self, directory: str) -> Dict[str, Any]:
@@ -228,7 +228,7 @@ class DataService:
                         info['pcap_files'].append(file)
         
         except Exception as e:
-            self._logger.error(f"获取目录信息时发生错误: {e}")
+            self._logger.error(f"Error occurred while getting directory information: {e}")
         
         return info
     
@@ -316,7 +316,7 @@ class DataService:
             return None
     
     def open_output_directory(self):
-        """打开输出目录"""
+        """Open output directory"""
         if self.current_output_dir and os.path.exists(self.current_output_dir):
             open_directory_in_system(self.current_output_dir)
         else:
@@ -344,4 +344,4 @@ class DataService:
             self._logger.info("数据服务资源清理完成")
             
         except Exception as e:
-            self._logger.error(f"清理资源失败: {e}")
+            self._logger.error(f"Failed to cleanup resources: {e}")

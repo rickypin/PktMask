@@ -1,5 +1,39 @@
 # 变更日志
 
+## v0.2.2 (2025-07-15)
+
+### 🧹 代码库清理
+
+#### 废弃文件清理
+- **清理范围**: 全面清理废弃代理文件、临时脚本和过期配置
+- **清理统计**: 删除55个文件，清理1,112行代码，节省8.8MB磁盘空间
+- **安全措施**: 所有重要文件已备份到 `backup/deprecated_files/`
+
+#### 已删除文件清单
+- **向后兼容代理文件** (3个文件):
+  - `src/pktmask/core/encapsulation/adapter.py` - 已迁移到新位置
+  - `src/pktmask/domain/adapters/statistics_adapter.py` - 已迁移到新位置
+  - `run_gui.py` - 已被统一入口点替代
+- **临时调试脚本** (5个文件):
+  - `test_log_fix.py`, `code_stats.py`, `detailed_stats.py` - 一次性分析脚本
+  - `deprecated_files_analyzer.py`, `project_cleanup_analyzer.py` - 清理分析工具
+- **废弃配置文件** (1个文件):
+  - `config/default/mask_config.yaml` - 旧版双模块架构配置
+- **历史输出文件** (46个文件):
+  - `output/` 整个目录 - TLS分析报告和验证数据
+
+#### 代码清理
+- **注释清理**: 移除 `src/pktmask/core/processors/registry.py` 中的旧架构注释
+- **兼容性保留**: `DedupStage` 别名因仍被使用而保留，已备份但未删除
+
+#### 影响评估
+- ✅ **无功能影响**: 所有删除文件均为废弃内容
+- ✅ **向后兼容**: 核心功能和接口完全保持
+- ✅ **技术债务**: 显著减少，代码库更整洁
+- ✅ **维护成本**: 降低，减少混淆和冗余
+
+---
+
 ## v0.2.1 (2025-07-15)
 
 ### 🐛 关键Bug修复

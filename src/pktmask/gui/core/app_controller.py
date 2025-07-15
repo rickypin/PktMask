@@ -77,7 +77,7 @@ class AppController(QObject):
         # 处理线程
         self.processing_thread: Optional[object] = None
         
-        self._logger.info("应用控制器初始化完成")
+        self._logger.info("Application controller initialization completed")
     
     def start_processing(self):
         """启动处理流程"""
@@ -103,7 +103,7 @@ class AppController(QObject):
             return True
             
         except Exception as e:
-            self._logger.error(f"启动处理流程失败: {e}")
+            self._logger.error(f"Failed to start processing flow: {e}")
             self.error_occurred.emit(f"启动失败: {str(e)}")
             return False
     
@@ -129,8 +129,8 @@ class AppController(QObject):
             self._logger.info("处理流程已停止")
 
         except Exception as e:
-            self._logger.error(f"停止处理流程失败: {e}")
-            self.error_occurred.emit(f"停止失败: {str(e)}")
+            self._logger.error(f"Failed to stop processing flow: {e}")
+            self.error_occurred.emit(f"Stop failed: {str(e)}")
     
     def get_processing_config(self) -> Dict[str, Any]:
         """获取处理配置（使用标准命名规范）"""
@@ -146,17 +146,17 @@ class AppController(QObject):
         """验证输入参数"""
         # 检查输入目录
         if not hasattr(self.main_window, 'base_dir') or not self.main_window.base_dir:
-            self.error_occurred.emit("请选择输入目录")
+            self.error_occurred.emit("Please select input directory")
             return False
-            
+
         if not os.path.exists(self.main_window.base_dir):
-            self.error_occurred.emit("输入目录不存在")
+            self.error_occurred.emit("Input directory does not exist")
             return False
-        
-        # 检查处理选项
+
+        # Check processing options
         config = self.get_processing_config()
         if not any(config.values()):
-            self.error_occurred.emit("请至少选择一个处理选项")
+            self.error_occurred.emit("Please select at least one processing option")
             return False
             
         return True
@@ -176,8 +176,8 @@ class AppController(QObject):
             return True
             
         except Exception as e:
-            self._logger.error(f"准备处理环境失败: {e}")
-            self.error_occurred.emit(f"准备失败: {str(e)}")
+            self._logger.error(f"Failed to prepare processing environment: {e}")
+            self.error_occurred.emit(f"Preparation failed: {str(e)}")
             return False
     
     def _start_processing_thread(self):
@@ -201,7 +201,7 @@ class AppController(QObject):
             self.processing_thread.start()
             
         except Exception as e:
-            self._logger.error(f"启动处理线程失败: {e}")
+            self._logger.error(f"Failed to start processing thread: {e}")
             raise
     
     def _update_elapsed_time(self):
@@ -243,11 +243,11 @@ class AppController(QObject):
             self.processing_finished.emit(final_stats)
             self.status_changed.emit("processing_finished")
             
-            self._logger.info("处理流程完成")
-            
+            self._logger.info("Processing flow completed")
+
         except Exception as e:
-            self._logger.error(f"处理完成回调失败: {e}")
-            self.error_occurred.emit(f"完成处理失败: {str(e)}")
+            self._logger.error(f"Failed to handle processing completion: {e}")
+            self.error_occurred.emit(f"Completion handling failed: {str(e)}")
     
     def cleanup(self):
         """清理资源"""
@@ -261,7 +261,7 @@ class AppController(QObject):
                 self.processing_thread.stop()
                 self.processing_thread.wait(1000)
             
-            self._logger.info("应用控制器资源清理完成")
-            
+            self._logger.info("Application controller resource cleanup completed")
+
         except Exception as e:
-            self._logger.error(f"清理资源失败: {e}")
+            self._logger.error(f"Failed to cleanup resources: {e}")

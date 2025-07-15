@@ -30,7 +30,7 @@ class DialogManager:
         self._logger = get_logger(__name__)
     
     def show_user_guide_dialog(self):
-        """显示用户指南对话框"""
+        """Show user guide dialog"""
         try:
             with open(resource_path('summary.md'), 'r', encoding='utf-8') as f:
                 content = f.read()
@@ -54,7 +54,7 @@ class DialogManager:
             QMessageBox.critical(self.main_window, "Error", f"Could not load User Guide: {str(e)}")
 
     def show_about_dialog(self):
-        """显示关于对话框"""
+        """Show about dialog"""
         try:
             about_text = """
             <h2>PktMask</h2>
@@ -126,7 +126,7 @@ class DialogManager:
             QMessageBox.critical(self.main_window, "Error", f"Could not show About dialog: {str(e)}")
 
     def show_error_dialog(self, title: str, message: str):
-        """显示错误对话框"""
+        """Show error dialog"""
         try:
             QMessageBox.critical(self.main_window, title, message)
             self._logger.error(f"Error dialog displayed: {title} - {message}")
@@ -134,7 +134,7 @@ class DialogManager:
             self._logger.error(f"Failed to show error dialog: {e}")
 
     def show_warning_dialog(self, title: str, message: str):
-        """显示警告对话框"""
+        """Show warning dialog"""
         try:
             QMessageBox.warning(self.main_window, title, message)
             self._logger.warning(f"Warning dialog displayed: {title} - {message}")
@@ -142,7 +142,7 @@ class DialogManager:
             self._logger.error(f"Failed to show warning dialog: {e}")
 
     def show_info_dialog(self, title: str, message: str):
-        """显示信息对话框"""
+        """Show info dialog"""
         try:
             QMessageBox.information(self.main_window, title, message)
             self._logger.info(f"Info dialog displayed: {title} - {message}")
@@ -150,41 +150,41 @@ class DialogManager:
             self._logger.error(f"Failed to show info dialog: {e}")
 
     def show_question_dialog(self, title: str, message: str) -> bool:
-        """显示确认对话框"""
+        """Show confirmation dialog"""
         try:
             reply = QMessageBox.question(
-                self.main_window, 
-                title, 
+                self.main_window,
+                title,
                 message,
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No
             )
-            
+
             result = reply == QMessageBox.StandardButton.Yes
             self._logger.info(f"Question dialog displayed: {title} - User choice: {'Yes' if result else 'No'}")
             return result
-            
+
         except Exception as e:
             self._logger.error(f"Failed to show question dialog: {e}")
             return False
 
     def show_progress_dialog(self, title: str, message: str, maximum: int = 0) -> QProgressDialog:
-        """显示进度对话框"""
+        """Show progress dialog"""
         try:
             progress = QProgressDialog(message, "Cancel", 0, maximum, self.main_window)
             progress.setWindowTitle(title)
             progress.setWindowModality(Qt.WindowModality.WindowModal)
-            progress.setMinimumDuration(1000)  # 1秒后显示
-            
-            self._logger.info(f"创建进度对话框: {title}")
+            progress.setMinimumDuration(1000)  # Show after 1 second
+
+            self._logger.info(f"Created progress dialog: {title}")
             return progress
-            
+
         except Exception as e:
-            self._logger.error(f"创建进度对话框失败: {e}")
+            self._logger.error(f"Failed to create progress dialog: {e}")
             return None
 
     def show_file_save_dialog(self, title: str, default_name: str = "", file_filter: str = "All Files (*)") -> str:
-        """显示文件保存对话框"""
+        """Show file save dialog"""
         try:
             filepath, _ = QFileDialog.getSaveFileName(
                 self.main_window,
@@ -192,20 +192,20 @@ class DialogManager:
                 default_name,
                 file_filter
             )
-            
+
             if filepath:
-                self._logger.info(f"用户选择保存文件: {filepath}")
+                self._logger.info(f"User selected save file: {filepath}")
             else:
-                self._logger.debug("用户取消文件保存")
+                self._logger.debug("User cancelled file save")
             
             return filepath
-            
+
         except Exception as e:
-            self._logger.error(f"显示文件保存对话框失败: {e}")
+            self._logger.error(f"Failed to show file save dialog: {e}")
             return ""
 
     def show_file_open_dialog(self, title: str, file_filter: str = "All Files (*)") -> str:
-        """显示文件打开对话框"""
+        """Show file open dialog"""
         try:
             filepath, _ = QFileDialog.getOpenFileName(
                 self.main_window,
@@ -213,40 +213,40 @@ class DialogManager:
                 "",
                 file_filter
             )
-            
+
             if filepath:
-                self._logger.info(f"用户选择打开文件: {filepath}")
+                self._logger.info(f"User selected open file: {filepath}")
             else:
-                self._logger.debug("用户取消文件打开")
-            
+                self._logger.debug("User cancelled file open")
+
             return filepath
-            
+
         except Exception as e:
-            self._logger.error(f"显示文件打开对话框失败: {e}")
+            self._logger.error(f"Failed to show file open dialog: {e}")
             return ""
 
     def show_directory_dialog(self, title: str, default_path: str = "") -> str:
-        """显示目录选择对话框"""
+        """Show directory selection dialog"""
         try:
             directory = QFileDialog.getExistingDirectory(
                 self.main_window,
                 title,
                 default_path
             )
-            
+
             if directory:
-                self._logger.info(f"用户选择目录: {directory}")
+                self._logger.info(f"User selected directory: {directory}")
             else:
-                self._logger.debug("用户取消目录选择")
-            
+                self._logger.debug("User cancelled directory selection")
+
             return directory
-            
+
         except Exception as e:
-            self._logger.error(f"显示目录选择对话框失败: {e}")
+            self._logger.error(f"Failed to show directory selection dialog: {e}")
             return ""
 
     def show_input_dialog(self, title: str, label: str, default_text: str = "") -> tuple[str, bool]:
-        """显示输入对话框"""
+        """Show input dialog"""
         try:
             text, ok = QInputDialog.getText(
                 self.main_window,
@@ -256,73 +256,73 @@ class DialogManager:
             )
             
             if ok:
-                self._logger.info(f"用户输入: {title} - {text}")
+                self._logger.info(f"User input: {title} - {text}")
             else:
-                self._logger.debug("用户取消输入")
-            
+                self._logger.debug("User cancelled input")
+
             return text, ok
-            
+
         except Exception as e:
-            self._logger.error(f"显示输入对话框失败: {e}")
+            self._logger.error(f"Failed to show input dialog: {e}")
             return "", False
 
     def show_custom_dialog(self, title: str, content: str, width: int = 400, height: int = 300) -> QDialog:
-        """显示自定义内容对话框"""
+        """Show custom content dialog"""
         try:
             dialog = QDialog(self.main_window)
             dialog.setWindowTitle(title)
             dialog.setFixedSize(width, height)
-            
+
             layout = QVBoxLayout(dialog)
-            
-            # 内容区域
+
+            # Content area
             text_widget = QTextEdit()
             text_widget.setReadOnly(True)
             text_widget.setPlainText(content)
             layout.addWidget(text_widget)
-            
-            # 按钮区域
+
+            # Button area
             button_layout = QHBoxLayout()
             button_layout.addStretch()
-            
+
             ok_button = QPushButton("OK")
             ok_button.clicked.connect(dialog.accept)
             button_layout.addWidget(ok_button)
-            
+
             layout.addLayout(button_layout)
-            
-            self._logger.info(f"创建自定义对话框: {title}")
+
+            self._logger.info(f"Created custom dialog: {title}")
             return dialog
-            
+
         except Exception as e:
-            self._logger.error(f"创建自定义对话框失败: {e}")
+            self._logger.error(f"Failed to create custom dialog: {e}")
             return None
 
     def show_processing_error(self, error_message: str):
-        """显示处理错误对话框"""
+        """Show processing error dialog"""
         try:
-            # 如果错误消息为空或只是"Unknown error"，使用更友好的消息
+            # If error message is empty or just "Unknown error", use a more friendly message
             if not error_message or error_message.strip() == "Unknown error":
                 error_message = "An unexpected error occurred during processing. Please check the logs for more details."
-            
-            # 检查是否在自动化测试环境中
+
+            # Check if in automated test environment
             is_automated_test = (
-                os.environ.get('QT_QPA_PLATFORM') == 'offscreen' or  # 无头模式
-                os.environ.get('PYTEST_CURRENT_TEST') is not None or  # pytest环境
-                os.environ.get('CI') == 'true' or  # CI环境
-                hasattr(self.main_window, '_test_mode')  # 测试模式标志
+                os.environ.get('QT_QPA_PLATFORM') == 'offscreen' or  # Headless mode
+                os.environ.get('PYTEST_CURRENT_TEST') is not None or  # pytest environment
+                os.environ.get('CI') == 'true' or  # CI environment
+                hasattr(self.main_window, '_test_mode')  # Test mode flag
             )
-            
+
             if is_automated_test:
-                # 在自动化测试环境中，只记录错误而不显示阻塞性对话框
-                self._logger.error(f"处理错误（自动化测试模式）: {error_message}")
-                # 更新主窗口日志以便测试验证
+                # In automated test environment, only log error without showing blocking dialog
+                self._logger.error(f"Processing error (automated test mode): {error_message}")
+                # Update main window log for test verification
                 self.main_window.update_log(f"Error: {error_message}")
-                # 可选：发送一个非阻塞的通知
+                # Optional: send a non-blocking notification
                 self._send_non_blocking_error_notification(error_message)
                 return
-            
-            # 在正常GUI环境中显示模态对话框
+
+            # Show modal dialog in normal GUI environment
             error_dialog = QMessageBox(self.main_window)
             error_dialog.setIcon(QMessageBox.Icon.Critical)
             error_dialog.setWindowTitle("Processing Error")
@@ -348,38 +348,38 @@ class DialogManager:
             
         except Exception as e:
             self._logger.error(f"Failed to show processing error dialog: {e}")
-            # 如果对话框显示失败，至少更新日志
+            # If dialog display fails, at least update the log
             self.main_window.update_log(f"Error: {error_message}")
-    
+
     def _send_non_blocking_error_notification(self, error_message: str):
-        """发送非阻塞的错误通知（用于自动化测试）"""
+        """Send non-blocking error notification (for automated testing)"""
         try:
-            # 这里可以发送状态栏消息、日志更新或其他非阻塞通知
+            # Can send status bar message, log update or other non-blocking notifications
             if hasattr(self.main_window, 'statusBar'):
                 self.main_window.statusBar().showMessage(f"Error: {error_message}", 5000)
-            
-            # 发出错误信号供测试监听
+
+            # Emit error signal for test listening
             if hasattr(self.main_window, 'error_occurred'):
                 self.main_window.error_occurred.emit(error_message)
-                
+
         except Exception as e:
             self._logger.debug(f"Failed to send non-blocking notification: {e}")
 
     def show_processing_complete(self, summary: str):
-        """显示处理完成对话框"""
+        """Show processing complete dialog"""
         try:
             success_dialog = QMessageBox(self.main_window)
             success_dialog.setIcon(QMessageBox.Icon.Information)
             success_dialog.setWindowTitle("Processing Complete")
             success_dialog.setText("Processing completed successfully!")
-            
+
             if summary:
                 success_dialog.setDetailedText(summary)
-            
+
             success_dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
             success_dialog.exec()
-            
-            self._logger.info("显示处理完成对话框")
-            
+
+            self._logger.info("Showed processing complete dialog")
+
         except Exception as e:
-            self._logger.error(f"显示处理完成对话框失败: {e}") 
+            self._logger.error(f"Failed to show processing complete dialog: {e}")

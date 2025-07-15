@@ -1,5 +1,30 @@
 ## [Unreleased]
 
+### Removed
+- **Deprecated Files Cleanup** (2025-07-15)
+  - **Cleanup Description**: Comprehensive cleanup of deprecated proxy files, temporary scripts, and obsolete configuration files to reduce technical debt and improve codebase maintainability.
+  - **Files Removed**:
+    - **Backward Compatibility Proxy Files** (3 files, 67 lines):
+      - `src/pktmask/core/encapsulation/adapter.py` - Migrated to `pktmask.adapters.encapsulation_adapter`
+      - `src/pktmask/domain/adapters/statistics_adapter.py` - Migrated to `pktmask.adapters.statistics_adapter`
+      - `run_gui.py` - Replaced by unified entry point `python -m pktmask`
+    - **Temporary Debug Scripts** (5 files, 1,006 lines):
+      - `test_log_fix.py`, `code_stats.py`, `detailed_stats.py` - One-time analysis scripts
+      - `deprecated_files_analyzer.py`, `project_cleanup_analyzer.py` - Cleanup analysis tools
+    - **Obsolete Configuration** (1 file, 39 lines):
+      - `config/default/mask_config.yaml` - Legacy dual-module architecture config
+    - **Historical Output Files** (46 files, 8.7MB):
+      - `output/` directory - TLS analysis reports and validation data
+  - **Code Cleanup**:
+    - Removed legacy architecture comment in `src/pktmask/core/processors/registry.py`
+  - **Impact**:
+    - **Files Cleaned**: 55 files total
+    - **Code Reduced**: 1,112 lines
+    - **Disk Space Saved**: ~8.8MB
+    - **Technical Debt**: Significantly reduced
+  - **Safety Measures**: All important files backed up to `backup/deprecated_files/`
+  - **Compatibility**: No functional impact, all core features preserved
+
 ### Changed
 - **PayloadMasker Default Full Masking Strategy** (2025-07-15)
   - **Change Description**: Modified PayloadMasker module's default processing logic to implement "mask by default" strategy, ensuring all TCP payloads undergo masking processing, significantly enhancing data security.

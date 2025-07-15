@@ -779,7 +779,7 @@ class ReportManager:
                 step_type = 'anonymize_ips'  # Use standard naming
             elif step_name_raw in ['DedupStage', 'DeduplicationStage']:
                 step_type = 'remove_dupes'
-            elif step_name_raw in ['MaskStage', 'MaskPayloadStage', 'NewMaskPayloadStage', 'Mask Payloads (v2)']:
+            elif step_name_raw in ['MaskStage', 'MaskPayloadStage', 'NewMaskPayloadStage', 'Mask Payloads (v2)', 'Payload Masking Stage']:
                 step_type = 'mask_payloads'  # Use standard naming
             else:
                 step_type = step_name_raw.lower()

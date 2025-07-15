@@ -1,5 +1,7 @@
 # PktMask
 
+> **🧹 v0.2.2 更新 (2025-07-15)**: 代码库清理完成！删除55个废弃文件，清理1,112行冗余代码，节省8.8MB空间，显著减少技术债务。详见 [清理报告](docs/development/CODEBASE_CLEANUP_REPORT.md)。
+>
 > **🎉 v0.2.1 更新 (2025-07-15)**: 关键功能修复完成！MaskStage和IP匿名化功能已完全恢复正常。详见 [修复摘要](docs/development/CRITICAL_FIXES_SUMMARY.md)。
 
 PktMask is a graphical interface tool for processing network packet files, focusing on IP address anonymization, payload trimming, and packet deduplication. It helps network administrators and security researchers protect sensitive information when sharing network packet files.

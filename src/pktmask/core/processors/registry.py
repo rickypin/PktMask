@@ -30,7 +30,6 @@ class ProcessorRegistry:
             from .ip_anonymizer import IPAnonymizer
             from .deduplicator import Deduplicator
             from .masker import Masker
-            # Legacy processors removed, using new dual-module architecture
             from ..pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage as MaskingProcessor
             
             cls._processors.update({

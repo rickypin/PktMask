@@ -76,7 +76,7 @@ class SimplifiedMainWindow(QMainWindow):
             self._logger.info("Core components initialization completed")
             
         except Exception as e:
-            self._logger.error(f"核心组件初始化失败: {e}")
+            self._logger.error(f"Core component initialization failed: {e}")
             raise
     
     def _connect_signals(self):
@@ -109,7 +109,7 @@ class SimplifiedMainWindow(QMainWindow):
             self._logger.debug("Signal connections completed")
             
         except Exception as e:
-            self._logger.error(f"信号连接失败: {e}")
+            self._logger.error(f"Signal connection failed: {e}")
     
     def _handle_progress_update(self, event_type: str, data: dict):
         """处理进度更新"""

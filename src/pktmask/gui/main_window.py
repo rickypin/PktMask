@@ -268,7 +268,7 @@ class MainWindow(QMainWindow):
             return
         
         if isinstance(event_data, PipelineEventData):
-            self._logger.debug(f"接收到结构化事件: {event_data.event_type} - {type(event_data.data).__name__}")
+            self._logger.debug(f"Received structured event: {event_data.event_type} - {type(event_data.data).__name__}")
             
             # 可以在这里添加基于新数据模型的增强处理逻辑
             # 例如：更详细的日志、更精确的UI更新、数据验证等
@@ -283,7 +283,7 @@ class MainWindow(QMainWindow):
             
             elif event_data.event_type == PipelineEvents.STEP_SUMMARY:
                 if hasattr(event_data.data, 'result'):
-                    self._logger.debug(f"步骤结果: {event_data.data.result}")
+                    self._logger.debug(f"Step result: {event_data.data.result}")
         else:
             self._logger.warning(f"Received unstructured event data: {type(event_data)}")
     
@@ -296,7 +296,7 @@ class MainWindow(QMainWindow):
             return
         
         if isinstance(stats_data, StatisticsData):
-            self._logger.debug(f"接收到结构化统计数据: {stats_data.metrics.files_processed} files, {stats_data.metrics.packets_processed} packets")
+            self._logger.debug(f"Received structured statistics data: {stats_data.metrics.files_processed} files, {stats_data.metrics.packets_processed} packets")
             
             # 基于新数据模型的增强统计处理
             # 可以实现更精确的性能监控、数据验证等
@@ -666,7 +666,7 @@ class MainWindow(QMainWindow):
             self.update_log(f"Error saving summary report: {str(e)}")
 
     def find_existing_summary_reports(self) -> List[str]:
-        """查找工作目录中的现有summary report文件"""
+        """Find existing summary report files in working directory"""
         if not self.current_output_dir or not os.path.exists(self.current_output_dir):
             return []
         

@@ -40,7 +40,7 @@ class UIBuilder:
         self.config = get_app_config()
         self._logger = get_logger(__name__)
         
-        self._logger.info("UI构建器初始化完成")
+        self._logger.info("UI builder initialization completed")
     
     def setup_ui(self):
         """构建完整的用户界面"""
@@ -51,10 +51,10 @@ class UIBuilder:
             self._apply_initial_styles()
             self._show_initial_guides()
             
-            self._logger.info("UI界面构建完成")
-            
+            self._logger.info("UI interface construction completed")
+
         except Exception as e:
-            self._logger.error(f"UI界面构建失败: {e}")
+            self._logger.error(f"UI interface construction failed: {e}")
             raise
     
     def _setup_window_properties(self):
