@@ -157,7 +157,6 @@ class PipelineManager:
             self.main_window.output_path_label.setEnabled(True)
             for cb in [self.main_window.anonymize_ips_cb, self.main_window.remove_dupes_cb, self.main_window.mask_payloads_cb]:
                 cb.setEnabled(True)
-            # web_focused_cb 保持禁用状态，因为功能未完成
             self.main_window.start_proc_btn.setEnabled(True)
             self.main_window.start_proc_btn.setText("Start")
     

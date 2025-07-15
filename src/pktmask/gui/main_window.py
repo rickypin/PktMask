@@ -742,13 +742,7 @@ class MainWindow(QMainWindow):
         """更新Start按钮样式"""
         self.ui_manager._update_start_button_style()
 
-    def _get_coming_soon_style(self) -> str:
-        """根据当前主题生成Coming Soon选项样式（由UIManager处理）"""
-        return self.ui_manager._get_coming_soon_style()
 
-    def _apply_coming_soon_style(self):
-        """应用Coming Soon样式到web_focused_cb"""
-        self.ui_manager._apply_coming_soon_style()
 
     # === 统计数据兼容性属性访问器 ===
     @property

@@ -167,30 +167,23 @@ class UIManager:
         
         self.main_window.remove_dupes_cb = QCheckBox("Remove Dupes")
         self.main_window.anonymize_ips_cb = QCheckBox("Anonymize IPs")
-        self.main_window.mask_payloads_cb = QCheckBox("Mask Payloads")
-        self.main_window.web_focused_cb = QCheckBox("Web-Focused Traffic Only (Coming Soon)")
-        
+        self.main_window.mask_payloads_cb = QCheckBox("Mask Payloads ( Keep TLS Handshakes )")
+
         self.main_window.mask_payloads_cb.setToolTip("Intelligently masks packet payloads while preserving TLS handshake data.")
-        self.main_window.web_focused_cb.setToolTip(
-            "HTTP协议处理功能将在未来版本中提供。仅支持TLS、IP匿名化和去重功能。"
-        )
 
         # 设置手型光标
         for cb in [self.main_window.remove_dupes_cb, self.main_window.anonymize_ips_cb,
-                  self.main_window.mask_payloads_cb, self.main_window.web_focused_cb]:
+                  self.main_window.mask_payloads_cb]:
             cb.setCursor(Qt.CursorShape.PointingHandCursor)
         
         # 使用配置中的默认状态
         self.main_window.remove_dupes_cb.setChecked(self.config.ui.default_remove_dupes)
         self.main_window.anonymize_ips_cb.setChecked(self.config.ui.default_anonymize_ips)
         self.main_window.mask_payloads_cb.setChecked(self.config.ui.default_mask_payloads)
-        self.main_window.web_focused_cb.setChecked(False)
-        self.main_window.web_focused_cb.setEnabled(False)
 
         pipeline_layout.addWidget(self.main_window.remove_dupes_cb)
         pipeline_layout.addWidget(self.main_window.anonymize_ips_cb)
         pipeline_layout.addWidget(self.main_window.mask_payloads_cb)
-        pipeline_layout.addWidget(self.main_window.web_focused_cb)
         pipeline_layout.addStretch()
 
         # Step 3: Execute
@@ -324,7 +317,6 @@ class UIManager:
     def _apply_initial_styles(self):
         """应用初始样式"""
         self.apply_stylesheet()
-        self._apply_coming_soon_style()
         self._update_path_link_styles()
         self._update_start_button_style()
     
@@ -447,7 +439,6 @@ class UIManager:
             self.apply_stylesheet()
             self._update_path_link_styles()
             self._update_start_button_style()
-            self._apply_coming_soon_style()
 
     def _get_path_link_style(self) -> str:
         """获取路径链接样式"""
@@ -568,58 +559,9 @@ class UIManager:
         # 移除旧的按钮样式并添加新的
         self.main_window.start_proc_btn.setStyleSheet(style)
 
-    def _get_coming_soon_style(self) -> str:
-        """获取Coming Soon样式"""
-        theme = self.get_current_theme()
-        if theme == 'dark':
-            return """
-                QCheckBox {
-                    color: #888;
-                    font-style: italic;
-                }
-                QCheckBox::indicator {
-                    width: 18px;
-                    height: 18px;
-                    background-color: #333;
-                    border: 1px solid #555;
-                    border-radius: 3px;
-                }
-                QCheckBox::indicator:disabled {
-                    background-color: #222;
-                    border-color: #444;
-                }
-                QCheckBox::indicator:checked:disabled {
-                    background-color: #555;
-                    border-color: #666;
-                }
-            """
-        else:
-            return """
-                QCheckBox {
-                    color: #888;
-                    font-style: italic;
-                }
-                QCheckBox::indicator {
-                    width: 18px;
-                    height: 18px;
-                    background-color: #f0f0f0;
-                    border: 1px solid #ccc;
-                    border-radius: 3px;
-                }
-                QCheckBox::indicator:disabled {
-                    background-color: #e8e8e8;
-                    border-color: #ddd;
-                }
-                QCheckBox::indicator:checked:disabled {
-                    background-color: #ddd;
-                    border-color: #ccc;
-                }
-            """
 
-    def _apply_coming_soon_style(self):
-        """应用Coming Soon样式"""
-        style = self._get_coming_soon_style()
-        self.main_window.web_focused_cb.setStyleSheet(style)
+
+
 
     def _update_start_button_state(self):
         """根据输入目录和选项状态更新Start按钮"""
