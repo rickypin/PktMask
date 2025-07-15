@@ -24,21 +24,37 @@ src/pktmask/adapters/
 
 ## 核心适配器
 
-### 1. 直接使用StageBase架构
+### 1. 混合架构状态说明
 
-PipelineProcessorAdapter已被移除，现在所有处理组件都直接继承自 `StageBase`。
+**重要说明**: PktMask当前处于架构迁移的中间状态，存在两套并行的处理系统：
 
+#### ✅ 已迁移到StageBase的组件
 ```python
-from pktmask.core.pipeline.stages.anon_ip import AnonStage
-from pktmask.core.pipeline.stages.dedup import DeduplicationStage
+from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage
 
-# 直接创建Stage
-anon_stage = AnonStage(config)
-dedup_stage = DeduplicationStage(config)
+# 载荷掩码已完全迁移到StageBase架构
+mask_stage = NewMaskPayloadStage()
+mask_stage.initialize(config)
+```
 
-# 在管道中使用
-pipeline.add_stage(anon_stage)
-pipeline.add_stage(dedup_stage)
+#### 🔄 仍使用BaseProcessor的组件
+```python
+from pktmask.core.processors.ip_anonymizer import IPAnonymizer
+from pktmask.core.processors.deduplicator import Deduplicator
+
+# IP匿名化和去重仍使用BaseProcessor架构
+anonymizer = IPAnonymizer(config)
+deduplicator = Deduplicator(config)
+```
+
+#### 🔧 统一访问接口（推荐）
+```python
+from pktmask.core.processors.registry import ProcessorRegistry
+
+# 通过ProcessorRegistry统一访问新旧架构
+anonymizer = ProcessorRegistry.get_processor('anonymize_ips')
+deduplicator = ProcessorRegistry.get_processor('remove_dupes')
+masker = ProcessorRegistry.get_processor('mask_payloads')  # 实际返回NewMaskPayloadStage
 ```
 
 ### 2. EventDataAdapter
@@ -105,33 +121,42 @@ ip_pairs = adapter.extract_ips_for_anonymization(ip_analysis)
 payload_analysis = adapter.analyze_packet_for_payload_processing(packet)
 ```
 
-## 兼容性适配器
+## 架构迁移状态
 
-### IpAnonymizationStageCompat
+### 当前迁移进度
 
-为旧代码提供兼容接口。
+#### ✅ 已完成迁移的功能
+- **载荷掩码**: `NewMaskPayloadStage` (StageBase架构)
+  - 双模块设计（Marker + Masker）
+  - 完全兼容StageBase接口
+  - 生产就绪状态
+
+#### 🔄 待迁移的功能
+- **IP匿名化**: `IPAnonymizer` (BaseProcessor架构)
+  - 功能: 前缀保持匿名化、目录级映射构建
+  - 状态: 待迁移到StageBase
+  - 临时访问: 通过ProcessorRegistry
+
+- **去重处理**: `Deduplicator` (BaseProcessor架构)
+  - 功能: 数据包去重、哈希计算、统计分析
+  - 状态: 待迁移到StageBase
+  - 临时访问: 通过ProcessorRegistry
+
+### 迁移建议
 
 ```python
-from pktmask.adapters.compatibility import IpAnonymizationStageCompat
+# 当前推荐的使用方式（通过统一接口）
+from pktmask.core.pipeline.executor import PipelineExecutor
 
-# 旧接口（会产生废弃警告）
-stage = IpAnonymizationStageCompat(strategy=old_strategy, reporter=old_reporter)
+config = {
+    'anonymize_ips': {'enabled': True},
+    'remove_dupes': {'enabled': True},
+    'mask_payloads': {'enabled': True}
+}
 
-# 推荐：直接使用新的 AnonStage
-from pktmask.core.pipeline.stages.anon_ip import AnonStage
-stage = AnonStage()
-```
-
-### DeduplicationStageCompat
-
-去重功能的兼容接口。
-
-```python
-from pktmask.adapters.compatibility import DeduplicationStageCompat
-
-# 兼容接口
-stage = DeduplicationStageCompat()
-result = stage.process_file_legacy(input_path, output_path)
+# PipelineExecutor自动处理新旧架构的差异
+executor = PipelineExecutor(config)
+result = executor.run(input_path, output_path)
 ```
 
 ## 异常处理

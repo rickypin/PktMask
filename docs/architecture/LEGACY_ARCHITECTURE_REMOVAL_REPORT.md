@@ -1,85 +1,100 @@
-# PktMask旧架构移除实施报告
+# PktMask架构迁移状态报告
 
-> **版本**: v1.0  
-> **实施日期**: 2025-07-15  
-> **风险等级**: P0（高风险架构重构）  
-> **实施状态**: ✅ **完成**  
-> **影响范围**: 架构统一，完全移除向后兼容性  
+> **版本**: v2.0
+> **更新日期**: 2025-07-15
+> **风险等级**: P1（中等风险部分迁移）
+> **实施状态**: 🔄 **部分完成**
+> **影响范围**: 混合架构，载荷掩码已迁移，IP匿名化和去重待迁移
 
 ---
 
 ## 📋 执行摘要
 
 ### 项目背景
-PktMask项目存在三套并行的处理架构：ProcessingStep、StageBase和ProcessorStage，导致代码重复、维护成本激增。基于项目仍处于开发阶段的优势，实施了激进的架构统一方案。
+PktMask项目当前处于架构迁移的中间状态。项目存在两套并行的处理架构：BaseProcessor系统（旧架构）和StageBase Pipeline系统（新架构），其中载荷掩码功能已完成迁移，IP匿名化和去重功能仍使用旧架构。
 
-### 核心目标
-- **彻底统一架构**：采用StageBase作为唯一处理架构
-- **消除技术债务**：完全移除ProcessingStep和ProcessorStage
-- **提升开发效率**：减少架构相关代码，简化维护
-- **建立长期基础**：为项目未来发展奠定技术基础
+### 当前架构状态
+- **✅ 已迁移到StageBase**：载荷掩码功能（NewMaskPayloadStage）
+- **🔄 仍使用BaseProcessor**：IP匿名化（IPAnonymizer）、去重（Deduplicator）
+- **🔧 桥接机制**：ProcessorRegistry作为新旧系统的统一接口
 
 ### 实施结果
-✅ **成功完成** - 所有旧架构组件已移除，新架构运行正常
+🔄 **部分完成** - 载荷掩码已迁移到新架构，其他组件仍需迁移
 
 ---
 
-## 🔧 实施方法
+## 🔧 当前架构状态分析
 
-### 阶段1：架构分析和规划
+### 实际存在的架构系统
 
-#### 1.1 现状调研
-使用代码库检索工具深入分析项目结构：
+#### 1.1 BaseProcessor系统（旧架构 - 仍在使用）
+**位置**: `src/pktmask/core/processors/`
+**核心组件**:
+- `BaseProcessor`: 处理器抽象基类
+- `IPAnonymizer`: IP匿名化处理器（继承BaseProcessor）
+- `Deduplicator`: 去重处理器（继承BaseProcessor）
+- `ProcessorRegistry`: 处理器注册表和桥接层
 
+**状态**: 🔄 **仍在使用** - IP匿名化和去重功能依赖此架构
+
+#### 1.2 StageBase Pipeline系统（新架构 - 部分使用）
+**位置**: `src/pktmask/core/pipeline/`
+**核心组件**:
+- `StageBase`: Stage抽象基类
+- `PipelineExecutor`: 统一Pipeline执行器
+- `NewMaskPayloadStage`: 载荷掩码Stage（继承StageBase）
+
+**状态**: ✅ **已实现** - 载荷掩码功能已完全迁移
+
+### 已移除的架构组件
+
+#### 2.1 ProcessingStep系统（已完全移除）
 ```bash
-# 分析项目整体架构
-codebase-retrieval "PktMask项目的整体架构概览，包括主要模块、核心处理组件、新旧架构实现"
-
-# 识别需要删除的组件
-codebase-retrieval "ProcessingStep体系的具体实现和依赖关系"
+# 确认已删除的文件
+❌ src/pktmask/core/base_step.py - 不存在
+❌ src/pktmask/steps/ - 目录不存在
 ```
 
-#### 1.2 依赖关系梳理
-- 识别所有继承自ProcessingStep的类
-- 分析ProcessorStageAdapter的使用情况
-- 确认NewMaskPayloadStage的继承关系问题
-
-### 阶段2：系统性移除旧架构
-
-#### 2.1 删除ProcessingStep体系
+#### 2.2 ProcessorStageAdapter适配层（已移除）
 ```bash
-# 确认文件不存在（已在之前清理）
-# src/pktmask/core/base_step.py - 已不存在
-# src/pktmask/steps/ - 已不存在
+# 已删除的适配器文件
+❌ src/pktmask/core/pipeline/processor_stage.py - 已删除
+❌ src/pktmask/adapters/processor_adapter.py - 已删除
+❌ src/pktmask/stages/ - 目录已删除
 ```
 
-#### 2.2 删除ProcessorStageAdapter适配层
-```bash
-# 删除核心适配器文件
-rm src/pktmask/core/pipeline/processor_stage.py
+### 混合架构的桥接机制
 
-# 删除适配器实现
-rm src/pktmask/adapters/processor_adapter.py
-
-# 删除兼容性适配器目录
-rm -rf src/pktmask/stages
-```
-
-#### 2.3 修复继承关系
-关键修复：`NewMaskPayloadStage` 从 `ProcessorStage` 迁移到 `StageBase`
+#### 3.1 ProcessorRegistry桥接功能
+**位置**: `src/pktmask/core/processors/registry.py`
+**功能**: 统一新旧架构的访问接口
 
 ```python
-# 修改前
-from pktmask.core.pipeline.processor_stage import ProcessorStage
-class NewMaskPayloadStage(ProcessorStage):
-    def __init__(self, config):
-        super().__init__(config)  # 错误：StageBase不接受参数
+# ProcessorRegistry中的桥接映射
+cls._processors.update({
+    # Standard naming keys (consistent with GUI interface)
+    'anonymize_ips': IPAnonymizer,        # BaseProcessor系统
+    'remove_dupes': Deduplicator,         # BaseProcessor系统
+    'mask_payloads': MaskingProcessor,    # 指向NewMaskPayloadStage (StageBase系统)
 
-# 修改后  
+    # Old keys → aliases, maintain backward compatibility
+    'anon_ip': IPAnonymizer,
+    'dedup_packet': Deduplicator,
+    'mask_payload': MaskingProcessor,
+})
+```
+
+#### 3.2 已完成的迁移：NewMaskPayloadStage
+**迁移状态**: ✅ **已完成**
+**继承关系**: `NewMaskPayloadStage` 继承自 `StageBase`
+
+```python
+# 当前正确的实现
 from pktmask.core.pipeline.base_stage import StageBase
 class NewMaskPayloadStage(StageBase):
     def __init__(self, config):
-        super().__init__()  # 正确：无参数调用
+        super().__init__()  # StageBase无参数构造函数
+        self.config = config
 ```
 
 ### 阶段3：更新导入和引用
@@ -147,32 +162,48 @@ def verify_architecture_unification():
 
 ## 📊 实施结果
 
-### 成功删除的组件
+### 已完成的迁移
 
-#### 文件删除清单
-```
-❌ src/pktmask/core/pipeline/processor_stage.py
-❌ src/pktmask/adapters/processor_adapter.py  
-❌ src/pktmask/stages/ (整个目录)
-❌ tests/unit/test_pipeline_processor_adapter.py
-```
-
-#### 代码修改清单
+#### ✅ 载荷掩码功能迁移
 ```
 ✅ src/pktmask/core/pipeline/stages/mask_payload_v2/stage.py
-   - 继承关系: ProcessorStage → StageBase
-   - 构造函数: super().__init__(config) → super().__init__()
-   - 初始化方法: 修复参数传递
+   - 类名: NewMaskPayloadStage
+   - 继承: StageBase
+   - 状态: 完全迁移，生产就绪
+   - 特性: 双模块架构（Marker + Masker）
+```
 
-✅ src/pktmask/adapters/__init__.py
-   - 移除PipelineProcessorAdapter导入
-   - 更新__all__列表
+#### ❌ 已删除的旧组件
+```
+❌ src/pktmask/core/pipeline/processor_stage.py - ProcessorStage适配器已删除
+❌ src/pktmask/adapters/processor_adapter.py - 旧适配器已删除
+❌ src/pktmask/stages/ - 旧stages目录已删除
+❌ tests/unit/test_pipeline_processor_adapter.py - 相关测试已删除
+```
 
-✅ docs/architecture/NEW_MASKSTAGE_UNIFIED_DESIGN.md
-   - 更新架构示例代码
+### 待迁移的组件
 
-✅ docs/current/user/adapters_usage_guide.md
-   - 更新用户指南，移除已删除适配器的使用说明
+#### 🔄 仍使用BaseProcessor的组件
+```
+🔄 src/pktmask/core/processors/ip_anonymizer.py
+   - 类名: IPAnonymizer
+   - 继承: BaseProcessor
+   - 状态: 待迁移到StageBase
+   - 功能: IP匿名化、目录级映射构建、频率统计
+
+🔄 src/pktmask/core/processors/deduplicator.py
+   - 类名: Deduplicator
+   - 继承: BaseProcessor
+   - 状态: 待迁移到StageBase
+   - 功能: 数据包去重、哈希计算、统计分析
+```
+
+#### 🔧 桥接机制（ProcessorRegistry）
+```
+🔧 src/pktmask/core/processors/registry.py
+   - 功能: 统一新旧架构的访问接口
+   - 状态: 临时桥接，完成迁移后可简化
+   - 映射: BaseProcessor和StageBase组件的统一注册
 ```
 
 ### 验证测试结果

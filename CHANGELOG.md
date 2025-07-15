@@ -154,25 +154,32 @@
   - `IpAnonymizationStep` → `IpAnonymizationStage`
   - `IntelligentTrimmingStep` → `IntelligentTrimmingStage`
 
-#### 完全向后兼容
-- 保留 `pktmask.steps` 兼容层，现有代码无需修改
-- 旧的导入路径会显示弃用警告，但功能完全正常
-- 所有现有测试和功能保持100%兼容
+#### 架构迁移状态（更新说明）
+**重要澄清**: 当前项目处于部分迁移状态，并非完全统一到StageBase架构
 
-#### 开发者迁移建议
+- ✅ **已迁移**: 载荷掩码功能（NewMaskPayloadStage → StageBase）
+- 🔄 **待迁移**: IP匿名化和去重功能（仍使用BaseProcessor架构）
+- 🔧 **桥接机制**: ProcessorRegistry提供统一访问接口
+
+#### 当前推荐使用方式
 ```python
-# 旧方式（仍可用，显示弃用警告）
-from pktmask.steps import DeduplicationStep
+# 推荐：通过PipelineExecutor统一访问
+from pktmask.core.pipeline.executor import PipelineExecutor
 
-# 新方式（推荐）
-from pktmask.stages import DeduplicationStage
+config = {
+    'anonymize_ips': {'enabled': True},    # BaseProcessor系统
+    'remove_dupes': {'enabled': True},     # BaseProcessor系统
+    'mask_payloads': {'enabled': True}     # StageBase系统
+}
+
+executor = PipelineExecutor(config)  # 自动处理新旧架构差异
 ```
 
 #### 影响范围
-- ✅ 解决了 Step vs Stage 概念混淆问题
-- ✅ 统一了导入路径命名规范
-- ✅ 提升了代码可读性和一致性
-- ✅ 为后续架构统一打下基础
+- ✅ 载荷掩码功能完全迁移到双模块架构
+- 🔄 IP匿名化和去重功能保持BaseProcessor架构
+- 🔧 ProcessorRegistry提供新旧系统的统一桥接
+- 📋 为完整架构统一奠定基础
 
 ---
 
@@ -186,10 +193,12 @@ from pktmask.stages import DeduplicationStage
 - 提升执行效率 5-10%，降低内存消耗
 - 统一错误处理逻辑，简化降级到透传模式的流程
 
-#### 处理器架构优化
-- 引入 ProcessorStageAdapter 统一处理器接口
-- 重构 Pipeline 执行器，提升模块化程度
-- 优化 CLI 和 GUI 管理器集成
+#### 处理器架构优化（状态更新）
+**澄清**: ProcessorStageAdapter已被移除，当前使用混合架构
+- ✅ 移除 ProcessorStageAdapter 适配层
+- ✅ 载荷掩码迁移到StageBase架构（NewMaskPayloadStage）
+- 🔄 IP匿名化和去重保持BaseProcessor架构
+- 🔧 ProcessorRegistry作为新旧系统桥接层
 
 ### 🔄 向后兼容性改进
 
