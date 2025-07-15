@@ -8,7 +8,7 @@ PktMask 适配器模块
 __version__ = "1.0.0"
 
 # 核心适配器
-from .processor_adapter import PipelineProcessorAdapter
+# PipelineProcessorAdapter已删除，直接使用StageBase架构
 from .encapsulation_adapter import ProcessingAdapter
 from .statistics_adapter import StatisticsDataAdapter
 
@@ -36,7 +36,6 @@ __all__ = [
     '__version__',
     
     # 核心适配器
-    'PipelineProcessorAdapter',
     'ProcessingAdapter',
     'StatisticsDataAdapter',
     

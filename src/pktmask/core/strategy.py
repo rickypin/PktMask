@@ -382,6 +382,9 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
             freq_ipv6_6[":".join(parts[:6])] = freq_ipv6_6.get(":".join(parts[:6]), 0) + 1
             freq_ipv6_7[":".join(parts[:7])] = freq_ipv6_7.get(":".join(parts[:7]), 0) + 1
         
+        # 【Enhanced】Get encapsulation adapter once for the entire process
+        encap_adapter = self._get_encap_adapter()
+
         for f in files_to_process:
             file_path = os.path.join(subdir_path, f)
             ext = os.path.splitext(f)[1].lower()
@@ -390,11 +393,10 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                 with reader_class(file_path) as reader:
                     for packet in reader:
                         self._encap_stats['total_packets_scanned'] += 1
-                        
+
                         # 【Enhanced】Use encapsulation adapter to analyze packets and extract IPs from all layers
-                        encap_adapter = self._get_encap_adapter()
                         ip_analysis = encap_adapter.analyze_packet_for_ip_processing(packet)
-                        
+
                         # Update encapsulation statistics
                         if ip_analysis['has_encapsulation']:
                             self._encap_stats['encapsulated_packets'] += 1
@@ -402,7 +404,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                                 self._encap_stats['multi_layer_ip_packets'] += 1
                         else:
                             self._encap_stats['plain_packets'] += 1
-                        
+
                         # 【Enhanced】Process IP addresses from all layers
                         ip_pairs = encap_adapter.extract_ips_for_anonymization(ip_analysis)
                         for src_ip, dst_ip, context in ip_pairs:
@@ -411,30 +413,30 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                                 process_ipv4_address(src_ip)
                             elif ':' in src_ip:
                                 process_ipv6_address(src_ip)
-                            
+
                             if '.' in dst_ip:
                                 process_ipv4_address(dst_ip)
                             elif ':' in dst_ip:
                                 process_ipv6_address(dst_ip)
-                        
+
                         # 【Compatibility】Keep original simple IP extraction as fallback
                         if not ip_pairs:
                             # Fall back to original logic
                             if packet.haslayer(IP):
                                 process_ipv4_address(packet.getlayer(IP).src)
                                 process_ipv4_address(packet.getlayer(IP).dst)
-                            
+
                             if packet.haslayer(IPv6):
                                 process_ipv6_address(packet.getlayer(IPv6).src)
                                 process_ipv6_address(packet.getlayer(IPv6).dst)
-                            
+
             except Exception as e:
                 error_log.append(f"Error scanning file {file_path}: {str(e)}")
-        
+
         # Record frequency statistics and performance metrics
         end_time = time.time()
         duration = end_time - start_time
-        
+
         # 【Enhanced】Get encapsulation processing statistics
         encap_proc_stats = encap_adapter.get_processing_stats()
         

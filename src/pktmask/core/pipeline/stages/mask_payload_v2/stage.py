@@ -12,11 +12,11 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Union, Optional
 
-from pktmask.core.pipeline.processor_stage import ProcessorStage
+from pktmask.core.pipeline.base_stage import StageBase
 from pktmask.core.pipeline.models import StageStats
 
 
-class NewMaskPayloadStage(ProcessorStage):
+class NewMaskPayloadStage(StageBase):
     """双模块架构掩码处理阶段
 
     基于双模块分离设计：
@@ -34,8 +34,11 @@ class NewMaskPayloadStage(ProcessorStage):
                 - masker_config: Masker模块配置
                 - mode: 处理模式 ("enhanced", "basic")
         """
-        super().__init__(config)
+        super().__init__()
         self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
+
+        # 保存原始配置
+        self.config = config.copy()
 
         # 配置解析
         self.protocol = config.get('protocol', 'tls')
@@ -58,17 +61,21 @@ class NewMaskPayloadStage(ProcessorStage):
 
 
 
-    def initialize(self) -> bool:
+    def initialize(self, config: Optional[Dict] = None) -> None:
         """初始化阶段
 
-        Returns:
-            初始化是否成功
+        Args:
+            config: 可选的配置参数
         """
         if self._initialized:
-            return True
+            return
 
         try:
             self.logger.info("Starting NewMaskPayloadStage initialization")
+
+            # 更新配置（如果提供）
+            if config:
+                self.config.update(config)
 
             # 创建 Marker 模块
             self.marker = self._create_marker()
@@ -80,11 +87,13 @@ class NewMaskPayloadStage(ProcessorStage):
 
             self._initialized = True
             self.logger.info("NewMaskPayloadStage initialization successful")
-            return True
+
+            # 调用父类初始化
+            super().initialize(config)
 
         except Exception as e:
             self.logger.error(f"NewMaskPayloadStage initialization failed: {e}")
-            return False
+            raise
     
     def process_file(self, input_path: Union[str, Path],
                     output_path: Union[str, Path]) -> StageStats:
@@ -97,10 +106,16 @@ class NewMaskPayloadStage(ProcessorStage):
         Returns:
             StageStats: 处理统计信息
         """
-        if not self._initialized and not self.initialize():
-            raise RuntimeError("NewMaskPayloadStage 未初始化")
+        if not self._initialized:
+            self.initialize()
+            if not self._initialized:
+                raise RuntimeError("NewMaskPayloadStage 未初始化")
 
-        self.validate_inputs(input_path, output_path)
+        # 验证输入参数
+        if not Path(input_path).exists():
+            raise FileNotFoundError(f"输入文件不存在: {input_path}")
+        if not Path(input_path).is_file():
+            raise ValueError(f"输入路径不是文件: {input_path}")
 
         input_path = Path(input_path)
         output_path = Path(output_path)

@@ -123,7 +123,7 @@ class PipelineExecutor:
             result = ProcessResult(
                 success=len(errors) == 0,
                 input_file=str(input_path),
-                output_file=str(current_input) if len(errors) == 0 else None,
+                output_file=str(output_path) if len(errors) == 0 else None,
                 duration_ms=total_duration_ms,
                 stage_stats=stage_stats_list,
                 errors=errors,

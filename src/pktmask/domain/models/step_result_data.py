@@ -148,16 +148,19 @@ STEP_RESULT_MAPPING = {
     # 标准命名（与GUI界面一致）
     'anonymize_ips': IPAnonymizationResult,    # 标准处理标识符
     'remove_dupes': DeduplicationResult,       # 标准处理标识符
-    'mask_payloads': TrimmingResult,           # 标准处理标识符
+    'mask_payloads': MaskingResult,            # 标准处理标识符
 
     # 旧命名 - 保持向后兼容
     'mask_ip': IPAnonymizationResult,          # 废弃别名
     'mask_ips': IPAnonymizationResult,         # 废弃别名
     'dedup_packet': DeduplicationResult,       # 废弃别名
-    'trim_packet': TrimmingResult,             # 废弃别名
-    'intelligent_trim': TrimmingResult,        # 废弃别名
-    'mask_payload': TrimmingResult,            # 废弃别名
+    'trim_packet': MaskingResult,              # 废弃别名
+    'intelligent_trim': MaskingResult,         # 废弃别名
+    'mask_payload': MaskingResult,             # 废弃别名
 }
+
+# 为了向后兼容，创建别名
+TrimmingResult = MaskingResult
 
 
 class FileStepResults(BaseModel):

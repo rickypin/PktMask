@@ -448,7 +448,7 @@ class DebugInterface:
 保持与现有 MaskPayloadStage 完全兼容的接口：
 
 ```python
-class NewMaskPayloadStage(ProcessorStage):
+class NewMaskPayloadStage(StageBase):
     """新一代掩码处理阶段"""
 
     def __init__(self, config: Dict[str, Any]):
@@ -459,6 +459,7 @@ class NewMaskPayloadStage(ProcessorStage):
         - masker_config: Masker模块配置
         - mode: 处理模式 ("enhanced", "basic")
         """
+        super().__init__(config)
         self.marker = self._create_marker(config)
         self.masker = PayloadMasker(config.get('masker_config', {}))
 

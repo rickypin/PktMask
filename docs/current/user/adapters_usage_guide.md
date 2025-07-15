@@ -24,22 +24,21 @@ src/pktmask/adapters/
 
 ## 核心适配器
 
-### 1. PipelineProcessorAdapter
+### 1. 直接使用StageBase架构
 
-将传统的 `BaseProcessor` 适配为新的 `StageBase` 接口。
+PipelineProcessorAdapter已被移除，现在所有处理组件都直接继承自 `StageBase`。
 
 ```python
-from pktmask.adapters import PipelineProcessorAdapter
-from pktmask.core.processors import IPAnonymizationProcessor
+from pktmask.core.pipeline.stages.anon_ip import AnonStage
+from pktmask.core.pipeline.stages.dedup import DeduplicationStage
 
-# 创建处理器
-processor = IPAnonymizationProcessor(config)
-
-# 包装为适配器
-adapter = PipelineProcessorAdapter(processor)
+# 直接创建Stage
+anon_stage = AnonStage(config)
+dedup_stage = DeduplicationStage(config)
 
 # 在管道中使用
-pipeline.add_stage(adapter)
+pipeline.add_stage(anon_stage)
+pipeline.add_stage(dedup_stage)
 ```
 
 ### 2. EventDataAdapter
