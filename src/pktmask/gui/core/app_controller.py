@@ -132,12 +132,12 @@ class AppController(QObject):
             self.error_occurred.emit(f"停止失败: {str(e)}")
     
     def get_processing_config(self) -> Dict[str, Any]:
-        """获取处理配置"""
+        """获取处理配置（使用标准命名规范）"""
         # 从主窗口获取用户选择的配置
         config = {
-            'mask_ip': getattr(self.main_window, 'mask_ip_cb', None) and self.main_window.mask_ip_cb.isChecked(),
-            'dedup_packet': getattr(self.main_window, 'dedup_packet_cb', None) and self.main_window.dedup_packet_cb.isChecked(),
-            'trim_packet': getattr(self.main_window, 'mask_payload_cb', None) and self.main_window.mask_payload_cb.isChecked(),
+            'anonymize_ips': getattr(self.main_window, 'anonymize_ips_cb', None) and self.main_window.anonymize_ips_cb.isChecked(),
+            'remove_dupes': getattr(self.main_window, 'remove_dupes_cb', None) and self.main_window.remove_dupes_cb.isChecked(),
+            'mask_payloads': getattr(self.main_window, 'mask_payloads_cb', None) and self.main_window.mask_payloads_cb.isChecked(),
         }
         return config
     

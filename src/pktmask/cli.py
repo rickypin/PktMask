@@ -27,15 +27,15 @@ def _run_pipeline(
     """Build pipeline configuration and execute."""
 
     cfg = {
-        "dedup": {"enabled": enable_dedup},
-        "anon": {"enabled": enable_anon},
-        "mask": {
+        "remove_dupes": {"enabled": enable_dedup},
+        "anonymize_ips": {"enabled": enable_anon},
+        "mask_payloads": {
             "enabled": enable_mask,
         },
     }
 
     if mask_mode:
-        cfg["mask"]["mode"] = mask_mode
+        cfg["mask_payloads"]["mode"] = mask_mode
 
     executor = PipelineExecutor(cfg)
 
@@ -62,12 +62,12 @@ def _run_pipeline(
 def cmd_mask(
     input_path: Path = typer.Argument(..., exists=True, readable=True, help="Input PCAP/PCAPNG file"),
     output_path: Path = typer.Option(..., "-o", "--output", help="Output file path"),
-    dedup: bool = typer.Option(False, "--dedup", help="Enable deduplication stage"),
-    anon: bool = typer.Option(False, "--anon", help="Enable IP anonymization stage"),
-    mode: str = typer.Option("enhanced", "--mode", help="Mask mode: enhanced|basic"),
+    dedup: bool = typer.Option(False, "--dedup", help="Enable Remove Dupes processing"),
+    anon: bool = typer.Option(False, "--anon", help="Enable Anonymize IPs processing"),
+    mode: str = typer.Option("enhanced", "--mode", help="Mask Payloads mode: enhanced|basic"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose progress output"),
 ):
-    """Execute payload masking pipeline using dual-module architecture (Marker + Masker)."""
+    """Execute Mask Payloads pipeline with optional Remove Dupes and Anonymize IPs processing."""
 
     _run_pipeline(
         input_file=input_path,
@@ -90,7 +90,7 @@ def cmd_dedup(
     input_path: Path = typer.Argument(..., exists=True, readable=True, help="Input PCAP/PCAPNG file"),
     output_path: Path = typer.Option(..., "-o", "--output", help="Output file path"),
 ):
-    """Execute deduplication stage only."""
+    """Execute Remove Dupes processing only."""
 
     _run_pipeline(
         input_file=input_path,
@@ -104,7 +104,7 @@ def cmd_anon(
     input_path: Path = typer.Argument(..., exists=True, readable=True, help="Input PCAP/PCAPNG file"),
     output_path: Path = typer.Option(..., "-o", "--output", help="Output file path"),
 ):
-    """Execute IP anonymization stage only."""
+    """Execute Anonymize IPs processing only."""
 
     _run_pipeline(
         input_file=input_path,

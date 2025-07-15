@@ -10,11 +10,16 @@ from enum import Enum, IntEnum, auto
 
 
 class ProcessingStepType(Enum):
-    """处理步骤类型枚举"""
-    MASK_IP = "mask_ip"
-    DEDUP_PACKET = "dedup_packet"
-    TRIM_PACKET = "trim_packet"
+    """处理步骤类型枚举（使用标准GUI命名）"""
+    ANONYMIZE_IPS = "anonymize_ips"
+    REMOVE_DUPES = "remove_dupes"
+    MASK_PAYLOADS = "mask_payloads"
     WEB_FOCUSED = "web_focused"  # HTTP功能已移除，保留向后兼容
+
+    # 旧枚举值 - 保持向后兼容
+    MASK_IP = "mask_ip"  # 废弃，使用 ANONYMIZE_IPS
+    DEDUP_PACKET = "dedup_packet"  # 废弃，使用 REMOVE_DUPES
+    TRIM_PACKET = "trim_packet"  # 废弃，使用 MASK_PAYLOADS
 
 
 class PipelineStatus(Enum):
@@ -188,10 +193,10 @@ class UIStrings(Enum):
     GROUP_LOG = "Log"
     GROUP_SUMMARY = "Summary Report"
     
-    # 复选框文本
-    CHECKBOX_DEDUP_PACKET = "Remove Dupes"
-    CHECKBOX_MASK_IP = "Anonymize IPs"
-    CHECKBOX_TRIM_PACKET = "Mask Payloads"
+    # 复选框文本（使用标准GUI命名）
+    CHECKBOX_REMOVE_DUPES = "Remove Dupes"
+    CHECKBOX_ANONYMIZE_IPS = "Anonymize IPs"
+    CHECKBOX_MASK_PAYLOADS = "Mask Payloads"
     CHECKBOX_WEB_FOCUSED = "Web-Focused Traffic Only (功能已移除)"
     
     # 路径标签默认文本
@@ -210,19 +215,9 @@ class UIStrings(Enum):
     MSG_WARNING = "Warning"
     MSG_ERROR = "Error"
     
-    # 提示信息（更新HTTP功能状态）
-    TOOLTIP_TRIM = "Intelligently trims packet payloads while preserving TLS handshake data."
+    # 工具提示信息（使用标准GUI命名）
+    TOOLTIP_REMOVE_DUPES = "Remove duplicate packets based on content hash to reduce file size."
+    TOOLTIP_ANONYMIZE_IPS = "Replace IP addresses with anonymized versions while preserving network structure."
+    TOOLTIP_MASK_PAYLOADS = "Intelligently trims packet payloads while preserving TLS handshake data."
     TOOLTIP_WEB_FOCUSED = "HTTP协议处理功能已从本版本中移除。仅支持TLS、IP匿名化和去重功能。"
 
-
-# 界面文本常量（更新HTTP功能状态）
-CHECKBOX_DEDUP_PACKET = "Remove Dupes"
-CHECKBOX_MASK_IP = "Anonymize IPs"
-CHECKBOX_TRIM_PACKET = "Mask Payloads"
-CHECKBOX_WEB_FOCUSED = "Web-Focused Traffic Only (功能已移除)"
-
-# 工具提示常量（更新HTTP功能状态）
-TOOLTIP_DEDUP_PACKET = "Remove duplicate packets based on content hash to reduce file size."
-TOOLTIP_MASK_IP = "Replace IP addresses with anonymized versions while preserving network structure."
-TOOLTIP_TRIM_PACKET = "Intelligently trims packet payloads while preserving TLS handshake data."
-TOOLTIP_WEB_FOCUSED = "HTTP协议处理功能已从本版本中移除。仅支持TLS、IP匿名化和去重功能。" 

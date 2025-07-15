@@ -4,16 +4,16 @@
 集中管理所有配置的默认值，便于维护和更新。
 """
 
-# 用户界面默认值
+# 用户界面默认值（使用标准GUI命名）
 DEFAULT_UI_CONFIG = {
     'window_width': 1200,
     'window_height': 800,
     'window_maximized': False,
     'theme': 'auto',
     'font_size': 10,
-    'default_dedup': True,
-    'default_mask_ip': True,
-    'default_mask': True,
+    'default_remove_dupes': True,
+    'default_anonymize_ips': True,
+    'default_mask_payloads': True,
     'remember_last_dir': True,
     'auto_open_output': False,
     'show_progress_details': True,
@@ -81,21 +81,21 @@ VALIDATION_CONSTRAINTS = {
     'valid_output_formats': ['pcap', 'pcapng']
 }
 
-# 处理器默认配置
+# 处理器默认配置（使用标准命名）
 PROCESSOR_DEFAULTS = {
-    'ip_anonymizer': {
+    'anonymize_ips': {
         'enabled': True,
         'preserve_subnet_structure': True,
         'preserve_original_segments': True,
         'anonymization_strategy': 'hierarchical'
     },
-    'deduplicator': {
+    'remove_dupes': {
         'enabled': True,
         'algorithm': 'sha256',
         'strict_mode': False,
         'memory_efficient': True
     },
-    'mask_payload': {
+    'mask_payloads': {
         'enabled': True,
         'mode': 'enhanced',
         'preserve_tls_handshake': True,

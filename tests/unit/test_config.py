@@ -37,8 +37,9 @@ class TestAppConfig:
         assert hasattr(config.ui, 'window_width')
         assert hasattr(config.ui, 'window_height')
         assert hasattr(config.ui, 'theme')
-        assert hasattr(config.ui, 'default_dedup')
-        assert hasattr(config.ui, 'default_mask_ip')
+        assert hasattr(config.ui, 'default_remove_dupes')
+        assert hasattr(config.ui, 'default_anonymize_ips')
+        assert hasattr(config.ui, 'default_mask_payloads')
         
         # 处理配置属性
         assert hasattr(config.processing, 'chunk_size')
@@ -94,9 +95,9 @@ class TestUISettings:
         assert ui.window_width == 1200
         assert ui.window_height == 800
         assert ui.theme == "auto"
-        assert ui.default_dedup is True
-        assert ui.default_mask_ip is True
-        assert ui.default_trim is False
+        assert ui.default_remove_dupes is True
+        assert ui.default_anonymize_ips is True
+        assert ui.default_mask_payloads is True
     
     def test_ui_modifications(self):
         """测试UI设置修改"""
@@ -218,7 +219,9 @@ class TestConfigurationIntegration:
         # 获取UI配置
         ui_config = config.get_ui_config()
         assert isinstance(ui_config, dict)
-        assert 'default_dedup' in ui_config
+        assert 'default_remove_dupes' in ui_config
+        assert 'default_anonymize_ips' in ui_config
+        assert 'default_mask_payloads' in ui_config
         assert 'theme' in ui_config
 
 

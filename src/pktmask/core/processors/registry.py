@@ -28,20 +28,21 @@ class ProcessorRegistry:
         try:
             # 延迟导入避免循环依赖
             from .ip_anonymizer import IPAnonymizer
-            from .deduplicator import Deduplicator  
-            from .trimmer import Trimmer
+            from .deduplicator import Deduplicator
+            from .masker import Masker
             # 旧版处理器已移除，使用新版双模块架构
             from ..pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage as MaskingProcessor
             
             cls._processors.update({
-                # 新正式键 (见 REFACTOR_PLAN §3)
+                # 标准命名键（与GUI界面一致）
+                'anonymize_ips': IPAnonymizer,
+                'remove_dupes': Deduplicator,
+                'mask_payloads': MaskingProcessor,
+
+                # 旧键 → 别名，保持向后兼容并抛出 DeprecationWarning
                 'anon_ip': IPAnonymizer,
                 'dedup_packet': Deduplicator,
                 'mask_payload': MaskingProcessor,
-
-                # 旧键 → 别名，保持向后兼容并抛出 DeprecationWarning
-                'mask_ip': IPAnonymizer,
-                'trim_packet': MaskingProcessor,
             })
             cls._loaded = True
             

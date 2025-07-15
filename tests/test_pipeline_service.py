@@ -47,9 +47,9 @@ class TestPipelineService(unittest.TestCase):
         )
         
         expected = {
-            "anon": {"enabled": True},
-            "dedup": {"enabled": True},
-            "mask": {
+            "anonymize_ips": {"enabled": True},
+            "remove_dupes": {"enabled": True},
+            "mask_payloads": {
                 "enabled": True,
                 "protocol": "tls",
                 "mode": "enhanced",

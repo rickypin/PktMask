@@ -22,9 +22,9 @@ def main(ctx: typer.Context):
 # 导入并注册 CLI 命令（不使用嵌套，保持简单）
 from pktmask.cli import cmd_mask, cmd_dedup, cmd_anon
 
-app.command("mask", help="处理 PCAP 文件（去重、匿名化、掩码）")(cmd_mask)
-app.command("dedup", help="仅执行去重")(cmd_dedup)  
-app.command("anon", help="仅执行 IP 匿名化")(cmd_anon)
+app.command("mask", help="处理 PCAP 文件（Remove Dupes、Anonymize IPs、Mask Payloads）")(cmd_mask)
+app.command("dedup", help="仅执行 Remove Dupes")(cmd_dedup)
+app.command("anon", help="仅执行 Anonymize IPs")(cmd_anon)
 
 if __name__ == "__main__":
     app()

@@ -86,11 +86,11 @@ class ReportManager:
         
         # 显示已启用的处理步骤
         enabled_steps = []
-        if self.main_window.mask_ip_cb.isChecked():
+        if self.main_window.anonymize_ips_cb.isChecked():
             enabled_steps.append("IP Anonymization")
-        if self.main_window.dedup_packet_cb.isChecked():
+        if self.main_window.remove_dupes_cb.isChecked():
             enabled_steps.append("Deduplication")
-        if self.main_window.mask_payload_cb.isChecked():
+        if self.main_window.mask_payloads_cb.isChecked():
             enabled_steps.append("Payload Masking")
         
         stop_report += f"🔧 Configured Processing Steps: {', '.join(enabled_steps)}\n"
@@ -112,8 +112,8 @@ class ReportManager:
             if global_partial_report:
                 self.main_window.summary_text.append(global_partial_report)
         
-        # 显示Enhanced Trimmer智能处理统计（如果有）
-        enhanced_partial_report = self._generate_enhanced_trimming_report(separator_length, is_partial=True)
+        # 显示Enhanced Masking智能处理统计（如果有）
+        enhanced_partial_report = self._generate_enhanced_masking_report(separator_length, is_partial=True)
         if enhanced_partial_report:
             self.main_window.summary_text.append(enhanced_partial_report)
         
@@ -139,11 +139,11 @@ class ReportManager:
             
             # 检查文件是否完整处理完成（所有配置的步骤都完成）
             expected_steps = set()
-            if self.main_window.mask_ip_cb.isChecked():
+            if self.main_window.anonymize_ips_cb.isChecked():
                 expected_steps.add("IP Anonymization")
-            if self.main_window.dedup_packet_cb.isChecked():
+            if self.main_window.remove_dupes_cb.isChecked():
                 expected_steps.add("Deduplication")
-            if self.main_window.mask_payload_cb.isChecked():
+            if self.main_window.mask_payloads_cb.isChecked():
                 expected_steps.add("Payload Masking")
             
             completed_steps = set(steps_data.keys())
@@ -186,12 +186,18 @@ class ReportManager:
         # 显示详细结果
         original_packets = 0
         file_ip_mappings = {}
-        
+
+        # 优先从Deduplication步骤获取原始包数
+        if 'Deduplication' in steps_data:
+            original_packets = steps_data['Deduplication']['data'].get('total_packets', 0)
+        elif 'IP Anonymization' in steps_data:
+            original_packets = steps_data['IP Anonymization']['data'].get('total_packets', 0)
+        elif 'Payload Masking' in steps_data:
+            original_packets = steps_data['Payload Masking']['data'].get('total_packets', 0)
+
         for step_name in step_order:
             if step_name in steps_data:
                 data = steps_data[step_name]['data']
-                if data.get('total_packets'):
-                    original_packets = data.get('total_packets', 0)
                 
                 if step_name == 'IP Anonymization':
                     # 支持新的AnonStage字段名称（从extra_metrics中获取）
@@ -210,7 +216,7 @@ class ReportManager:
                 
                 elif step_name == 'Payload Masking':
                     # 支持新的MaskPayloadStage字段名称
-                    masked = data.get('packets_modified', data.get('trimmed_packets', 0))
+                    masked = data.get('packets_modified', data.get('masked_packets', 0))
                     rate = (masked / original_packets * 100) if original_packets > 0 else 0
                     report += f"   ✂️  Payload Masking: {masked} masked ({rate:.1f}%)\n"
         
@@ -239,7 +245,7 @@ class ReportManager:
     def _generate_global_ip_mappings_report(self, separator_length: int, is_partial: bool = False) -> Optional[str]:
         """生成全局IP映射报告"""
         # 首先检查是否有IP匿名化处理
-        if not self.main_window.mask_ip_cb.isChecked():
+        if not self.main_window.anonymize_ips_cb.isChecked():
             return None
             
         # 检查是否有全局IP映射数据
@@ -250,11 +256,11 @@ class ReportManager:
         has_completed_files = False
         for filename, file_result in self.main_window.file_processing_results.items():
             expected_steps = set()
-            if self.main_window.mask_ip_cb.isChecked():
+            if self.main_window.anonymize_ips_cb.isChecked():
                 expected_steps.add("IP Anonymization")
-            if self.main_window.dedup_packet_cb.isChecked():
+            if self.main_window.remove_dupes_cb.isChecked():
                 expected_steps.add("Deduplication")
-            if self.main_window.mask_payload_cb.isChecked():
+            if self.main_window.mask_payloads_cb.isChecked():
                 expected_steps.add("Payload Masking")
             
             completed_steps = set(file_result['steps'].keys())
@@ -311,16 +317,19 @@ class ReportManager:
         header = f"\n{'='*separator_length}\n📄 FILE PROCESSING RESULTS: {filename_display}\n{'='*separator_length}"
         self.main_window.summary_text.append(header)
         
-        # 获取原始包数（从第一个处理步骤获取）
+        # 获取原始包数（优先从Deduplication步骤获取，因为它包含真正的原始包数）
         original_packets = 0
         output_filename = None
-        if 'IP Anonymization' in steps_data:
-            original_packets = steps_data['IP Anonymization']['data'].get('total_packets', 0)
-            output_filename = steps_data['IP Anonymization']['data'].get('output_filename')
-        elif 'Deduplication' in steps_data:
+        if 'Deduplication' in steps_data:
+            # Deduplication步骤的total_packets是真正的原始包数
             original_packets = steps_data['Deduplication']['data'].get('total_packets', 0)
             output_filename = steps_data['Deduplication']['data'].get('output_filename')
+        elif 'IP Anonymization' in steps_data:
+            # 如果没有去重步骤，从IP匿名化步骤获取
+            original_packets = steps_data['IP Anonymization']['data'].get('total_packets', 0)
+            output_filename = steps_data['IP Anonymization']['data'].get('output_filename')
         elif 'Payload Masking' in steps_data:
+            # 最后从载荷掩码步骤获取
             original_packets = steps_data['Payload Masking']['data'].get('total_packets', 0)
             output_filename = steps_data['Payload Masking']['data'].get('output_filename')
         
@@ -363,33 +372,33 @@ class ReportManager:
                 # 对于Payload Masking，记录详细的数据字段
                 if step_name == 'Payload Masking':
                     self._logger.info(f"🔍 Payload Masking数据: packets_processed={data.get('packets_processed')}, packets_modified={data.get('packets_modified')}")
-                    self._logger.info(f"🔍 Payload Masking数据: total_packets={data.get('total_packets')}, trimmed_packets={data.get('trimmed_packets')}")
+                    self._logger.info(f"🔍 Payload Masking数据: total_packets={data.get('total_packets')}, masked_packets={data.get('masked_packets')}")
                 
-                if step_type in ['mask_ip', 'mask_ips']:  # 修复：支持两种命名格式
+                if step_type in ['anonymize_ips', 'mask_ip', 'mask_ips']:  # 支持标准命名和旧命名
                     # 使用新的IP统计数据
                     original_ips = data.get('original_ips', 0)
                     masked_ips = data.get('anonymized_ips', 0)
                     rate = (masked_ips / original_ips * 100) if original_ips > 0 else 0
                     line = f"  🛡️  {step_name:<18} | Original IPs: {original_ips:>3} | Anonymized IPs: {masked_ips:>3} | Rate: {rate:5.1f}%"
-                    
+
                     # IP映射已在上面从缓存中获取
-                    
+
                 elif step_type == 'remove_dupes':
                     unique = data.get('unique_packets', 0)
                     removed = data.get('removed_count', 0)
                     total_before = data.get('total_packets', 0)
                     rate = (removed / total_before * 100) if total_before > 0 else 0
                     line = f"  🔄 {step_name:<18} | Unique Pkts: {unique:>4} | Removed Pkts: {removed:>4} | Rate: {rate:5.1f}%"
-                
-                elif step_type in ['intelligent_trim', 'trim_payloads']:  # 修复：支持两种命名格式
+
+                elif step_type in ['mask_payloads']:  # 使用标准命名
                     # 修复：MaskStage返回的字段名称不同
                     total = data.get('total_packets', data.get('packets_processed', 0))
-                    masked = data.get('trimmed_packets', data.get('packets_modified', 0))
+                    masked = data.get('masked_packets', data.get('packets_modified', 0))
                     rate = (masked / total * 100) if total > 0 else 0
-                    
-                    # 检查是否是Enhanced Trimmer的智能处理结果
-                    if self._is_enhanced_trimming(data):
-                        line = self._generate_enhanced_trimming_report_line(step_name, data)
+
+                    # 检查是否是Enhanced Masking的智能处理结果
+                    if self._is_enhanced_masking(data):
+                        line = self._generate_enhanced_masking_report_line(step_name, data)
                     else:
                         line = f"  ✂️  {step_name:<18} | Total Pkts: {total:>5} | Masked Pkts: {masked:>4} | Rate: {rate:5.1f}%"
                 else:
@@ -405,8 +414,8 @@ class ReportManager:
             for i, (orig_ip, new_ip) in enumerate(sorted_mappings, 1):
                 self.main_window.summary_text.append(f"   {i:2d}. {orig_ip:<16} → {new_ip}")
         
-        # 如果使用了Enhanced Trimmer，显示智能处理详细信息
-        enhanced_report = self._generate_enhanced_trimming_report_for_file(original_filename, separator_length)
+        # 如果使用了Enhanced Masking，显示智能处理详细信息
+        enhanced_report = self._generate_enhanced_masking_report_for_file(original_filename, separator_length)
         if enhanced_report:
             self.main_window.summary_text.append(enhanced_report)
         
@@ -415,30 +424,36 @@ class ReportManager:
     def generate_processing_finished_report(self):
         """生成处理完成时的报告"""
         separator_length = 70  # 保持一致的分隔线长度
-        
+
+        # **修复**: 在停止计时器和重置统计之前，先保存当前的统计数据
+        # 确保Live Dashboard显示的数据不会被重置影响
+        current_files_processed = self.main_window.files_processed_count
+        current_packets_processed = self.main_window.packets_processed_count
+        current_time_elapsed = self.main_window.time_elapsed_label.text()
+
         # 停止计时器
         if self.main_window.timer and self.main_window.timer.isActive():
             self.main_window.timer.stop()
-        
+
         # 停止统计管理器的计时
         if hasattr(self.main_window, 'pipeline_manager') and hasattr(self.main_window.pipeline_manager, 'statistics'):
             self.main_window.pipeline_manager.statistics.stop_timing()
-            
+
         self.main_window.update_time_elapsed()
-        
+
         enabled_steps = []
-        if self.main_window.dedup_packet_cb.isChecked():
+        if self.main_window.remove_dupes_cb.isChecked():
             enabled_steps.append("Deduplication")
-        if self.main_window.mask_ip_cb.isChecked():
+        if self.main_window.anonymize_ips_cb.isChecked():
             enabled_steps.append("IP Anonymization")
-        if self.main_window.mask_payload_cb.isChecked():
+        if self.main_window.mask_payloads_cb.isChecked():
             enabled_steps.append("Payload Masking")
-            
+
         completion_report = f"\n{'='*separator_length}\n🎉 PROCESSING COMPLETED!\n{'='*separator_length}\n"
-        completion_report += f"🎯 All {self.main_window.processed_files_count} files have been successfully processed.\n"
-        completion_report += f"📈 Files Processed: {self.main_window.processed_files_count}\n"
-        completion_report += f"📊 Total Packets Processed: {self.main_window.packets_processed_count}\n"
-        completion_report += f"⏱️ Time Elapsed: {self.main_window.time_elapsed_label.text()}\n"
+        completion_report += f"🎯 All {current_files_processed} files have been successfully processed.\n"
+        completion_report += f"📈 Files Processed: {current_files_processed}\n"
+        completion_report += f"📊 Total Packets Processed: {current_packets_processed}\n"
+        completion_report += f"⏱️ Time Elapsed: {current_time_elapsed}\n"
         completion_report += f"🔧 Applied Processing Steps: {', '.join(enabled_steps)}\n"
         
         # 安全处理输出目录显示
@@ -457,10 +472,10 @@ class ReportManager:
         if global_ip_report:
             self.main_window.summary_text.append(global_ip_report)
         
-        # 添加Enhanced Trimmer智能处理总报告
-        enhanced_trimming_report = self._generate_enhanced_trimming_report(separator_length, is_partial=False)
-        if enhanced_trimming_report:
-            self.main_window.summary_text.append(enhanced_trimming_report)
+        # 添加Enhanced Masking智能处理总报告
+        enhanced_masking_report = self._generate_enhanced_masking_report(separator_length, is_partial=False)
+        if enhanced_masking_report:
+            self.main_window.summary_text.append(enhanced_masking_report)
         
         # 修复：处理完成后自动保存Summary Report到输出目录
         self._save_summary_report_to_output()
@@ -761,11 +776,11 @@ class ReportManager:
         if not step_type:
             # 新Pipeline系统没有type字段，从step_name推断
             if step_name_raw == 'AnonStage':
-                step_type = 'mask_ip'  # 统一使用mask_ip作为IP匿名化的类型
+                step_type = 'anonymize_ips'  # 使用标准命名
             elif step_name_raw in ['DedupStage', 'DeduplicationStage']:
                 step_type = 'remove_dupes'
             elif step_name_raw in ['MaskStage', 'MaskPayloadStage', 'NewMaskPayloadStage', 'Mask Payloads (v2)']:
-                step_type = 'trim_payloads'
+                step_type = 'mask_payloads'  # 使用标准命名
             else:
                 step_type = step_name_raw.lower()
         
@@ -775,17 +790,15 @@ class ReportManager:
             if step_type and step_type.endswith('_final'):
                 # 处理最终报告，提取IP映射信息
                 report_data = data.get('report')
-                if report_data and 'mask_ip' in step_type:
+                if report_data and 'anonymize_ips' in step_type:
                     self.set_final_summary_report(report_data)
             return
         
         # 标准化步骤名称 - 修复Pipeline和ReportManager之间的映射不匹配
         step_display_names = {
-            'mask_ip': 'IP Anonymization',
-            'mask_ips': 'IP Anonymization',  # 修复：Pipeline发送的是复数形式
+            'anonymize_ips': 'IP Anonymization',  # 标准命名
             'remove_dupes': 'Deduplication',
-            'intelligent_trim': 'Payload Masking',
-            'trim_payloads': 'Payload Masking',  # 修复：Pipeline发送的是trim_payloads
+            'mask_payloads': 'Payload Masking',   # 标准命名
         }
         
         step_name = step_display_names.get(step_type, step_type)
@@ -798,9 +811,9 @@ class ReportManager:
         
         # **关键修复**: 如果是IP匿名化步骤，提取并累积IP映射到全局映射
         is_ip_anonymization = (
-            step_type in ['mask_ip', 'mask_ips'] or 
+            step_type in ['anonymize_ips'] or
             step_name_raw == 'AnonStage' or
-            'ip_mappings' in data or 
+            'ip_mappings' in data or
             'file_ip_mappings' in data
         )
         
@@ -838,41 +851,41 @@ class ReportManager:
         else:
             self._logger.debug(f"非IP匿名化步骤: {step_name_raw}")
 
-    def _is_enhanced_trimming(self, data: Dict[str, Any]) -> bool:
+    def _is_enhanced_masking(self, data: Dict[str, Any]) -> bool:
         """检查是否是增强掩码处理结果 - 基于双模块架构"""
         step_name = data.get('step_name', '')
-        
-        # 检查Enhanced Trimmer特有的字段组合 - 必须是真正的Enhanced Intelligent Mode
+
+        # 检查Enhanced Masking特有的字段组合 - 必须是真正的Enhanced Intelligent Mode
         enhanced_indicators = [
             'processing_mode' in data and data.get('processing_mode') == 'Enhanced Intelligent Mode',
             'protocol_stats' in data,
             'strategies_applied' in data,
             'enhancement_level' in data,
         ]
-        
+
         # 协议适配模式有不同的处理模式标识，不会是 'Enhanced Intelligent Mode'
-        # 如果有真正的Enhanced Trimmer特有字段组合，认为是智能处理
+        # 如果有真正的Enhanced Masking特有字段组合，认为是智能处理
         return all(enhanced_indicators[:3])  # 前3个字段必须都存在
 
-    def _generate_enhanced_trimming_report_line(self, step_name: str, data: Dict[str, Any]) -> str:
-        """生成Enhanced Trimmer的处理结果报告行（移除HTTP统计）"""
+    def _generate_enhanced_masking_report_line(self, step_name: str, data: Dict[str, Any]) -> str:
+        """生成Enhanced Masking的处理结果报告行（移除HTTP统计）"""
         total = data.get('total_packets', 0)
-        masked = data.get('trimmed_packets', 0)
-        
+        masked = data.get('masked_packets', 0)
+
         # 获取协议统计（移除HTTP）
         protocol_stats = data.get('protocol_stats', {})
         tls_packets = protocol_stats.get('tls_packets', 0)
         other_packets = protocol_stats.get('other_packets', 0)
-        
+
         # 基础报告行（增强模式标识）
         rate = (masked / total * 100) if total > 0 else 0
         line = f"  ✂️  {step_name:<18} | Enhanced Mode | Total: {total:>4} | Masked: {masked:>4} | Rate: {rate:5.1f}%"
-        
+
         return line
 
-    def _generate_enhanced_trimming_report(self, separator_length: int, is_partial: bool = False) -> Optional[str]:
-        """生成Enhanced Trimmer的智能处理统计总报告（移除HTTP支持）"""
-        # 检查是否有Enhanced Trimmer处理的文件
+    def _generate_enhanced_masking_report(self, separator_length: int, is_partial: bool = False) -> Optional[str]:
+        """生成Enhanced Masking的智能处理统计总报告（移除HTTP支持）"""
+        # 检查是否有Enhanced Masking处理的文件
         enhanced_files = []
         total_enhanced_stats = {
             'total_packets': 0,
@@ -881,13 +894,13 @@ class ReportManager:
             'strategies_applied': set(),
             'files_processed': 0
         }
-        
-        # 遍历所有处理过的文件，找出使用Enhanced Trimmer的文件
+
+        # 遍历所有处理过的文件，找出使用Enhanced Masking的文件
         for filename, file_result in self.main_window.file_processing_results.items():
             steps_data = file_result.get('steps', {})
             payload_step = steps_data.get('Payload Masking')
-            
-            if payload_step and self._is_enhanced_trimming(payload_step.get('data', {})):
+
+            if payload_step and self._is_enhanced_masking(payload_step.get('data', {})):
                 enhanced_files.append(filename)
                 data = payload_step['data']
                 
@@ -902,20 +915,20 @@ class ReportManager:
                 strategies = data.get('strategies_applied', [])
                 total_enhanced_stats['strategies_applied'].update(strategies)
         
-        # 如果没有Enhanced Trimmer处理，返回None
+        # 如果没有Enhanced Masking处理，返回None
         if not enhanced_files:
             return None
-        
+
         # 生成智能处理总报告
-        title = "🧠 ENHANCED TRIMMING INTELLIGENCE REPORT"
+        title = "🧠 ENHANCED MASKING INTELLIGENCE REPORT"
         if is_partial:
             title += " (Partial)"
-        
+
         report = f"\n{'='*separator_length}\n{title}\n{'='*separator_length}\n"
-        
+
         # 处理模式和增强信息
         report += f"🎯 Processing Mode: Intelligent Auto-Detection\n"
-        report += f"⚡ Enhancement Level: 4x accuracy improvement over simple trimming\n"
+        report += f"⚡ Enhancement Level: 4x accuracy improvement over simple masking\n"
         report += f"📁 Enhanced Files: {total_enhanced_stats['files_processed']}/{len(self.main_window.file_processing_results)}\n\n"
         
         # 协议检测统计（移除HTTP）
@@ -947,22 +960,22 @@ class ReportManager:
         
         return report
 
-    def _generate_enhanced_trimming_report_for_file(self, filename: str, separator_length: int) -> Optional[str]:
-        """为单个文件生成Enhanced Trimmer的处理结果报告（移除HTTP统计）"""
+    def _generate_enhanced_masking_report_for_file(self, filename: str, separator_length: int) -> Optional[str]:
+        """为单个文件生成Enhanced Masking的处理结果报告（移除HTTP统计）"""
         if filename not in self.main_window.file_processing_results:
             return None
-        
+
         file_result = self.main_window.file_processing_results[filename]
         steps_data = file_result.get('steps', {})
         payload_step = steps_data.get('Payload Masking')
-        
-        if not payload_step or not self._is_enhanced_trimming(payload_step.get('data', {})):
+
+        if not payload_step or not self._is_enhanced_masking(payload_step.get('data', {})):
             return None
-        
+
         data = payload_step['data']
         protocol_stats = data.get('protocol_stats', {})
-        
-        report = f"\n🧠 Enhanced Trimming Details for {filename}:\n"
+
+        report = f"\n🧠 Enhanced Masking Details for {filename}:\n"
         report += f"   📊 Protocol Analysis:\n"
         
         total_packets = data.get('total_packets', 0)
@@ -989,8 +1002,8 @@ class ReportManager:
         
         return report
 
-    def _generate_enhanced_trimming_report_for_directory(self, separator_length: int) -> Optional[str]:
-        """生成整个目录的Enhanced Trimmer的处理结果报告"""
+    def _generate_enhanced_masking_report_for_directory(self, separator_length: int) -> Optional[str]:
+        """生成整个目录的Enhanced Masking的处理结果报告"""
         # 这个方法在目录级别处理完成时调用
         # 目前先返回通用的Enhanced报告
-        return self._generate_enhanced_trimming_report(separator_length, is_partial=False) 
+        return self._generate_enhanced_masking_report(separator_length, is_partial=False)

@@ -18,10 +18,10 @@ import os
 
 from scapy.all import Ether, IP, TCP, Raw, Dot1Q, wrpcap
 
-# Trimming module has been refactored - skip this test file
+# Masking module has been refactored - skip this test file
 import pytest
 
-pytest.skip("Trimming module has been refactored", allow_module_level=True)
+pytest.skip("Masking module has been refactored", allow_module_level=True)
 
 # from src.pktmask.stages.trimming import (
 #     IntelligentTrimmingStage,
@@ -37,8 +37,8 @@ from src.pktmask.core.encapsulation.adapter import ProcessingAdapter
 from src.pktmask.core.encapsulation.types import EncapsulationType
 
 
-class TestEnhancedPayloadTrimming(unittest.TestCase):
-    """测试增强版载荷裁切功能"""
+class TestEnhancedPayloadMasking(unittest.TestCase):
+    """测试增强版载荷掩码功能"""
     
     def setUp(self):
         """设置测试环境"""
@@ -186,8 +186,8 @@ class TestEnhancedPayloadTrimming(unittest.TestCase):
         self.assertEqual(len(result_packets), len(original_result[0]))
         self.assertEqual(total, original_result[1])
 
-    def test_trimming_step_initialization(self):
-        """测试智能裁切步骤完整初始化（合并增强版本）"""
+    def test_masking_step_initialization(self):
+        """测试智能掩码步骤完整初始化（合并增强版本）"""
         step = IntelligentTrimmingStage()
         
         # 基础属性验证
@@ -254,8 +254,8 @@ class TestEnhancedPayloadTrimming(unittest.TestCase):
         self.assertEqual(len(ranges), 1)  # 只有handshake是信令
         self.assertEqual(ranges[0], (0, len(tls_handshake)))
 
-    def test_trim_packet_payload_functionality(self):
-        """测试数据包载荷裁切功能"""
+    def test_mask_packet_payload_functionality(self):
+        """测试数据包载荷掩码功能"""
         # 创建带载荷的TCP数据包
         original_packet = Ether() / IP(src="192.168.1.1", dst="192.168.1.2") / TCP(sport=80, dport=8080) / Raw(b"payload to trim")
         

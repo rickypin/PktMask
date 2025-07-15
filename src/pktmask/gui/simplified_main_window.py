@@ -99,12 +99,12 @@ class SimplifiedMainWindow(QMainWindow):
                 self.start_proc_btn.clicked.connect(self.app_controller.start_processing)
             
             # 选项变化信号
-            if hasattr(self, 'mask_ip_cb'):
-                self.mask_ip_cb.stateChanged.connect(self.ui_builder.update_start_button_state)
-            if hasattr(self, 'dedup_packet_cb'):
-                self.dedup_packet_cb.stateChanged.connect(self.ui_builder.update_start_button_state)
-            if hasattr(self, 'mask_payload_cb'):
-                self.mask_payload_cb.stateChanged.connect(self.ui_builder.update_start_button_state)
+            if hasattr(self, 'anonymize_ips_cb'):
+                self.anonymize_ips_cb.stateChanged.connect(self.ui_builder.update_start_button_state)
+            if hasattr(self, 'remove_dupes_cb'):
+                self.remove_dupes_cb.stateChanged.connect(self.ui_builder.update_start_button_state)
+            if hasattr(self, 'mask_payloads_cb'):
+                self.mask_payloads_cb.stateChanged.connect(self.ui_builder.update_start_button_state)
             
             self._logger.debug("信号连接完成")
             

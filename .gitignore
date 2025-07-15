@@ -33,6 +33,7 @@ Thumbs.db
 
 # Project specific
 tests/samples/
+tests/data/
 
 # Coverage / report artifacts
 htmlcov/

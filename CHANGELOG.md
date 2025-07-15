@@ -222,7 +222,7 @@ from pktmask.stages import DeduplicationStage
 # 标准掩码处理
 pktmask mask input.pcap -o output.pcap --mode enhanced
 
-# 组合处理
+# 组合处理（Remove Dupes + Anonymize IPs + Mask Payloads）
 pktmask mask input.pcap -o output.pcap --dedup --anon --mode enhanced
 ```
 

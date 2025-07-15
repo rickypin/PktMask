@@ -134,7 +134,7 @@ def process_directory(
 def _handle_stage_progress(stage, stats, progress_callback):
     """处理阶段进度回调"""
     # Emit log with stage-specific action wording
-    if stage.name == 'DedupStage':
+    if stage.name == 'DedupStage' or stage.name == 'DeduplicationStage':
         msg = f"    - {stage.name}: processed {stats.packets_processed} pkts, removed {stats.packets_modified} pkts"
     elif stage.name == 'AnonStage':
         msg = f"    - {stage.name}: processed {stats.packets_processed} pkts, Anonymized {stats.packets_modified} ips"
@@ -182,14 +182,14 @@ def build_pipeline_config(
     enable_dedup: bool,
     enable_mask: bool
 ) -> Dict:
-    """根据功能开关构建管道配置"""
+    """根据功能开关构建管道配置（使用标准命名规范）"""
     config: Dict[str, Dict] = {}
     if enable_anon:
-        config["anon"] = {"enabled": True}
+        config["anonymize_ips"] = {"enabled": True}
     if enable_dedup:
-        config["dedup"] = {"enabled": True}
+        config["remove_dupes"] = {"enabled": True}
     if enable_mask:
-        config["mask"] = {
+        config["mask_payloads"] = {
             "enabled": True,
             "protocol": "tls",  # 协议类型
             "mode": "enhanced",  # 使用增强模式

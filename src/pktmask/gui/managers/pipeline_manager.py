@@ -98,21 +98,21 @@ class PipelineManager:
 
         # 通过事件协调器禁用控件
         if hasattr(self.main_window, 'event_coordinator'):
-            self.main_window.event_coordinator.request_ui_update('enable_controls', 
-                controls=['dir_path_label', 'output_path_label', 'mask_ip_cb', 'dedup_packet_cb', 'mask_payload_cb'],
+            self.main_window.event_coordinator.request_ui_update('enable_controls',
+                controls=['dir_path_label', 'output_path_label', 'anonymize_ips_cb', 'remove_dupes_cb', 'mask_payloads_cb'],
                 enabled=False)
         else:
             # 备用方案：直接操作
             self.main_window.dir_path_label.setEnabled(False)
             self.main_window.output_path_label.setEnabled(False)
-            for cb in [self.main_window.mask_ip_cb, self.main_window.dedup_packet_cb, self.main_window.mask_payload_cb]:
+            for cb in [self.main_window.anonymize_ips_cb, self.main_window.remove_dupes_cb, self.main_window.mask_payloads_cb]:
                 cb.setEnabled(False)
 
         # 创建并配置新的 PipelineExecutor
         config = build_pipeline_config(
-            enable_anon=self.main_window.mask_ip_cb.isChecked(),
-            enable_dedup=self.main_window.dedup_packet_cb.isChecked(),
-            enable_mask=self.main_window.mask_payload_cb.isChecked()
+            enable_anon=self.main_window.anonymize_ips_cb.isChecked(),
+            enable_dedup=self.main_window.remove_dupes_cb.isChecked(),
+            enable_mask=self.main_window.mask_payloads_cb.isChecked()
         )
         if not config:
             self._logger.warning("未选择任何处理步骤")
@@ -146,16 +146,16 @@ class PipelineManager:
         
         # 通过事件协调器重新启用控件
         if hasattr(self.main_window, 'event_coordinator'):
-            self.main_window.event_coordinator.request_ui_update('enable_controls', 
-                controls=['dir_path_label', 'output_path_label', 'mask_ip_cb', 'dedup_packet_cb', 'mask_payload_cb', 'start_proc_btn'],
+            self.main_window.event_coordinator.request_ui_update('enable_controls',
+                controls=['dir_path_label', 'output_path_label', 'anonymize_ips_cb', 'remove_dupes_cb', 'mask_payloads_cb', 'start_proc_btn'],
                 enabled=True)
-            self.main_window.event_coordinator.request_ui_update('update_button_text', 
+            self.main_window.event_coordinator.request_ui_update('update_button_text',
                 button='start_proc_btn', text='Start')
         else:
             # 备用方案：直接操作
             self.main_window.dir_path_label.setEnabled(True)
             self.main_window.output_path_label.setEnabled(True)
-            for cb in [self.main_window.mask_ip_cb, self.main_window.dedup_packet_cb, self.main_window.mask_payload_cb]:
+            for cb in [self.main_window.anonymize_ips_cb, self.main_window.remove_dupes_cb, self.main_window.mask_payloads_cb]:
                 cb.setEnabled(True)
             # web_focused_cb 保持禁用状态，因为功能未完成
             self.main_window.start_proc_btn.setEnabled(True)
@@ -279,6 +279,15 @@ class PipelineManager:
         # 首先清理线程状态，确保UI状态检查正确
         self.processing_thread = None
 
+        # **修复**: 在生成报告之前，确保Live Dashboard显示最终的统计数据
+        # 更新Live Dashboard显示为最终统计数据
+        final_files_processed = self.statistics.files_processed
+        final_packets_processed = self.statistics.packets_processed
+
+        # 确保Live Dashboard显示最终的正确数据
+        self.main_window.files_processed_label.setText(str(final_files_processed))
+        self.main_window.packets_processed_label.setText(str(final_packets_processed))
+
         # 委托给ReportManager生成报告
         self.main_window.report_manager.generate_processing_finished_report()
         
@@ -313,14 +322,24 @@ class PipelineManager:
             # 启用其他控件
             self.main_window.dir_path_label.setEnabled(True)
             self.main_window.output_path_label.setEnabled(True)
-            for cb in [self.main_window.mask_ip_cb, self.main_window.dedup_packet_cb, self.main_window.mask_payload_cb]:
+            for cb in [self.main_window.anonymize_ips_cb, self.main_window.remove_dupes_cb, self.main_window.mask_payloads_cb]:
                 cb.setEnabled(True)
 
             # 更新按钮样式
             self.main_window.ui_manager._update_start_button_style()
 
+        def ensure_final_stats_display():
+            """确保最终统计数据正确显示在Live Dashboard中"""
+            # **修复**: 再次确保Live Dashboard显示最终的正确统计数据
+            # 防止任何后续操作意外重置显示
+            self.main_window.files_processed_label.setText(str(final_files_processed))
+            self.main_window.packets_processed_label.setText(str(final_packets_processed))
+
         # 延迟100ms执行UI更新
         QTimer.singleShot(100, update_ui_state)
+
+        # **修复**: 延迟200ms再次确保统计数据显示正确，防止被其他操作覆盖
+        QTimer.singleShot(200, ensure_final_stats_display)
 
         self._logger.info("处理流程完成")
     
@@ -330,15 +349,16 @@ class PipelineManager:
         self.processing_thread = None
     
     def reset_processing_state(self):
-        """重置处理状态"""
+        """重置处理状态（仅在开始新处理时调用）"""
         # 使用statistics管理器重置数据
         self.statistics.reset_all_statistics()
         self.user_stopped = False
-        
-        # 通过事件协调器通知UI更新
+
+        # **修复**: 通过事件协调器通知UI更新，但只在开始新处理时重置显示
+        # 这样可以避免处理完成后意外重置Live Dashboard显示
         if hasattr(self.main_window, 'event_coordinator'):
             self.main_window.event_coordinator.notify_statistics_change(action='reset')
-        
+
         # 停止计时器
         if self.main_window.timer.isActive():
             self.main_window.timer.stop()

@@ -12,12 +12,12 @@
    - 使用准确描述模型职责的名称。例如，`DeduplicationResult` 表示去重结果。
 
 2. **处理逻辑命名**
-   - 使用反映数据流和处理步骤的名称。例如，`dedup_packet` 或 `trim_packet`。
+   - 使用反映数据流和处理步骤的名称。例如，`dedup_packet` 或 `mask_payloads`。
 
 3. **别名映射**
    - 在配置文件或文档内正式记录别名映射：
      - `DeduplicationResult` 映射到 `dedup_packet`
-     - `TrimmingResult` 映射到 `trim_packet`
+     - `MaskingResult` 映射到 `mask_payloads`
 
 ---
 

@@ -17,10 +17,10 @@ ui:
   language: "zh_CN"           # 界面语言: zh_CN, en_US
   font_size: 12               # 字体大小 (8-24)
   
-  # 默认选项
-  default_dedup: true         # 默认启用去重
-  default_mask_ip: true       # 默认启用IP匿名化
-  default_mask: true          # 默认启用载荷掩码
+  # 默认选项（使用标准GUI命名）
+  default_remove_dupes: true  # 默认启用 Remove Dupes
+  default_anonymize_ips: true # 默认启用 Anonymize IPs
+  default_mask_payloads: true # 默认启用 Mask Payloads
   
   # 界面行为
   remember_last_dir: true     # 记住上次使用的目录
@@ -34,16 +34,16 @@ processing:
   max_retry_attempts: 3       # 最大重试次数 (1-10)
   timeout_seconds: 300        # 处理超时时间(秒) (60-3600)
   
-  # IP匿名化设置
+  # Anonymize IPs 设置
   anonymization_strategy: "hierarchical"  # 匿名化策略: hierarchical, random, cryptographic
   preserve_subnet_structure: true         # 保持子网结构
   consistent_mapping: true                # 保持一致性映射
-  
-  # 去重设置
+
+  # Remove Dupes 设置
   dedup_algorithm: "hash_based"           # 去重算法: hash_based, content_based, hybrid
   dedup_threshold: 0.95                   # 去重相似度阈值 (0.0-1.0)
-  
-  # 掩码设置
+
+  # Mask Payloads 设置
   mask_mode: "enhanced"                   # 掩码模式: enhanced(智能协议分析), basic(透传)
   preserve_tls_handshake: true            # 保留TLS握手数据
   preserve_tls_alerts: true               # 保留TLS告警数据

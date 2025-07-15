@@ -102,14 +102,14 @@ class DeduplicationResult(BaseStepResult):
         return (duplicates / original) * 100.0
 
 
-class TrimmingResult(BaseStepResult):
-    """裁切步骤结果"""
+class MaskingResult(BaseStepResult):
+    """掩码步骤结果"""
     original_packets: int = Field(default=0, ge=0, description="原始包数量")
-    trimmed_packets: int = Field(default=0, ge=0, description="裁切后包数量")
+    masked_packets: int = Field(default=0, ge=0, description="掩码后包数量")
     packets_modified: int = Field(default=0, ge=0, description="修改的包数量")
     total_bytes_removed: int = Field(default=0, ge=0, description="移除的总字节数")
     tls_packets_identified: int = Field(default=0, ge=0, description="识别的TLS包数量")
-    payload_size_before: int = Field(default=0, ge=0, description="裁切前载荷大小")
+    payload_size_before: int = Field(default=0, ge=0, description="掩码前载荷大小")
     payload_size_after: int = Field(default=0, ge=0, description="裁切后载荷大小")
     
     def __init__(self, **data):
@@ -141,22 +141,22 @@ class CustomStepResult(BaseStepResult):
         return self.custom_metrics.get(key, default)
 
 
-# 步骤结果类型映射
+# 步骤结果类型映射（使用标准GUI命名）
 # 注意：此映射表定义了处理逻辑标识符与领域模型类之间的对应关系
 # 详细的命名规则和别名映射请参考：config/naming_aliases.yaml
 STEP_RESULT_MAPPING = {
-    # IP匿名化处理
-    'mask_ip': IPAnonymizationResult,      # 标准处理标识符
-    'mask_ips': IPAnonymizationResult,     # 复数形式别名
-    
-    # 去重处理
-    'dedup_packet': DeduplicationResult,   # 标准处理标识符
-    'remove_dupes': DeduplicationResult,   # 传统别名
-    
-    # 载荷掩码处理
-    'trim_packet': TrimmingResult,         # 传统处理标识符
-    'intelligent_trim': TrimmingResult,    # 智能裁切别名
-    'mask_payload': TrimmingResult,        # 新标准处理标识符
+    # 标准命名（与GUI界面一致）
+    'anonymize_ips': IPAnonymizationResult,    # 标准处理标识符
+    'remove_dupes': DeduplicationResult,       # 标准处理标识符
+    'mask_payloads': TrimmingResult,           # 标准处理标识符
+
+    # 旧命名 - 保持向后兼容
+    'mask_ip': IPAnonymizationResult,          # 废弃别名
+    'mask_ips': IPAnonymizationResult,         # 废弃别名
+    'dedup_packet': DeduplicationResult,       # 废弃别名
+    'trim_packet': TrimmingResult,             # 废弃别名
+    'intelligent_trim': TrimmingResult,        # 废弃别名
+    'mask_payload': TrimmingResult,            # 废弃别名
 }
 
 

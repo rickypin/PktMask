@@ -165,31 +165,31 @@ class UIManager:
         pipeline_layout.setContentsMargins(15, 12, 15, 12)
         pipeline_layout.setSpacing(20)
         
-        self.main_window.dedup_packet_cb = QCheckBox("Remove Dupes")
-        self.main_window.mask_ip_cb = QCheckBox("Anonymize IPs")
-        self.main_window.mask_payload_cb = QCheckBox("Mask Payloads")
+        self.main_window.remove_dupes_cb = QCheckBox("Remove Dupes")
+        self.main_window.anonymize_ips_cb = QCheckBox("Anonymize IPs")
+        self.main_window.mask_payloads_cb = QCheckBox("Mask Payloads")
         self.main_window.web_focused_cb = QCheckBox("Web-Focused Traffic Only (Coming Soon)")
         
-        self.main_window.mask_payload_cb.setToolTip("Intelligently masks packet payloads while preserving TLS handshake data.")
+        self.main_window.mask_payloads_cb.setToolTip("Intelligently masks packet payloads while preserving TLS handshake data.")
         self.main_window.web_focused_cb.setToolTip(
             "HTTP协议处理功能将在未来版本中提供。仅支持TLS、IP匿名化和去重功能。"
         )
-        
+
         # 设置手型光标
-        for cb in [self.main_window.dedup_packet_cb, self.main_window.mask_ip_cb,
-                  self.main_window.mask_payload_cb, self.main_window.web_focused_cb]:
+        for cb in [self.main_window.remove_dupes_cb, self.main_window.anonymize_ips_cb,
+                  self.main_window.mask_payloads_cb, self.main_window.web_focused_cb]:
             cb.setCursor(Qt.CursorShape.PointingHandCursor)
         
         # 使用配置中的默认状态
-        self.main_window.dedup_packet_cb.setChecked(self.config.ui.default_dedup)
-        self.main_window.mask_ip_cb.setChecked(self.config.ui.default_mask_ip)
-        self.main_window.mask_payload_cb.setChecked(self.config.ui.default_mask)
+        self.main_window.remove_dupes_cb.setChecked(self.config.ui.default_remove_dupes)
+        self.main_window.anonymize_ips_cb.setChecked(self.config.ui.default_anonymize_ips)
+        self.main_window.mask_payloads_cb.setChecked(self.config.ui.default_mask_payloads)
         self.main_window.web_focused_cb.setChecked(False)
         self.main_window.web_focused_cb.setEnabled(False)
-        
-        pipeline_layout.addWidget(self.main_window.dedup_packet_cb)
-        pipeline_layout.addWidget(self.main_window.mask_ip_cb)
-        pipeline_layout.addWidget(self.main_window.mask_payload_cb)
+
+        pipeline_layout.addWidget(self.main_window.remove_dupes_cb)
+        pipeline_layout.addWidget(self.main_window.anonymize_ips_cb)
+        pipeline_layout.addWidget(self.main_window.mask_payloads_cb)
         pipeline_layout.addWidget(self.main_window.web_focused_cb)
         pipeline_layout.addStretch()
 
@@ -317,9 +317,9 @@ class UIManager:
         self.main_window.start_proc_btn.clicked.connect(self.main_window.pipeline_manager.toggle_pipeline_processing)
         
         # checkbox状态变化信号 - 正确调用UIManager的方法
-        self.main_window.mask_ip_cb.stateChanged.connect(self._update_start_button_state)
-        self.main_window.dedup_packet_cb.stateChanged.connect(self._update_start_button_state)
-        self.main_window.mask_payload_cb.stateChanged.connect(self._update_start_button_state)
+        self.main_window.anonymize_ips_cb.stateChanged.connect(self._update_start_button_state)
+        self.main_window.remove_dupes_cb.stateChanged.connect(self._update_start_button_state)
+        self.main_window.mask_payloads_cb.stateChanged.connect(self._update_start_button_state)
     
     def _apply_initial_styles(self):
         """应用初始样式"""
@@ -624,9 +624,9 @@ class UIManager:
     def _update_start_button_state(self):
         """根据输入目录和选项状态更新Start按钮"""
         has_input_dir = self.main_window.base_dir is not None
-        has_any_action = (self.main_window.mask_ip_cb.isChecked() or
-                         self.main_window.dedup_packet_cb.isChecked() or
-                         self.main_window.mask_payload_cb.isChecked())
+        has_any_action = (self.main_window.anonymize_ips_cb.isChecked() or
+                         self.main_window.remove_dupes_cb.isChecked() or
+                         self.main_window.mask_payloads_cb.isChecked())
 
         # 检查是否正在处理中
         processing_thread = getattr(self.main_window.pipeline_manager, 'processing_thread', None)

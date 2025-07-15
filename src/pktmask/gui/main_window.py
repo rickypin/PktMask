@@ -224,11 +224,15 @@ class MainWindow(QMainWindow):
         """处理统计数据更新"""
         action = data.get('action', 'update')
         if action == 'reset':
-            # 重置UI显示
-            self.files_processed_label.setText("0")
-            self.packets_processed_label.setText("0")
-            self.time_elapsed_label.setText("00:00.00")
-            self.progress_bar.setValue(0)
+            # **修复**: 检查是否正在处理中，只有在开始新处理时才重置Live Dashboard显示
+            # 避免在处理完成后重置显示导致统计数据丢失
+            if hasattr(self, 'pipeline_manager') and self.pipeline_manager.processing_thread is None:
+                # 只有在没有处理线程运行时才重置显示（即开始新处理时）
+                self.files_processed_label.setText("0")
+                self.packets_processed_label.setText("0")
+                self.time_elapsed_label.setText("00:00.00")
+                self.progress_bar.setValue(0)
+            # 如果正在处理或刚完成处理，保持当前显示不变
         else:
             # 更新UI显示
             stats = self.event_coordinator.get_statistics_data()
@@ -336,9 +340,9 @@ class MainWindow(QMainWindow):
     def save_user_preferences(self):
         """保存用户偏好设置"""
         # 保存处理选项的默认状态
-        self.config.ui.default_dedup = self.dedup_packet_cb.isChecked()
-        self.config.ui.default_mask_ip = self.mask_ip_cb.isChecked()
-        self.config.ui.default_mask = self.mask_payload_cb.isChecked()
+        self.config.ui.default_remove_dupes = self.remove_dupes_cb.isChecked()
+        self.config.ui.default_anonymize_ips = self.anonymize_ips_cb.isChecked()
+        self.config.ui.default_mask_payloads = self.mask_payloads_cb.isChecked()
         
         # 保存最后使用的目录
         if self.base_dir and self.config.ui.remember_last_dir:
@@ -533,13 +537,17 @@ class MainWindow(QMainWindow):
             self.update_log(data['message'])
 
         elif event_type == PipelineEvents.STEP_SUMMARY:
-            # **修复**: 简化包计数逻辑，只从第一个Stage（DedupStage）计算包数，避免重复计算
+            # **修复**: 简化包计数逻辑，只从第一个Stage（去重阶段）计算包数，避免重复计算
             step_name = data.get('step_name', '')
             packets_processed = data.get('packets_processed', 0)
+            # **修复**: 如果packets_processed为0，尝试使用total_packets字段
+            if packets_processed == 0:
+                packets_processed = data.get('total_packets', 0)
             current_file = data.get('filename', '')
-            
-            # 只从DedupStage计算包数（它总是第一个运行的Stage）
-            if step_name == 'DedupStage' and packets_processed > 0:
+
+            # 只从去重阶段计算包数（它总是第一个运行的Stage）
+            # **修复**: 支持新旧两种Stage名称，并且只要有包数就计算（不要求>0）
+            if (step_name in ['DedupStage', 'DeduplicationStage']) and packets_processed >= 0:
                 # 检查这个文件是否已经计算过包数
                 if not hasattr(self, '_counted_files'):
                     self._counted_files = set()
@@ -547,6 +555,7 @@ class MainWindow(QMainWindow):
                     self._counted_files.add(current_file)
                     self.packets_processed_count += packets_processed
                     self.packets_processed_label.setText(str(self.packets_processed_count))
+                    self._logger.debug(f"更新包计数: 文件={current_file}, 包数={packets_processed}, 总计={self.packets_processed_count}")
             
             self.collect_step_result(data)
 
@@ -620,12 +629,12 @@ class MainWindow(QMainWindow):
         
         # 生成处理选项标识
         enabled_steps = []
-        if self.mask_ip_cb.isChecked():
-            enabled_steps.append("MaskIP")
-        if self.dedup_packet_cb.isChecked():
-            enabled_steps.append("Dedup")
-        if self.mask_payload_cb.isChecked():
-            enabled_steps.append("Trim")
+        if self.anonymize_ips_cb.isChecked():
+            enabled_steps.append("AnonymizeIPs")
+        if self.remove_dupes_cb.isChecked():
+            enabled_steps.append("RemoveDupes")
+        if self.mask_payloads_cb.isChecked():
+            enabled_steps.append("MaskPayloads")
         
         steps_suffix = "_".join(enabled_steps) if enabled_steps else "NoSteps"
         timestamp = current_timestamp()

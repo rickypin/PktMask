@@ -5,16 +5,16 @@ PktMask 是一个用于处理网络数据包文件的图形界面工具，专注
 ## 功能特性
 
 ### 支持的处理功能
-- ✅ **IP地址匿名化**: 分层匿名化算法，支持多层封装
+- ✅ **Anonymize IPs**: 分层匿名化算法，支持多层封装
   - 保持网络结构
   - 局部随机替换
   - 分层一致性替换
   - 支持 IPv4 和 IPv6 地址
-- ✅ **载荷裁切**: 智能TLS载荷处理，保护TLS握手信令
+- ✅ **Mask Payloads**: 智能TLS载荷处理，保护TLS握手信令
   - TLS握手信令保护
   - 应用数据智能裁切
   - 支持复杂网络流量
-- ✅ **数据包去重**: 高效去除重复数据包
+- ✅ **Remove Dupes**: 高效去除重复数据包
 - ❌ **HTTP协议处理**: 已在v3.0版本中移除
 
 ### 支持的网络协议
@@ -60,13 +60,13 @@ python -m pktmask
 
 ### 使用 CLI
 ```bash
-# 掩码处理
+# Mask Payloads 处理（可选 Remove Dupes 和 Anonymize IPs）
 ./pktmask mask input.pcap -o output.pcap --dedup --anon
 
-# 仅去重
+# 仅 Remove Dupes
 ./pktmask dedup input.pcap -o output.pcap
 
-# 仅 IP 匿名化
+# 仅 Anonymize IPs
 ./pktmask anon input.pcap -o output.pcap
 
 # 查看帮助
@@ -79,9 +79,9 @@ python -m pktmask
 1. 启动 PktMask GUI
 2. 点击"选择目录"按钮，选择包含 pcap/pcapng 文件的目录
 3. 选择所需的处理功能：
-   - IP地址匿名化
-   - 载荷裁切（TLS智能处理）
-   - 数据内包去重
+   - Anonymize IPs
+   - Mask Payloads（TLS智能处理）
+   - Remove Dupes
 4. 点击"开始处理"按钮
 5. 等待处理完成
 6. 查看处理日志和结果

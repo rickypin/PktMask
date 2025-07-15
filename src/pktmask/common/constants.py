@@ -134,8 +134,8 @@ class ProcessingConstants:
     ERROR_DISPLAY_LIMIT = 5
     
     # 处理步骤后缀
-    MASK_IP_SUFFIX = "-Masked"
-    TRIM_PACKET_SUFFIX = "-Trimmed"
+    ANONYMIZE_IPS_SUFFIX = "-Anonymized"
+    MASK_PAYLOADS_SUFFIX = "-Masked"
     DEDUP_PACKET_SUFFIX = "-Deduped"
 
 
@@ -238,11 +238,14 @@ class SystemConstants:
     MILLISECONDS_DISPLAY_DIVISOR = 10
 
 
-# 显示名称映射
+# 显示名称映射（使用标准GUI命名）
 PROCESS_DISPLAY_NAMES = {
-    "mask_ip": "Mask IP",
-    "dedup_packet": "Remove Dupes", 
-    "trim_packet": "Trim Packet"
+    # 标准命名
+    "anonymize_ips": "Anonymize IPs",
+    "remove_dupes": "Remove Dupes",
+    "mask_payloads": "Mask Payloads",
+
+    # 旧命名 - 保持向后兼容（已移除不规范命名）
 }
 
 # 错误消息

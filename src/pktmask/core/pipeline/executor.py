@@ -149,15 +149,27 @@ class PipelineExecutor:
     # ------------------------------------------------------------------
     # 内部方法
     # ------------------------------------------------------------------
+    def _get_config_with_fallback(self, config: Dict, standard_key: str, legacy_key: str) -> Dict:
+        """获取配置，支持标准键名和旧键名的向后兼容性"""
+        # 优先使用标准键名
+        if standard_key in config:
+            return config[standard_key]
+        # 回退到旧键名
+        elif legacy_key in config:
+            self._logger.warning(f"使用了旧配置键名 '{legacy_key}'，建议更新为 '{standard_key}'")
+            return config[legacy_key]
+        # 返回空配置
+        return {}
+
     def _build_pipeline(self, config: Dict) -> List[StageBase]:
         """根据配置动态装配 Pipeline。"""
 
         stages: List[StageBase] = []
 
         # ------------------------------------------------------------------
-        # Dedup Stage
+        # Remove Dupes Stage (标准命名：remove_dupes，向后兼容：dedup)
         # ------------------------------------------------------------------
-        dedup_cfg = config.get("dedup", {})
+        dedup_cfg = self._get_config_with_fallback(config, "remove_dupes", "dedup")
         if dedup_cfg.get("enabled", False):
             from pktmask.core.pipeline.stages.dedup import DeduplicationStage
 
@@ -166,9 +178,9 @@ class PipelineExecutor:
             stages.append(stage)
 
         # ------------------------------------------------------------------
-        # Anon Stage
+        # Anonymize IPs Stage (标准命名：anonymize_ips，向后兼容：anon)
         # ------------------------------------------------------------------
-        anon_cfg = config.get("anon", {})
+        anon_cfg = self._get_config_with_fallback(config, "anonymize_ips", "anon")
         if anon_cfg.get("enabled", False):
             from pktmask.core.pipeline.stages.anon_ip import AnonStage
 
@@ -177,9 +189,9 @@ class PipelineExecutor:
             stages.append(stage)
 
         # ------------------------------------------------------------------
-        # Mask Stage - 双模块架构
+        # Mask Payloads Stage (标准命名：mask_payloads，向后兼容：mask)
         # ------------------------------------------------------------------
-        mask_cfg = config.get("mask", {})
+        mask_cfg = self._get_config_with_fallback(config, "mask_payloads", "mask")
         if mask_cfg.get("enabled", False):
             # 直接使用新一代双模块架构
             from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage

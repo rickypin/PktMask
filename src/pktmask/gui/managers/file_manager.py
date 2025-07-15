@@ -154,11 +154,11 @@ class FileManager:
         
         # 生成处理选项标识
         enabled_steps = []
-        if hasattr(self.main_window, 'mask_ip_cb') and self.main_window.mask_ip_cb.isChecked():
+        if hasattr(self.main_window, 'anonymize_ips_cb') and self.main_window.anonymize_ips_cb.isChecked():
             enabled_steps.append("MaskIP")
-        if hasattr(self.main_window, 'dedup_packet_cb') and self.main_window.dedup_packet_cb.isChecked():
+        if hasattr(self.main_window, 'remove_dupes_cb') and self.main_window.remove_dupes_cb.isChecked():
             enabled_steps.append("Dedup")
-        if hasattr(self.main_window, 'mask_payload_cb') and self.main_window.mask_payload_cb.isChecked():
+        if hasattr(self.main_window, 'mask_payloads_cb') and self.main_window.mask_payloads_cb.isChecked():
             enabled_steps.append("Trim")
         
         steps_suffix = "_".join(enabled_steps) if enabled_steps else "NoSteps"

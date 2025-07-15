@@ -27,10 +27,10 @@ class UISettings:
     theme: str = "auto"  # auto, light, dark
     font_size: int = 10
     
-    # 默认选项
-    default_dedup: bool = True
-    default_mask_ip: bool = True
-    default_mask: bool = True
+    # 默认选项（使用标准GUI命名）
+    default_remove_dupes: bool = True
+    default_anonymize_ips: bool = True
+    default_mask_payloads: bool = True
     
     # 文件处理设置
     remember_last_dir: bool = True
@@ -345,11 +345,11 @@ class AppConfig:
         }
     
     def get_ui_config(self) -> Dict[str, Any]:
-        """获取UI配置字典"""
+        """获取UI配置字典（使用标准命名规范）"""
         return {
-            'default_dedup': self.ui.default_dedup,
-            'default_mask_ip': self.ui.default_mask_ip,
-            'default_mask': self.ui.default_mask,
+            'default_remove_dupes': self.ui.default_remove_dupes,
+            'default_anonymize_ips': self.ui.default_anonymize_ips,
+            'default_mask_payloads': self.ui.default_mask_payloads,
             'remember_last_dir': self.ui.remember_last_dir,
             'last_input_dir': self.ui.last_input_dir,
             'last_output_dir': self.ui.last_output_dir,

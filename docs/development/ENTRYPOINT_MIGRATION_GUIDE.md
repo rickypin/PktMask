@@ -298,13 +298,13 @@ python pktmask.py
 PktMask 也提供命令行接口用于批处理：
 
 ```bash
-# 完整处理（去重 + 匿名化 + 掩码）
+# 完整处理（Remove Dupes + Anonymize IPs + Mask Payloads）
 ./pktmask mask input.pcap -o output.pcap --dedup --anon
 
-# 仅去重
+# 仅 Remove Dupes
 ./pktmask dedup input.pcap -o output.pcap
 
-# 仅 IP 匿名化
+# 仅 Anonymize IPs
 ./pktmask anon input.pcap -o output.pcap
 ```
 ```

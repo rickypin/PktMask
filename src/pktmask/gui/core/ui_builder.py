@@ -156,19 +156,19 @@ class UIBuilder:
         self.main_window.options_group = QGroupBox("Processing Options")
         layout = QVBoxLayout(self.main_window.options_group)
         
-        # 处理选项
-        self.main_window.mask_ip_cb = QCheckBox("IP Anonymization")
-        self.main_window.mask_ip_cb.setChecked(True)
-        
-        self.main_window.dedup_packet_cb = QCheckBox("Packet Deduplication")
-        self.main_window.dedup_packet_cb.setChecked(True)
-        
-        self.main_window.mask_payload_cb = QCheckBox("Payload Masking")
-        self.main_window.mask_payload_cb.setChecked(True)
-        
-        layout.addWidget(self.main_window.mask_ip_cb)
-        layout.addWidget(self.main_window.dedup_packet_cb)
-        layout.addWidget(self.main_window.mask_payload_cb)
+        # 处理选项（使用标准GUI命名）
+        self.main_window.anonymize_ips_cb = QCheckBox("Anonymize IPs")
+        self.main_window.anonymize_ips_cb.setChecked(True)
+
+        self.main_window.remove_dupes_cb = QCheckBox("Remove Dupes")
+        self.main_window.remove_dupes_cb.setChecked(True)
+
+        self.main_window.mask_payloads_cb = QCheckBox("Mask Payloads")
+        self.main_window.mask_payloads_cb.setChecked(True)
+
+        layout.addWidget(self.main_window.anonymize_ips_cb)
+        layout.addWidget(self.main_window.remove_dupes_cb)
+        layout.addWidget(self.main_window.mask_payloads_cb)
         
         # 开始按钮
         self.main_window.start_proc_btn = QPushButton("Start Processing")
@@ -321,9 +321,9 @@ class UIBuilder:
         
         # 检查是否选择了处理选项
         has_options = (
-            self.main_window.mask_ip_cb.isChecked() or
-            self.main_window.dedup_packet_cb.isChecked() or
-            self.main_window.mask_payload_cb.isChecked()
+            self.main_window.anonymize_ips_cb.isChecked() or
+            self.main_window.remove_dupes_cb.isChecked() or
+            self.main_window.mask_payloads_cb.isChecked()
         )
         
         # 更新按钮状态

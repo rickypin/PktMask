@@ -6,15 +6,13 @@ result_type_mapping:
   # 去重相关
   dedup_packet: "DeduplicationResult"
   remove_dupes: "DeduplicationResult"
-  
-  # IP匿名化相关  
-  mask_ip: "IPAnonymizationResult"
-  mask_ips: "IPAnonymizationResult"
-  
-  # 载荷裁切相关
-  trim_packet: "TrimmingResult"
-  intelligent_trim: "TrimmingResult"
-  mask_payload: "TrimmingResult"
+
+  # IP匿名化相关
+  anonymize_ips: "IPAnonymizationResult"
+
+  # 载荷掩码相关
+  mask_payloads: "MaskingResult"
+  mask_payload: "MaskingResult"
 
 # 步骤名称映射
 step_name_mapping:
@@ -25,12 +23,12 @@ step_name_mapping:
     description: "数据包去重处理"
     
   ip_anonymization:
-    aliases: ["mask_ip", "mask_ips", "anon_ip"]
+    aliases: ["anon_ip", "anonymize_ips"]
     canonical: "IP Anonymization"
     description: "IP地址匿名化处理"
-    
+
   payload_masking:
-    aliases: ["trim_packet", "intelligent_trim", "mask_payload"]
+    aliases: ["mask_payload", "mask_payloads"]
     canonical: "Payload Masking"
     description: "载荷掩码处理"
 
@@ -49,7 +47,7 @@ processor_type_mapping:
   # 载荷掩码处理器
   mask:
     class_name: "MaskingProcessor"
-    legacy_aliases: ["EnhancedTrimmer", "TrimProcessor"]
+    legacy_aliases: ["MaskProcessor"]
 
 # Stage类型映射
 stage_type_mapping:
@@ -66,27 +64,27 @@ stage_type_mapping:
   # 载荷掩码Stage
   mask:
     class_name: "MaskStage"
-    legacy_aliases: ["MaskPayloadStage", "TrimmingStage"]
+    legacy_aliases: ["MaskPayloadStage"]
 
-# 配置键映射
+# 配置键映射（使用标准GUI命名）
 config_key_mapping:
   # Pipeline配置键
-  dedup: 
-    description: "去重配置"
+  remove_dupes:
+    description: "Remove Dupes 配置"
     enabled_key: "enabled"
-    
-  anon:
-    description: "IP匿名化配置" 
+
+  anonymize_ips:
+    description: "Anonymize IPs 配置"
     enabled_key: "enabled"
     strategy_key: "strategy"
-    
-  mask:
-    description: "载荷掩码配置"
+
+  mask_payloads:
+    description: "Mask Payloads 配置"
     enabled_key: "enabled"
     mode_key: "mode"
 
-# 文件后缀映射
+# 文件后缀映射（使用标准命名）
 file_suffix_mapping:
-  dedup: "-Deduped"
-  anon: "-Masked" 
-  mask: "-Trimmed"
+  remove_dupes: "-RemoveDupes"
+  anonymize_ips: "-AnonymizeIPs"
+  mask_payloads: "-MaskPayloads"
