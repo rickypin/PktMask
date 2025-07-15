@@ -308,11 +308,11 @@ class DataService:
                 with open(report_path, 'w', encoding='utf-8') as f:
                     f.write(report_content)
                 
-                self._logger.info(f"报告已保存到: {report_path}")
+                self._logger.info(f"Report saved to: {report_path}")
                 return report_path
             
         except Exception as e:
-            self._logger.error(f"保存报告失败: {e}")
+            self._logger.error(f"Failed to save report: {e}")
             return None
     
     def open_output_directory(self):
@@ -320,7 +320,7 @@ class DataService:
         if self.current_output_dir and os.path.exists(self.current_output_dir):
             open_directory_in_system(self.current_output_dir)
         else:
-            self._logger.warning("输出目录不存在或未设置")
+            self._logger.warning("Output directory does not exist or is not set")
     
     def reset_stats(self):
         """重置统计信息"""

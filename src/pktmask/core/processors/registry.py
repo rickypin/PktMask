@@ -47,8 +47,8 @@ class ProcessorRegistry:
             cls._loaded = True
             
         except ImportError as e:
-            print(f"加载内置处理器时出错: {e}")
-            print("警告: 无法加载载荷裁切处理器")
+            print(f"Error loading built-in processors: {e}")
+            print("Warning: Unable to load payload trimming processor")
     
     @classmethod
     def get_processor(cls, name: str, config: ProcessorConfig) -> BaseProcessor:

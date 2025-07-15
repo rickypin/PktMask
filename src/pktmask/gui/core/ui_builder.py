@@ -232,7 +232,7 @@ class UIBuilder:
     def show_error_dialog(self, title: str, message: str):
         """显示错误对话框"""
         QMessageBox.critical(self.main_window, title, message)
-        self._logger.error(f"错误对话框: {title} - {message}")
+        self._logger.error(f"Error dialog: {title} - {message}")
     
     def show_info_dialog(self, title: str, message: str):
         """显示信息对话框"""

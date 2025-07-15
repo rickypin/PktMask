@@ -50,7 +50,7 @@ class NewMaskPayloadStage(ProcessorStage):
         # 配置验证器（可选）
         self.config_validator = None
 
-        self.logger.info(f"NewMaskPayloadStage 创建: protocol={self.protocol}, mode={self.mode}")
+        self.logger.info(f"NewMaskPayloadStage created: protocol={self.protocol}, mode={self.mode}")
 
 
 
@@ -68,7 +68,7 @@ class NewMaskPayloadStage(ProcessorStage):
             return True
 
         try:
-            self.logger.info("开始初始化 NewMaskPayloadStage")
+            self.logger.info("Starting NewMaskPayloadStage initialization")
 
             # 创建 Marker 模块
             self.marker = self._create_marker()
@@ -79,11 +79,11 @@ class NewMaskPayloadStage(ProcessorStage):
             self.masker = self._create_masker()
 
             self._initialized = True
-            self.logger.info("NewMaskPayloadStage 初始化成功")
+            self.logger.info("NewMaskPayloadStage initialization successful")
             return True
 
         except Exception as e:
-            self.logger.error(f"NewMaskPayloadStage 初始化失败: {e}")
+            self.logger.error(f"NewMaskPayloadStage initialization failed: {e}")
             return False
     
     def process_file(self, input_path: Union[str, Path],
@@ -105,7 +105,7 @@ class NewMaskPayloadStage(ProcessorStage):
         input_path = Path(input_path)
         output_path = Path(output_path)
 
-        self.logger.info(f"开始处理文件: {input_path} -> {output_path}")
+        self.logger.info(f"Starting file processing: {input_path} -> {output_path}")
 
         start_time = time.time()
 
@@ -118,26 +118,26 @@ class NewMaskPayloadStage(ProcessorStage):
             return self._process_with_dual_module_mode(input_path, output_path, start_time)
 
         except Exception as e:
-            self.logger.error(f"文件处理失败: {e}")
+            self.logger.error(f"File processing failed: {e}")
             raise
 
     def _process_with_dual_module_mode(self, input_path: Path, output_path: Path, start_time: float) -> StageStats:
         """使用新版双模块架构处理文件"""
-        self.logger.debug("使用双模块架构处理模式")
+        self.logger.debug("Using dual-module architecture processing mode")
 
-        # 阶段1: 调用Marker模块生成KeepRuleSet
-        self.logger.debug("阶段1: 生成保留规则")
+        # Phase 1: Call Marker module to generate KeepRuleSet
+        self.logger.debug("Phase 1: Generate keep rules")
         keep_rules = self.marker.analyze_file(str(input_path), self.config)
 
-        # 阶段2: 调用Masker模块应用规则
-        self.logger.debug("阶段2: 应用掩码规则")
+        # Phase 2: Call Masker module to apply rules
+        self.logger.debug("Phase 2: Apply masking rules")
         masking_stats = self.masker.apply_masking(str(input_path), str(output_path), keep_rules)
 
         # 阶段3: 转换统计信息
         stage_stats = self._convert_to_stage_stats(masking_stats)
 
-        self.logger.info(f"双模块处理完成: 处理包数={stage_stats.packets_processed}, "
-                        f"修改包数={stage_stats.packets_modified}")
+        self.logger.info(f"Dual-module processing completed: processed_packets={stage_stats.packets_processed}, "
+                        f"modified_packets={stage_stats.packets_modified}")
 
         return stage_stats
 
@@ -145,7 +145,7 @@ class NewMaskPayloadStage(ProcessorStage):
 
     def _process_with_basic_mode(self, input_path: Path, output_path: Path, start_time: float) -> StageStats:
         """基础模式处理（透传复制）"""
-        self.logger.debug("使用基础模式（透传复制）")
+        self.logger.debug("Using basic mode (passthrough copy)")
 
         import shutil
 
@@ -174,7 +174,7 @@ class NewMaskPayloadStage(ProcessorStage):
             }
         )
 
-        self.logger.info(f"基础模式处理完成: 文件大小={stage_stats.extra_metrics['file_size']} 字节")
+        self.logger.info(f"Basic mode processing completed: file_size={stage_stats.extra_metrics['file_size']} bytes")
 
         return stage_stats
 
@@ -253,6 +253,6 @@ class NewMaskPayloadStage(ProcessorStage):
             # Masker 模块暂时没有清理方法
             pass
         self._initialized = False
-        self.logger.debug("NewMaskPayloadStage 资源清理完成")
+        self.logger.debug("NewMaskPayloadStage resource cleanup completed")
 
 

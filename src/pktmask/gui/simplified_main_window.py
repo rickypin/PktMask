@@ -73,7 +73,7 @@ class SimplifiedMainWindow(QMainWindow):
             self.ui_builder = UIBuilder(self)
             self.data_service = DataService(self)
             
-            self._logger.info("核心组件初始化完成")
+            self._logger.info("Core components initialization completed")
             
         except Exception as e:
             self._logger.error(f"核心组件初始化失败: {e}")
@@ -106,7 +106,7 @@ class SimplifiedMainWindow(QMainWindow):
             if hasattr(self, 'mask_payloads_cb'):
                 self.mask_payloads_cb.stateChanged.connect(self.ui_builder.update_start_button_state)
             
-            self._logger.debug("信号连接完成")
+            self._logger.debug("Signal connections completed")
             
         except Exception as e:
             self._logger.error(f"信号连接失败: {e}")
@@ -135,7 +135,7 @@ class SimplifiedMainWindow(QMainWindow):
                 self._update_stats_display(data['stats'])
                 
         except Exception as e:
-            self._logger.error(f"处理进度更新失败: {e}")
+            self._logger.error(f"Failed to update processing progress: {e}")
     
     def _handle_status_change(self, status: str):
         """处理状态变化"""
@@ -170,10 +170,10 @@ class SimplifiedMainWindow(QMainWindow):
                 if hasattr(self, 'progress_bar'):
                     self.progress_bar.setVisible(False)
             
-            self._logger.debug(f"状态变化: {status}")
+            self._logger.debug(f"Status change: {status}")
             
         except Exception as e:
-            self._logger.error(f"处理状态变化失败: {e}")
+            self._logger.error(f"Failed to handle status change: {e}")
     
     def _handle_error(self, error_message: str):
         """处理错误"""
@@ -188,10 +188,10 @@ class SimplifiedMainWindow(QMainWindow):
             # 发送错误信号（用于测试）
             self.error_occurred.emit(error_message)
             
-            self._logger.error(f"处理错误: {error_message}")
+            self._logger.error(f"Processing error: {error_message}")
             
         except Exception as e:
-            self._logger.error(f"处理错误回调失败: {e}")
+            self._logger.error(f"Failed to handle error callback: {e}")
     
     def _handle_processing_finished(self, final_stats: dict):
         """处理完成回调"""
@@ -217,10 +217,10 @@ class SimplifiedMainWindow(QMainWindow):
                 f"Report saved to output directory."
             )
             
-            self._logger.info("处理完成")
+            self._logger.info("Processing completed")
             
         except Exception as e:
-            self._logger.error(f"处理完成回调失败: {e}")
+            self._logger.error(f"Failed to handle completion callback: {e}")
     
     def _update_stats_display(self, stats: dict):
         """更新统计显示"""
@@ -234,7 +234,7 @@ class SimplifiedMainWindow(QMainWindow):
                 self.data_service.stats.packets_modified = stats['packets_modified']
             
         except Exception as e:
-            self._logger.error(f"更新统计显示失败: {e}")
+            self._logger.error(f"Failed to update statistics display: {e}")
     
     def update_time_elapsed(self):
         """更新经过时间显示（兼容性方法）"""
@@ -247,7 +247,7 @@ class SimplifiedMainWindow(QMainWindow):
                 self.time_label.setText(time_str)
                 
         except Exception as e:
-            self._logger.error(f"更新时间显示失败: {e}")
+            self._logger.error(f"Failed to update time display: {e}")
     
     def changeEvent(self, event: QEvent):
         """处理窗口事件（主题变化等）"""
@@ -257,7 +257,7 @@ class SimplifiedMainWindow(QMainWindow):
             super().changeEvent(event)
             
         except Exception as e:
-            self._logger.error(f"处理窗口事件失败: {e}")
+            self._logger.error(f"Failed to handle window event: {e}")
     
     def closeEvent(self, event):
         """窗口关闭事件"""
@@ -274,10 +274,10 @@ class SimplifiedMainWindow(QMainWindow):
             self._save_window_state()
             
             event.accept()
-            self._logger.info("主窗口关闭")
+            self._logger.info("Main window closed")
             
         except Exception as e:
-            self._logger.error(f"窗口关闭处理失败: {e}")
+            self._logger.error(f"Failed to handle window close: {e}")
             event.accept()
     
     def _save_window_state(self):
@@ -293,7 +293,7 @@ class SimplifiedMainWindow(QMainWindow):
                 pass
             
         except Exception as e:
-            self._logger.error(f"保存窗口状态失败: {e}")
+            self._logger.error(f"Failed to save window state: {e}")
 
 
 def main():

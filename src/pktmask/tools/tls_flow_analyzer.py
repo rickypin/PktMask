@@ -1073,7 +1073,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
 
 
 def _find_pcap_files(input_dir: Path) -> List[Path]:
-    """查找目录中的所有 pcap/pcapng 文件"""
+    """Find all pcap/pcapng files in directory"""
     pcap_extensions = {'.pcap', '.pcapng', '.cap'}
     pcap_files = []
 
@@ -1081,7 +1081,7 @@ def _find_pcap_files(input_dir: Path) -> List[Path]:
         pcap_files.extend(input_dir.glob(f"*{ext}"))
         pcap_files.extend(input_dir.glob(f"*{ext.upper()}"))
 
-    # 按文件名排序
+    # Sort by filename
     return sorted(pcap_files)
 
 
@@ -1090,14 +1090,14 @@ def _process_batch_files(pcap_files: List[Path], analyzer: 'TLSFlowAnalyzer',
                         filter_types: Optional[Set[int]], output_dir: Optional[Path],
                         formats: str, verbose: bool, detailed: bool,
                         summary_only: bool) -> Dict[str, Dict[str, Any]]:
-    """批量处理多个 pcap 文件"""
+    """Batch process multiple pcap files"""
     batch_results = {}
     total_files = len(pcap_files)
 
-    print(f"[tls-flow-analyzer] 开始批量处理 {total_files} 个文件...")
+    print(f"[tls-flow-analyzer] Starting batch processing of {total_files} files...")
 
     for i, pcap_file in enumerate(pcap_files, 1):
-        print(f"[tls-flow-analyzer] 处理文件 {i}/{total_files}: {pcap_file.name}")
+        print(f"[tls-flow-analyzer] Processing file {i}/{total_files}: {pcap_file.name}")
 
         try:
             # 分析单个文件
@@ -1128,30 +1128,30 @@ def _process_batch_files(pcap_files: List[Path], analyzer: 'TLSFlowAnalyzer',
             # 打印单个文件的简要摘要
             if verbose:
                 global_stats = analysis_result["global_statistics"]
-                print(f"  ✅ {pcap_file.name}: {global_stats['frames_containing_tls']} 帧, "
-                     f"{global_stats['tls_records_total']} 记录, "
-                     f"{global_stats['tcp_streams_analyzed']} 流")
+                print(f"  ✅ {pcap_file.name}: {global_stats['frames_containing_tls']} frames, "
+                     f"{global_stats['tls_records_total']} records, "
+                     f"{global_stats['tcp_streams_analyzed']} streams")
 
         except Exception as e:
-            print(f"  ❌ {pcap_file.name}: 分析失败 - {e}")
+            print(f"  ❌ {pcap_file.name}: Analysis failed - {e}")
             if verbose:
                 import traceback
                 traceback.print_exc()
             continue
 
-    print(f"[tls-flow-analyzer] 批量处理完成，成功处理 {len(batch_results)}/{total_files} 个文件")
+    print(f"[tls-flow-analyzer] Batch processing completed, successfully processed {len(batch_results)}/{total_files} files")
     return batch_results
 
 
 def _generate_summary_html_report(batch_results: Dict[str, Dict[str, Any]],
                                  output_dir: Path, verbose: bool) -> None:
-    """生成汇总 HTML 报告"""
+    """Generate summary HTML report"""
     if not JINJA2_AVAILABLE:
-        print(f"[tls-flow-analyzer] ⚠️  Jinja2 未安装，跳过汇总 HTML 输出")
+        print(f"[tls-flow-analyzer] ⚠️  Jinja2 not installed, skipping summary HTML output")
         return
 
     if not batch_results:
-        print(f"[tls-flow-analyzer] ⚠️  没有成功分析的文件，跳过汇总 HTML 输出")
+        print(f"[tls-flow-analyzer] ⚠️  No successfully analyzed files, skipping summary HTML output")
         return
 
     try:
@@ -1171,10 +1171,10 @@ def _generate_summary_html_report(batch_results: Dict[str, Dict[str, Any]],
             f.write(html_content)
 
         if verbose:
-            print(f"[tls-flow-analyzer] 汇总 HTML 输出: {summary_html_path}")
+            print(f"[tls-flow-analyzer] Summary HTML output: {summary_html_path}")
 
     except Exception as e:
-        print(f"[tls-flow-analyzer] ⚠️  生成汇总 HTML 失败: {e}")
+        print(f"[tls-flow-analyzer] ⚠️  Failed to generate summary HTML: {e}")
         if verbose:
             import traceback
             traceback.print_exc()
@@ -1558,7 +1558,7 @@ def _output_results(analysis_result: Dict[str, Any], pcap_path: str,
             json.dump(analysis_result, f, ensure_ascii=False, indent=2, default=str)
 
         if verbose:
-            print(f"[tls-flow-analyzer] JSON 输出: {json_path}")
+            print(f"[tls-flow-analyzer] JSON output: {json_path}")
 
         # 如果启用详细模式，额外输出详细分析文件
         if detailed:
@@ -1567,7 +1567,7 @@ def _output_results(analysis_result: Dict[str, Any], pcap_path: str,
                 json.dump(detailed_analysis, f, ensure_ascii=False, indent=2, default=str)
 
             if verbose:
-                print(f"[tls-flow-analyzer] 详细分析 JSON 输出: {detailed_json_path}")
+                print(f"[tls-flow-analyzer] Detailed analysis JSON output: {detailed_json_path}")
 
     # TSV 输出
     if "tsv" in formats_list:
@@ -1606,7 +1606,7 @@ def _output_results(analysis_result: Dict[str, Any], pcap_path: str,
                        f"{processing_strategies_str}\n")
 
         if verbose:
-            print(f"[tls-flow-analyzer] TSV 输出: {tsv_path}")
+            print(f"[tls-flow-analyzer] TSV output: {tsv_path}")
 
         # 如果启用详细模式，输出消息结构分析 TSV
         if detailed and "detailed_analysis" in analysis_result:
@@ -1639,7 +1639,7 @@ def _output_results(analysis_result: Dict[str, Any], pcap_path: str,
                            f"{msg['processing_strategy']}\n")
 
             if verbose:
-                print(f"[tls-flow-analyzer] 消息结构 TSV 输出: {detailed_tsv_path}")
+                print(f"[tls-flow-analyzer] Message structure TSV output: {detailed_tsv_path}")
 
     # HTML 输出
     if "html" in formats_list:
@@ -1648,9 +1648,9 @@ def _output_results(analysis_result: Dict[str, Any], pcap_path: str,
 
 def _output_html_report(analysis_result: Dict[str, Any], pcap_path: str,
                        output_dir: Path, pcap_stem: str, verbose: bool) -> None:
-    """生成HTML格式的分析报告"""
+    """Generate HTML format analysis report"""
     if not JINJA2_AVAILABLE:
-        print(f"[tls-flow-analyzer] ⚠️  Jinja2 未安装，跳过 HTML 输出")
+        print(f"[tls-flow-analyzer] ⚠️  Jinja2 not installed, skipping HTML output")
         return
 
     try:
@@ -1685,14 +1685,14 @@ def _output_html_report(analysis_result: Dict[str, Any], pcap_path: str,
             f.write(html_content)
 
         if verbose:
-            print(f"[tls-flow-analyzer] HTML 输出: {html_path}")
+            print(f"[tls-flow-analyzer] HTML output: {html_path}")
 
     except Exception as e:
-        print(f"[tls-flow-analyzer] ⚠️  HTML 报告生成失败: {e}")
+        print(f"[tls-flow-analyzer] ⚠️  HTML report generation failed: {e}")
 
 
 def _apply_type_filter(analysis_result: Dict[str, Any], filter_types: Set[int]) -> Dict[str, Any]:
-    """应用 TLS 协议类型过滤"""
+    """Apply TLS protocol type filtering"""
     # 过滤详细帧信息
     filtered_frames = []
     for frame in analysis_result["detailed_frames"]:
@@ -1732,39 +1732,39 @@ def _apply_type_filter(analysis_result: Dict[str, Any], filter_types: Set[int]) 
 
 
 def _print_summary(analysis_result: Dict[str, Any], detailed: bool) -> None:
-    """打印分析结果摘要"""
+    """Print analysis result summary"""
     metadata = analysis_result["metadata"]
     global_stats = analysis_result["global_statistics"]
     protocol_stats = analysis_result["protocol_type_statistics"]
 
-    print(f"[tls-flow-analyzer] ✅ TLS 流量分析完成")
-    print(f"  包含 TLS 消息的数据帧总数: {global_stats['frames_containing_tls']}")
-    print(f"  TLS 记录总数: {global_stats['tls_records_total']}")
-    print(f"  分析的 TCP 流总数: {global_stats['tcp_streams_analyzed']}")
+    print(f"[tls-flow-analyzer] ✅ TLS traffic analysis completed")
+    print(f"  Total frames containing TLS messages: {global_stats['frames_containing_tls']}")
+    print(f"  Total TLS records: {global_stats['tls_records_total']}")
+    print(f"  Total TCP streams analyzed: {global_stats['tcp_streams_analyzed']}")
 
-    print(f"\n  按 TLS 消息类型统计:")
+    print(f"\n  Statistics by TLS message type:")
     for content_type in sorted(protocol_stats.keys()):
         type_name = TLS_CONTENT_TYPES[content_type]
         strategy = TLS_PROCESSING_STRATEGIES[content_type]
         frames = protocol_stats[content_type]["frames"]
         records = protocol_stats[content_type]["records"]
-        print(f"    TLS-{content_type} ({type_name}, {strategy}): {frames} 帧, {records} 记录")
+        print(f"    TLS-{content_type} ({type_name}, {strategy}): {frames} frames, {records} records")
 
     if detailed:
-        print(f"\n  TCP 流分析详情:")
+        print(f"\n  TCP flow analysis details:")
         tcp_flow_analysis = analysis_result["tcp_flow_analysis"]
         for stream_id, flow_info in tcp_flow_analysis.items():
-            print(f"    TCP 流 {stream_id}: {flow_info['packet_count']} 个数据包")
+            print(f"    TCP stream {stream_id}: {flow_info['packet_count']} packets")
             for direction, dir_info in flow_info["directions"].items():
                 print(f"      {direction}: {dir_info['src_ip']}:{dir_info['src_port']} -> "
                      f"{dir_info['dst_ip']}:{dir_info['dst_port']} "
-                     f"({dir_info['packet_count']} 包, {dir_info['payload_size']} 字节载荷)")
+                     f"({dir_info['packet_count']} packets, {dir_info['payload_size']} bytes payload)")
 
-        # 显示重组消息详情
+        # Display reassembled message details
         reassembled_messages = analysis_result.get("reassembled_messages", [])
         if reassembled_messages:
-            print(f"\n  重组 TLS 消息详情 ({len(reassembled_messages)} 个消息):")
-            for i, message in enumerate(reassembled_messages[:10]):  # 限制显示前10个消息
+            print(f"\n  Reassembled TLS message details ({len(reassembled_messages)} messages):")
+            for i, message in enumerate(reassembled_messages[:10]):  # Limit display to first 10 messages
                 content_type_name = message.get("content_type_name", "Unknown")
                 stream_id = message.get("stream_id", "unknown")
                 direction = message.get("direction", "unknown")
@@ -1777,26 +1777,26 @@ def _print_summary(analysis_result: Dict[str, Any], detailed: bool) -> None:
                 payload_seq_end = message.get("tls_payload_seq_end", message.get("tls_seq_end", payload_seq_start))
 
                 is_complete = "✓" if message.get("is_complete", False) else "⚠"
-                is_cross_segment = "跨段" if message.get("is_cross_segment", False) else "单段"
+                is_cross_segment = "cross-segment" if message.get("is_cross_segment", False) else "single-segment"
 
-                print(f"    [{i+1:2d}] 流{stream_id}-{direction} {content_type_name} ({length}字节) {is_complete} {is_cross_segment}")
-                print(f"         头部序列号: {header_seq_start}-{header_seq_end}")
-                print(f"         载荷序列号: {payload_seq_start}-{payload_seq_end}")
+                print(f"    [{i+1:2d}] stream{stream_id}-{direction} {content_type_name} ({length}bytes) {is_complete} {is_cross_segment}")
+                print(f"         Header sequence: {header_seq_start}-{header_seq_end}")
+                print(f"         Payload sequence: {payload_seq_start}-{payload_seq_end}")
 
             if len(reassembled_messages) > 10:
-                print(f"    ... 还有 {len(reassembled_messages) - 10} 个消息 (详见输出文件)")
+                print(f"    ... {len(reassembled_messages) - 10} more messages (see output files for details)")
         else:
-            print(f"\n  无重组 TLS 消息")
+            print(f"\n  No reassembled TLS messages")
 
 
 def _print_batch_summary(batch_results: Dict[str, Dict[str, Any]], detailed: bool) -> None:
-    """打印批量处理摘要"""
+    """Print batch processing summary"""
     total_files = len(batch_results)
     if total_files == 0:
-        print(f"[tls-flow-analyzer] ❌ 没有成功分析的文件")
+        print(f"[tls-flow-analyzer] ❌ No successfully analyzed files")
         return
 
-    # 汇总统计
+    # Summary statistics
     total_frames = 0
     total_records = 0
     total_streams = 0
@@ -1814,28 +1814,28 @@ def _print_batch_summary(batch_results: Dict[str, Dict[str, Any]], detailed: boo
             global_protocol_stats[content_type]["frames"] += stats["frames"]
             global_protocol_stats[content_type]["records"] += stats["records"]
 
-    print(f"[tls-flow-analyzer] ✅ 批量 TLS 流量分析完成")
-    print(f"  成功分析文件数: {total_files}")
-    print(f"  包含 TLS 消息的数据帧总数: {total_frames}")
-    print(f"  TLS 记录总数: {total_records}")
-    print(f"  分析的 TCP 流总数: {total_streams}")
+    print(f"[tls-flow-analyzer] ✅ Batch TLS traffic analysis completed")
+    print(f"  Successfully analyzed files: {total_files}")
+    print(f"  Total frames containing TLS messages: {total_frames}")
+    print(f"  Total TLS records: {total_records}")
+    print(f"  Total TCP streams analyzed: {total_streams}")
 
-    print(f"\n  全局 TLS 消息类型统计:")
+    print(f"\n  Global TLS message type statistics:")
     for content_type in sorted(global_protocol_stats.keys()):
         type_name = TLS_CONTENT_TYPES[content_type]
         strategy = TLS_PROCESSING_STRATEGIES[content_type]
         frames = global_protocol_stats[content_type]["frames"]
         records = global_protocol_stats[content_type]["records"]
-        print(f"    TLS-{content_type} ({type_name}, {strategy}): {frames} 帧, {records} 记录")
+        print(f"    TLS-{content_type} ({type_name}, {strategy}): {frames} frames, {records} records")
 
     if detailed:
-        print(f"\n  各文件详细统计:")
+        print(f"\n  Detailed statistics by file:")
         for pcap_path, result in batch_results.items():
             pcap_name = Path(pcap_path).name
             global_stats = result["global_statistics"]
-            print(f"    📄 {pcap_name}: {global_stats['frames_containing_tls']} 帧, "
-                 f"{global_stats['tls_records_total']} 记录, "
-                 f"{global_stats['tcp_streams_analyzed']} 流")
+            print(f"    📄 {pcap_name}: {global_stats['frames_containing_tls']} frames, "
+                 f"{global_stats['tls_records_total']} records, "
+                 f"{global_stats['tcp_streams_analyzed']} streams")
 
 
 def main(argv: Optional[List[str]] = None) -> None:
@@ -1850,16 +1850,16 @@ def main(argv: Optional[List[str]] = None) -> None:
         if args.filter_types:
             try:
                 filter_types = set(int(t.strip()) for t in args.filter_types.split(",") if t.strip())
-                # 验证协议类型范围
+                # Validate protocol type range
                 invalid_types = filter_types - set(TLS_CONTENT_TYPES.keys())
                 if invalid_types:
-                    print(f"[tls-flow-analyzer] 错误: 无效的TLS协议类型: {invalid_types}", file=sys.stderr)
+                    print(f"[tls-flow-analyzer] Error: Invalid TLS protocol types: {invalid_types}", file=sys.stderr)
                     sys.exit(1)
             except ValueError as e:
-                print(f"[tls-flow-analyzer] 错误: 无法解析协议类型 '{args.filter_types}': {e}", file=sys.stderr)
+                print(f"[tls-flow-analyzer] Error: Unable to parse protocol types '{args.filter_types}': {e}", file=sys.stderr)
                 sys.exit(1)
 
-        # 创建分析器
+        # Create analyzer
         analyzer = TLSFlowAnalyzer(verbose=args.verbose)
 
         # 设置输出目录
@@ -1899,22 +1899,22 @@ def main(argv: Optional[List[str]] = None) -> None:
             _print_summary(analysis_result, args.detailed)
 
         elif args.input_dir:
-            # 批量处理
+            # Batch processing
             if not args.input_dir.exists():
-                print(f"[tls-flow-analyzer] 错误: 输入目录不存在: {args.input_dir}", file=sys.stderr)
+                print(f"[tls-flow-analyzer] Error: Input directory does not exist: {args.input_dir}", file=sys.stderr)
                 sys.exit(1)
 
             if not args.input_dir.is_dir():
-                print(f"[tls-flow-analyzer] 错误: 输入路径不是目录: {args.input_dir}", file=sys.stderr)
+                print(f"[tls-flow-analyzer] Error: Input path is not a directory: {args.input_dir}", file=sys.stderr)
                 sys.exit(1)
 
-            # 查找pcap文件
+            # Find pcap files
             pcap_files = _find_pcap_files(args.input_dir)
             if not pcap_files:
-                print(f"[tls-flow-analyzer] 错误: 在目录 {args.input_dir} 中未找到 pcap/pcapng 文件", file=sys.stderr)
+                print(f"[tls-flow-analyzer] Error: No pcap/pcapng files found in directory {args.input_dir}", file=sys.stderr)
                 sys.exit(1)
 
-            # 批量处理文件
+            # Batch process files
             batch_results = _process_batch_files(
                 pcap_files=pcap_files,
                 analyzer=analyzer,
@@ -1932,11 +1932,11 @@ def main(argv: Optional[List[str]] = None) -> None:
             if args.generate_summary_html:
                 _generate_summary_html_report(batch_results, args.output_dir, args.verbose)
 
-            # 打印批量处理摘要
+            # Print batch processing summary
             _print_batch_summary(batch_results, args.detailed)
 
     except Exception as e:
-        print(f"[tls-flow-analyzer] ❌ 分析失败: {e}", file=sys.stderr)
+        print(f"[tls-flow-analyzer] ❌ Analysis failed: {e}", file=sys.stderr)
         sys.exit(1)
 
 

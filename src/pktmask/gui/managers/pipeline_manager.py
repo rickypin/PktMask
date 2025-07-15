@@ -49,7 +49,9 @@ class PipelineManager:
     
     def toggle_pipeline_processing(self):
         """Toggle processing flow state"""
-        if self.processing_thread and self.processing_thread.isRunning():
+        # Store thread reference to avoid race condition
+        thread = self.processing_thread
+        if thread and thread.isRunning():
             self.stop_pipeline_processing()
         else:
             self.start_pipeline_processing()
@@ -133,14 +135,17 @@ class PipelineManager:
         """Stop processing flow"""
         self.main_window.user_stopped = True  # Set stop flag
         self.main_window.update_log("--- Stopping pipeline... ---")
-        if self.processing_thread:
-            self.processing_thread.stop()
+
+        # Store thread reference to avoid race condition
+        thread = self.processing_thread
+        if thread:
+            thread.stop()
             # Wait for thread to safely end, maximum wait 3 seconds
-            if not self.processing_thread.wait(3000):
+            if not thread.wait(3000):
                 self.main_window.log_text.append("Warning: Pipeline did not stop gracefully, forcing termination.")
-                self.processing_thread.terminate()
-                self.processing_thread.wait()
-        
+                thread.terminate()
+                thread.wait()
+
         # Generate partial summary statistics when stopped
         self.main_window.report_manager.generate_partial_summary_on_stop()
         
@@ -276,7 +281,9 @@ class PipelineManager:
     def processing_finished(self):
         """Processing complete"""
         # 首先清理线程状态，确保UI状态检查正确
-        self.processing_thread = None
+        # Note: Thread cleanup is also handled in on_thread_finished to ensure cleanup
+        if self.processing_thread:
+            self.processing_thread = None
 
         # **Fix**: Before generating the report, ensure Live Dashboard displays final statistics
         # Update Live Dashboard to show final statistics
@@ -344,8 +351,9 @@ class PipelineManager:
     
     def on_thread_finished(self):
         """Thread completion handling"""
-        # Thread cleanup is already handled in processing_finished, no need to repeat here
-        self.processing_thread = None
+        # Ensure thread cleanup happens regardless of how processing ended
+        if self.processing_thread:
+            self.processing_thread = None
     
     def reset_processing_state(self):
         """Reset processing state (only called when starting new processing)"""

@@ -112,21 +112,22 @@ class AppController(QObject):
         try:
             # 设置停止标志
             self.state.user_stop()
-            
-            # 停止处理线程
-            if self.processing_thread:
-                self.processing_thread.stop()
-                if not self.processing_thread.wait(3000):
-                    self.processing_thread.terminate()
-                    self.processing_thread.wait()
-            
+
+            # 停止处理线程 - Store thread reference to avoid race condition
+            thread = self.processing_thread
+            if thread:
+                thread.stop()
+                if not thread.wait(3000):
+                    thread.terminate()
+                    thread.wait()
+
             # 停止计时器
             self.timer.stop()
-            
+
             # 发送状态变化信号
             self.status_changed.emit("processing_stopped")
             self._logger.info("处理流程已停止")
-            
+
         except Exception as e:
             self._logger.error(f"停止处理流程失败: {e}")
             self.error_occurred.emit(f"停止失败: {str(e)}")

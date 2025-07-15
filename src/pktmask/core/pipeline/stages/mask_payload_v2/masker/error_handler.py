@@ -283,16 +283,16 @@ class ErrorRecoveryHandler:
             
             with open(log_file, 'a', encoding='utf-8') as f:
                 f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(error_info.timestamp))}\n")
-                f.write(f"严重程度: {error_info.severity.value}\n")
-                f.write(f"类别: {error_info.category.value}\n")
-                f.write(f"消息: {error_info.message}\n")
+                f.write(f"Severity: {error_info.severity.value}\n")
+                f.write(f"Category: {error_info.category.value}\n")
+                f.write(f"Message: {error_info.message}\n")
                 if error_info.context:
-                    f.write(f"上下文: {error_info.context}\n")
+                    f.write(f"Context: {error_info.context}\n")
                 if error_info.traceback_str:
-                    f.write(f"堆栈跟踪:\n{error_info.traceback_str}\n")
+                    f.write(f"Stack trace:\n{error_info.traceback_str}\n")
                 f.write("-" * 80 + "\n")
         except Exception as e:
-            self.logger.warning(f"写入错误日志文件失败: {e}")
+            self.logger.warning(f"Failed to write error log file: {e}")
     
     def get_error_summary(self) -> Dict[str, Any]:
         """获取错误摘要"""

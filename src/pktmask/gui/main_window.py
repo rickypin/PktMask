@@ -218,7 +218,7 @@ class MainWindow(QMainWindow):
         
 #        # 连接Qt信号
 #        self.event_coordinator.ui_update_requested.connect(self._handle_ui_update_request)
-#        self._logger.debug("管理器事件订阅设置完成")
+#        self._logger.debug("Manager event subscription setup completed")
     
     def _handle_statistics_update(self, data: dict):
         """处理统计数据更新"""
@@ -264,7 +264,7 @@ class MainWindow(QMainWindow):
             from pktmask.domain.models.pipeline_event_data import PipelineEventData
             from pktmask.core.events import PipelineEvents
         except ImportError:
-            self._logger.warning("无法导入结构化数据模型，跳过结构化处理")
+            self._logger.warning("Unable to import structured data model, skipping structured processing")
             return
         
         if isinstance(event_data, PipelineEventData):
@@ -274,25 +274,25 @@ class MainWindow(QMainWindow):
             # 例如：更详细的日志、更精确的UI更新、数据验证等
             
             if hasattr(event_data.data, 'message') and event_data.data.message:
-                self._logger.info(f"事件消息: {event_data.data.message}")
+                self._logger.info(f"Event message: {event_data.data.message}")
             
             # 可以根据事件类型执行特定的增强处理
             if event_data.event_type == PipelineEvents.FILE_START:
                 if hasattr(event_data.data, 'size_bytes') and event_data.data.size_bytes:
-                    self._logger.info(f"开始处理文件，大小: {event_data.data.size_bytes} bytes")
+                    self._logger.info(f"Started processing file, size: {event_data.data.size_bytes} bytes")
             
             elif event_data.event_type == PipelineEvents.STEP_SUMMARY:
                 if hasattr(event_data.data, 'result'):
                     self._logger.debug(f"步骤结果: {event_data.data.result}")
         else:
-            self._logger.warning(f"接收到非结构化事件数据: {type(event_data)}")
+            self._logger.warning(f"Received unstructured event data: {type(event_data)}")
     
     def _handle_statistics_data(self, stats_data):
         """处理结构化统计数据"""
         try:
             from pktmask.domain.models.statistics_data import StatisticsData
         except ImportError:
-            self._logger.warning("无法导入统计数据模型，跳过结构化处理")
+            self._logger.warning("Unable to import statistics data model, skipping structured processing")
             return
         
         if isinstance(stats_data, StatisticsData):
@@ -306,20 +306,20 @@ class MainWindow(QMainWindow):
             processing_speed = stats_data.timing.get_processing_speed(stats_data.metrics.packets_processed)
             
             if completion_rate > 0:
-                self._logger.info(f"处理进度: {completion_rate:.1f}%")
+                self._logger.info(f"Processing progress: {completion_rate:.1f}%")
             
             if processing_speed > 0:
-                self._logger.info(f"处理速度: {processing_speed:.1f} packets/sec")
+                self._logger.info(f"Processing speed: {processing_speed:.1f} packets/sec")
             
             # 可以在这里添加实时性能监控、异常检测等功能
             
         else:
-            self._logger.warning(f"接收到非结构化统计数据: {type(stats_data)}")
+            self._logger.warning(f"Received unstructured statistics data: {type(stats_data)}")
     
     def _on_config_changed(self, new_config):
         """配置变更回调"""
         self.config = new_config
-        self._logger.info("配置已更新，重新应用设置")
+        self._logger.info("Configuration updated, reapplying settings")
         
         # 更新窗口尺寸（如果需要）
         current_size = self.size()
@@ -555,7 +555,7 @@ class MainWindow(QMainWindow):
                     self._counted_files.add(current_file)
                     self.packets_processed_count += packets_processed
                     self.packets_processed_label.setText(str(self.packets_processed_count))
-                    self._logger.debug(f"更新包计数: 文件={current_file}, 包数={packets_processed}, 总计={self.packets_processed_count}")
+                    self._logger.debug(f"Updated packet count: file={current_file}, packets={packets_processed}, total={self.packets_processed_count}")
             
             self.collect_step_result(data)
 
@@ -863,9 +863,9 @@ class MainWindow(QMainWindow):
         """设置测试模式（用于自动化测试）"""
         self._test_mode = enabled
         if enabled:
-            self._logger.info("已启用测试模式 - 对话框将自动处理")
+            self._logger.info("Test mode enabled - dialogs will be handled automatically")
         else:
-            self._logger.info("已禁用测试模式")
+            self._logger.info("Test mode disabled")
         return self
 
 def main():
@@ -892,7 +892,7 @@ def main():
             return window if test_mode else 0
             
         except Exception as e:
-            print(f"测试模式下GUI初始化失败: {e}")
+            print(f"GUI initialization failed in test mode: {e}")
             return None
     else:
         # 正常模式：完整的GUI启动

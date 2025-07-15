@@ -535,7 +535,7 @@ def main(argv: list[str] | None = None) -> None:
             tshark_cmd += ["-d", spec]
 
     if args.verbose:
-        sys.stdout.write(f"[enhanced-tls-marker] 运行命令: {' '.join(tshark_cmd)}\n")
+        sys.stdout.write(f"[enhanced-tls-marker] Running command: {' '.join(tshark_cmd)}\n")
 
     # 执行 tshark
     try:
@@ -546,14 +546,14 @@ def main(argv: list[str] | None = None) -> None:
             capture_output=True,
         )
     except subprocess.CalledProcessError as exc:
-        sys.stderr.write(f"[enhanced-tls-marker] 错误: tshark 执行失败: {exc}\n")
+        sys.stderr.write(f"[enhanced-tls-marker] Error: tshark execution failed: {exc}\n")
         sys.exit(3)
 
     # 解析 JSON 输出
     try:
         packets = json.loads(completed.stdout)
     except json.JSONDecodeError as exc:
-        sys.stderr.write(f"[enhanced-tls-marker] 错误: tshark JSON 解析失败: {exc}\n")
+        sys.stderr.write(f"[enhanced-tls-marker] Error: tshark JSON parsing failed: {exc}\n")
         sys.exit(3)
 
     # 分析TLS记录

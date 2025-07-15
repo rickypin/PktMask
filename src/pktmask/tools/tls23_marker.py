@@ -202,7 +202,7 @@ def main(argv: list[str] | None = None) -> None:
             capture_output=True,
         )
     except subprocess.CalledProcessError as exc:
-        sys.stderr.write(f"[tls23-marker] 错误: tshark 执行失败: {exc}\n")
+        sys.stderr.write(f"[tls23-marker] Error: tshark execution failed: {exc}\n")
         sys.exit(3)
 
     import json  # 延迟导入
@@ -210,7 +210,7 @@ def main(argv: list[str] | None = None) -> None:
     try:
         packets = json.loads(completed.stdout)
     except json.JSONDecodeError as exc:
-        sys.stderr.write(f"[tls23-marker] 错误: tshark JSON 解析失败: {exc}\n")
+        sys.stderr.write(f"[tls23-marker] Error: tshark JSON parsing failed: {exc}\n")
         sys.exit(3)
 
     hits: list[dict[str, str | int]] = []

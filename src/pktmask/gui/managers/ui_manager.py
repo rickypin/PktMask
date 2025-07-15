@@ -570,7 +570,7 @@ class UIManager:
                          self.main_window.remove_dupes_cb.isChecked() or
                          self.main_window.mask_payloads_cb.isChecked())
 
-        # 检查是否正在处理中
+        # 检查是否正在处理中 - Store thread reference to avoid race condition
         processing_thread = getattr(self.main_window.pipeline_manager, 'processing_thread', None)
         is_processing = (processing_thread is not None and processing_thread.isRunning())
 

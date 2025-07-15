@@ -32,10 +32,10 @@ class IPAnonymizer(BaseProcessor):
             self._strategy = HierarchicalAnonymizationStrategy()
             self._reporter = FileReporter()
             
-            self._logger.info("IP匿名化处理器初始化成功")
+            self._logger.info("IP anonymization processor initialization successful")
             
         except Exception as e:
-            self._logger.error(f"IP匿名化处理器初始化失败: {e}")
+            self._logger.error(f"IP anonymization processor initialization failed: {e}")
             raise
             
     def process_file(self, input_path: str, output_path: str) -> ProcessorResult:

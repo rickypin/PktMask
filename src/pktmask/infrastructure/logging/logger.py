@@ -121,7 +121,7 @@ class PktMaskLogger:
 
         except Exception as e:
             # 如果重新配置失败，记录警告但不中断程序
-            logging.getLogger('pktmask').warning(f"重新配置日志系统失败: {e}")
+            logging.getLogger('pktmask').warning(f"Failed to reconfigure logging system: {e}")
     
     def log_exception(self, logger_name: str, exc: Exception, context: Optional[Dict[str, Any]] = None):
         """记录异常信息"""
