@@ -494,11 +494,11 @@ def main(argv: list[str] | None = None) -> None:
     if args.verbose:
         target_names = [f"TLS-{t} ({TLS_CONTENT_TYPES[t]})" for t in sorted(target_types)]
         sys.stdout.write(
-            f"[enhanced-tls-marker] 输入文件: {args.pcap}\n"
-            f"[enhanced-tls-marker] 目标协议类型: {', '.join(target_names)}\n"
-            f"[enhanced-tls-marker] 输出目录: {args.output_dir or Path(args.pcap).parent}\n"
-            f"[enhanced-tls-marker] 输出格式: {args.formats}\n"
-            f"[enhanced-tls-marker] tshark 可执行: {tshark_exec}\n"
+            f"[enhanced-tls-marker] Input file: {args.pcap}\n"
+            f"[enhanced-tls-marker] Target protocol types: {', '.join(target_names)}\n"
+            f"[enhanced-tls-marker] Output directory: {args.output_dir or Path(args.pcap).parent}\n"
+            f"[enhanced-tls-marker] Output formats: {args.formats}\n"
+            f"[enhanced-tls-marker] tshark executable: {tshark_exec}\n"
         )
 
     # 构造 tshark 命令

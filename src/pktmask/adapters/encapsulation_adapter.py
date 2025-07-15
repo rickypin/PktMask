@@ -61,7 +61,7 @@ class ProcessingAdapter:
             encap_result = self.parser.parse_packet_layers(packet)
             
             if not encap_result.parsing_success:
-                self.logger.warning(f"数据包解析失败: {encap_result.error_message}")
+                self.logger.warning(f"Packet parsing failed: {encap_result.error_message}")
                 self.stats['processing_errors'] += 1
                 return self._create_fallback_ip_analysis(packet)
             
@@ -83,11 +83,11 @@ class ProcessingAdapter:
                 'encap_result': encap_result
             }
             
-            self.logger.debug(f"IP处理分析完成: {len(encap_result.ip_layers)}个IP层")
+            self.logger.debug(f"IP processing analysis completed: {len(encap_result.ip_layers)} IP layers")
             return ip_analysis
             
         except Exception as e:
-            error_msg = f"IP处理分析失败: {str(e)}"
+            error_msg = f"IP processing analysis failed: {str(e)}"
             self.logger.error(error_msg)
             self.stats['processing_errors'] += 1
             return self._create_fallback_ip_analysis(packet)
@@ -109,7 +109,7 @@ class ProcessingAdapter:
             encap_result = self.parser.parse_packet_layers(packet)
             
             if not encap_result.parsing_success:
-                self.logger.warning(f"数据包解析失败: {encap_result.error_message}")
+                self.logger.warning(f"Packet parsing failed: {encap_result.error_message}")
                 self.stats['processing_errors'] += 1
                 return self._create_fallback_payload_analysis(packet)
             
@@ -134,11 +134,11 @@ class ProcessingAdapter:
                 'encap_result': encap_result
             }
             
-            self.logger.debug(f"载荷处理分析完成: 载荷深度={payload_analysis['payload_depth']}")
+            self.logger.debug(f"Payload processing analysis completed: payload depth={payload_analysis['payload_depth']}")
             return payload_analysis
             
         except Exception as e:
-            error_msg = f"载荷处理分析失败: {str(e)}"
+            error_msg = f"Payload processing analysis failed: {str(e)}"
             self.logger.error(error_msg)
             return self._create_fallback_payload_analysis(packet)
     
@@ -167,11 +167,11 @@ class ProcessingAdapter:
                     fallback_ips = self._extract_fallback_ips(packet)
                     ip_pairs.extend(fallback_ips)
             
-            self.logger.debug(f"提取到{len(ip_pairs)}对IP地址用于匿名化")
+            self.logger.debug(f"Extracted {len(ip_pairs)} IP address pairs for anonymization")
             return ip_pairs
             
         except Exception as e:
-            self.logger.error(f"IP地址提取失败: {str(e)}")
+            self.logger.error(f"IP address extraction failed: {str(e)}")
             return []
     
     def extract_tcp_session_for_trimming(self, payload_analysis: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -202,11 +202,11 @@ class ProcessingAdapter:
                 'encap_context': payload_analysis.get('encap_type', EncapsulationType.PLAIN).value
             }
             
-            self.logger.debug(f"提取TCP会话: {tcp_session['session_key']}")
+            self.logger.debug(f"Extracted TCP session: {tcp_session['session_key']}")
             return tcp_session
             
         except Exception as e:
-            self.logger.error(f"TCP会话提取失败: {str(e)}")
+            self.logger.error(f"TCP session extraction failed: {str(e)}")
             return None
     
     def is_packet_encapsulated(self, packet: Packet) -> bool:
@@ -287,7 +287,7 @@ class ProcessingAdapter:
             'encap_type_counts': {},
             'processing_errors': 0
         }
-        self.logger.debug("处理统计已重置")
+        self.logger.debug("Processing statistics reset")
     
     # === 私有辅助方法 ===
     

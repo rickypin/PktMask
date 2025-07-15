@@ -95,13 +95,13 @@ class PayloadMasker:
         # 注册自定义错误恢复处理器
         self._register_custom_recovery_handlers()
 
-        self.logger.info(f"PayloadMasker 初始化: chunk_size={self.chunk_size}, "
+        self.logger.info(f"PayloadMasker initialized: chunk_size={self.chunk_size}, "
                         f"verify_checksums={self.verify_checksums}, "
-                        f"内存限制={memory_config['max_memory_mb']}MB")
+                        f"memory_limit={memory_config['max_memory_mb']}MB")
 
         # 检查 scapy 可用性
         if not SCAPY_AVAILABLE:
-            self.logger.warning("Scapy 不可用，某些功能可能受限")
+            self.logger.warning("Scapy unavailable, some features may be limited")
 
     def _reset_processing_state(self) -> None:
         """重置处理状态以避免多文件处理时的状态污染
@@ -109,7 +109,7 @@ class PayloadMasker:
         在每次apply_masking调用开始时重置所有可能导致状态污染的变量。
         这确保了每个文件的处理都是独立的，不会受到之前文件处理的影响。
         """
-        self.logger.debug("重置PayloadMasker处理状态")
+        self.logger.debug("Resetting PayloadMasker processing state")
 
         # 重置流方向识别状态
         self.flow_directions.clear()
@@ -156,7 +156,7 @@ class PayloadMasker:
         Returns:
             MaskingStats: 掩码处理统计信息
         """
-        self.logger.info(f"开始应用掩码: {input_path} -> {output_path}")
+        self.logger.info(f"Starting mask application: {input_path} -> {output_path}")
         start_time = time.time()
 
         # 重置状态以避免多文件处理时的状态污染
@@ -174,10 +174,10 @@ class PayloadMasker:
 
         try:
             # 1. 验证输入文件
-            self.logger.info("验证输入文件...")
+            self.logger.info("Validating input file...")
             input_validation = self.data_validator.validate_input_file(input_path)
             if not input_validation.is_valid:
-                error_msg = f"输入文件验证失败: {input_validation.error_message}"
+                error_msg = f"Input file validation failed: {input_validation.error_message}"
                 self.error_handler.handle_error(
                     error_msg,
                     ErrorSeverity.HIGH,
@@ -188,11 +188,11 @@ class PayloadMasker:
 
             # 记录验证警告
             for warning in input_validation.warnings:
-                self.logger.warning(f"输入文件警告: {warning}")
+                self.logger.warning(f"Input file warning: {warning}")
 
             # 检查 scapy 可用性
             if not SCAPY_AVAILABLE:
-                error_msg = "Scapy 不可用，无法处理 pcap 文件"
+                error_msg = "Scapy unavailable, cannot process pcap files"
                 self.error_handler.handle_error(
                     error_msg,
                     ErrorSeverity.CRITICAL,
@@ -202,15 +202,15 @@ class PayloadMasker:
                 raise RuntimeError(error_msg)
 
             # 1. 预处理保留规则
-            self.logger.info("预处理保留规则...")
+            self.logger.info("Preprocessing keep rules...")
             rule_lookup = self.error_handler.retry_operation(
                 lambda: self._preprocess_keep_rules(keep_rules),
                 error_category=ErrorCategory.PROCESSING_ERROR
             )
-            self.logger.info(f"预处理完成，共 {len(rule_lookup)} 个流方向")
+            self.logger.info(f"Preprocessing completed, {len(rule_lookup)} flow directions total")
 
             # 2. 逐包处理载荷 - 优化的流式处理
-            self.logger.info("开始逐包处理...")
+            self.logger.info("Starting packet-by-packet processing...")
 
             # 性能监控
             if self.enable_performance_monitoring:
@@ -262,10 +262,10 @@ class PayloadMasker:
                             if self.enable_performance_monitoring:
                                 current_memory = process.memory_info().rss
                                 memory_usage_mb = current_memory / 1024 / 1024
-                                self.logger.info(f"已处理 {stats.processed_packets} 个数据包, "
-                                               f"内存使用: {memory_usage_mb:.1f}MB")
+                                self.logger.info(f"Processed {stats.processed_packets} packets, "
+                                               f"memory usage: {memory_usage_mb:.1f}MB")
                             else:
-                                self.logger.debug(f"已处理 {stats.processed_packets} 个数据包")
+                                self.logger.debug(f"Processed {stats.processed_packets} packets")
 
                     # 写入剩余的缓冲区数据包
                     self._flush_packet_buffer(packet_buffer, writer)
@@ -277,7 +277,7 @@ class PayloadMasker:
             )
 
             # 3. 验证处理状态
-            self.logger.info("验证处理状态...")
+            self.logger.info("Validating processing state...")
             processing_validation = self.data_validator.validate_processing_state(
                 stats.processed_packets,
                 stats.modified_packets,
@@ -285,7 +285,7 @@ class PayloadMasker:
             )
 
             if not processing_validation.is_valid:
-                error_msg = f"处理状态验证失败: {processing_validation.error_message}"
+                error_msg = f"Processing state validation failed: {processing_validation.error_message}"
                 self.error_handler.handle_error(
                     error_msg,
                     ErrorSeverity.HIGH,
@@ -296,17 +296,17 @@ class PayloadMasker:
 
             # 记录处理状态警告
             for warning in processing_validation.warnings:
-                self.logger.warning(f"处理状态警告: {warning}")
+                self.logger.warning(f"Processing state warning: {warning}")
 
             # 4. 验证输出文件
-            self.logger.info("验证输出文件...")
+            self.logger.info("Validating output file...")
             output_validation = self.data_validator.validate_output_file(
                 output_path,
                 expected_packet_count=stats.processed_packets
             )
 
             if not output_validation.is_valid:
-                error_msg = f"输出文件验证失败: {output_validation.error_message}"
+                error_msg = f"Output file validation failed: {output_validation.error_message}"
                 self.error_handler.handle_error(
                     error_msg,
                     ErrorSeverity.HIGH,
@@ -317,7 +317,7 @@ class PayloadMasker:
 
             # 记录输出验证警告
             for warning in output_validation.warnings:
-                self.logger.warning(f"输出文件警告: {warning}")
+                self.logger.warning(f"Output file warning: {warning}")
 
             # 5. 计算执行时间和统计信息
             stats.execution_time = time.time() - start_time
@@ -332,15 +332,15 @@ class PayloadMasker:
             # 生成性能报告
             if self.enable_performance_monitoring:
                 memory_report = self.memory_optimizer.get_optimization_report()
-                self.logger.info(f"掩码应用完成: 处理包数={stats.processed_packets}, "
-                               f"修改包数={stats.modified_packets}, "
-                               f"执行时间={stats.execution_time:.2f}秒, "
-                               f"峰值内存={memory_report['peak_memory_mb']:.1f}MB, "
-                               f"GC次数={memory_report['gc_collections']}")
+                self.logger.info(f"Mask application completed: processed_packets={stats.processed_packets}, "
+                               f"modified_packets={stats.modified_packets}, "
+                               f"execution_time={stats.execution_time:.2f}s, "
+                               f"peak_memory={memory_report['peak_memory_mb']:.1f}MB, "
+                               f"gc_count={memory_report['gc_collections']}")
             else:
-                self.logger.info(f"掩码应用完成: 处理包数={stats.processed_packets}, "
-                               f"修改包数={stats.modified_packets}, "
-                               f"执行时间={stats.execution_time:.2f}秒")
+                self.logger.info(f"Mask application completed: processed_packets={stats.processed_packets}, "
+                               f"modified_packets={stats.modified_packets}, "
+                               f"execution_time={stats.execution_time:.2f}s")
 
         except Exception as e:
             # 处理顶级异常
@@ -351,7 +351,7 @@ class PayloadMasker:
                 {"input_file": input_path, "output_file": output_path}
             )
 
-            self.logger.error(f"掩码应用失败: {e}")
+            self.logger.error(f"Mask application failed: {e}")
 
             # 尝试降级处理
             fallback_mode = self.fallback_handler.get_recommended_fallback_mode({
@@ -360,7 +360,7 @@ class PayloadMasker:
                 'error_message': str(e)
             })
 
-            self.logger.warning(f"尝试降级处理: {fallback_mode.value}")
+            self.logger.warning(f"Attempting fallback processing: {fallback_mode.value}")
 
             fallback_result = self.fallback_handler.execute_fallback(
                 input_path,
@@ -370,17 +370,17 @@ class PayloadMasker:
             )
 
             if fallback_result.success:
-                self.logger.info(f"降级处理成功: {fallback_result.message}")
+                self.logger.info(f"Fallback processing succeeded: {fallback_result.message}")
                 stats.success = True  # 降级处理成功
-                stats.add_error(f"原始处理失败，降级处理成功: {fallback_result.message}")
+                stats.add_error(f"Original processing failed, fallback processing succeeded: {fallback_result.message}")
                 stats.fallback_used = True
                 stats.fallback_mode = fallback_mode.value
                 stats.fallback_details = fallback_result.details
             else:
-                self.logger.error(f"降级处理也失败: {fallback_result.message}")
+                self.logger.error(f"Fallback processing also failed: {fallback_result.message}")
                 stats.success = False
                 stats.add_error(str(e))
-                stats.add_error(f"降级处理失败: {fallback_result.message}")
+                stats.add_error(f"Fallback processing failed: {fallback_result.message}")
 
             # 添加错误摘要到统计信息
             error_summary = self.error_handler.get_error_summary()
@@ -409,12 +409,12 @@ class PayloadMasker:
         for rule in keep_rules.rules:
             preserve_strategy = rule.metadata.get('preserve_strategy', 'full_preserve')
 
-            # 映射策略名称：将 'full_message' 映射到 'full_preserve'
+            # Map strategy names: map 'full_message' to 'full_preserve'
             if preserve_strategy == 'full_message':
                 preserve_strategy = 'full_preserve'
             elif preserve_strategy not in ['header_only', 'full_preserve']:
                 # 对于未知策略，默认使用 full_preserve
-                self.logger.warning(f"未知的保留策略 '{preserve_strategy}'，使用 'full_preserve' 替代")
+                self.logger.warning(f"Unknown preserve strategy '{preserve_strategy}', using 'full_preserve' instead")
                 preserve_strategy = 'full_preserve'
 
             rule_lookup[rule.stream_id][rule.direction][preserve_strategy].append((rule.seq_start, rule.seq_end))
@@ -459,10 +459,10 @@ class PayloadMasker:
                 }
 
                 total_original_ranges = len(header_only_ranges) + len(full_preserve_ranges)
-                self.logger.debug(f"流 {stream_id}:{direction} - "
-                                f"原始区间: {total_original_ranges}, 合并后: {len(all_ranges)}, "
+                self.logger.debug(f"Flow {stream_id}:{direction} - "
+                                f"original ranges: {total_original_ranges}, after merge: {len(all_ranges)}, "
                                 f"header_only: {len(header_only_ranges)}, full_preserve: {len(merged_full_ranges)}, "
-                                f"边界点: {len(bounds)}")
+                                f"boundary points: {len(bounds)}")
 
         return processed_lookup
 
@@ -522,7 +522,7 @@ class PayloadMasker:
             # 添加调试日志
             src_info = f"{ip_layer.src}:{tcp_layer.sport}"
             dst_info = f"{ip_layer.dst}:{tcp_layer.dport}"
-            self.logger.debug(f"处理数据包: {src_info}->{dst_info}, stream_id={stream_id}, direction={direction}")
+            self.logger.debug(f"Processing packet: {src_info}->{dst_info}, stream_id={stream_id}, direction={direction}")
 
             # 获取 TCP 载荷
             payload = bytes(tcp_layer.payload) if tcp_layer.payload else b''
@@ -537,7 +537,7 @@ class PayloadMasker:
             # 获取匹配的规则数据，如果没有匹配规则则使用空规则数据
             if stream_id in rule_lookup and direction in rule_lookup[stream_id]:
                 rule_data = rule_lookup[stream_id][direction]
-                self.logger.debug(f"找到匹配规则: stream_id={stream_id}, direction={direction}")
+                self.logger.debug(f"Found matching rule: stream_id={stream_id}, direction={direction}")
             else:
                 # 没有匹配的规则，使用空规则数据（将导致全掩码处理）
                 rule_data = {'header_only_ranges': [], 'full_preserve_ranges': []}
@@ -546,9 +546,9 @@ class PayloadMasker:
                 for sid in available_streams:
                     available_directions[sid] = list(rule_lookup[sid].keys())
 
-                self.logger.debug(f"无匹配规则，执行全掩码: stream_id={stream_id}, direction={direction}")
-                self.logger.debug(f"可用流: {available_streams}")
-                self.logger.debug(f"可用方向: {available_directions}")
+                self.logger.debug(f"No matching rule, performing full masking: stream_id={stream_id}, direction={direction}")
+                self.logger.debug(f"Available streams: {available_streams}")
+                self.logger.debug(f"Available directions: {available_directions}")
 
             # 应用保留规则（对于无规则的情况，将执行全掩码）
             new_payload = self._apply_keep_rules(
@@ -561,7 +561,7 @@ class PayloadMasker:
                 if rule_data['header_only_ranges'] == [] and rule_data['full_preserve_ranges'] == []:
                     # 无任何保留规则，执行全掩码
                     new_payload = b'\x00' * len(payload)
-                    self.logger.debug(f"执行全掩码处理: {len(payload)}字节")
+                    self.logger.debug(f"Performing full masking: {len(payload)} bytes")
                 else:
                     # 有规则但未修改，原样返回
                     return packet, False
@@ -571,7 +571,7 @@ class PayloadMasker:
             return modified_packet, True
 
         except Exception as e:
-            self.logger.warning(f"处理数据包失败: {e}")
+            self.logger.warning(f"Packet processing failed: {e}")
             return packet, False
 
     def _find_innermost_tcp(self, packet) -> Tuple[Optional[Any], Optional[Any]]:
@@ -643,7 +643,7 @@ class PayloadMasker:
                 break
 
         if depth >= max_depth:
-            self.logger.warning(f"达到最大递归深度 {max_depth}，可能存在循环引用")
+            self.logger.warning(f"Reached maximum recursion depth {max_depth}, possible circular reference")
 
         return (tcp_layer, ip_layer) if tcp_layer and ip_layer else (None, None)
 
@@ -680,7 +680,7 @@ class PayloadMasker:
         self.tuple_to_stream_id[tuple_key] = stream_id
         self.flow_id_counter += 1
 
-        self.logger.debug(f"分配新流ID: {tuple_key} -> {stream_id}")
+        self.logger.debug(f"Assigned new flow ID: {tuple_key} -> {stream_id}")
 
         return stream_id
 
@@ -718,8 +718,8 @@ class PayloadMasker:
                 }
             }
 
-            self.logger.debug(f"建立流方向信息 {stream_id}: forward={src_ip}:{src_port}->{dst_ip}:{dst_port}")
-            return 'forward'  # 第一个包定义为forward方向
+            self.logger.debug(f"Established flow direction info {stream_id}: forward={src_ip}:{src_port}->{dst_ip}:{dst_port}")
+            return 'forward'  # First packet defines forward direction
 
         # 根据已建立的方向信息判断当前包的方向
         forward_info = self.flow_directions[stream_id]["forward"]
@@ -1011,7 +1011,7 @@ class PayloadMasker:
         # 确保载荷长度不变
         original_length = len(bytes(tcp_layer.payload)) if tcp_layer.payload else 0
         if len(new_payload) != original_length:
-            raise ValueError(f"载荷长度不能改变: {original_length} -> {len(new_payload)}")
+            raise ValueError(f"Payload length cannot change: {original_length} -> {len(new_payload)}")
 
         # 创建数据包副本
         import copy
@@ -1020,7 +1020,7 @@ class PayloadMasker:
         # 找到修改后数据包中的 TCP 层
         modified_tcp, _ = self._find_innermost_tcp(modified_packet)
         if modified_tcp is None:
-            raise ValueError("无法在修改后的数据包中找到 TCP 层")
+            raise ValueError("Cannot find TCP layer in modified packet")
 
         # 更新载荷
         modified_tcp.payload = Raw(load=new_payload)
@@ -1056,17 +1056,17 @@ class PayloadMasker:
         Args:
             memory_stats: 内存统计信息
         """
-        self.logger.warning(f"内存压力警告: 使用率={memory_stats.memory_pressure*100:.1f}%, "
-                          f"当前内存={memory_stats.current_usage/1024/1024:.1f}MB")
+        self.logger.warning(f"Memory pressure warning: usage={memory_stats.memory_pressure*100:.1f}%, "
+                          f"current_memory={memory_stats.current_usage/1024/1024:.1f}MB")
 
         # 可以在这里实现额外的内存压力处理逻辑
         # 例如：减少缓冲区大小、强制垃圾回收等
         if memory_stats.memory_pressure > 0.9:  # 90%以上内存使用率
-            self.logger.error("内存使用率过高，建议减少chunk_size或增加内存限制")
+            self.logger.error("Memory usage too high, recommend reducing chunk_size or increasing memory limit")
 
             # 触发内存错误处理
             self.error_handler.handle_error(
-                "内存使用率过高",
+                "Memory usage too high",
                 ErrorSeverity.HIGH,
                 ErrorCategory.MEMORY_ERROR,
                 {"memory_pressure": memory_stats.memory_pressure}
@@ -1115,24 +1115,24 @@ class PayloadMasker:
                 if 'input_file' in error_info.context:
                     input_file = Path(error_info.context['input_file'])
                     if not input_file.exists():
-                        self.logger.error(f"输入文件不存在: {input_file}")
+                        self.logger.error(f"Input file does not exist: {input_file}")
                         return False
 
                     # 检查文件大小
                     if input_file.stat().st_size == 0:
-                        self.logger.error(f"输入文件为空: {input_file}")
+                        self.logger.error(f"Input file is empty: {input_file}")
                         return False
 
                     # 尝试简单的文件读取测试
                     with open(input_file, 'rb') as f:
                         header = f.read(24)  # PCAP文件头
                         if len(header) < 24:
-                            self.logger.error(f"PCAP文件头不完整: {input_file}")
+                            self.logger.error(f"PCAP file header incomplete: {input_file}")
                             return False
 
                 return True
             except Exception as e:
-                self.logger.warning(f"PCAP文件恢复检查失败: {e}")
+                self.logger.warning(f"PCAP file recovery check failed: {e}")
                 return False
 
         def processing_error_recovery(error_info) -> bool:
@@ -1141,7 +1141,7 @@ class PayloadMasker:
                 # 清理序列号状态，重新开始
                 if hasattr(self, 'seq_state'):
                     self.seq_state.clear()
-                    self.logger.info("清理序列号状态以恢复处理")
+                    self.logger.info("Cleared sequence number state to recover processing")
                     return True
                 return False
             except Exception:

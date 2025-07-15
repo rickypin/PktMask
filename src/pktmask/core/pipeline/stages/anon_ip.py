@@ -52,7 +52,7 @@ class AnonStage(StageBase):
 
         if not result.success:
             warnings.warn(
-                f"AnonStage 处理失败: {result.error}",
+                f"AnonStage processing failed: {result.error}",
                 RuntimeWarning,
                 stacklevel=2,
             )

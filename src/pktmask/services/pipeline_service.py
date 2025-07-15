@@ -34,8 +34,8 @@ def create_pipeline_executor(config: Dict) -> object:
         from pktmask.core.pipeline.executor import PipelineExecutor
         return PipelineExecutor(config)
     except Exception as e:
-        logger.error(f"[Service] 创建执行器失败: {e}")
-        raise PipelineServiceError("创建执行器失败")
+        logger.error(f"[Service] Failed to create executor: {e}")
+        raise PipelineServiceError("Failed to create executor")
 
 # 处理目录中的所有 PCAP 文件
 # Dummy implementation; replace ... with real logic
@@ -59,7 +59,7 @@ def process_directory(
     """
     try:
         import os
-        logger.info(f"[Service] 开始处理目录: {input_dir}")
+        logger.info(f"[Service] Starting directory processing: {input_dir}")
         
         # 发送管道开始事件
         progress_callback(PipelineEvents.PIPELINE_START, {'total_subdirs': 1})
@@ -71,7 +71,7 @@ def process_directory(
                 pcap_files.append(file.path)
         
         if not pcap_files:
-            progress_callback(PipelineEvents.LOG, {'message': '目录中未找到PCAP文件'})
+            progress_callback(PipelineEvents.LOG, {'message': 'No PCAP files found in directory'})
             progress_callback(PipelineEvents.PIPELINE_END, {})
             return
         
@@ -113,7 +113,7 @@ def process_directory(
                 
             except Exception as e:
                 progress_callback(PipelineEvents.ERROR, {
-                    'message': f"处理文件 {os.path.basename(input_path)} 时出错: {str(e)}"
+                    'message': f"Error processing file {os.path.basename(input_path)}: {str(e)}"
                 })
             
             # 发送文件完成事件
@@ -125,11 +125,11 @@ def process_directory(
         # 发送管道结束事件
         progress_callback(PipelineEvents.PIPELINE_END, {})
         
-        logger.info(f"[Service] 完成处理目录: {input_dir}")
+        logger.info(f"[Service] Completed directory processing: {input_dir}")
         
     except Exception as e:
-        logger.error(f"[Service] 处理目录失败: {e}")
-        raise PipelineServiceError(f"处理目录失败: {str(e)}")
+        logger.error(f"[Service] Directory processing failed: {e}")
+        raise PipelineServiceError(f"Directory processing failed: {str(e)}")
 
 def _handle_stage_progress(stage, stats, progress_callback):
     """处理阶段进度回调"""
@@ -151,12 +151,12 @@ def stop_pipeline(executor: object) -> None:
         # 尝试调用执行器的stop方法
         if hasattr(executor, 'stop'):
             executor.stop()
-            logger.info("[Service] 管道已停止")
+            logger.info("[Service] Pipeline stopped")
         else:
-            logger.warning("[Service] 执行器不支持stop方法")
+            logger.warning("[Service] Executor does not support stop method")
     except Exception as e:
-        logger.error(f"[Service] 停止管道失败: {e}")
-        raise PipelineServiceError(f"停止管道失败: {str(e)}")
+        logger.error(f"[Service] Failed to stop pipeline: {e}")
+        raise PipelineServiceError(f"Failed to stop pipeline: {str(e)}")
 
 # 返回当前执行器的统计信息
 # Dummy implementation; replace ... with real logic
@@ -171,7 +171,7 @@ def get_pipeline_status(executor: object) -> Dict[str, Any]:
 def validate_config(config: Dict) -> Tuple[bool, Optional[str]]:
     """验证配置有效性"""
     if not config:
-        return False, "配置为空"
+        return False, "Configuration is empty"
     return True, None
 
 # 根据功能开关构建管道配置

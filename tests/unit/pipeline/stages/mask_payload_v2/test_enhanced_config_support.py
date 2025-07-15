@@ -243,7 +243,7 @@ class TestEnhancedConfigSupport:
             stage = NewMaskPayloadStage(config)
 
             # 验证日志调用
-            mock_logger.info.assert_any_call("检测到旧版配置格式，正在转换为新格式")
+            mock_logger.info.assert_any_call("Detected legacy configuration format, converting to new format")
 
             # 重置 mock
             mock_logger.reset_mock()
@@ -252,7 +252,7 @@ class TestEnhancedConfigSupport:
             config = {'recipe_path': '/old/path'}
             stage = NewMaskPayloadStage(config)
 
-            mock_logger.warning.assert_any_call("检测到已废弃的 recipe_path 配置，将忽略并使用智能协议分析")
+            mock_logger.warning.assert_any_call("Detected deprecated recipe_path configuration, will ignore and use intelligent protocol analysis")
     
     def test_config_format_detection_priority(self):
         """测试配置格式检测优先级"""

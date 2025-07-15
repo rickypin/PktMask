@@ -53,7 +53,7 @@ class ProtocolStackParser:
             self.enable_parsing_logs = self.config.logging.enable_protocol_parsing_logs
         except Exception as e:
             # 如果配置获取失败，默认关闭详细日志
-            self.logger.warning(f"获取配置失败，使用默认日志设置: {e}")
+            self.logger.warning(f"Failed to get configuration, using default log settings: {e}")
             self.enable_parsing_logs = False
 
         # 协议层解析器映射
@@ -84,7 +84,7 @@ class ProtocolStackParser:
             ParsingError: 解析失败
         """
         try:
-            self.logger.debug("开始解析协议栈")
+            self.logger.debug("Starting protocol stack parsing")
             
             # 检测封装类型
             encap_type = self.detector.detect_encapsulation_type(packet)
@@ -143,11 +143,11 @@ class ProtocolStackParser:
             
             # 根据配置决定是否输出详细日志
             if self.enable_parsing_logs:
-                self.logger.info(f"协议栈解析完成: {len(layers)}层, {len(ip_layers)}个IP层")
+                self.logger.info(f"Protocol stack parsing completed: {len(layers)} layers, {len(ip_layers)} IP layers")
             return result
             
         except Exception as e:
-            error_msg = f"协议栈解析失败: {str(e)}"
+            error_msg = f"Protocol stack parsing failed: {str(e)}"
             self.logger.error(error_msg)
             
             # 返回失败结果
@@ -176,7 +176,7 @@ class ProtocolStackParser:
             result = self.parse_packet_layers(packet)
             return result.ip_layers
         except Exception as e:
-            self.logger.warning(f"IP地址提取失败: {str(e)}")
+            self.logger.warning(f"IP address extraction failed: {str(e)}")
             return []
     
     def find_innermost_payload(self, packet: Packet) -> Optional[PayloadInfo]:
@@ -193,7 +193,7 @@ class ProtocolStackParser:
             result = self.parse_packet_layers(packet)
             return result.innermost_payload
         except Exception as e:
-            self.logger.warning(f"载荷定位失败: {str(e)}")
+            self.logger.warning(f"Payload location failed: {str(e)}")
             return None
     
     # === 单层解析方法 ===
@@ -217,7 +217,7 @@ class ProtocolStackParser:
                 )
                 
         except Exception as e:
-            self.logger.warning(f"解析层 {layer.__class__.__name__} 失败: {str(e)}")
+            self.logger.warning(f"Failed to parse layer {layer.__class__.__name__}: {str(e)}")
             return None
     
     def _parse_ethernet(self, layer: Ether, depth: int, encap_type: EncapsulationType) -> LayerInfo:
@@ -449,7 +449,7 @@ class ProtocolStackParser:
             return None
             
         except Exception as e:
-            self.logger.warning(f"提取IP信息失败: {str(e)}")
+            self.logger.warning(f"Failed to extract IP information: {str(e)}")
             return None
     
     def _extract_vlan_info(self, vlan_layer: Packet, depth: int) -> Optional[VLANInfo]:
@@ -475,7 +475,7 @@ class ProtocolStackParser:
             return None
             
         except Exception as e:
-            self.logger.warning(f"提取VLAN信息失败: {str(e)}")
+            self.logger.warning(f"Failed to extract VLAN information: {str(e)}")
             return None
     
     def _find_innermost_payload(self, packet: Packet, layers: List[LayerInfo]) -> Optional[PayloadInfo]:
@@ -524,5 +524,5 @@ class ProtocolStackParser:
             )
             
         except Exception as e:
-            self.logger.warning(f"查找载荷失败: {str(e)}")
+            self.logger.warning(f"Failed to find payload: {str(e)}")
             return None 

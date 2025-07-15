@@ -20,7 +20,7 @@ class EnhancedTrimError(Exception):
     def __str__(self) -> str:
         if self.details:
             details_str = ", ".join(f"{k}={v}" for k, v in self.details.items())
-            return f"{super().__str__()} (详情: {details_str})"
+            return f"{super().__str__()} (Details: {details_str})"
         return super().__str__()
 
 
@@ -57,7 +57,7 @@ class ConfigValidationError(EnhancedTrimError):
             "config_value": config_value,
             "validation_reason": reason
         }
-        super().__init__(f"配置项 '{config_key}' 验证失败: {reason}", details)
+        super().__init__(f"Configuration item '{config_key}' validation failed: {reason}", details)
         self.config_key = config_key
         self.config_value = config_value
 
@@ -73,7 +73,7 @@ class MaskSpecError(EnhancedTrimError):
         if mask_params:
             details["mask_params"] = mask_params
         
-        super().__init__(f"掩码规范 '{mask_type}' 错误: {message}", details)
+        super().__init__(f"Mask specification '{mask_type}' error: {message}", details)
         self.mask_type = mask_type
 
 
@@ -88,7 +88,7 @@ class StreamMaskTableError(EnhancedTrimError):
             "operation": operation,
             "stream_id": stream_id
         }
-        super().__init__(f"流掩码表操作 '{operation}' 失败: {message}", details)
+        super().__init__(f"Stream mask table operation '{operation}' failed: {message}", details)
         self.operation = operation
         self.stream_id = stream_id
 
@@ -107,7 +107,7 @@ class ToolAvailabilityError(EnhancedTrimError):
         if suggestions:
             details["suggestions"] = suggestions
         
-        super().__init__(f"外部工具 '{tool_name}' 不可用: {reason}", details)
+        super().__init__(f"External tool '{tool_name}' unavailable: {reason}", details)
         self.tool_name = tool_name
         self.suggestions = suggestions or []
 
@@ -156,6 +156,6 @@ class ResourceManagementError(EnhancedTrimError):
             "resource_type": resource_type,
             "operation": operation
         }
-        super().__init__(f"资源管理失败 ({resource_type}:{operation}): {message}", details)
+        super().__init__(f"Resource management failed ({resource_type}:{operation}): {message}", details)
         self.resource_type = resource_type
         self.operation = operation 

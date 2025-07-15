@@ -237,7 +237,7 @@ class UIBuilder:
     def show_info_dialog(self, title: str, message: str):
         """显示信息对话框"""
         QMessageBox.information(self.main_window, title, message)
-        self._logger.info(f"信息对话框: {title} - {message}")
+        self._logger.info(f"Info dialog: {title} - {message}")
     
     def show_question_dialog(self, title: str, message: str) -> bool:
         """显示确认对话框"""

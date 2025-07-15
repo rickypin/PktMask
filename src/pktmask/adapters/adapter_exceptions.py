@@ -29,7 +29,7 @@ class AdapterError(Exception):
         super().__init__(self.format_message())
     
     def format_message(self) -> str:
-        """格式化错误消息"""
+        """Format error message"""
         base_msg = f"[{self.error_code}] {self.message}"
         if self.context:
             context_str = ", ".join(f"{k}={v}" for k, v in self.context.items())

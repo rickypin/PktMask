@@ -14,9 +14,9 @@ from ...infrastructure.logging import get_logger
 
 
 class IPAnonymizer(BaseProcessor):
-    """IP匿名化处理器
-    
-    直接使用HierarchicalAnonymizationStrategy实现IP匿名化功能。
+    """IP anonymization processor
+
+    Directly uses HierarchicalAnonymizationStrategy to implement IP anonymization functionality.
     """
     
     def __init__(self, config: ProcessorConfig):
@@ -26,9 +26,9 @@ class IPAnonymizer(BaseProcessor):
         self._reporter: Optional[FileReporter] = None
         
     def _initialize_impl(self):
-        """初始化IP匿名化组件"""
+        """Initialize IP anonymization components"""
         try:
-            # 创建策略和报告器
+            # Create strategy and reporter
             self._strategy = HierarchicalAnonymizationStrategy()
             self._reporter = FileReporter()
             
@@ -175,7 +175,7 @@ class IPAnonymizer(BaseProcessor):
         self._strategy.build_mapping_from_directory(pcap_files)
         
     def finalize_directory_processing(self) -> Optional[dict]:
-        """完成目录处理"""
+        """Complete directory processing"""
         if self._strategy:
             return {
                 'total_ip_mappings': len(self._strategy.get_ip_map()),

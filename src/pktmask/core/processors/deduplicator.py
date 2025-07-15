@@ -42,35 +42,35 @@ class DeduplicationProcessor(BaseProcessor):
             raise
             
     def process_file(self, input_path: str, output_path: str) -> ProcessorResult:
-        """处理单个文件的去重"""
+        """Process deduplication for a single file"""
         if not self._is_initialized:
             if not self.initialize():
                 return ProcessorResult(
-                    success=False, 
-                    error="处理器未正确初始化"
+                    success=False,
+                    error="Processor not properly initialized"
                 )
         
         try:
-            # 验证输入
+            # Validate inputs
             self.validate_inputs(input_path, output_path)
-            
-            # 重置统计信息
+
+            # Reset statistics
             self.reset_stats()
-            
-            self._logger.info(f"开始去重处理: {input_path} -> {output_path}")
+
+            self._logger.info(f"Starting deduplication: {input_path} -> {output_path}")
             
             start_time = time.time()
             
-            # 读取数据包
+            # Read packets
             packets = rdpcap(input_path)
             total_packets = len(packets)
-            
-            # 去重处理
+
+            # Deduplication processing
             unique_packets = []
             removed_count = 0
-            
+
             for packet in packets:
-                # 生成数据包哈希
+                # Generate packet hash
                 packet_hash = self._generate_packet_hash(packet)
                 
                 if packet_hash not in self._packet_hashes:
@@ -79,24 +79,24 @@ class DeduplicationProcessor(BaseProcessor):
                 else:
                     removed_count += 1
             
-            # 保存去重后的数据包
+            # Save deduplicated packets
             if unique_packets:
                 wrpcap(output_path, unique_packets)
             else:
-                # 如果没有唯一数据包，创建空文件
+                # If no unique packets, create empty file
                 open(output_path, 'a').close()
             
             processing_time = time.time() - start_time
             
-            # 构建结果数据
+            # Build result data
             result_data = {
                 'total_packets': total_packets,
                 'unique_packets': len(unique_packets),
                 'removed_count': removed_count,
                 'processing_time': processing_time
             }
-            
-            # 更新统计信息
+
+            # Update statistics
             self.stats.update({
                 'total_packets': result_data.get('total_packets', 0),
                 'unique_packets': result_data.get('unique_packets', 0),
@@ -106,7 +106,7 @@ class DeduplicationProcessor(BaseProcessor):
             })
             
             removed_count = result_data.get('removed_count', 0)
-            self._logger.info(f"去重完成: 移除 {removed_count} 个重复数据包")
+            self._logger.info(f"Deduplication completed: removed {removed_count} duplicate packets")
             
             return ProcessorResult(
                 success=True,
@@ -115,25 +115,25 @@ class DeduplicationProcessor(BaseProcessor):
             )
             
         except FileNotFoundError as e:
-            error_msg = f"文件未找到: {e}"
+            error_msg = f"File not found: {e}"
             self._logger.error(error_msg)
             return ProcessorResult(success=False, error=error_msg)
-            
+
         except Exception as e:
-            error_msg = f"去重处理失败: {e}"
+            error_msg = f"Deduplication processing failed: {e}"
             self._logger.error(error_msg)
             return ProcessorResult(success=False, error=error_msg)
     
     def get_display_name(self) -> str:
-        """获取用户友好的显示名称"""
+        """Get user-friendly display name"""
         return "Remove Dupes"
-    
+
     def get_description(self) -> str:
-        """获取处理器描述"""
-        return "移除完全重复的数据包，减少文件大小"
+        """Get processor description"""
+        return "Remove completely duplicate packets to reduce file size"
         
     def _calculate_deduplication_rate(self, result_data: dict) -> float:
-        """计算去重比率"""
+        """Calculate deduplication rate"""
         total_packets = result_data.get('total_packets', 0)
         removed_count = result_data.get('removed_count', 0)
         
@@ -143,7 +143,7 @@ class DeduplicationProcessor(BaseProcessor):
         return (removed_count / total_packets) * 100.0
         
     def _calculate_space_saved(self, input_path: str, output_path: str) -> dict:
-        """计算空间节省情况"""
+        """Calculate space saved"""
         try:
             if not os.path.exists(input_path) or not os.path.exists(output_path):
                 return {'input_size': 0, 'output_size': 0, 'saved_bytes': 0, 'saved_percentage': 0.0}
@@ -161,11 +161,11 @@ class DeduplicationProcessor(BaseProcessor):
             }
             
         except Exception as e:
-            self._logger.warning(f"计算空间节省失败: {e}")
+            self._logger.warning(f"Failed to calculate space saved: {e}")
             return {'input_size': 0, 'output_size': 0, 'saved_bytes': 0, 'saved_percentage': 0.0}
             
     def get_duplication_stats(self) -> dict:
-        """获取去重统计信息"""
+        """Get deduplication statistics"""
         return {
             'total_processed': self.stats.get('total_packets', 0),
             'unique_found': self.stats.get('unique_packets', 0),
@@ -175,29 +175,29 @@ class DeduplicationProcessor(BaseProcessor):
         }
     
     def _generate_packet_hash(self, packet: 'Packet') -> str:
-        """生成数据包的哈希值"""
+        """Generate packet hash value"""
         try:
-            # 使用数据包的原始字节生成哈希
+            # Generate hash using packet's raw bytes
             packet_bytes = bytes(packet)
             return hashlib.md5(packet_bytes).hexdigest()
         except Exception as e:
-            self._logger.warning(f"生成数据包哈希失败: {e}")
-            # 备用方案：使用字符串表示
+            self._logger.warning(f"Failed to generate packet hash: {e}")
+            # Fallback: use string representation
             return hashlib.md5(str(packet).encode()).hexdigest()
 
 
-# 兼容性别名 - 保持向后兼容
+# Compatibility alias - maintain backward compatibility
 class Deduplicator(DeduplicationProcessor):
-    """兼容性别名，请使用 DeduplicationProcessor 代替。
-    
-    .. deprecated:: 当前版本
-       请使用 :class:`DeduplicationProcessor` 代替 :class:`Deduplicator`
+    """Compatibility alias, please use DeduplicationProcessor instead.
+
+    .. deprecated:: Current version
+       Please use :class:`DeduplicationProcessor` instead of :class:`Deduplicator`
     """
-    
+
     def __init__(self, config: ProcessorConfig):
         import warnings
         warnings.warn(
-            "Deduplicator 已废弃，请使用 DeduplicationProcessor 代替",
+            "Deduplicator is deprecated, please use DeduplicationProcessor instead",
             DeprecationWarning,
             stacklevel=2
         )

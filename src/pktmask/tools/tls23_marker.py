@@ -192,7 +192,7 @@ def main(argv: list[str] | None = None) -> None:
             tshark_cmd += ["-d", spec]
 
     if args.verbose:
-        sys.stdout.write(f"[tls23-marker] 运行命令: {' '.join(tshark_cmd)}\n")
+        sys.stdout.write(f"[tls23-marker] Running command: {' '.join(tshark_cmd)}\n")
 
     try:
         completed = subprocess.run(

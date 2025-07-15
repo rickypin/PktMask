@@ -85,7 +85,7 @@ class EncapsulationDetector:
             for encap_type, detector in self._detection_patterns.items():
                 if detector(packet):
                     detected_types.add(encap_type)
-                    self.logger.debug(f"检测到封装类型: {encap_type.value}")
+                    self.logger.debug(f"Detected encapsulation type: {encap_type.value}")
             
             # 确定最终封装类型
             final_type = self._resolve_encapsulation_type(detected_types)
@@ -93,11 +93,11 @@ class EncapsulationDetector:
             # 缓存结果
             self._cache_result(cache_key, final_type)
             
-            self.logger.info(f"数据包封装类型检测完成: {final_type.value}")
+            self.logger.info(f"Packet encapsulation type detection completed: {final_type.value}")
             return final_type
             
         except Exception as e:
-            error_msg = f"封装类型检测失败: {str(e)}"
+            error_msg = f"Encapsulation type detection failed: {str(e)}"
             self.logger.error(error_msg)
             raise EncapsulationError(error_msg) from e
     
@@ -143,7 +143,7 @@ class EncapsulationDetector:
             return depth
             
         except Exception as e:
-            self.logger.warning(f"计算封装深度失败: {str(e)}")
+            self.logger.warning(f"Failed to calculate encapsulation depth: {str(e)}")
             return 0
     
     def get_supported_encapsulations(self) -> List[EncapsulationType]:
@@ -253,7 +253,7 @@ class EncapsulationDetector:
         for encap_type in priority_order:
             if encap_type in detected_types:
                 if len(detected_types) > 1:
-                    self.logger.info(f"检测到复合封装，选择优先级最高的类型: {encap_type.value}")
+                    self.logger.info(f"Detected composite encapsulation, selecting highest priority type: {encap_type.value}")
                 return encap_type
         
         return EncapsulationType.COMPOSITE
@@ -308,7 +308,7 @@ class EncapsulationDetector:
     def clear_cache(self):
         """清除检测缓存"""
         self._detection_cache.clear()
-        self.logger.debug("封装检测缓存已清除")
+        self.logger.debug("Encapsulation detection cache cleared")
     
     def get_cache_stats(self) -> Dict[str, int]:
         """获取缓存统计信息"""

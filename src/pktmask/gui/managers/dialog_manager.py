@@ -119,35 +119,35 @@ class DialogManager:
             
             dialog.exec()
             
-            self._logger.info("显示关于对话框")
+            self._logger.info("About dialog displayed")
             
         except Exception as e:
-            self._logger.error(f"显示关于对话框失败: {e}")
+            self._logger.error(f"Failed to show About dialog: {e}")
             QMessageBox.critical(self.main_window, "Error", f"Could not show About dialog: {str(e)}")
 
     def show_error_dialog(self, title: str, message: str):
         """显示错误对话框"""
         try:
             QMessageBox.critical(self.main_window, title, message)
-            self._logger.error(f"显示错误对话框: {title} - {message}")
+            self._logger.error(f"Error dialog displayed: {title} - {message}")
         except Exception as e:
-            self._logger.error(f"显示错误对话框失败: {e}")
+            self._logger.error(f"Failed to show error dialog: {e}")
 
     def show_warning_dialog(self, title: str, message: str):
         """显示警告对话框"""
         try:
             QMessageBox.warning(self.main_window, title, message)
-            self._logger.warning(f"显示警告对话框: {title} - {message}")
+            self._logger.warning(f"Warning dialog displayed: {title} - {message}")
         except Exception as e:
-            self._logger.error(f"显示警告对话框失败: {e}")
+            self._logger.error(f"Failed to show warning dialog: {e}")
 
     def show_info_dialog(self, title: str, message: str):
         """显示信息对话框"""
         try:
             QMessageBox.information(self.main_window, title, message)
-            self._logger.info(f"显示信息对话框: {title} - {message}")
+            self._logger.info(f"Info dialog displayed: {title} - {message}")
         except Exception as e:
-            self._logger.error(f"显示信息对话框失败: {e}")
+            self._logger.error(f"Failed to show info dialog: {e}")
 
     def show_question_dialog(self, title: str, message: str) -> bool:
         """显示确认对话框"""
@@ -161,11 +161,11 @@ class DialogManager:
             )
             
             result = reply == QMessageBox.StandardButton.Yes
-            self._logger.info(f"显示确认对话框: {title} - 用户选择: {'是' if result else '否'}")
+            self._logger.info(f"Question dialog displayed: {title} - User choice: {'Yes' if result else 'No'}")
             return result
             
         except Exception as e:
-            self._logger.error(f"显示确认对话框失败: {e}")
+            self._logger.error(f"Failed to show question dialog: {e}")
             return False
 
     def show_progress_dialog(self, title: str, message: str, maximum: int = 0) -> QProgressDialog:
@@ -344,10 +344,10 @@ class DialogManager:
             error_dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
             error_dialog.exec()
             
-            self._logger.error(f"显示处理错误对话框: {error_message}")
+            self._logger.error(f"Processing error dialog displayed: {error_message}")
             
         except Exception as e:
-            self._logger.error(f"显示处理错误对话框失败: {e}")
+            self._logger.error(f"Failed to show processing error dialog: {e}")
             # 如果对话框显示失败，至少更新日志
             self.main_window.update_log(f"Error: {error_message}")
     
@@ -363,7 +363,7 @@ class DialogManager:
                 self.main_window.error_occurred.emit(error_message)
                 
         except Exception as e:
-            self._logger.debug(f"发送非阻塞通知失败: {e}")
+            self._logger.debug(f"Failed to send non-blocking notification: {e}")
 
     def show_processing_complete(self, summary: str):
         """显示处理完成对话框"""

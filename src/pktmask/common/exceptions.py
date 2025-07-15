@@ -32,7 +32,7 @@ class PktMaskError(Exception):
         return self.message
     
     def to_dict(self) -> Dict[str, Any]:
-        """将异常信息转换为字典格式"""
+        """Convert exception information to dictionary format"""
         return {
             'type': self.__class__.__name__,
             'message': self.message,
@@ -179,14 +179,14 @@ class ResourceError(PktMaskError):
 
 # 便利函数
 def create_error_from_exception(exc: Exception, context: Optional[Dict[str, Any]] = None) -> PktMaskError:
-    """从标准异常创建PktMask异常"""
+    """Create PktMask exception from standard exception"""
     if isinstance(exc, PktMaskError):
         return exc
     
     error_message = str(exc)
     error_type = type(exc).__name__
     
-    # 根据异常类型选择适当的PktMask异常类
+    # Select appropriate PktMask exception class based on exception type
     if isinstance(exc, (IOError, OSError)):
         return FileError(error_message, context=context)
     elif isinstance(exc, ValueError):

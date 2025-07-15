@@ -48,7 +48,7 @@ class DeduplicationStage(StageBase):
         input_path: str | Path,
         output_path: str | Path,
     ) -> StageStats | Dict[str, Any] | None:
-        """对单文件执行去重处理，并返回统一的 :class:`StageStats`。"""
+        """Execute deduplication processing on a single file and return unified :class:`StageStats`."""
 
         input_path = str(input_path)
         output_path = str(output_path)
@@ -62,7 +62,7 @@ class DeduplicationStage(StageBase):
 
         if not result.success:
             warnings.warn(
-                f"DeduplicationStage 处理失败: {result.error}",
+                f"DeduplicationStage processing failed: {result.error}",
                 RuntimeWarning,
                 stacklevel=2,
             )
@@ -95,7 +95,7 @@ class DedupStage(DeduplicationStage):
     
     def __init__(self, config: Optional[Dict[str, Any]] | None = None):
         warnings.warn(
-            "DedupStage 已废弃，请使用 DeduplicationStage 代替",
+            "DedupStage is deprecated, please use DeduplicationStage instead",
             DeprecationWarning,
             stacklevel=2
         )

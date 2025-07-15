@@ -21,25 +21,25 @@ class ProcessorRegistry:
     
     @classmethod
     def _load_builtin_processors(cls):
-        """延迟加载内置处理器"""
+        """Lazy load built-in processors"""
         if cls._loaded:
             return
             
         try:
-            # 延迟导入避免循环依赖
+            # Lazy import to avoid circular dependencies
             from .ip_anonymizer import IPAnonymizer
             from .deduplicator import Deduplicator
             from .masker import Masker
-            # 旧版处理器已移除，使用新版双模块架构
+            # Legacy processors removed, using new dual-module architecture
             from ..pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage as MaskingProcessor
             
             cls._processors.update({
-                # 标准命名键（与GUI界面一致）
+                # Standard naming keys (consistent with GUI interface)
                 'anonymize_ips': IPAnonymizer,
                 'remove_dupes': Deduplicator,
                 'mask_payloads': MaskingProcessor,
 
-                # 旧键 → 别名，保持向后兼容并抛出 DeprecationWarning
+                # Old keys → aliases, maintain backward compatibility and throw DeprecationWarning
                 'anon_ip': IPAnonymizer,
                 'dedup_packet': Deduplicator,
                 'mask_payload': MaskingProcessor,
@@ -57,7 +57,7 @@ class ProcessorRegistry:
         
         if name not in cls._processors:
             available = list(cls._processors.keys())
-            raise ValueError(f"未知处理器: {name}。可用处理器: {available}")
+            raise ValueError(f"Unknown processor: {name}. Available processors: {available}")
             
         processor_class = cls._processors[name]
         return processor_class(config)
@@ -66,10 +66,10 @@ class ProcessorRegistry:
     def register_processor(cls, name: str, processor_class: Type[BaseProcessor]):
         """注册新的处理器"""
         if not issubclass(processor_class, BaseProcessor):
-            raise TypeError(f"处理器类必须继承自BaseProcessor: {processor_class}")
+            raise TypeError(f"Processor class must inherit from BaseProcessor: {processor_class}")
             
         cls._processors[name] = processor_class
-        print(f"已注册处理器: {name} -> {processor_class.__name__}")
+        print(f"Registered processor: {name} -> {processor_class.__name__}")
     
     @classmethod
     def list_processors(cls) -> List[str]:
@@ -83,7 +83,7 @@ class ProcessorRegistry:
         cls._load_builtin_processors()
         
         if name not in cls._processors:
-            raise ValueError(f"未知处理器: {name}")
+            raise ValueError(f"Unknown processor: {name}")
             
         processor_class = cls._processors[name]
         

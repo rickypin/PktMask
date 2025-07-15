@@ -1,36 +1,36 @@
-# 命名别名映射配置
-# 记录领域模型与处理逻辑之间的正式映射关系
+# Naming alias mapping configuration
+# Records formal mapping relationships between domain models and processing logic
 
-# 结果类型映射
+# Result type mapping
 result_type_mapping:
-  # 去重相关
+  # Deduplication related
   dedup_packet: "DeduplicationResult"
   remove_dupes: "DeduplicationResult"
 
-  # IP匿名化相关
+  # IP anonymization related
   anonymize_ips: "IPAnonymizationResult"
 
-  # 载荷掩码相关
+  # Payload masking related
   mask_payloads: "MaskingResult"
   mask_payload: "MaskingResult"
 
-# 步骤名称映射
+# Step name mapping
 step_name_mapping:
-  # 标准化步骤名称
+  # Standardized step names
   deduplication:
     aliases: ["remove_dupes", "dedup_packet", "dedup"]
     canonical: "Deduplication"
-    description: "数据包去重处理"
-    
+    description: "Packet deduplication processing"
+
   ip_anonymization:
     aliases: ["anon_ip", "anonymize_ips"]
     canonical: "IP Anonymization"
-    description: "IP地址匿名化处理"
+    description: "IP address anonymization processing"
 
   payload_masking:
     aliases: ["mask_payload", "mask_payloads"]
     canonical: "Payload Masking"
-    description: "载荷掩码处理"
+    description: "Payload masking processing"
 
 # 处理器类型映射
 processor_type_mapping:

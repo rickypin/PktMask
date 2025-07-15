@@ -299,12 +299,12 @@ def _generate_unique_ipv6_segment(original_seg: str, seed_base: str) -> str:
 
 class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
     """
-    基于网段频率的分层IP匿名化策略。
-    该策略会预扫描文件以保留子网结构。
+    Hierarchical IP anonymization strategy based on network segment frequency.
+    This strategy pre-scans files to preserve subnet structure.
     """
     def __init__(self):
         self._ip_map: Dict[str, str] = {}
-        # 新增：封装处理适配器（延迟初始化以避免循环导入）
+        # New: Encapsulation processing adapter (lazy initialization to avoid circular imports)
         self._encap_adapter = None
         self._encap_stats = {
             'total_packets_scanned': 0,
@@ -314,7 +314,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         }
 
     def _get_encap_adapter(self):
-        """延迟初始化封装适配器以避免循环导入"""
+        """Lazy initialize encapsulation adapter to avoid circular imports"""
         if self._encap_adapter is None:
             from pktmask.adapters.encapsulation_adapter import ProcessingAdapter
             self._encap_adapter = ProcessingAdapter()
@@ -322,7 +322,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
 
     def reset(self):
         self._ip_map = {}
-        # 重置封装统计
+        # Reset encapsulation statistics
         if self._encap_adapter is not None:
             self._encap_adapter.reset_stats()
         self._encap_stats = {
@@ -337,7 +337,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
 
     def _prescan_addresses(self, files_to_process: List[str], subdir_path: str, error_log: List[str]) -> Tuple:
         """
-        修正版本：正确统计所有IP地址（源和目标）的频率
+        Corrected version: Correctly count frequency of all IP addresses (source and destination)
         """
         import time
         from pktmask.infrastructure.logging import log_performance
@@ -391,11 +391,11 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                     for packet in reader:
                         self._encap_stats['total_packets_scanned'] += 1
                         
-                        # 【增强】使用封装适配器分析数据包，提取所有层级的IP
+                        # 【Enhanced】Use encapsulation adapter to analyze packets and extract IPs from all layers
                         encap_adapter = self._get_encap_adapter()
                         ip_analysis = encap_adapter.analyze_packet_for_ip_processing(packet)
                         
-                        # 更新封装统计
+                        # Update encapsulation statistics
                         if ip_analysis['has_encapsulation']:
                             self._encap_stats['encapsulated_packets'] += 1
                             if ip_analysis['has_multiple_ips']:
@@ -403,7 +403,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                         else:
                             self._encap_stats['plain_packets'] += 1
                         
-                        # 【增强】处理所有层级的IP地址
+                        # 【Enhanced】Process IP addresses from all layers
                         ip_pairs = encap_adapter.extract_ips_for_anonymization(ip_analysis)
                         for src_ip, dst_ip, context in ip_pairs:
                             # 处理IPv4地址
@@ -417,9 +417,9 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                             elif ':' in dst_ip:
                                 process_ipv6_address(dst_ip)
                         
-                        # 【兼容性】保持原有的简单IP提取作为备选
+                        # 【Compatibility】Keep original simple IP extraction as fallback
                         if not ip_pairs:
-                            # 回退到原有逻辑
+                            # Fall back to original logic
                             if packet.haslayer(IP):
                                 process_ipv4_address(packet.getlayer(IP).src)
                                 process_ipv4_address(packet.getlayer(IP).dst)
@@ -431,11 +431,11 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
             except Exception as e:
                 error_log.append(f"Error scanning file {file_path}: {str(e)}")
         
-        # 记录频率统计信息和性能指标
+        # Record frequency statistics and performance metrics
         end_time = time.time()
         duration = end_time - start_time
         
-        # 【增强】获取封装处理统计
+        # 【Enhanced】Get encapsulation processing statistics
         encap_proc_stats = encap_adapter.get_processing_stats()
         
         log_performance('ip_prescan_addresses', duration, 'ip_anonymization.performance', 
@@ -444,27 +444,27 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                        multi_layer_ip_packets=self._encap_stats['multi_layer_ip_packets'])
         
         logger = get_logger('anonymization.strategy')
-        logger.info(f"频率统计完成: 唯一IP总数={len(unique_ips)}, 耗时={duration:.2f}秒")
+        logger.info(f"Frequency statistics completed: unique IPs={len(unique_ips)}, duration={duration:.2f}s")
         
-        # 【增强】封装处理统计报告
-        logger.info(f"封装处理统计: 总包数={self._encap_stats['total_packets_scanned']}, "
-                   f"封装包数={self._encap_stats['encapsulated_packets']}, "
-                   f"多层IP包数={self._encap_stats['multi_layer_ip_packets']}, "
-                   f"普通包数={self._encap_stats['plain_packets']}")
+        # 【Enhanced】Encapsulation processing statistics report
+        logger.info(f"Encapsulation processing statistics: total packets={self._encap_stats['total_packets_scanned']}, "
+                   f"encapsulated={self._encap_stats['encapsulated_packets']}, "
+                   f"multi-layer IP={self._encap_stats['multi_layer_ip_packets']}, "
+                   f"normal={self._encap_stats['plain_packets']}")
         if self._encap_stats['total_packets_scanned'] > 0:
             encap_ratio = self._encap_stats['encapsulated_packets'] / self._encap_stats['total_packets_scanned']
             multi_ip_ratio = self._encap_stats['multi_layer_ip_packets'] / self._encap_stats['total_packets_scanned']
-            logger.info(f"封装比例: {encap_ratio:.1%}, 多层IP比例: {multi_ip_ratio:.1%}")
+            logger.info(f"Encapsulation ratio: {encap_ratio:.1%}, multi-layer IP ratio: {multi_ip_ratio:.1%}")
         
         if encap_proc_stats['encapsulation_distribution']:
-            logger.debug(f"封装类型分布: {encap_proc_stats['encapsulation_distribution']}")
+            logger.debug(f"Encapsulation type distribution: {encap_proc_stats['encapsulation_distribution']}")
         
         if freq_ipv4_1:
             top_ipv4_a = dict(sorted(freq_ipv4_1.items(), key=lambda x: x[1], reverse=True)[:5])
-            logger.debug(f"IPv4 A段频率统计(前5): {top_ipv4_a}")
+            logger.debug(f"IPv4 A-segment frequency statistics (top 5): {top_ipv4_a}")
         if freq_ipv4_2:
             top_ipv4_ab = dict(sorted(freq_ipv4_2.items(), key=lambda x: x[1], reverse=True)[:5])
-            logger.debug(f"IPv4 A.B段频率统计(前5): {top_ipv4_ab}")
+            logger.debug(f"IPv4 A.B-segment frequency statistics (top 5): {top_ipv4_ab}")
         
         return (freq_ipv4_1, freq_ipv4_2, freq_ipv4_3), \
                (freq_ipv6_1, freq_ipv6_2, freq_ipv6_3, freq_ipv6_4, freq_ipv6_5, freq_ipv6_6, freq_ipv6_7), \
@@ -472,7 +472,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
     
     def create_mapping(self, files_to_process: List[str], subdir_path: str, error_log: List[str]) -> Dict[str, str]:
         """
-        创建IP映射，确保无冲突
+        Create IP mapping, ensuring no conflicts
         """
         import time
         from pktmask.infrastructure.logging import log_performance
@@ -485,15 +485,15 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         maps_ipv4 = ({}, {}, {})
         maps_ipv6 = ({}, {}, {}, {}, {}, {}, {})
         
-        # 用于跟踪已使用的段值，确保唯一性
-        used_segments = (set(), set(), set())  # (A段, A.B段, A.B.C段)
+        # Track used segment values to ensure uniqueness
+        used_segments = (set(), set(), set())  # (A-segment, A.B-segment, A.B.C-segment)
         
         sorted_ips = sorted(all_ips, key=ip_sort_key)
         
-        # 记录映射生成开始信息
+        # Record mapping generation start information
         logger = get_logger('anonymization.strategy')
         ipv4_count = sum(1 for ip in sorted_ips if '.' in ip)
-        logger.info(f"开始生成映射 - IPv4地址数: {ipv4_count}, 总IP数: {len(sorted_ips)}")
+        logger.info(f"Starting mapping generation - IPv4 addresses: {ipv4_count}, total IPs: {len(sorted_ips)}")
         
         for ip in sorted_ips:
             try:
@@ -509,9 +509,9 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
             except Exception as e:
                 error_log.append(f"Pre-calculate mapping error for IP {ip}: {str(e)}")
         
-        # 记录分层映射统计信息
-        logger.info(f"分层映射生成完成: A段映射数={len(maps_ipv4[0])}, A.B段映射数={len(maps_ipv4[1])}, A.B.C段映射数={len(maps_ipv4[2])}")
-        logger.debug(f"唯一段数统计: A段={len(used_segments[0])}, A.B段={len(used_segments[1])}, A.B.C段={len(used_segments[2])}")
+        # Record hierarchical mapping statistics
+        logger.info(f"Hierarchical mapping generation completed: A-segment mappings={len(maps_ipv4[0])}, A.B-segment mappings={len(maps_ipv4[1])}, A.B.C-segment mappings={len(maps_ipv4[2])}")
+        logger.debug(f"Unique segment count statistics: A-segment={len(used_segments[0])}, A.B-segment={len(used_segments[1])}, A.B.C-segment={len(used_segments[2])}")
         
         # 验证高频网段的一致性映射
         consistency_errors = []
@@ -531,7 +531,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                     if orig_ab in ab_mapping_check:
                         if ab_mapping_check[orig_ab] != mapped_ab:
                             consistency_errors.append(
-                                f"A.B段映射不一致: {orig_ab} → {ab_mapping_check[orig_ab]} 和 {mapped_ab}"
+                                f"A.B-segment mapping inconsistent: {orig_ab} → {ab_mapping_check[orig_ab]} and {mapped_ab}"
                             )
                     else:
                         ab_mapping_check[orig_ab] = mapped_ab
@@ -544,45 +544,45 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                         if orig_abc in abc_mapping_check:
                             if abc_mapping_check[orig_abc] != mapped_abc:
                                 consistency_errors.append(
-                                    f"A.B.C段映射不一致: {orig_abc} → {abc_mapping_check[orig_abc]} 和 {mapped_abc}"
+                                    f"A.B.C-segment mapping inconsistent: {orig_abc} → {abc_mapping_check[orig_abc]} and {mapped_abc}"
                                 )
                         else:
                             abc_mapping_check[orig_abc] = mapped_abc
         
-        # 报告一致性验证结果
+        # Report consistency validation results
         if consistency_errors:
-            logger.warning(f"发现 {len(consistency_errors)} 个一致性错误")
-            for error in consistency_errors[:5]:  # 只记录前5个
-                logger.warning(f"一致性错误: {error}")
+            logger.warning(f"Found {len(consistency_errors)} consistency errors")
+            for error in consistency_errors[:5]:  # Only log first 5
+                logger.warning(f"Consistency error: {error}")
         else:
-            logger.info("所有高频网段映射一致性验证通过")
+            logger.info("All high-frequency network segment mapping consistency validation passed")
         
         # 验证高频段映射的正确性
         high_freq_ab_segments = {k: v for k, v in freqs_ipv4[1].items() if v >= 2}
         if high_freq_ab_segments:
-            logger.debug("高频A.B段一致性验证:")
+            logger.debug("High-frequency A.B-segment consistency validation:")
             for orig_ab, freq in sorted(high_freq_ab_segments.items(), key=lambda x: x[1], reverse=True)[:3]:
                 if orig_ab in ab_mapping_check:
                     mapped_ab = ab_mapping_check[orig_ab]
-                    logger.debug(f"高频段映射: {orig_ab} (频率:{freq}) → {mapped_ab}")
+                    logger.debug(f"High-frequency segment mapping: {orig_ab} (frequency:{freq}) → {mapped_ab}")
         
         if maps_ipv4[0]:
             sample_mappings = dict(list(maps_ipv4[0].items())[:3])
-            logger.debug(f"A段映射示例: {sample_mappings}")
+            logger.debug(f"A-segment mapping examples: {sample_mappings}")
         
-        # 记录性能指标
+        # Record performance metrics
         end_time = time.time()
         duration = end_time - start_time
         log_performance('ip_create_mapping', duration, 'ip_anonymization.performance',
                        total_ips=len(mapping), files_processed=len(files_to_process))
         
-        logger.info(f"IP映射创建完成: {len(mapping)}个映射, 耗时={duration:.2f}秒")
+        logger.info(f"IP mapping creation completed: {len(mapping)} mappings, duration={duration:.2f}s")
         
         self._ip_map = mapping
         return mapping
 
     def build_mapping_from_directory(self, all_pcap_files: List[str]):
-        """扫描所有文件并构建完整的IP映射。"""
+        """Scan all files and build complete IP mapping."""
         if not all_pcap_files:
             return
         
@@ -591,34 +591,34 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         error_log = []
 
         logger = get_logger('anonymization.strategy')
-        logger.info(f"开始构建目录级映射 - 文件数: {len(filenames)}")
+        logger.info(f"Starting directory-level mapping construction - file count: {len(filenames)}")
         self.create_mapping(filenames, subdir_path, error_log)
 
     def anonymize_packet(self, pkt) -> Tuple[object, bool]:
-        """根据已构建的映射匿名化单个数据包。【增强】支持多层封装IP匿名化。"""
+        """Anonymize single packet based on built mapping. 【Enhanced】Support multi-layer encapsulated IP anonymization."""
         is_anonymized = False
         
-        # 【增强】使用封装适配器分析数据包
+        # 【Enhanced】Use encapsulation adapter to analyze packet
         encap_adapter = self._get_encap_adapter()
         ip_analysis = encap_adapter.analyze_packet_for_ip_processing(pkt)
         
         if ip_analysis['has_encapsulation'] and ip_analysis['ip_layers']:
-            # 【增强】多层封装处理 - 匿名化所有层级的IP
+            # 【Enhanced】Multi-layer encapsulation processing - anonymize IPs at all layers
             for ip_layer_info in ip_analysis['ip_layers']:
                 ip_layer = ip_layer_info.layer_object
                 
-                # 匿名化源IP
+                # Anonymize source IP
                 if ip_layer_info.src_ip in self._ip_map:
                     ip_layer.src = self._ip_map[ip_layer_info.src_ip]
                     is_anonymized = True
                 
-                # 匿名化目标IP
+                # Anonymize destination IP
                 if ip_layer_info.dst_ip in self._ip_map:
                     ip_layer.dst = self._ip_map[ip_layer_info.dst_ip]
                     is_anonymized = True
         else:
-            # 【兼容性】回退到原有逻辑处理简单数据包
-            # 处理IPv4
+            # 【Compatibility】Fall back to original logic for simple packets
+            # Process IPv4
             if pkt.haslayer(IP):
                 layer = pkt.getlayer(IP)
                 if layer.src in self._ip_map:
@@ -628,7 +628,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                     layer.dst = self._ip_map[layer.dst]
                     is_anonymized = True
             
-            # 处理IPv6
+            # Process IPv6
             if pkt.haslayer(IPv6):
                 layer = pkt.getlayer(IPv6)
                 if layer.src in self._ip_map:
@@ -638,9 +638,9 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                     layer.dst = self._ip_map[layer.dst]
                     is_anonymized = True
                 
-        # 删除校验和以强制重新计算（适用于所有被修改的IP层）
+        # Delete checksums to force recalculation (applies to all modified IP layers)
         if is_anonymized:
-            # 清除所有可能受影响的校验和
+            # Clear all potentially affected checksums
             current_layer = pkt
             while current_layer:
                 if hasattr(current_layer, 'chksum'):

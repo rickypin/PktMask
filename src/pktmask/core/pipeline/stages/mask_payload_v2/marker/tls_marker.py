@@ -88,7 +88,7 @@ class TLSProtocolMarker(ProtocolMarker):
         """初始化TLS分析组件"""
         # 验证tshark可用性
         self.tshark_exec = self._check_tshark_version(self.tshark_path)
-        self.logger.info(f"TLS分析器初始化完成，使用tshark: {self.tshark_exec}")
+        self.logger.info(f"TLS analyzer initialization completed, using tshark: {self.tshark_exec}")
 
     def analyze_file(self, pcap_path: str, config: Dict[str, Any]) -> KeepRuleSet:
         """分析TLS流量并生成保留规则
@@ -100,14 +100,14 @@ class TLSProtocolMarker(ProtocolMarker):
         Returns:
             KeepRuleSet: TLS保留规则集合
         """
-        self.logger.info(f"开始分析TLS流量: {pcap_path}")
+        self.logger.info(f"Starting TLS traffic analysis: {pcap_path}")
         start_time = time.time()
 
         # 初始化组件
         try:
             self._initialize_components()
         except Exception as e:
-            self.logger.error(f"初始化组件失败: {e}")
+            self.logger.error(f"Component initialization failed: {e}")
             # 返回空的规则集合，但包含错误信息
             return KeepRuleSet(
                 rules=[],
@@ -147,13 +147,13 @@ class TLSProtocolMarker(ProtocolMarker):
             # 移除规则优化逻辑，采用单条TLS消息粒度的保留规则
             # ruleset.optimize_rules()  # 禁用规则合并优化
 
-            self.logger.info(f"TLS分析完成，耗时 {analysis_time:.2f} 秒，"
-                           f"生成 {len(ruleset.rules)} 条保留规则")
+            self.logger.info(f"TLS analysis completed, took {analysis_time:.2f} seconds, "
+                           f"generated {len(ruleset.rules)} keep rules")
 
             return ruleset
 
         except Exception as e:
-            self.logger.error(f"TLS流量分析失败: {e}")
+            self.logger.error(f"TLS traffic analysis failed: {e}")
             # 返回空规则集而不是抛出异常，保持系统稳定性
             ruleset = KeepRuleSet()
             ruleset.metadata = {
@@ -185,7 +185,7 @@ class TLSProtocolMarker(ProtocolMarker):
             min_str = ".".join(map(str, MIN_TSHARK_VERSION))
             raise RuntimeError(f"tshark 版本过低 ({ver_str})，需要 ≥ {min_str}")
 
-        self.logger.debug(f"检测到 tshark {'.'.join(map(str, version))} 于 {executable}")
+        self.logger.debug(f"Detected tshark {'.'.join(map(str, version))} at {executable}")
         return executable
 
     def _parse_tshark_version(self, output: str) -> Optional[Tuple[int, int, int]]:
@@ -202,7 +202,7 @@ class TLSProtocolMarker(ProtocolMarker):
         1. 第一阶段：扫描包含TLS记录头的包（启用TCP重组）
         2. 第二阶段：扫描包含TLS段数据的包（禁用TCP重组，捕获跨分段情况）
         """
-        self.logger.debug("扫描TLS消息")
+        self.logger.debug("Scanning TLS messages")
 
         # 第一阶段：扫描重组后的TLS消息
         cmd_reassembled = [
@@ -278,7 +278,7 @@ class TLSProtocolMarker(ProtocolMarker):
         # 合并两阶段的结果
         tls_packets = self._merge_tls_scan_results(packets_reassembled, packets_segments)
 
-        self.logger.debug(f"发现 {len(tls_packets)} 个包含TLS消息的数据包")
+        self.logger.debug(f"Found {len(tls_packets)} packets containing TLS messages")
         return tls_packets
 
     def _merge_tls_scan_results(self, packets_reassembled: List[Dict[str, Any]],
@@ -321,9 +321,9 @@ class TLSProtocolMarker(ProtocolMarker):
             p.get("_source", {}).get("layers", {}).get("frame.number", 0)
         )))
 
-        self.logger.debug(f"合并扫描结果：重组包 {len(packets_reassembled)} 个，"
-                         f"段数据包 {len(packets_segments)} 个，"
-                         f"合并后 {len(result_packets)} 个")
+        self.logger.debug(f"Merged scan results: {len(packets_reassembled)} reassembled packets, "
+                         f"{len(packets_segments)} segment packets, "
+                         f"{len(result_packets)} after merge")
 
         return result_packets
 
@@ -392,7 +392,7 @@ class TLSProtocolMarker(ProtocolMarker):
 
     def _analyze_tcp_flows(self, pcap_path: str, tls_packets: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
         """分析TCP流（复用自tls_flow_analyzer逻辑）"""
-        self.logger.debug("分析TCP流")
+        self.logger.debug("Analyzing TCP flows")
 
         # 提取唯一的TCP流ID
         stream_ids = set()
@@ -408,7 +408,7 @@ class TLSProtocolMarker(ProtocolMarker):
             if flow_info:
                 tcp_flows[stream_id] = flow_info
 
-        self.logger.debug(f"分析了 {len(tcp_flows)} 个TCP流")
+        self.logger.debug(f"Analyzed {len(tcp_flows)} TCP flows")
         return tcp_flows
 
     def _analyze_single_tcp_flow(self, pcap_path: str, stream_id: str) -> Optional[Dict[str, Any]]:
@@ -444,7 +444,7 @@ class TLSProtocolMarker(ProtocolMarker):
             completed = subprocess.run(cmd, check=True, text=True, capture_output=True)
             packets = json.loads(completed.stdout)
         except (subprocess.CalledProcessError, json.JSONDecodeError):
-            self.logger.warning(f"TCP流分析失败 (stream {stream_id})")
+            self.logger.warning(f"TCP flow analysis failed (stream {stream_id})")
             return None
 
         if not packets:
@@ -611,7 +611,7 @@ class TLSProtocolMarker(ProtocolMarker):
 
                 # 【修复1】：验证跨段消息的合理性
                 if not self._validate_cross_segment_record(content_type, length, actual_length):
-                    self.logger.warning(f"跨段TLS消息验证失败: 类型{content_type}, 声明长度{length}, 实际长度{actual_length}")
+                    self.logger.warning(f"Cross-segment TLS message validation failed: type {content_type}, declared length {length}, actual length {actual_length}")
                     offset += 1  # 跳过这个字节，继续寻找下一个TLS记录
                     continue
 
@@ -661,7 +661,7 @@ class TLSProtocolMarker(ProtocolMarker):
     def _generate_keep_rules(self, tls_packets: List[Dict[str, Any]],
                            tcp_flows: Dict[str, Dict[str, Any]]) -> KeepRuleSet:
         """生成保留规则（重构版本，使用重组载荷和精确序列号计算）"""
-        self.logger.debug("生成保留规则（使用重组载荷分析）")
+        self.logger.debug("Generating keep rules (using reassembled payload analysis)")
 
         ruleset = KeepRuleSet()
 
@@ -688,13 +688,13 @@ class TLSProtocolMarker(ProtocolMarker):
                         # 【修复2】：对跨段消息规则进行合理性验证
                         if self._validate_cross_segment_rule(rule, record):
                             ruleset.add_rule(rule)
-                            self.logger.debug(f"生成精确保留规则: 流{stream_id}-{direction_name} "
+                            self.logger.debug(f"Generated precise keep rule: flow {stream_id}-{direction_name} "
                                             f"TLS-{record['content_type']} "
-                                            f"序列号{rule.seq_start}-{rule.seq_end}")
+                                            f"seq {rule.seq_start}-{rule.seq_end}")
                         else:
-                            self.logger.warning(f"跨段规则验证失败，跳过: 流{stream_id}-{direction_name} "
+                            self.logger.warning(f"Cross-segment rule validation failed, skipping: flow {stream_id}-{direction_name} "
                                               f"TLS-{record['content_type']} "
-                                              f"序列号{rule.seq_start}-{rule.seq_end}")
+                                              f"seq {rule.seq_start}-{rule.seq_end}")
 
         # 第二阶段：处理无法重组的单包TLS消息（回退机制）
         self._generate_fallback_rules_from_packets(tls_packets, tcp_flows, ruleset)
@@ -757,14 +757,14 @@ class TLSProtocolMarker(ProtocolMarker):
             return rule
 
         except Exception as e:
-            self.logger.warning(f"从TLS记录创建保留规则失败: {e}")
+            self.logger.warning(f"Failed to create keep rule from TLS record: {e}")
             return None
 
     def _generate_fallback_rules_from_packets(self, tls_packets: List[Dict[str, Any]],
                                             tcp_flows: Dict[str, Dict[str, Any]],
                                             ruleset: KeepRuleSet) -> None:
         """从单包TLS消息生成回退规则（保持向后兼容性）"""
-        self.logger.debug("生成回退保留规则（单包TLS消息）")
+        self.logger.debug("Generating fallback keep rules (single-packet TLS messages)")
 
         for packet in tls_packets:
             layers = packet.get("_source", {}).get("layers", {})
@@ -793,24 +793,24 @@ class TLSProtocolMarker(ProtocolMarker):
             # 检测TLS片段类型
             if self._is_tls_fragment(packet):
                 # 这是TLS记录片段，需要特殊处理
-                self.logger.debug(f"检测到TLS片段: Frame {frame_number}")
+                self.logger.debug(f"Detected TLS fragment: Frame {frame_number}")
 
                 if self._is_applicationdata_fragment(packet):
                     # ApplicationData片段：完全掩码（不生成保留规则）
-                    self.logger.debug(f"ApplicationData片段，跳过规则生成: Frame {frame_number}")
+                    self.logger.debug(f"ApplicationData fragment, skipping rule generation: Frame {frame_number}")
                     continue
                 else:
                     # 其他类型片段：完全保留
                     rule = self._create_full_preserve_rule(packet, tcp_flows)
                     if rule:
                         ruleset.add_rule(rule)
-                        self.logger.debug(f"生成片段完全保留规则: Frame {frame_number} "
-                                        f"序列号{rule.seq_start}-{rule.seq_end}")
+                        self.logger.debug(f"Generated fragment full preserve rule: Frame {frame_number} "
+                                        f"seq {rule.seq_start}-{rule.seq_end}")
                     continue
 
             elif self._is_tls_record_start(packet, tcp_payload):
                 # TLS记录开始：按正常逻辑处理
-                self.logger.debug(f"检测到TLS记录开始: Frame {frame_number}")
+                self.logger.debug(f"Detected TLS record start: Frame {frame_number}")
 
                 # 【解决方案3A】：验证TLS内容类型与载荷的一致性
                 content_types = layers.get("tls.record.content_type", [])
@@ -823,7 +823,7 @@ class TLSProtocolMarker(ProtocolMarker):
 
                         # 验证TLS类型与载荷头部的一致性
                         if not self._validate_tls_type_consistency(tcp_payload, type_num):
-                            self.logger.warning(f"Frame {frame_number}: TLS类型{type_num}与载荷不一致，跳过")
+                            self.logger.warning(f"Frame {frame_number}: TLS type {type_num} inconsistent with payload, skipping")
                             continue
 
                         if self._should_preserve_tls_type(type_num):
@@ -833,13 +833,13 @@ class TLSProtocolMarker(ProtocolMarker):
                                 # 【解决方案3B】：验证规则的合理性
                                 if self._validate_rule_reasonableness(rule, packet, tcp_payload):
                                     ruleset.add_rule(rule)
-                                    self.logger.debug(f"生成TLS记录规则: Frame {frame_number} "
-                                                    f"TLS-{type_num} 序列号{rule.seq_start}-{rule.seq_end}")
+                                    self.logger.debug(f"Generated TLS record rule: Frame {frame_number} "
+                                                    f"TLS-{type_num} seq {rule.seq_start}-{rule.seq_end}")
                                 else:
-                                    self.logger.warning(f"Frame {frame_number}: 规则验证失败，跳过")
+                                    self.logger.warning(f"Frame {frame_number}: rule validation failed, skipping")
             else:
                 # 非TLS数据或无法识别：完全掩码（不生成保留规则）
-                self.logger.debug(f"非TLS数据，跳过规则生成: Frame {frame_number}")
+                self.logger.debug(f"Non-TLS data, skipping rule generation: Frame {frame_number}")
                 continue
 
     def _create_simple_packet_rule(self, packet: Dict[str, Any],
@@ -899,7 +899,7 @@ class TLSProtocolMarker(ProtocolMarker):
             return rule
 
         except Exception as e:
-            self.logger.warning(f"创建简化包规则失败: {e}")
+            self.logger.warning(f"Failed to create simplified packet rule: {e}")
             return None
 
     def _determine_packet_direction(self, packet: Dict[str, Any],
@@ -976,7 +976,7 @@ class TLSProtocolMarker(ProtocolMarker):
             return rule
 
         except Exception as e:
-            self.logger.warning(f"创建保留规则失败: {e}")
+            self.logger.warning(f"Failed to create keep rule: {e}")
             return None
 
     def _create_keep_rule(self, stream_id: str, direction: str, tcp_seq: Any,
@@ -1028,7 +1028,7 @@ class TLSProtocolMarker(ProtocolMarker):
             return rule
 
         except Exception as e:
-            self.logger.warning(f"创建保留规则失败: {e}")
+            self.logger.warning(f"Failed to create keep rule: {e}")
             return None
 
     def _create_tls23_header_rule(self, stream_id: str, direction: str,
@@ -1071,13 +1071,13 @@ class TLSProtocolMarker(ProtocolMarker):
                 }
             )
 
-            self.logger.debug(f"创建TLS-23头部保留规则: Frame {frame_number}, "
-                            f"序列号 {seq_start}-{seq_end} (5字节头部)")
+            self.logger.debug(f"Created TLS-23 header keep rule: Frame {frame_number}, "
+                            f"seq {seq_start}-{seq_end} (5-byte header)")
 
             return rule
 
         except Exception as e:
-            self.logger.warning(f"创建TLS-23头部保留规则失败: {e}")
+            self.logger.warning(f"Failed to create TLS-23 header keep rule: {e}")
             return None
 
     def _create_keep_rule_for_tls_message(self, stream_id: str, direction: str,
@@ -1129,9 +1129,9 @@ class TLSProtocolMarker(ProtocolMarker):
                     }
                 )
 
-                self.logger.debug(f"创建TLS-23消息#{message_index}头部保留规则: "
-                                f"Frame {frame_number}, 序列号 {message_start_seq}-"
-                                f"{message_start_seq + TLS_RECORD_HEADER_SIZE} (5字节头部)")
+                self.logger.debug(f"Created TLS-23 message #{message_index} header keep rule: "
+                                f"Frame {frame_number}, seq {message_start_seq}-"
+                                f"{message_start_seq + TLS_RECORD_HEADER_SIZE} (5-byte header)")
 
                 return rule
             else:
@@ -1159,7 +1159,7 @@ class TLSProtocolMarker(ProtocolMarker):
                 return rule
 
         except Exception as e:
-            self.logger.warning(f"创建TLS消息保留规则失败: {e}")
+            self.logger.warning(f"Failed to create TLS message keep rule: {e}")
             return None
 
     # 注释：移除32位序列号回绕处理，直接使用绝对序列号
@@ -1371,7 +1371,7 @@ class TLSProtocolMarker(ProtocolMarker):
             return rule
 
         except Exception as e:
-            self.logger.warning(f"创建完全保留规则失败: {e}")
+            self.logger.warning(f"Failed to create full preserve rule: {e}")
             return None
 
     def _validate_tls_type_consistency(self, payload_hex: str, expected_type: int) -> bool:
@@ -1398,7 +1398,7 @@ class TLSProtocolMarker(ProtocolMarker):
             # 对于某些特殊情况，允许一定的容错
             # 例如，如果Wireshark解析为TLS-23，但载荷第一字节不是23，
             # 可能是因为这是一个跨段消息的片段
-            self.logger.debug(f"TLS类型不一致: 期望{expected_type}, 实际{actual_type}")
+            self.logger.debug(f"TLS type inconsistent: expected {expected_type}, actual {actual_type}")
             return False
 
         except (ValueError, TypeError):
@@ -1426,47 +1426,47 @@ class TLSProtocolMarker(ProtocolMarker):
             # 对于header_only规则，长度应该是5字节
             if rule.metadata.get('preserve_strategy') == 'header_only':
                 if rule_length != 5:
-                    self.logger.warning(f"Header_only规则长度异常: {rule_length} (期望5)")
+                    self.logger.warning(f"Header_only rule length abnormal: {rule_length} (expected 5)")
                     return False
 
             # 对于full_message规则，长度不应该超过TCP载荷长度
             elif rule.metadata.get('preserve_strategy') == 'full_message':
                 if rule_length > tcp_len:
-                    self.logger.warning(f"Full_message规则长度超出TCP载荷: {rule_length} > {tcp_len}")
+                    self.logger.warning(f"Full_message rule length exceeds TCP payload: {rule_length} > {tcp_len}")
                     return False
 
             # 2. 检查TLS-23规则的特殊性
             if rule.rule_type == 'tls_applicationdata_header':
                 # ApplicationData头部规则必须是5字节
                 if rule_length != 5:
-                    self.logger.warning(f"ApplicationData头部规则长度错误: {rule_length}")
+                    self.logger.warning(f"ApplicationData header rule length incorrect: {rule_length}")
                     return False
 
                 # 验证载荷确实以TLS-23开头
                 if payload_hex and len(payload_hex) >= 2:
                     first_byte = int(payload_hex[0:2], 16)
                     if first_byte != 23:
-                        self.logger.warning(f"ApplicationData规则但载荷不以23开头: {first_byte}")
+                        self.logger.warning(f"ApplicationData rule but payload does not start with 23: {first_byte}")
                         return False
 
             # 3. 检查ChangeCipherSpec规则的特殊性
             elif rule.rule_type == 'tls_changecipherspec':
                 # ChangeCipherSpec消息通常很短（6字节：5字节头+1字节载荷）
                 if rule_length > 50:  # 给一些容错空间
-                    self.logger.warning(f"ChangeCipherSpec规则长度异常: {rule_length}")
+                    self.logger.warning(f"ChangeCipherSpec rule length abnormal: {rule_length}")
                     return False
 
                 # 验证载荷确实以TLS-20开头
                 if payload_hex and len(payload_hex) >= 2:
                     first_byte = int(payload_hex[0:2], 16)
                     if first_byte != 20:
-                        self.logger.warning(f"ChangeCipherSpec规则但载荷不以20开头: {first_byte}")
+                        self.logger.warning(f"ChangeCipherSpec rule but payload does not start with 20: {first_byte}")
                         return False
 
             return True
 
         except Exception as e:
-            self.logger.warning(f"规则合理性验证失败: {e}")
+            self.logger.warning(f"Rule reasonableness validation failed: {e}")
             return False
 
     def _validate_cross_segment_record(self, content_type: int, declared_length: int, actual_length: int) -> bool:
@@ -1484,36 +1484,36 @@ class TLSProtocolMarker(ProtocolMarker):
             # 1. 检查声明长度是否合理
             MAX_TLS_RECORD_LENGTH = 16384  # TLS标准最大记录长度
             if declared_length > MAX_TLS_RECORD_LENGTH:
-                self.logger.warning(f"TLS记录声明长度过大: {declared_length} > {MAX_TLS_RECORD_LENGTH}")
+                self.logger.warning(f"TLS record declared length too large: {declared_length} > {MAX_TLS_RECORD_LENGTH}")
                 return False
 
             # 2. 针对不同TLS类型的特殊检查
             if content_type == 20:  # ChangeCipherSpec
                 # ChangeCipherSpec消息载荷通常只有1字节
                 if declared_length > 10:  # 给一些容错空间
-                    self.logger.warning(f"ChangeCipherSpec声明长度异常: {declared_length}")
+                    self.logger.warning(f"ChangeCipherSpec declared length abnormal: {declared_length}")
                     return False
 
             elif content_type == 21:  # Alert
                 # Alert消息载荷通常只有2字节
                 if declared_length > 10:  # 给一些容错空间
-                    self.logger.warning(f"Alert声明长度异常: {declared_length}")
+                    self.logger.warning(f"Alert declared length abnormal: {declared_length}")
                     return False
 
             # 3. 检查实际长度与声明长度的差异
             if actual_length > declared_length:
-                self.logger.warning(f"实际长度超过声明长度: {actual_length} > {declared_length}")
+                self.logger.warning(f"Actual length exceeds declared length: {actual_length} > {declared_length}")
                 return False
 
             # 4. 检查跨段的合理性（实际长度不应该太小）
             if actual_length < declared_length * 0.1:  # 实际长度不应该小于声明长度的10%
-                self.logger.warning(f"跨段记录实际长度过小: {actual_length} < {declared_length * 0.1}")
+                self.logger.warning(f"Cross-segment record actual length too small: {actual_length} < {declared_length * 0.1}")
                 return False
 
             return True
 
         except Exception as e:
-            self.logger.warning(f"跨段记录验证失败: {e}")
+            self.logger.warning(f"Cross-segment record validation failed: {e}")
             return False
 
     def _validate_cross_segment_rule(self, rule: KeepRule, record: Dict[str, Any]) -> bool:
@@ -1538,31 +1538,31 @@ class TLSProtocolMarker(ProtocolMarker):
                 # 跨段规则的长度不应该过大
                 MAX_CROSS_SEGMENT_RULE_LENGTH = 2048  # 2KB限制
                 if rule_length > MAX_CROSS_SEGMENT_RULE_LENGTH:
-                    self.logger.warning(f"跨段规则长度过大: {rule_length} > {MAX_CROSS_SEGMENT_RULE_LENGTH}")
+                    self.logger.warning(f"Cross-segment rule length too large: {rule_length} > {MAX_CROSS_SEGMENT_RULE_LENGTH}")
                     return False
 
                 # 针对特定TLS类型的严格限制
                 if content_type == 20:  # ChangeCipherSpec
                     # ChangeCipherSpec规则不应该超过100字节
                     if rule_length > 100:
-                        self.logger.warning(f"跨段ChangeCipherSpec规则长度异常: {rule_length}")
+                        self.logger.warning(f"Cross-segment ChangeCipherSpec rule length abnormal: {rule_length}")
                         return False
 
                 elif content_type == 21:  # Alert
                     # Alert规则不应该超过50字节
                     if rule_length > 50:
-                        self.logger.warning(f"跨段Alert规则长度异常: {rule_length}")
+                        self.logger.warning(f"Cross-segment Alert rule length abnormal: {rule_length}")
                         return False
 
             # 2. 检查声明长度与实际规则长度的一致性
             if rule.metadata.get('preserve_strategy') == 'full_message':
                 expected_length = 5 + actual_length  # 5字节头部 + 实际载荷长度
                 if abs(rule_length - expected_length) > 10:  # 允许一些误差
-                    self.logger.warning(f"规则长度与期望不符: {rule_length} vs {expected_length}")
+                    self.logger.warning(f"Rule length does not match expected: {rule_length} vs {expected_length}")
                     return False
 
             return True
 
         except Exception as e:
-            self.logger.warning(f"跨段规则验证失败: {e}")
+            self.logger.warning(f"Cross-segment rule validation failed: {e}")
             return False

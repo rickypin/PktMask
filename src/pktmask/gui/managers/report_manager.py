@@ -726,10 +726,10 @@ class ReportManager:
         try:
             self.main_window.log_text.clear()
             self.main_window.summary_text.clear()
-            self._logger.debug("清空日志和摘要显示")
+            self._logger.debug("Cleared log and summary display")
             
         except Exception as e:
-            self._logger.error(f"清空显示区域时发生错误: {e}")
+            self._logger.error(f"Error occurred while clearing display area: {e}")
     
     def export_summary_report(self, filepath: str) -> bool:
         """导出摘要报告到文件"""
@@ -739,11 +739,11 @@ class ReportManager:
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(content)
             
-            self._logger.info(f"摘要报告已导出到: {filepath}")
+            self._logger.info(f"Summary report exported to: {filepath}")
             return True
             
         except Exception as e:
-            self._logger.error(f"导出摘要报告失败: {e}")
+            self._logger.error(f"Failed to export summary report: {e}")
             return False
     
     def _save_summary_report_to_output(self):
@@ -755,9 +755,9 @@ class ReportManager:
             elif hasattr(self.main_window, 'file_manager'):
                 self.main_window.file_manager.save_summary_report_to_output_dir()
             else:
-                self._logger.warning("无法找到保存Summary Report的方法")
+                self._logger.warning("Cannot find method to save Summary Report")
         except Exception as e:
-            self._logger.error(f"保存Summary Report到输出目录失败: {e}")
+            self._logger.error(f"Failed to save Summary Report to output directory: {e}")
 
     def collect_step_result(self, data: dict):
         """收集每个步骤的处理结果，但不立即显示"""
@@ -768,23 +768,23 @@ class ReportManager:
         step_name_raw = data.get('step_name', '')
         
         # **调试日志**: 记录收集的步骤结果
-        self._logger.info(f"🔍 收集步骤结果: 文件={self.main_window.current_processing_file}, 步骤={step_name_raw}, 类型={step_type}")
-        self._logger.info(f"🔍 数据字段: {list(data.keys())}")
+        self._logger.info(f"🔍 Collecting step results: file={self.main_window.current_processing_file}, step={step_name_raw}, type={step_type}")
+        self._logger.info(f"🔍 Data fields: {list(data.keys())}")
         
         # **修复**: 支持新Pipeline系统的步骤名称
         # 从step_name推断步骤类型，而不是仅依赖type字段
         if not step_type:
             # 新Pipeline系统没有type字段，从step_name推断
             if step_name_raw == 'AnonStage':
-                step_type = 'anonymize_ips'  # 使用标准命名
+                step_type = 'anonymize_ips'  # Use standard naming
             elif step_name_raw in ['DedupStage', 'DeduplicationStage']:
                 step_type = 'remove_dupes'
             elif step_name_raw in ['MaskStage', 'MaskPayloadStage', 'NewMaskPayloadStage', 'Mask Payloads (v2)']:
-                step_type = 'mask_payloads'  # 使用标准命名
+                step_type = 'mask_payloads'  # Use standard naming
             else:
                 step_type = step_name_raw.lower()
         
-        self._logger.info(f"🔍 推断步骤类型: {step_type}")
+        self._logger.info(f"🔍 Inferred step type: {step_type}")
         
         if not step_type or step_type.endswith('_final'):
             if step_type and step_type.endswith('_final'):
@@ -796,9 +796,9 @@ class ReportManager:
         
         # 标准化步骤名称 - 修复Pipeline和ReportManager之间的映射不匹配
         step_display_names = {
-            'anonymize_ips': 'IP Anonymization',  # 标准命名
+            'anonymize_ips': 'IP Anonymization',  # Standard naming
             'remove_dupes': 'Deduplication',
-            'mask_payloads': 'Payload Masking',   # 标准命名
+            'mask_payloads': 'Payload Masking',   # Standard naming
         }
         
         step_name = step_display_names.get(step_type, step_type)
@@ -844,12 +844,12 @@ class ReportManager:
                 
                 # 累积映射而不是覆盖
                 self.main_window.global_ip_mappings.update(ip_mappings)
-                
-                self._logger.info(f"✅ 收集IP映射: 文件={self.main_window.current_processing_file}, 新映射={len(ip_mappings)}个, 全局映射总数={len(self.main_window.global_ip_mappings)}个")
+
+                self._logger.info(f"✅ Collected IP mappings: file={self.main_window.current_processing_file}, new_mappings={len(ip_mappings)}, global_total={len(self.main_window.global_ip_mappings)}")
             else:
-                self._logger.warning(f"IP匿名化步骤完成，但未找到有效的IP映射数据: {list(data.keys())}")
+                self._logger.warning(f"IP anonymization step completed, but no valid IP mapping data found: {list(data.keys())}")
         else:
-            self._logger.debug(f"非IP匿名化步骤: {step_name_raw}")
+            self._logger.debug(f"Non-IP anonymization step: {step_name_raw}")
 
     def _is_enhanced_masking(self, data: Dict[str, Any]) -> bool:
         """检查是否是增强掩码处理结果 - 基于双模块架构"""
@@ -863,7 +863,7 @@ class ReportManager:
             'enhancement_level' in data,
         ]
 
-        # 协议适配模式有不同的处理模式标识，不会是 'Enhanced Intelligent Mode'
+        # Protocol adaptation mode has different processing mode identifiers, not 'Enhanced Intelligent Mode'
         # 如果有真正的Enhanced Masking特有字段组合，认为是智能处理
         return all(enhanced_indicators[:3])  # 前3个字段必须都存在
 
@@ -938,8 +938,8 @@ class ReportManager:
             other_rate = (total_enhanced_stats['other_packets'] / total_packets) * 100
             
             report += f"📊 Protocol Detection Results:\n"
-            report += f"   • TLS packets: {total_enhanced_stats['tls_packets']:,} ({tls_rate:.1f}%) - 智能TLS策略\n"
-            report += f"   • Other packets: {total_enhanced_stats['other_packets']:,} ({other_rate:.1f}%) - 通用策略\n"
+            report += f"   • TLS packets: {total_enhanced_stats['tls_packets']:,} ({tls_rate:.1f}%) - Intelligent TLS strategy\n"
+            report += f"   • Other packets: {total_enhanced_stats['other_packets']:,} ({other_rate:.1f}%) - General strategy\n"
             report += f"   • Total processed: {total_packets:,} packets in 4 stages\n\n"
         
         # 策略应用统计
