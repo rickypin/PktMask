@@ -28,13 +28,13 @@ from .core.data_service import DataService
 
 
 class SimplifiedMainWindow(QMainWindow):
-    """简化的主窗口 - 仅负责UI容器和基本事件分发
-    
-    新架构特点：
-    1. 职责单一：仅作为UI容器和事件分发器
-    2. 组件清晰：3个核心组件各司其职
-    3. 依赖简化：减少组件间复杂依赖
-    4. 维护友好：代码结构清晰，易于理解和修改
+    """Simplified main window - only responsible for UI container and basic event dispatching
+
+    New architecture features:
+    1. Single responsibility: Only serves as UI container and event dispatcher
+    2. Clear components: 3 core components each with their own responsibilities
+    3. Simplified dependencies: Reduced complex dependencies between components
+    4. Maintenance friendly: Clear code structure, easy to understand and modify
     """
     
     # 基本信号定义
@@ -44,26 +44,26 @@ class SimplifiedMainWindow(QMainWindow):
         super().__init__()
         self._logger = get_logger('simplified_main_window')
         
-        # 基本配置
+        # Basic configuration
         self.config = get_app_config()
-        
-        # 兼容性属性（保持与原有代码的兼容）
+
+        # Compatibility properties (maintain compatibility with original code)
         self.base_dir: Optional[str] = None
         self.output_dir: Optional[str] = None
         self.current_output_dir: Optional[str] = None
         self.time_elapsed = 0
         self.user_stopped = False
-        
-        # 初始化核心组件
+
+        # Initialize core components
         self._init_core_components()
-        
-        # 构建界面
+
+        # Build interface
         self.ui_builder.setup_ui()
-        
-        # 连接信号
+
+        # Connect signals
         self._connect_signals()
-        
-        self._logger.info("简化主窗口初始化完成")
+
+        self._logger.info("Simplified main window initialization completed")
     
     def _init_core_components(self):
         """初始化核心组件"""
@@ -317,7 +317,7 @@ def main():
             return window if test_mode else 0
             
         except Exception as e:
-            print(f"测试模式下GUI初始化失败: {e}")
+            print(f"GUI initialization failed in test mode: {e}")
             return None
     else:
         # 正常模式

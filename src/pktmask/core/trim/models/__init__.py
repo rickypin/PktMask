@@ -1,13 +1,13 @@
 """
-Trim模块数据模型
+Trim module data models
 
-包含掩码规范和TLS协议处理等核心数据结构。
+Contains core data structures such as masking specifications and TLS protocol processing.
 """
 
-# 基础掩码规范（实际存在的文件）
+# Basic masking specifications (actual existing files)
 from .mask_spec import MaskSpec, MaskAfter, MaskRange, KeepAll
 
-# TLS协议处理模型（实际存在的文件）
+# TLS protocol processing models (actual existing files)
 from .tls_models import (
     TLSProcessingStrategy,
     MaskAction,

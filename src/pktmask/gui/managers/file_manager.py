@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-文件管理器 - 负责目录选择和文件操作
+File manager - handles directory selection and file operations
 """
 
 import os
@@ -17,7 +17,7 @@ from pktmask.utils.file_ops import open_directory_in_system
 from pktmask.infrastructure.logging import get_logger
 
 class FileManager:
-    """文件管理器 - 负责目录选择和文件操作"""
+    """File manager - handles directory selection and file operations"""
     
     def __init__(self, main_window: 'MainWindow'):
         self.main_window = main_window
@@ -25,7 +25,7 @@ class FileManager:
         self._logger = get_logger(__name__)
     
     def choose_folder(self):
-        """选择输入目录"""
+        """Select input directory"""
         dir_path = QFileDialog.getExistingDirectory(
             self.main_window,
             "Select Input Folder",
@@ -33,14 +33,14 @@ class FileManager:
         )
         if dir_path:
             self.main_window.base_dir = dir_path
-            self.main_window.last_opened_dir = dir_path  # 记录当前选择的目录
+            self.main_window.last_opened_dir = dir_path  # Record currently selected directory
             self.main_window.dir_path_label.setText(os.path.basename(dir_path))
-            
-            # 自动生成默认输出路径
+
+            # Auto-generate default output path
             self.generate_default_output_path()
-            self.main_window.ui_manager._update_start_button_state()  # 智能更新按钮状态
-            
-            self._logger.info(f"选择输入目录: {dir_path}")
+            self.main_window.ui_manager._update_start_button_state()  # Intelligently update button state
+
+            self._logger.info(f"Selected input directory: {dir_path}")
 
     def handle_output_click(self):
         """处理输出路径按钮点击 - 在处理完成后打开目录，否则选择自定义输出目录"""

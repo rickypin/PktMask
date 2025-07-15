@@ -1,13 +1,13 @@
 """
-PktMask - IP 地址替换工具
+PktMask - IP Address Replacement Tool
 """
 
 __version__ = "0.1.0" 
 
 # ---------------------------------------------------------------------------
 # Optional runtime stub for PyQt6 (used by limited unit-tests).
-# The real GUI version依赖真实的 PyQt6；但在 CI / headless 环境下可缺失。
-# 我们在导入失败时注入最小占位模块，避免 ImportError。
+# The real GUI version depends on actual PyQt6; but can be missing in CI / headless environments.
+# We inject a minimal placeholder module on import failure to avoid ImportError.
 # ---------------------------------------------------------------------------
 import sys
 import types

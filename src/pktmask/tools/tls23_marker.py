@@ -1,7 +1,7 @@
 """TLS23 Marker Tool (Stage 1: CLI Skeleton & Environment Detection)
 
-本模块实现了 tls23_marker 工具的 CLI 参数解析和基础环境探测功能，
-后续阶段将逐步补充扫描、补标和输出逻辑。
+This module implements CLI parameter parsing and basic environment detection functionality for the tls23_marker tool,
+with subsequent stages gradually adding scanning, supplementary marking and output logic.
 
 使用示例：
     python -m pktmask.tools.tls23_marker --pcap input.pcapng
@@ -22,9 +22,9 @@ MIN_TSHARK_VERSION: Tuple[int, int, int] = (4, 2, 0)
 
 
 def _parse_tshark_version(output: str) -> Tuple[int, int, int] | None:
-    """从 `tshark -v` 输出解析版本号。
+    """Parse version number from `tshark -v` output.
 
-    预期格式示例::
+    Expected format example::
         TShark (Wireshark) 4.2.1 (Git commit 111222)
     """
     m = re.search(r"(\d+)\.(\d+)\.(\d+)", output)
@@ -34,10 +34,10 @@ def _parse_tshark_version(output: str) -> Tuple[int, int, int] | None:
 
 
 def _check_tshark_version(tshark_path: str | None, verbose: bool = False) -> str:
-    """验证本地 tshark 可用且版本足够，返回实际可执行路径。
+    """Verify local tshark is available and version is sufficient, return actual executable path.
 
-    如果 `tshark_path` 为空，则假设可直接在 PATH 中调用。
-    版本不足或不可执行时退出并返回非零码 1。
+    If `tshark_path` is empty, assume it can be called directly from PATH.
+    Exit with non-zero code 1 if version is insufficient or not executable.
     """
     executable = tshark_path or "tshark"
 
@@ -47,20 +47,20 @@ def _check_tshark_version(tshark_path: str | None, verbose: bool = False) -> str
         )
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
         sys.stderr.write(
-            f"[tls23-marker] 错误: 无法执行 '{executable}': {exc}\n"
+            f"[tls23-marker] Error: Cannot execute '{executable}': {exc}\n"
         )
         sys.exit(1)
 
     version = _parse_tshark_version(completed.stdout + completed.stderr)
     if version is None:
-        sys.stderr.write("[tls23-marker] 错误: 无法解析 tshark 版本号。\n")
+        sys.stderr.write("[tls23-marker] Error: Cannot parse tshark version number.\n")
         sys.exit(1)
 
     if version < MIN_TSHARK_VERSION:
         ver_str = ".".join(map(str, version))
         min_str = ".".join(map(str, MIN_TSHARK_VERSION))
         sys.stderr.write(
-            f"[tls23-marker] 错误: tshark 版本过低 ({ver_str})，需要 ≥ {min_str}.\n"
+            f"[tls23-marker] Error: tshark version too low ({ver_str}), requires ≥ {min_str}.\n"
         )
         sys.exit(1)
 

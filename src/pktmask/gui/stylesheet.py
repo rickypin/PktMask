@@ -48,7 +48,7 @@ FONTS = {
 
 def generate_stylesheet(mode: str) -> str:
     """
-    根据给定的模式（'light' 或 'dark'）生成完整的QSS样式表。
+    Generate complete QSS stylesheet based on given mode ('light' or 'dark').
     """
     palette = DARK_PALETTE if mode == 'dark' else LIGHT_PALETTE
 

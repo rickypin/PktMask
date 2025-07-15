@@ -1,50 +1,50 @@
 ## [Unreleased]
 
 ### Changed
-- **PayloadMasker默认全掩码处理策略** (2025-07-15)
-  - **改动描述**: 修改PayloadMasker模块的默认处理逻辑，实现"mask by default"策略，确保所有TCP载荷都经过掩码处理，显著提升数据安全性。
-  - **核心变更**:
-    - 移除了"无匹配规则时原样返回"的逻辑，改为默认全掩码处理
-    - 对于任何TCP载荷，都先创建全零缓冲区，然后仅根据KeepRuleSet中的规则进行选择性保留
-    - 非TLS协议的TCP载荷（如HTTP、SSH、FTP等）现在被完全掩码，而不是保持原样
-  - **修改文件**: `src/pktmask/core/pipeline/stages/mask_payload_v2/masker/payload_masker.py`
-  - **关键修改**:
+- **PayloadMasker Default Full Masking Strategy** (2025-07-15)
+  - **Change Description**: Modified PayloadMasker module's default processing logic to implement "mask by default" strategy, ensuring all TCP payloads undergo masking processing, significantly enhancing data security.
+  - **Core Changes**:
+    - Removed "return as-is when no matching rules" logic, changed to default full masking processing
+    - For any TCP payload, first create zero buffer, then selectively preserve only according to rules in KeepRuleSet
+    - Non-TLS protocol TCP payloads (such as HTTP, SSH, FTP, etc.) are now completely masked instead of preserved as-is
+  - **Modified File**: `src/pktmask/core/pipeline/stages/mask_payload_v2/masker/payload_masker.py`
+  - **Key Modifications**:
     ```python
-    # 修改前：无规则时原样返回
+    # Before: Return as-is when no rules
     if stream_id not in rule_lookup or direction not in rule_lookup[stream_id]:
-        return packet, False  # ❌ 原样返回，敏感数据暴露
+        return packet, False  # ❌ Return as-is, sensitive data exposed
 
-    # 修改后：无规则时执行全掩码
+    # After: Execute full masking when no rules
     if stream_id in rule_lookup and direction in rule_lookup[stream_id]:
         rule_data = rule_lookup[stream_id][direction]
     else:
         rule_data = {'header_only_ranges': [], 'full_preserve_ranges': []}
-        # 将导致全掩码处理
+        # Will result in full masking processing
     ```
-  - **安全性提升**:
-    - **HTTP协议**: 用户名、密码、API密钥等敏感信息现在被完全掩码
-    - **SSH协议**: 版本信息、配置信息等不再泄露
-    - **数据库协议**: SQL查询、数据内容等敏感信息被保护
-    - **自定义协议**: 业务逻辑、配置信息等得到保护
-  - **处理策略变更**:
-    - **修改前**: "默认允许" - 只有TLS流量被处理，其他协议完全保留
-    - **修改后**: "默认拒绝" - 所有TCP载荷默认掩码，只有明确在KeepRuleSet中的数据才被保留
-  - **验证结果**:
-    - 非TLS协议载荷：从原始明文 → 完全掩码（全零）
-    - TLS协议载荷：根据保留规则选择性保留（行为不变）
-    - 统计信息：正确反映掩码字节数和保留字节数
-    - 修改包数：现在包含所有被处理的TCP载荷
-  - **兼容性**: 保持现有TLS处理逻辑、规则优先级策略和接口签名完全不变
+  - **Security Enhancements**:
+    - **HTTP Protocol**: Usernames, passwords, API keys and other sensitive information are now completely masked
+    - **SSH Protocol**: Version information, configuration information no longer leaked
+    - **Database Protocols**: SQL queries, data content and other sensitive information protected
+    - **Custom Protocols**: Business logic, configuration information protected
+  - **Processing Strategy Changes**:
+    - **Before**: "Default allow" - Only TLS traffic processed, other protocols completely preserved
+    - **After**: "Default deny" - All TCP payloads masked by default, only data explicitly in KeepRuleSet preserved
+  - **Verification Results**:
+    - Non-TLS protocol payloads: From original plaintext → Complete masking (all zeros)
+    - TLS protocol payloads: Selective preservation according to preservation rules (behavior unchanged)
+    - Statistics: Correctly reflect masked bytes and preserved bytes
+    - Modified packet count: Now includes all processed TCP payloads
+  - **Compatibility**: Maintains existing TLS processing logic, rule priority strategy and interface signatures completely unchanged
 
 ### Fixed
-- **TLS-23消息掩码不一致性问题** (2025-07-14)
-  - **问题描述**: GUI界面和命令行脚本在处理多个TLS文件时产生不一致的掩码结果。在多文件场景下，GUI只能正确掩码少数文件，大多数文件的TLS-23消息体未被掩码，而命令行脚本能正确掩码所有文件。
-  - **根本原因**: `PayloadMasker`在多文件处理时存在状态污染问题。GUI使用`PipelineExecutor`重用同一个`NewMaskPayloadStage`实例处理多个文件，导致以下状态变量在文件间被重用：
-    - `self.flow_directions = {}` - 流方向识别状态
-    - `self.stream_id_cache = {}` - 流ID缓存
-    - `self.tuple_to_stream_id = {}` - 元组到流ID映射
-    - `self.flow_id_counter` - 流ID计数器
-  - **修复方案**: 在`PayloadMasker.apply_masking()`方法开始时添加`_reset_processing_state()`方法，确保每次处理文件时都重置所有可能导致状态污染的变量。
+- **TLS-23 Message Masking Inconsistency Issue** (2025-07-14)
+  - **Problem Description**: GUI interface and command line scripts produce inconsistent masking results when processing multiple TLS files. In multi-file scenarios, GUI can only correctly mask a few files, most files' TLS-23 message bodies are not masked, while command line scripts can correctly mask all files.
+  - **Root Cause**: `PayloadMasker` has state pollution issues during multi-file processing. GUI uses `PipelineExecutor` to reuse the same `NewMaskPayloadStage` instance to process multiple files, causing the following state variables to be reused between files:
+    - `self.flow_directions = {}` - Flow direction identification state
+    - `self.stream_id_cache = {}` - Stream ID cache
+    - `self.tuple_to_stream_id = {}` - Tuple to stream ID mapping
+    - `self.flow_id_counter` - Stream ID counter
+  - **Fix Solution**: Add `_reset_processing_state()` method at the beginning of `PayloadMasker.apply_masking()` method to ensure all variables that could cause state pollution are reset when processing each file.
   - **修复代码**: 在`src/pktmask/core/pipeline/stages/mask_payload_v2/masker/payload_masker.py`中添加：
     ```python
     def _reset_processing_state(self) -> None:
@@ -92,31 +92,31 @@
   - **验证结果**: 通过测试确认TLSProtocolMarker能正确读取GUI配置，用户设置的`application_data`等参数能够正确生效。同时更新了相关测试文件以匹配修复后的配置结构。
 
 ### Changed
-- 统一入口点：所有功能通过 `pktmask` 命令访问
-- GUI 成为默认模式（无参数启动）
-- CLI 命令简化（移除 `cli` 前缀）
-- 依赖管理集中化：移除子包独立配置，统一使用顶层 `pyproject.toml`
+- Unified entry point: All features accessible through `pktmask` command
+- GUI becomes default mode (launch without parameters)
+- CLI commands simplified (removed `cli` prefix)
+- Centralized dependency management: Removed sub-package independent configs, unified with top-level `pyproject.toml`
 
 ### Added
-- 新增 `performance` 可选依赖组：包含 `psutil` 和 `memory-profiler`
-- 子包 `tcp_payload_masker` 的 `typing-extensions` 依赖已合并到主项目
+- Added `performance` optional dependency group: Contains `psutil` and `memory-profiler`
+- Sub-package `tcp_payload_masker`'s `typing-extensions` dependency merged to main project
 
 ### Removed
-- 移除 `src/pktmask/core/tcp_payload_masker/requirements.txt`
-- 移除 `src/pktmask/core/tcp_payload_masker/setup.py`
+- Removed `src/pktmask/core/tcp_payload_masker/requirements.txt`
+- Removed `src/pktmask/core/tcp_payload_masker/setup.py`
 
 ### Deprecated
-- `run_gui.py` 已弃用，请使用 `./pktmask` 或 `python pktmask.py`
-- 直接运行 `src/pktmask/cli.py` 已不再支持
+- `run_gui.py` deprecated, please use `./pktmask` or `python pktmask.py`
+- Direct execution of `src/pktmask/cli.py` no longer supported
 
 ### Migration Guide
-- GUI 用户：使用 `./pktmask` 替代 `python run_gui.py`
-- CLI 用户：命令更简洁，如 `./pktmask mask` 替代之前的调用方式
-- 开发者：子包依赖现由顶层管理，使用 `pip install -e ".[dev,performance]"` 安装所有依赖
+- GUI users: Use `./pktmask` instead of `python run_gui.py`
+- CLI users: Commands are more concise, e.g., `./pktmask mask` instead of previous calling methods
+- Developers: Sub-package dependencies now managed by top-level, use `pip install -e ".[dev,performance]"` to install all dependencies
 
 ---
 
-# PktMask 变更日志
+# PktMask Changelog
 
 ## v0.2.1 (2025-07-08)
 

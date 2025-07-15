@@ -113,5 +113,5 @@ def cmd_anon(
     )
 
 
-# CLI 命令由 __main__.py 统一管理
-# 直接运行此文件已不再支持
+# CLI commands are managed uniformly by __main__.py
+# Direct execution of this file is no longer supported

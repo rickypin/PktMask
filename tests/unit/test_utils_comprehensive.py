@@ -410,20 +410,20 @@ class TestStringOpsComprehensive:
         assert "key3: 123" in result
     
     def test_clean_filename(self):
-        """测试文件名清理"""
+        """Test filename cleaning"""
         dirty_name = "file<>name|with:illegal*chars?.txt"
         clean_name = string_ops.clean_filename(dirty_name)
-        
+
         illegal_chars = '<>|:*?'
         for char in illegal_chars:
             assert char not in clean_name
-        
+
         assert clean_name.endswith(".txt")
         assert "file" in clean_name
         assert "name" in clean_name
-    
+
     def test_format_progress_text(self):
-        """测试进度文本格式化"""
+        """Test progress text formatting"""
         result = string_ops.format_progress_text(25, 100, "files")
         
         assert "25" in result
@@ -614,37 +614,37 @@ class TestTimeOpsComprehensive:
 
 @pytest.mark.integration
 class TestUtilsIntegrationComprehensive:
-    """Utils模块综合集成测试"""
-    
+    """Utils module comprehensive integration tests"""
+
     def test_file_and_string_ops_integration(self, temp_dir):
-        """测试文件操作和字符串操作的集成"""
-        # 创建一个文件名需要清理的文件
+        """Test integration of file operations and string operations"""
+        # Create a file with filename that needs cleaning
         dirty_filename = "test<file>name.txt"
         clean_filename = string_ops.clean_filename(dirty_filename)
-        
-        # 使用清理后的文件名创建文件
+
+        # Create file using cleaned filename
         file_path = temp_dir / clean_filename
         content = "Test content for integration"
         file_path.write_text(content)
-        
-        # 获取文件大小并格式化
+
+        # Get file size and format it
         size = file_ops.get_file_size(str(file_path))
         formatted_size = math_ops.format_size_bytes(size)
-        
+
         assert size > 0
         assert "B" in formatted_size
         assert clean_filename != dirty_filename
         assert "<" not in clean_filename
         assert ">" not in clean_filename
-    
+
     def test_math_and_string_ops_integration(self):
-        """测试数学操作和字符串操作的集成"""
-        # 模拟处理统计
+        """Test integration of math operations and string operations"""
+        # Simulate processing statistics
         original_count = 1000
         processed_count = 850
         rate = math_ops.calculate_percentage(processed_count, original_count)
-        
-        # 格式化摘要
+
+        # Format summary
         summary = string_ops.format_step_summary("Test Step", original_count, processed_count, rate)
         
         assert "1000" in summary
@@ -653,31 +653,31 @@ class TestUtilsIntegrationComprehensive:
         assert "Test Step" in summary
     
     def test_all_utils_modules_work_together(self, temp_dir):
-        """测试所有工具模块协同工作"""
-        # 1. 创建测试文件
+        """Test all utility modules working together"""
+        # 1. Create test files
         test_files = []
         for i in range(5):
             filename = f"test_file_{i}.pcap"
             file_path = temp_dir / filename
-            content = f"Test content for file {i}" * (i + 1)  # 不同大小的文件
+            content = f"Test content for file {i}" * (i + 1)  # Different sized files
             file_path.write_text(content)
             test_files.append(str(file_path))
-        
-        # 2. 查找PCAP文件
+
+        # 2. Find PCAP files
         found_files = file_ops.find_pcap_files(temp_dir)
-        # 过滤只保留我们创建的测试文件
+        # Filter to keep only our created test files
         our_test_files = [f for f in found_files if any(f"test_file_{i}" in f for i in range(5))]
-        
-        # 验证我们创建的文件都被找到
+
+        # Verify all our created files were found
         assert len(our_test_files) >= 5
-        
-        # 验证我们创建的文件都在其中
+
+        # Verify all our created files are included
         expected_basenames = [f"test_file_{i}" for i in range(5)]
         found_basenames = [file_ops.get_file_base_name(f) for f in our_test_files]
         for expected_basename in expected_basenames:
             assert expected_basename in found_basenames
-        
-        # 3. 计算统计信息（只基于我们的文件）
+
+        # 3. Calculate statistics (based only on our files)
         our_file_sizes = [file_ops.get_file_size(f) for f in our_test_files]
         stats = math_ops.calculate_statistics(our_file_sizes)
         

@@ -47,10 +47,10 @@ class DialogManager:
             layout.addWidget(text_edit)
             dialog.exec()
             
-            self._logger.info("显示用户指南对话框")
+            self._logger.info("Show user guide dialog")
 
         except Exception as e:
-            self._logger.error(f"加载用户指南失败: {e}")
+            self._logger.error(f"Failed to load user guide: {e}")
             QMessageBox.critical(self.main_window, "Error", f"Could not load User Guide: {str(e)}")
 
     def show_about_dialog(self):

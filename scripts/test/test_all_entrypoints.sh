@@ -1,37 +1,37 @@
 #!/bin/bash
-# 测试所有入口方式
+# Test all entry points
 
-echo "=== 测试 GUI 启动 ==="
-echo "1. 测试 ./pktmask （按 Ctrl+C 退出）"
+echo "=== Test GUI Launch ==="
+echo "1. Test ./pktmask (press Ctrl+C to exit)"
 timeout 3 ./pktmask 2>&1 | head -5 || true
 echo ""
 
-echo "2. 测试 python pktmask.py"
+echo "2. Test python pktmask.py"
 timeout 3 python pktmask.py 2>&1 | head -5 || true
 echo ""
 
-echo "3. 测试 python -m pktmask"
+echo "3. Test python -m pktmask"
 timeout 3 python -m pktmask 2>&1 | head -5 || true
 echo ""
 
-echo "4. 测试 run_gui.py（应显示弃用警告）"
+echo "4. Test run_gui.py (should show deprecation warning)"
 python run_gui.py 2>&1 | head -10 &
 PID=$!
 sleep 2
 kill $PID 2>/dev/null || true
 echo ""
 
-echo -e "\n=== 测试 CLI 命令 ==="
-echo "5. 测试 mask 命令帮助"
+echo -e "\n=== Test CLI Commands ==="
+echo "5. Test mask command help"
 ./pktmask mask --help | head -5
 echo ""
 
-echo -e "\n6. 测试 dedup 命令帮助"
+echo -e "\n6. Test dedup command help"
 ./pktmask dedup --help | head -5
 echo ""
 
-echo -e "\n7. 测试 anon 命令帮助"
+echo -e "\n7. Test anon command help"
 ./pktmask anon --help | head -5
 echo ""
 
-echo -e "\n=== 测试完成 ==="
+echo -e "\n=== Testing Complete ==="

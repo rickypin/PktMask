@@ -29,7 +29,7 @@ class ProtocolInfo:
 
 @dataclass
 class TrimContext:
-    """裁切上下文数据类"""
+    """Trimming context data class"""
     packet_index: int           # 数据包在流中的索引
     stream_id: str             # 流ID
     flow_direction: str        # 流方向: 'client_to_server' or 'server_to_client'

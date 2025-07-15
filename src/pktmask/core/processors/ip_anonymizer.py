@@ -1,7 +1,7 @@
 """
-IP匿名化处理器
+IP Anonymization Processor
 
-直接实现IP匿名化功能，不依赖Legacy Steps。
+Directly implements IP anonymization functionality, not dependent on Legacy Steps.
 """
 import os
 from typing import Optional
@@ -48,52 +48,52 @@ class IPAnonymizer(BaseProcessor):
                 )
         
         try:
-            # 验证输入
+            # Validate inputs
             self.validate_inputs(input_path, output_path)
-            
-            # 重置统计信息
+
+            # Reset statistics
             self.reset_stats()
-            
-            self._logger.info(f"开始IP匿名化: {input_path} -> {output_path}")
-            
-            # 使用Scapy处理PCAP文件
+
+            self._logger.info(f"Starting IP anonymization: {input_path} -> {output_path}")
+
+            # Use Scapy to process PCAP file
             from scapy.all import rdpcap, wrpcap
             import time
-            
+
             start_time = time.time()
-            
-            # 读取数据包
+
+            # Read packets
             packets = rdpcap(input_path)
             total_packets = len(packets)
-            
-            # **关键修复**: 先建立IP映射表
-            self._logger.info("分析文件中的IP地址并建立映射表...")
+
+            # **Key fix**: Build IP mapping table first
+            self._logger.info("Analyzing IP addresses in file and building mapping table...")
             self._strategy.build_mapping_from_directory([input_path])
             ip_mappings = self._strategy.get_ip_map()
-            self._logger.info(f"建立IP映射完成: {len(ip_mappings)} 个IP地址")
-            
-            # 开始匿名化数据包
-            self._logger.info("开始匿名化数据包")
+            self._logger.info(f"IP mapping construction completed: {len(ip_mappings)} IP addresses")
+
+            # Start anonymizing packets
+            self._logger.info("Starting packet anonymization")
             anonymized_packets = 0
             
-            # 处理每个数据包
+            # Process each packet
             anonymized_pkts = []
             for packet in packets:
                 modified_packet, was_modified = self._strategy.anonymize_packet(packet)
                 anonymized_pkts.append(modified_packet)
                 if was_modified:
                     anonymized_packets += 1
-            
-            # 保存匿名化后的数据包
+
+            # Save anonymized packets
             if anonymized_pkts:
                 wrpcap(output_path, anonymized_pkts)
             else:
-                # 如果没有数据包，创建空文件
+                # If no packets, create empty file
                 open(output_path, 'a').close()
-            
+
             processing_time = time.time() - start_time
-            
-            # 构建结果数据
+
+            # Build result data
             ip_mappings = self._strategy.get_ip_map()
             result_data = {
                 'total_packets': total_packets,
@@ -103,14 +103,14 @@ class IPAnonymizer(BaseProcessor):
                 'file_ip_mappings': ip_mappings,
                 'processing_time': processing_time
             }
-            
+
             if result_data is None:
                 return ProcessorResult(
                     success=False,
-                    error="IP匿名化处理失败，未返回结果"
+                    error="IP anonymization processing failed, no result returned"
                 )
-            
-            # 更新统计信息
+
+            # Update statistics
             self.stats.update({
                 'original_ips': result_data.get('original_ips', 0),
                 'anonymized_ips': result_data.get('anonymized_ips', 0),
@@ -119,9 +119,9 @@ class IPAnonymizer(BaseProcessor):
                 'ip_mappings': result_data.get('file_ip_mappings', {}),
                 'anonymization_rate': self._calculate_anonymization_rate(result_data)
             })
-            
+
             self._logger.info(
-                f"IP匿名化完成: {result_data.get('anonymized_ips', 0)} IPs匿名化"
+                f"IP anonymization completed: {result_data.get('anonymized_ips', 0)} IPs anonymized"
             )
             
             return ProcessorResult(
@@ -131,47 +131,47 @@ class IPAnonymizer(BaseProcessor):
             )
             
         except FileNotFoundError as e:
-            error_msg = f"文件未找到: {e}"
+            error_msg = f"File not found: {e}"
             self._logger.error(error_msg)
             return ProcessorResult(success=False, error=error_msg)
-            
+
         except Exception as e:
-            error_msg = f"IP匿名化处理失败: {e}"
+            error_msg = f"IP anonymization processing failed: {e}"
             self._logger.error(error_msg)
             return ProcessorResult(success=False, error=error_msg)
     
     def get_display_name(self) -> str:
-        """获取处理器的显示名称"""
+        """Get processor display name"""
         return "Anonymize IPs"
-    
+
     def get_description(self) -> str:
-        """获取处理器描述"""
-        return "匿名化数据包中的IP地址，保持子网结构一致性"
-        
+        """Get processor description"""
+        return "Anonymize IP addresses in packets while maintaining subnet structure consistency"
+
     def _calculate_anonymization_rate(self, result_data: dict) -> float:
-        """计算匿名化比率"""
+        """Calculate anonymization rate"""
         original_ips = result_data.get('original_ips', 0)
         anonymized_ips = result_data.get('anonymized_ips', 0)
-        
+
         if original_ips == 0:
             return 0.0
-        
+
         return (anonymized_ips / original_ips) * 100.0
-        
+
     def get_ip_mappings(self) -> dict:
-        """获取IP映射表"""
+        """Get IP mapping table"""
         if self._strategy:
             return self._strategy.get_ip_map()
         return {}
-        
+
     def prepare_for_directory(self, directory_path: str, pcap_files: list):
-        """为目录处理准备IP映射"""
+        """Prepare IP mapping for directory processing"""
         if not self._is_initialized:
             if not self.initialize():
-                raise RuntimeError("处理器初始化失败")
-        
-        self._logger.info(f"为目录准备IP映射: {directory_path}")
-        # 使用策略的build_mapping_from_directory方法建立IP映射
+                raise RuntimeError("Processor initialization failed")
+
+        self._logger.info(f"Preparing IP mapping for directory: {directory_path}")
+        # Use strategy's build_mapping_from_directory method to build IP mapping
         self._strategy.build_mapping_from_directory(pcap_files)
         
     def finalize_directory_processing(self) -> Optional[dict]:

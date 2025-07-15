@@ -249,7 +249,7 @@ class UIBuilder:
         return reply == QMessageBox.StandardButton.Yes
     
     def show_user_guide_dialog(self):
-        """显示用户指南对话框"""
+        """Show user guide dialog"""
         guide_text = """
         PktMask User Guide
         ==================
@@ -286,7 +286,7 @@ class UIBuilder:
         dialog.exec()
     
     def show_about_dialog(self):
-        """显示关于对话框"""
+        """Show about dialog"""
         about_text = """
         PktMask v1.0
         

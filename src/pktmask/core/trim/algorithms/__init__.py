@@ -1,25 +1,25 @@
 """
-载荷分析算法模块
+Payload analysis algorithm module
 
-提供通用协议分析算法，支持：
-1. 通用协议识别和分析
-2. TLS协议特化处理
-3. TCP/UDP流分析
+Provides general protocol analysis algorithms, supporting:
+1. General protocol recognition and analysis
+2. TLS protocol specialized processing
+3. TCP/UDP stream analysis
 
-作者: PktMask Team
-版本: 2.0.0 (移除HTTP支持)
-创建时间: 2025-01-16
-更新时间: 2025-01-XX
+Author: PktMask Team
+Version: 2.0.0 (HTTP support removed)
+Creation date: 2025-01-16
+Update date: 2025-01-XX
 """
 
-# 当前版本暂无特定算法导入
-# 所有算法逻辑已集成到相应的策略类中
+# Current version has no specific algorithm imports
+# All algorithm logic has been integrated into corresponding strategy classes
 
 __all__ = [
-    # 通用算法将在未来版本中添加
+    # General algorithms will be added in future versions
 ]
 
-# 模块版本信息
+# Module version information
 __version__ = "2.0.0"
 __author__ = "PktMask Team"
-__description__ = "通用载荷分析算法模块 (已移除HTTP支持)" 
+__description__ = "General payload analysis algorithm module (HTTP support removed)"

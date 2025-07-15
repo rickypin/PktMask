@@ -23,18 +23,18 @@ def run_command(cmd, timeout=3):
         return f"错误: {str(e)}"
 
 def main():
-    print("=== PktMask 单一入口点验证 ===\n")
-    
-    # 1. 检查 __main__.py 是否是唯一入口
-    print("1. 检查源码中的入口点:")
+    print("=== PktMask Single Entry Point Verification ===\n")
+
+    # 1. Check if __main__.py is the only entry point
+    print("1. Check entry points in source code:")
     main_py_files = subprocess.run(
         "find src -name '*.py' -exec grep -l 'if __name__ == .* __main__' {} \\;",
         shell=True,
         capture_output=True,
         text=True
     ).stdout.strip().split('\n')
-    
-    print(f"   发现 {len(main_py_files)} 个包含 main 的文件:")
+
+    print(f"   Found {len(main_py_files)} files containing main:")
     for f in main_py_files:
         print(f"   - {f}")
     
@@ -71,37 +71,37 @@ def main():
             print("   ✗ 失败")
             print(f"   输出: {output[:100]}...")
     
-    # 5. 检查配置文件
-    print("\n5. 检查 pyproject.toml 配置:")
+    # 5. Check configuration file
+    print("\n5. Check pyproject.toml configuration:")
     config_output = run_command("grep -A1 'project.scripts' pyproject.toml")
     print(f"   {config_output.strip()}")
-    
-    # 6. 总结
-    print("\n=== 总结 ===")
-    print("✓ GUI 和 CLI 使用同一个入口点: pktmask.__main__.app()")
-    print("✓ 通过 Typer 的 callback 机制智能分发")
-    print("✓ 无参数时默认启动 GUI（桌面应用特性）")
-    print("✓ 有命令时执行对应的 CLI 功能")
-    
-    # 7. 检查是否有其他独立入口
-    print("\n检查潜在的独立入口:")
-    
-    # 检查 cli.py 是否还能独立运行
+
+    # 6. Summary
+    print("\n=== Summary ===")
+    print("✓ GUI and CLI use the same entry point: pktmask.__main__.app()")
+    print("✓ Intelligent dispatching through Typer's callback mechanism")
+    print("✓ Default GUI launch when no parameters (desktop application feature)")
+    print("✓ Execute corresponding CLI functions when commands provided")
+
+    # 7. Check for other independent entry points
+    print("\nCheck potential independent entry points:")
+
+    # Check if cli.py can still run independently
     cli_check = run_command("tail -5 src/pktmask/cli.py")
     if "if __name__" in cli_check:
-        print("✗ cli.py 仍有独立入口")
+        print("✗ cli.py still has independent entry point")
     else:
-        print("✓ cli.py 已移除独立入口")
+        print("✓ cli.py independent entry point removed")
     
-    # 检查其他可能的 GUI 入口
+    # Check other possible GUI entry points
     gui_files = subprocess.run(
         "find src -name '*.py' -path '*/gui/*' -exec grep -l 'QApplication' {} \\;",
         shell=True,
         capture_output=True,
         text=True
     ).stdout.strip().split('\n')
-    
-    print(f"\n包含 QApplication 的 GUI 文件: {len([f for f in gui_files if f])}")
+
+    print(f"\nGUI files containing QApplication: {len([f for f in gui_files if f])}")
     for f in gui_files:
         if f:
             print(f"   - {f}")

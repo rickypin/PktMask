@@ -12,36 +12,36 @@ import os
 from pathlib import Path
 
 def run_tests():
-    """运行所有适配器相关的测试并记录结果"""
-    
-    # 测试结果存储路径
+    """Run all adapter-related tests and record results"""
+
+    # Test results storage path
     output_dir = Path("output/reports/adapter_refactoring")
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     baseline_file = output_dir / f"baseline_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    
+
     results = {
         "timestamp": datetime.datetime.now().isoformat(),
         "tests": {},
         "performance": {},
         "coverage": {}
     }
-    
-    # 查找所有适配器相关的测试文件
+
+    # Find all adapter-related test files
     test_patterns = [
         "test_*adapter*.py",
         "test_*compat*.py"
     ]
-    
-    print("正在查找适配器相关的测试文件...")
+
+    print("Searching for adapter-related test files...")
     test_files = []
     for pattern in test_patterns:
         cmd = f"find tests -name '{pattern}' -type f"
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if result.returncode == 0:
             test_files.extend(result.stdout.strip().split('\n'))
-    
-    test_files = [f for f in test_files if f]  # 过滤空字符串
+
+    test_files = [f for f in test_files if f]  # Filter empty strings
     
     if not test_files:
         print("警告：未找到适配器相关的测试文件")

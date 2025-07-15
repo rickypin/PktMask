@@ -75,34 +75,34 @@ class TestFileOps:
 
 
 class TestStringOps:
-    """字符串操作工具测试"""
-    
+    """String operations utility tests"""
+
     def test_string_ops_module_exists(self):
-        """测试字符串操作模块存在"""
+        """Test string operations module exists"""
         assert string_ops is not None
-    
+
     def test_string_ops_has_common_functions(self):
-        """测试字符串操作模块有常见函数"""
-        # 检查常见的字符串操作函数
+        """Test string operations module has common functions"""
+        # Check common string operation functions
         common_functions = [
             'sanitize_filename',
             'format_bytes',
             'truncate_string',
             'escape_html'
         ]
-        
+
         for func_name in common_functions:
             if hasattr(string_ops, func_name):
                 assert callable(getattr(string_ops, func_name))
-    
+
     def test_sanitize_filename(self):
-        """测试文件名清理功能"""
+        """Test filename cleaning functionality"""
         if hasattr(string_ops, 'sanitize_filename'):
-            # 测试包含非法字符的文件名
+            # Test filename containing illegal characters
             dirty_name = "file<>name|with:illegal*chars?.txt"
             clean_name = string_ops.sanitize_filename(dirty_name)
-            
-            # 验证非法字符被清理
+
+            # Verify illegal characters are cleaned
             illegal_chars = '<>|:*?'
             for char in illegal_chars:
                 assert char not in clean_name

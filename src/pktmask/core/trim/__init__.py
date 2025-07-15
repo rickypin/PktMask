@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """
-Trim模块核心组件
+Trim module core components
 
-提供掩码规范和TLS协议处理功能。
+Provides masking specifications and TLS protocol processing functionality.
 
-核心组件:
-- 掩码规范模型 (models/mask_spec.py)
-- TLS协议处理模型 (models/tls_models.py)
+Core components:
+- Masking specification models (models/mask_spec.py)
+- TLS protocol processing models (models/tls_models.py)
 """
 
 # 导入实际存在的数据结构模型
@@ -29,10 +29,10 @@ from .models.tls_models import (
 )
 
 __all__ = [
-    # 掩码规范
+    # Masking specifications
     'MaskSpec', 'MaskAfter', 'MaskRange', 'KeepAll',
-    
-    # TLS协议处理模型
+
+    # TLS protocol processing models
     'TLSProcessingStrategy', 'MaskAction', 'TLSRecordInfo', 'MaskRule', 'TLSAnalysisResult',
     'create_mask_rule_for_tls_record', 'validate_tls_record_boundary', 'get_tls_processing_strategy'
 ]

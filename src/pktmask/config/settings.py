@@ -15,15 +15,15 @@ from datetime import datetime
 
 @dataclass
 class UISettings:
-    """用户界面设置"""
-    # 窗口设置
+    """User interface settings"""
+    # Window settings
     window_width: int = 1200
     window_height: int = 800
     window_min_width: int = 800
     window_min_height: int = 600
     window_maximized: bool = False
     
-    # 主题和外观
+    # Theme and appearance
     theme: str = "auto"  # auto, light, dark
     font_size: int = 10
     
@@ -269,7 +269,7 @@ class AppConfig:
             return True
             
         except Exception as e:
-            print(f"配置保存失败: {e}")
+            print(f"Configuration save failed: {e}")
             return False
     
     @classmethod

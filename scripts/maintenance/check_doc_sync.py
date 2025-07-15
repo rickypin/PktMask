@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-文档同步检查脚本
+Documentation synchronization check script
 
-检查文档中引用的组件是否在代码中存在，帮助识别过时的文档。
+Checks if components referenced in documentation exist in the code, helping identify outdated documentation.
 """
 
 import os
@@ -11,10 +11,10 @@ import sys
 from pathlib import Path
 from typing import Set, Dict, List, Tuple
 
-# 项目根目录
+# Project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
-# 要检查的组件名称模式
+# Component name patterns to check
 COMPONENT_PATTERNS = [
     r'\b(\w+Processor)\b',
     r'\b(\w+Adapter)\b',
@@ -24,7 +24,7 @@ COMPONENT_PATTERNS = [
     r'\b(\w+Manager)\b',
 ]
 
-# 要忽略的常见词汇
+# Common words to ignore
 IGNORE_WORDS = {
     'BaseProcessor', 'StageBase', 'ProcessorResult', 
     'StageStats', 'ProcessorConfig', 'MaskingRecipe'
@@ -32,7 +32,7 @@ IGNORE_WORDS = {
 
 
 def find_components_in_docs(doc_path: Path) -> Set[str]:
-    """在文档中查找组件名称"""
+    """Find component names in documentation"""
     components = set()
     
     try:
@@ -50,7 +50,7 @@ def find_components_in_docs(doc_path: Path) -> Set[str]:
 
 
 def find_components_in_code(src_path: Path) -> Set[str]:
-    """在代码中查找定义的类"""
+    """Find defined classes in code"""
     components = set()
     
     for py_file in src_path.rglob('*.py'):
@@ -61,7 +61,7 @@ def find_components_in_code(src_path: Path) -> Set[str]:
             with open(py_file, 'r', encoding='utf-8') as f:
                 content = f.read()
                 
-            # 查找类定义
+            # Find class definitions
             class_matches = re.findall(r'class\s+(\w+)\s*\(', content)
             components.update(class_matches)
             
@@ -72,10 +72,10 @@ def find_components_in_code(src_path: Path) -> Set[str]:
 
 
 def check_doc_sync(doc_path: Path, code_components: Set[str]) -> Tuple[List[str], List[str]]:
-    """检查单个文档的同步状态"""
+    """Check synchronization status of a single document"""
     doc_components = find_components_in_docs(doc_path)
-    
-    # 查找在文档中提到但代码中不存在的组件
+
+    # Find components mentioned in documentation but not existing in code
     missing_in_code = []
     found_in_code = []
     
@@ -89,20 +89,20 @@ def check_doc_sync(doc_path: Path, code_components: Set[str]) -> Tuple[List[str]
 
 
 def main():
-    """主函数"""
-    print("🔍 文档同步检查\n")
-    
-    # 收集代码中的所有组件
+    """Main function"""
+    print("🔍 Documentation Synchronization Check\n")
+
+    # Collect all components in code
     src_path = PROJECT_ROOT / 'src'
     code_components = find_components_in_code(src_path)
-    print(f"✅ 在代码中找到 {len(code_components)} 个组件\n")
-    
-    # 检查所有文档
+    print(f"✅ Found {len(code_components)} components in code\n")
+
+    # Check all documents
     docs_path = PROJECT_ROOT / 'docs'
     problems = []
-    
+
     for doc_file in docs_path.rglob('*.md'):
-        # 跳过 README 和其他非技术文档
+        # Skip README and other non-technical documents
         if doc_file.name in ['README.md', 'DOCUMENT_STATUS.md']:
             continue
             
@@ -116,31 +116,31 @@ def main():
                 'found': found
             })
     
-    # 输出结果
+    # Output results
     if problems:
-        print("⚠️  发现以下文档可能已过时：\n")
-        
+        print("⚠️  Found the following documents that may be outdated:\n")
+
         for problem in sorted(problems, key=lambda x: len(x['missing']), reverse=True):
             print(f"📄 {problem['path']}")
-            print(f"   ❌ 不存在的组件: {', '.join(problem['missing'])}")
+            print(f"   ❌ Non-existent components: {', '.join(problem['missing'])}")
             if problem['found']:
-                print(f"   ✅ 存在的组件: {', '.join(problem['found'][:3])}...")
+                print(f"   ✅ Existing components: {', '.join(problem['found'][:3])}...")
             print()
-            
-        # 分类统计
+
+        # Category statistics
         current_problems = [p for p in problems if 'current/' in str(p['path'])]
         archive_problems = [p for p in problems if 'archive/' in str(p['path'])]
-        
-        print("\n📊 统计:")
-        print(f"   - current/ 目录下: {len(current_problems)} 个文档需要更新")
-        print(f"   - archive/ 目录下: {len(archive_problems)} 个文档已归档")
-        print(f"   - 其他目录: {len(problems) - len(current_problems) - len(archive_problems)} 个文档")
-        
+
+        print("\n📊 Statistics:")
+        print(f"   - current/ directory: {len(current_problems)} documents need updating")
+        print(f"   - archive/ directory: {len(archive_problems)} documents archived")
+        print(f"   - Other directories: {len(problems) - len(current_problems) - len(archive_problems)} documents")
+
         if current_problems:
-            print("\n❗ 建议优先更新 current/ 目录下的文档")
+            print("\n❗ Recommend prioritizing updates to documents in current/ directory")
             
     else:
-        print("✅ 所有文档都与代码同步！")
+        print("✅ All documents are synchronized with code!")
         
     return 0 if not problems else 1
 

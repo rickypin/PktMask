@@ -321,7 +321,7 @@ class UIManager:
         self._update_start_button_style()
     
     def _show_initial_guides(self):
-        """显示初始指南"""
+        """Show initial guides"""
         self.main_window.log_text.setPlaceholderText(
             "\n🚀 Welcome to PktMask!\n\n"
             "┌─ Quick Start Guide ──────────┐\n"
@@ -333,17 +333,17 @@ class UIManager:
             "Processing logs will appear here..."
         )
         
-        # 读取summary.md文件内容
+        # Read summary.md file content
         try:
             from pktmask.utils.path import resource_path
             with open(resource_path('summary.md'), 'r', encoding='utf-8') as f:
                 summary_md_content = f.read()
             
-            # 将markdown内容转换为适合显示的格式，保持现有样式
+            # Convert markdown content to display-friendly format, maintaining existing styles
             formatted_content = "\n" + self._format_summary_md_content(summary_md_content)
             
         except Exception as e:
-            # 如果读取失败，使用备用内容
+            # If reading fails, use fallback content
             formatted_content = (
                 "\n📊 Processing results and statistics will be displayed here.\n\n"
                 "═══════════════════════════════════════════════════════════════════\n\n"
@@ -371,25 +371,25 @@ class UIManager:
         self.main_window.summary_text.setPlaceholderText(formatted_content)
     
     def _format_summary_md_content(self, md_content: str) -> str:
-        """将markdown内容格式化为适合显示的纯文本格式"""
+        """Format markdown content to plain text format suitable for display"""
         lines = md_content.split('\n')
         formatted_lines = []
         
-        # 直接开始，不添加顶部横线
+        # Start directly, don't add top horizontal line
         
         for line in lines:
             line = line.strip()
             if not line:
                 formatted_lines.append("")
             elif line.startswith('# '):
-                # 主标题 - 在标题上方和下方都添加横线
+                # Main title - add horizontal lines above and below the title
                 title = line[2:].strip()
                 formatted_lines.append("─" * 80)
                 formatted_lines.append(f"📦 {title}")
                 formatted_lines.append("─" * 80)
                 formatted_lines.append("")
             elif line.startswith('## '):
-                # 子标题
+                # Subtitle
                 subtitle = line[3:].strip()
                 emoji_map = {
                     'Anonymize IPs': '🛡️',

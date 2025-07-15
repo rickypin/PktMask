@@ -150,15 +150,15 @@ def find_files_by_extension(directory: Union[str, Path],
                           extensions: List[str], 
                           recursive: bool = False) -> List[str]:
     """
-    在目录中查找指定扩展名的文件
-    
+    Find files with specified extensions in a directory
+
     Args:
-        directory: 搜索目录
-        extensions: 扩展名列表
-        recursive: 是否递归搜索子目录
-    
+        directory: Search directory
+        extensions: List of extensions
+        recursive: Whether to recursively search subdirectories
+
     Returns:
-        找到的文件路径列表
+        List of found file paths
     """
     directory = Path(directory)
     found_files = []
@@ -189,21 +189,21 @@ def find_pcap_files(directory: Union[str, Path]) -> List[str]:
     return find_files_by_extension(directory, ProcessingConstants.SUPPORTED_EXTENSIONS)
 
 
-def copy_file_safely(src: Union[str, Path], dst: Union[str, Path], 
+def copy_file_safely(src: Union[str, Path], dst: Union[str, Path],
                      overwrite: bool = False) -> bool:
     """
-    安全地复制文件
-    
+    Safely copy a file
+
     Args:
-        src: 源文件路径
-        dst: 目标文件路径
-        overwrite: 是否覆盖已存在的文件
-    
+        src: Source file path
+        dst: Destination file path
+        overwrite: Whether to overwrite existing file
+
     Returns:
-        是否复制成功
-        
+        Whether copy was successful
+
     Raises:
-        FileError: 复制失败时
+        FileError: When copy fails
     """
     src_path = Path(src)
     dst_path = Path(dst)
@@ -215,27 +215,27 @@ def copy_file_safely(src: Union[str, Path], dst: Union[str, Path],
         raise FileError(f"Destination file exists and overwrite is disabled: {dst}", file_path=str(dst))
     
     try:
-        # 确保目标目录存在
+        # Ensure destination directory exists
         ensure_directory(dst_path.parent)
-        
-        # 复制文件
+
+        # Copy file
         shutil.copy2(src_path, dst_path)
         logger.debug(f"Copied file: {src} -> {dst}")
         return True
-        
+
     except Exception as e:
         raise FileError(f"Failed to copy file: {src} -> {dst}", file_path=str(src)) from e
 
 
 def delete_file_safely(filepath: Union[str, Path]) -> bool:
     """
-    安全地删除文件
-    
+    Safely delete a file
+
     Args:
-        filepath: 要删除的文件路径
-    
+        filepath: File path to delete
+
     Returns:
-        是否删除成功
+        Whether deletion was successful
     """
     path = Path(filepath)
     
@@ -254,13 +254,13 @@ def delete_file_safely(filepath: Union[str, Path]) -> bool:
 
 def open_directory_in_system(directory: Union[str, Path]) -> bool:
     """
-    在系统文件管理器中打开目录
-    
+    Open directory in system file manager
+
     Args:
-        directory: 要打开的目录路径
-    
+        directory: Directory path to open
+
     Returns:
-        是否成功打开
+        Whether successfully opened
     """
     import platform
     import subprocess
@@ -289,18 +289,18 @@ def open_directory_in_system(directory: Union[str, Path]) -> bool:
         return False
 
 
-def generate_output_filename(input_filename: str, suffix: str, 
+def generate_output_filename(input_filename: str, suffix: str,
                            directory: Optional[Union[str, Path]] = None) -> str:
     """
-    根据输入文件名生成输出文件名
-    
+    Generate output filename based on input filename
+
     Args:
-        input_filename: 输入文件名
-        suffix: 要添加的后缀
-        directory: 输出目录，如果为None则使用输入文件的目录
-    
+        input_filename: Input filename
+        suffix: Suffix to add
+        directory: Output directory, if None use input file's directory
+
     Returns:
-        生成的输出文件路径
+        Generated output file path
     """
     input_path = Path(input_filename)
     base_name = input_path.stem
@@ -316,13 +316,13 @@ def generate_output_filename(input_filename: str, suffix: str,
 
 def get_directory_size(directory: Union[str, Path]) -> int:
     """
-    计算目录的总大小
-    
+    Calculate total size of directory
+
     Args:
-        directory: 目录路径
-    
+        directory: Directory path
+
     Returns:
-        目录总大小（字节）
+        Total directory size (bytes)
     """
     total_size = 0
     directory = Path(directory)
@@ -339,14 +339,14 @@ def get_directory_size(directory: Union[str, Path]) -> int:
 
 def cleanup_temp_files(directory: Union[str, Path], pattern: str = "*.tmp") -> int:
     """
-    清理目录中的临时文件
-    
+    Clean up temporary files in directory
+
     Args:
-        directory: 要清理的目录
-        pattern: 文件模式，默认为 "*.tmp"
-    
+        directory: Directory to clean
+        pattern: File pattern, default is "*.tmp"
+
     Returns:
-        清理的文件数量
+        Number of files cleaned
     """
     directory = Path(directory)
     cleaned_count = 0

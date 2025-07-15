@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-主窗口模块
-实现图形界面
+Main window module
+Implements graphical interface
 """
 
 import os
@@ -30,7 +30,7 @@ from pktmask.infrastructure.logging import get_logger
 from pktmask.config import get_app_config
 from .stylesheet import generate_stylesheet
 
-# PROCESS_DISPLAY_NAMES 已移至 common.constants
+# PROCESS_DISPLAY_NAMES moved to common.constants
 
 class GuideDialog(QDialog):
     """处理指南对话框"""
@@ -49,10 +49,10 @@ class GuideDialog(QDialog):
 
 class PipelineThread(QThread):
     """
-    一个统一的线程来运行处理流水线。
-    它通过信号将结构化的进度数据发送到主线程。
-    
-    @deprecated: 该类已废弃，请使用 ServicePipelineThread 代替
+    A unified thread to run processing pipeline.
+    It sends structured progress data to main thread through signals.
+
+    @deprecated: This class is deprecated, please use ServicePipelineThread instead
     """
     progress_signal = pyqtSignal(PipelineEvents, dict)
 
@@ -85,13 +85,13 @@ class PipelineThread(QThread):
         self.is_running = False
         if self._pipeline:
             self._pipeline.stop()
-        # 发送停止日志和结束事件来触发 UI 恢复
+        # Send stop log and end event to trigger UI recovery
         self.progress_signal.emit(PipelineEvents.LOG, {'message': '--- Pipeline Stopped by User ---'})
         self.progress_signal.emit(PipelineEvents.PIPELINE_END, {})
 
 class ServicePipelineThread(QThread):
     """
-    使用服务接口的处理线程。
+    Processing thread using service interface.
     """
     progress_signal = pyqtSignal(PipelineEvents, dict)
 
@@ -127,7 +127,7 @@ class ServicePipelineThread(QThread):
         self.progress_signal.emit(PipelineEvents.PIPELINE_END, {})
 
 class MainWindow(QMainWindow):
-    """主窗口"""
+    """Main window"""
     
     # 定义信号
     error_occurred = pyqtSignal(str)  # 错误发生信号，用于自动化测试
@@ -136,7 +136,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self._logger = get_logger('main_window')
         
-        # 初始化配置管理器
+        # Initialize configuration manager
         self.config = get_app_config()
         
         # 注册配置变更回调 (简化版本暂时移除复杂的回调机制)
@@ -168,7 +168,7 @@ class MainWindow(QMainWindow):
         # 初始化UI
         self.ui_manager.init_ui()
         
-        self._logger.info("PktMask主窗口初始化完成")
+        self._logger.info("PktMask main window initialization completed")
     
     def _init_managers(self):
         """初始化所有管理器"""
@@ -185,10 +185,10 @@ class MainWindow(QMainWindow):
         self.report_manager = ReportManager(self)
         self.dialog_manager = DialogManager(self)
         
-        # 设置管理器间的事件订阅
+        # Setup inter-manager event subscriptions
         self._setup_manager_subscriptions()
         
-        self._logger.debug("所有管理器初始化完成")
+        self._logger.debug("All managers initialization completed")
     def _setup_manager_subscriptions(self):
         """设置管理器间的订阅关系"""
         # 订阅统计更新

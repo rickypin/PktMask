@@ -36,22 +36,22 @@ alwaysApply: false
 ### 2.2 docs/
 ```
 docs/
-├─ api/             # API 参考
-├─ development/     # 开发文档（architecture/implementation/migration）
-├─ reports/         # 技术报告
-└─ user/            # 用户指南
+├─ api/             # API reference
+├─ development/     # Development documentation (architecture/implementation/migration)
+├─ reports/         # Technical reports
+└─ user/            # User guides
 ```
 ### 2.3 scripts/
-- build/       打包、CI/CD 脚本。
-- test/        人工测试/演示脚本。
-- validation/  样本分析、结果验证脚本。
-- migration/   一次性迁移工具。
-- hooks/       Git 钩子脚本。
+- build/       Packaging, CI/CD scripts.
+- test/        Manual testing/demo scripts.
+- validation/  Sample analysis, result verification scripts.
+- migration/   One-time migration tools.
+- hooks/       Git hook scripts.
 
 ### 2.4 output/
-- processed/ 文件处理结果。
-- reports/    运行报告。
-- temp/       临时文件（可清理）。
+- processed/ File processing results.
+- reports/    Runtime reports.
+- temp/       Temporary files (can be cleaned).
 
 ---
 

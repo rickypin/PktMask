@@ -2,60 +2,60 @@
 # -*- coding: utf-8 -*-
 
 """
-字符串格式化工具模块
-提供统一的字符串处理和格式化功能
+String formatting utility module
+Provides unified string processing and formatting functionality
 """
 
 from typing import List, Dict, Any, Optional
 from ..common.constants import FormatConstants
 
 
-def create_separator(length: int = FormatConstants.SEPARATOR_LENGTH, 
+def create_separator(length: int = FormatConstants.SEPARATOR_LENGTH,
                     char: str = FormatConstants.STEP_SEPARATOR) -> str:
     """
-    创建分隔符字符串
-    
+    Create a separator string
+
     Args:
-        length: 分隔符长度
-        char: 分隔符字符
-    
+        length: Separator length
+        char: Separator character
+
     Returns:
-        分隔符字符串
+        Separator string
     """
     return char * length
 
 
-def format_ip_mapping(original_ip: str, masked_ip: str, 
+def format_ip_mapping(original_ip: str, masked_ip: str,
                      ip_width: int = FormatConstants.IP_DISPLAY_WIDTH) -> str:
     """
-    格式化IP映射显示
-    
+    Format IP mapping display
+
     Args:
-        original_ip: 原始IP地址
-        masked_ip: 匿名化IP地址
-        ip_width: IP地址显示宽度
-    
+        original_ip: Original IP address
+        masked_ip: Anonymized IP address
+        ip_width: IP address display width
+
     Returns:
-        格式化的IP映射字符串
+        Formatted IP mapping string
     """
     formatted_original = f"{original_ip:<{ip_width}}"
     return f"{formatted_original}{FormatConstants.IP_MAPPING_SEPARATOR}{masked_ip}"
 
 
-def format_step_summary(step_name: str, original_count: int, processed_count: int, 
+def format_step_summary(step_name: str, original_count: int, processed_count: int,
                        rate: float, emoji: str = "🔧") -> str:
     """
-    格式化处理步骤摘要
-    
+    Format processing step summary
+
     Args:
-        step_name: 步骤名称
-        original_count: 原始数量
-        processed_count: 处理数量
-        rate: 处理率
-        emoji: 步骤图标
-    
+        step_name: Step name
+        original_count: Original count
+        processed_count: Processed count
+        rate: Processing rate
+        emoji: Step icon
+
     Returns:
-        格式化的步骤摘要字符串
+        Formatted step summary string
     """
     step_display = f"{step_name:<{FormatConstants.STEP_NAME_WIDTH}}"
     original_display = f"{original_count:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM}}"
@@ -65,19 +65,19 @@ def format_step_summary(step_name: str, original_count: int, processed_count: in
     return f"  {emoji} {step_display} | Original: {original_display} | Processed: {processed_display} | Rate: {rate_display}"
 
 
-def format_deduplication_summary(step_name: str, unique_count: int, removed_count: int, 
+def format_deduplication_summary(step_name: str, unique_count: int, removed_count: int,
                                 rate: float) -> str:
     """
-    格式化去重步骤摘要
-    
+    Format deduplication step summary
+
     Args:
-        step_name: 步骤名称
-        unique_count: 唯一包数量
-        removed_count: 移除包数量
-        rate: 去重率
-    
+        step_name: Step name
+        unique_count: Unique packet count
+        removed_count: Removed packet count
+        rate: Deduplication rate
+
     Returns:
-        格式化的去重摘要字符串
+        Formatted deduplication summary string
     """
     step_display = f"{step_name:<{FormatConstants.STEP_NAME_WIDTH}}"
     unique_display = f"{unique_count:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM}}"
@@ -87,19 +87,19 @@ def format_deduplication_summary(step_name: str, unique_count: int, removed_coun
     return f"  🔄 {step_display} | Unique Pkts: {unique_display} | Removed Pkts: {removed_display} | Rate: {rate_display}"
 
 
-def format_trimming_summary(step_name: str, full_packets: int, trimmed_packets: int, 
+def format_trimming_summary(step_name: str, full_packets: int, trimmed_packets: int,
                           rate: float) -> str:
     """
-    格式化裁切步骤摘要
-    
+    Format trimming step summary
+
     Args:
-        step_name: 步骤名称
-        full_packets: 完整包数量
-        trimmed_packets: 裁切包数量
-        rate: 裁切率
-    
+        step_name: Step name
+        full_packets: Full packet count
+        trimmed_packets: Trimmed packet count
+        rate: Trimming rate
+
     Returns:
-        格式化的裁切摘要字符串
+        Formatted trimming summary string
     """
     step_display = f"{step_name:<{FormatConstants.STEP_NAME_WIDTH}}"
     full_display = f"{full_packets:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_LARGE}}"
@@ -109,19 +109,19 @@ def format_trimming_summary(step_name: str, full_packets: int, trimmed_packets: 
     return f"  ✂️  {step_display} | Full Pkts: {full_display} | Trimmed Pkts: {trimmed_display} | Rate: {rate_display}"
 
 
-def format_ip_mapping_list(ip_mappings: Dict[str, str], 
+def format_ip_mapping_list(ip_mappings: Dict[str, str],
                           max_display: Optional[int] = None,
                           show_numbers: bool = True) -> str:
     """
-    格式化IP映射列表
-    
+    Format IP mapping list
+
     Args:
-        ip_mappings: IP映射字典
-        max_display: 最大显示数量，None表示显示全部
-        show_numbers: 是否显示序号
-    
+        ip_mappings: IP mapping dictionary
+        max_display: Maximum display count, None means show all
+        show_numbers: Whether to show sequence numbers
+
     Returns:
-        格式化的IP映射列表字符串
+        Formatted IP mapping list string
     """
     if not ip_mappings:
         return ""
@@ -152,57 +152,57 @@ def format_ip_mapping_list(ip_mappings: Dict[str, str],
     return "\n".join(lines)
 
 
-def format_section_header(title: str, emoji: str = "📋", 
+def format_section_header(title: str, emoji: str = "📋",
                          separator_length: int = FormatConstants.SEPARATOR_LENGTH) -> str:
     """
-    格式化章节标题
-    
+    Format section header
+
     Args:
-        title: 标题文本
-        emoji: 标题图标
-        separator_length: 分隔符长度
-    
+        title: Title text
+        emoji: Title icon
+        separator_length: Separator length
+
     Returns:
-        格式化的章节标题字符串
+        Formatted section header string
     """
     separator = create_separator(separator_length)
     return f"\n{separator}\n{emoji} {title}\n{separator}\n"
 
 
-def format_summary_section(title: str, items: List[str], 
+def format_summary_section(title: str, items: List[str],
                           emoji: str = "📈") -> str:
     """
-    格式化摘要章节
-    
+    Format summary section
+
     Args:
-        title: 章节标题
-        items: 摘要项目列表
-        emoji: 章节图标
-    
+        title: Section title
+        items: Summary item list
+        emoji: Section icon
+
     Returns:
-        格式化的摘要章节字符串
+        Formatted summary section string
     """
     lines = [format_section_header(title, emoji)]
-    
+
     for item in items:
-        if item.strip():  # 只添加非空项目
+        if item.strip():  # Only add non-empty items
             lines.append(f"   • {item}")
-    
-    lines.append("")  # 添加空行
+
+    lines.append("")  # Add empty line
     return "\n".join(lines)
 
 
 def format_file_status(filename: str, status: str, details: Optional[List[str]] = None) -> str:
     """
-    格式化文件状态显示
-    
+    Format file status display
+
     Args:
-        filename: 文件名
-        status: 状态（如 "✅", "🔄", "❌"）
-        details: 详细信息列表
-    
+        filename: File name
+        status: Status (e.g., "✅", "🔄", "❌")
+        details: Detailed information list
+
     Returns:
-        格式化的文件状态字符串
+        Formatted file status string
     """
     lines = [f"\n{status} {filename}"]
     
@@ -216,15 +216,15 @@ def format_file_status(filename: str, status: str, details: Optional[List[str]] 
 
 def truncate_string(text: str, max_length: int, ellipsis: str = "...") -> str:
     """
-    截断字符串并添加省略号
-    
+    Truncate string and add ellipsis
+
     Args:
-        text: 原始字符串
-        max_length: 最大长度
-        ellipsis: 省略号字符串
-    
+        text: Original string
+        max_length: Maximum length
+        ellipsis: Ellipsis string
+
     Returns:
-        截断后的字符串
+        Truncated string
     """
     if len(text) <= max_length:
         return text
@@ -235,45 +235,45 @@ def truncate_string(text: str, max_length: int, ellipsis: str = "...") -> str:
     return text[:max_length - len(ellipsis)] + ellipsis
 
 
-def pad_string(text: str, width: int, align: str = FormatConstants.LEFT_ALIGN, 
+def pad_string(text: str, width: int, align: str = FormatConstants.LEFT_ALIGN,
               fill_char: str = " ") -> str:
     """
-    填充字符串到指定宽度
-    
+    Pad string to specified width
+
     Args:
-        text: 原始字符串
-        width: 目标宽度
-        align: 对齐方式（'<', '>', '^'）
-        fill_char: 填充字符
-    
+        text: Original string
+        width: Target width
+        align: Alignment method ('<', '>', '^')
+        fill_char: Fill character
+
     Returns:
-        填充后的字符串
+        Padded string
     """
     if align == FormatConstants.RIGHT_ALIGN:
         return text.rjust(width, fill_char)
     elif align == FormatConstants.CENTER_ALIGN:
         return text.center(width, fill_char)
-    else:  # 默认左对齐
+    else:  # Default left alignment
         return text.ljust(width, fill_char)
 
 
-def join_with_separator(items: List[str], separator: str = ", ", 
+def join_with_separator(items: List[str], separator: str = ", ",
                        empty_text: str = "None") -> str:
     """
-    使用分隔符连接字符串列表
-    
+    Join string list with separator
+
     Args:
-        items: 字符串列表
-        separator: 分隔符
-        empty_text: 空列表时的显示文本
-    
+        items: String list
+        separator: Separator
+        empty_text: Display text for empty list
+
     Returns:
-        连接后的字符串
+        Joined string
     """
     if not items:
         return empty_text
-    
-    # 过滤空字符串
+
+    # Filter empty strings
     filtered_items = [item for item in items if item.strip()]
     
     if not filtered_items:
@@ -282,18 +282,18 @@ def join_with_separator(items: List[str], separator: str = ", ",
     return separator.join(filtered_items)
 
 
-def format_key_value_pairs(data: Dict[str, Any], separator: str = ": ", 
+def format_key_value_pairs(data: Dict[str, Any], separator: str = ": ",
                           line_prefix: str = "   ") -> str:
     """
-    格式化键值对数据
-    
+    Format key-value pair data
+
     Args:
-        data: 键值对字典
-        separator: 键值分隔符
-        line_prefix: 行前缀
-    
+        data: Key-value pair dictionary
+        separator: Key-value separator
+        line_prefix: Line prefix
+
     Returns:
-        格式化的键值对字符串
+        Formatted key-value pair string
     """
     if not data:
         return ""
@@ -308,43 +308,43 @@ def format_key_value_pairs(data: Dict[str, Any], separator: str = ": ",
 
 def clean_filename(filename: str, replacement_char: str = "_") -> str:
     """
-    清理文件名中的非法字符
-    
+    Clean illegal characters from filename
+
     Args:
-        filename: 原始文件名
-        replacement_char: 替换字符
-    
+        filename: Original filename
+        replacement_char: Replacement character
+
     Returns:
-        清理后的文件名
+        Cleaned filename
     """
-    # 定义非法字符
+    # Define illegal characters
     illegal_chars = ['<', '>', ':', '"', '|', '?', '*', '/', '\\']
-    
+
     cleaned = filename
     for char in illegal_chars:
         cleaned = cleaned.replace(char, replacement_char)
-    
-    # 移除多个连续的替换字符
+
+    # Remove multiple consecutive replacement characters
     while replacement_char + replacement_char in cleaned:
         cleaned = cleaned.replace(replacement_char + replacement_char, replacement_char)
-    
-    # 移除开头和结尾的替换字符
+
+    # Remove replacement characters from beginning and end
     cleaned = cleaned.strip(replacement_char)
-    
+
     return cleaned or "unnamed"
 
 
 def format_progress_text(current: int, total: int, item_name: str = "items") -> str:
     """
-    格式化进度文本
-    
+    Format progress text
+
     Args:
-        current: 当前进度
-        total: 总数
-        item_name: 项目名称
-    
+        current: Current progress
+        total: Total count
+        item_name: Item name
+
     Returns:
-        格式化的进度文本
+        Formatted progress text
     """
     if total == 0:
         return f"0 {item_name}"

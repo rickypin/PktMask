@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-报告管理器 - 负责报告生成和显示
+Report Manager - Responsible for report generation and display
 """
 
 import os
@@ -15,41 +15,41 @@ if TYPE_CHECKING:
 from pktmask.infrastructure.logging import get_logger
 
 class ReportManager:
-    """报告管理器 - 负责报告生成和显示"""
-    
+    """Report Manager - Responsible for report generation and display"""
+
     def __init__(self, main_window: 'MainWindow'):
         self.main_window = main_window
         self.config = main_window.config
         self._logger = get_logger(__name__)
-    
+
     def update_log(self, message: str):
-        """更新日志显示"""
+        """Update log display"""
         try:
             timestamp = datetime.now().strftime("%H:%M:%S")
             formatted_message = f"[{timestamp}] {message}"
-            
-            # 添加到日志文本区域
+
+            # Add to log text area
             self.main_window.log_text.append(formatted_message)
-            
-            # 自动滚动到底部
+
+            # Auto-scroll to bottom
             cursor = self.main_window.log_text.textCursor()
             cursor.movePosition(cursor.MoveOperation.End)
             self.main_window.log_text.setTextCursor(cursor)
-            
-            self._logger.debug(f"UI日志更新: {message}")
-            
+
+            self._logger.debug(f"UI log updated: {message}")
+
         except Exception as e:
-            self._logger.error(f"更新日志显示时发生错误: {e}")
-    
+            self._logger.error(f"Error occurred while updating log display: {e}")
+
     def generate_partial_summary_on_stop(self):
-        """生成用户停止时的部分汇总统计"""
+        """Generate partial summary statistics when user stops processing"""
         separator_length = 70
         
-        # 计算当前的时间
+        # Calculate current time
         if self.main_window.timer:
             self.main_window.timer.stop()
-        
-        # 停止统计管理器的计时
+
+        # Stop statistics manager timing
         if hasattr(self.main_window, 'pipeline_manager') and hasattr(self.main_window.pipeline_manager, 'statistics'):
             self.main_window.pipeline_manager.statistics.stop_timing()
             
@@ -59,14 +59,14 @@ class ReportManager:
         partial_files = self.main_window.files_processed_count
         partial_packets = self.main_window.packets_processed_count
         
-        # 生成停止汇总报告
+        # Generate stop summary report
         stop_report = f"\n{'='*separator_length}\n⏹️ PROCESSING STOPPED BY USER\n{'='*separator_length}\n"
         stop_report += f"📊 Partial Statistics (Completed Portion):\n"
         stop_report += f"   • Files Processed: {partial_files}\n"
         stop_report += f"   • Packets Processed: {partial_packets:,}\n"
         stop_report += f"   • Processing Time: {partial_time}\n"
-        
-        # 计算部分处理速度
+
+        # Calculate partial processing speed
         try:
             time_parts = partial_time.split(':')
             if len(time_parts) >= 2:
@@ -83,8 +83,8 @@ class ReportManager:
                 stop_report += f"   • Average Speed: N/A\n\n"
         except:
             stop_report += f"   • Average Speed: N/A\n\n"
-        
-        # 显示已启用的处理步骤
+
+        # Display enabled processing steps
         enabled_steps = []
         if self.main_window.anonymize_ips_cb.isChecked():
             enabled_steps.append("IP Anonymization")
@@ -92,32 +92,32 @@ class ReportManager:
             enabled_steps.append("Deduplication")
         if self.main_window.mask_payloads_cb.isChecked():
             enabled_steps.append("Payload Masking")
-        
+
         stop_report += f"🔧 Configured Processing Steps: {', '.join(enabled_steps)}\n"
         stop_report += f"📁 Working Directory: {os.path.basename(self.main_window.base_dir) if self.main_window.base_dir else 'N/A'}\n"
         stop_report += f"⚠️ Processing was interrupted. All intermediate files have been cleaned up.\n"
         stop_report += f"❌ No completed output files were generated due to interruption.\n"
         stop_report += f"{'='*separator_length}\n"
-        
+
         self.main_window.summary_text.append(stop_report)
-        
-        # 检查并显示文件处理状态
+
+        # Check and display file processing status
         if self.main_window.file_processing_results:
             files_status_report = self._generate_files_status_report(separator_length)
             self.main_window.summary_text.append(files_status_report)
-        
-        # 显示全局IP映射汇总（仅当有完全完成的文件时）
+
+        # Display global IP mapping summary (only when there are fully completed files)
         if self.main_window.processed_files_count >= 1 and self.main_window.global_ip_mappings:
             global_partial_report = self._generate_global_ip_mappings_report(separator_length, True)
             if global_partial_report:
                 self.main_window.summary_text.append(global_partial_report)
         
-        # 显示Enhanced Masking智能处理统计（如果有）
+        # Display Enhanced Masking intelligent processing statistics (if any)
         enhanced_partial_report = self._generate_enhanced_masking_report(separator_length, is_partial=True)
         if enhanced_partial_report:
             self.main_window.summary_text.append(enhanced_partial_report)
-        
-        # 修正的重启提示
+
+        # Corrected restart hint
         restart_hint = f"\n💡 RESTART INFORMATION:\n"
         restart_hint += f"   • Clicking 'Start' will restart processing from the beginning\n"
         restart_hint += f"   • All files will be reprocessed (no partial resume capability)\n"
@@ -126,7 +126,7 @@ class ReportManager:
         self.main_window.summary_text.append(restart_hint)
     
     def _generate_files_status_report(self, separator_length: int) -> str:
-        """生成文件处理状态报告"""
+        """Generate file processing status report"""
         files_status_report = f"\n{'='*separator_length}\n📋 FILES PROCESSING STATUS (At Stop)\n{'='*separator_length}\n"
         
         completed_files = 0
@@ -137,7 +137,7 @@ class ReportManager:
             if not steps_data:
                 continue
             
-            # 检查文件是否完整处理完成（所有配置的步骤都完成）
+            # Check if file is fully processed (all configured steps completed)
             expected_steps = set()
             if self.main_window.anonymize_ips_cb.isChecked():
                 expected_steps.add("IP Anonymization")
@@ -166,11 +166,11 @@ class ReportManager:
         return files_status_report
     
     def _generate_completed_file_report(self, filename: str, steps_data: Dict) -> str:
-        """生成已完成文件的报告"""
+        """Generate report for completed file"""
         report = f"\n✅ {filename}\n"
         report += f"   Status: FULLY COMPLETED\n"
         
-        # 获取最终输出文件名
+        # Get final output filename
         step_order = ['Deduplication', 'IP Anonymization', 'Payload Masking']
         final_output = None
         for step_name in reversed(step_order):
@@ -183,11 +183,11 @@ class ReportManager:
         if final_output:
             report += f"   Output File: {final_output}\n"
         
-        # 显示详细结果
+        # Display detailed results
         original_packets = 0
         file_ip_mappings = {}
 
-        # 优先从Deduplication步骤获取原始包数
+        # Prioritize getting original packet count from Deduplication step
         if 'Deduplication' in steps_data:
             original_packets = steps_data['Deduplication']['data'].get('total_packets', 0)
         elif 'IP Anonymization' in steps_data:
@@ -198,33 +198,33 @@ class ReportManager:
         for step_name in step_order:
             if step_name in steps_data:
                 data = steps_data[step_name]['data']
-                
+
                 if step_name == 'IP Anonymization':
-                    # 支持新的AnonStage字段名称（从extra_metrics中获取）
+                    # Support new AnonStage field names (retrieved from extra_metrics)
                     extra_metrics = data.get('extra_metrics', {})
                     original_ips = data.get('original_ips', extra_metrics.get('original_ips', 0))
                     masked_ips = data.get('anonymized_ips', extra_metrics.get('anonymized_ips', 0))
                     rate = (masked_ips / original_ips * 100) if original_ips > 0 else 0
                     report += f"   🛡️  IP Anonymization: {original_ips} → {masked_ips} IPs ({rate:.1f}%)\n"
                     file_ip_mappings = data.get('file_ip_mappings', extra_metrics.get('file_ip_mappings', {}))
-                    
+
                 elif step_name == 'Deduplication':
                     unique = data.get('unique_packets', 0)
                     removed = data.get('removed_count', 0)
                     rate = (removed / original_packets * 100) if original_packets > 0 else 0
                     report += f"   🔄 Deduplication: {removed} removed ({rate:.1f}%)\n"
-                
+
                 elif step_name == 'Payload Masking':
-                    # 支持新的MaskPayloadStage字段名称
+                    # Support new MaskPayloadStage field names
                     masked = data.get('packets_modified', data.get('masked_packets', 0))
                     rate = (masked / original_packets * 100) if original_packets > 0 else 0
                     report += f"   ✂️  Payload Masking: {masked} masked ({rate:.1f}%)\n"
         
-        # 显示IP映射（如果有）
+        # Display IP mappings (if any)
         if file_ip_mappings:
             report += f"   🔗 IP Mappings ({len(file_ip_mappings)}):\n"
             for i, (orig_ip, new_ip) in enumerate(sorted(file_ip_mappings.items()), 1):
-                if i <= 5:  # 只显示前5个
+                if i <= 5:  # Only display first 5
                     report += f"      {i}. {orig_ip} → {new_ip}\n"
                 elif i == 6:
                     report += f"      ... and {len(file_ip_mappings) - 5} more\n"
@@ -233,7 +233,7 @@ class ReportManager:
         return report
     
     def _generate_partial_file_report(self, filename: str, completed_steps: set, expected_steps: set) -> str:
-        """生成部分完成文件的报告"""
+        """Generate report for partially completed file"""
         report = f"\n🔄 {filename}\n"
         report += f"   Status: PARTIALLY PROCESSED (Interrupted)\n"
         report += f"   Completed Steps: {', '.join(completed_steps)}\n"
@@ -241,18 +241,18 @@ class ReportManager:
         report += f"   ❌ No final output file generated\n"
         report += f"   🗑️ Temporary files cleaned up automatically\n"
         return report
-    
+
     def _generate_global_ip_mappings_report(self, separator_length: int, is_partial: bool = False) -> Optional[str]:
-        """生成全局IP映射报告"""
-        # 首先检查是否有IP匿名化处理
+        """Generate global IP mapping report"""
+        # First check if IP anonymization processing is enabled
         if not self.main_window.anonymize_ips_cb.isChecked():
             return None
-            
-        # 检查是否有全局IP映射数据
+
+        # Check if global IP mapping data exists
         if not self.main_window.global_ip_mappings:
             return None
-        
-        # 检查是否有完全完成的文件
+
+        # Check if there are fully completed files
         has_completed_files = False
         for filename, file_result in self.main_window.file_processing_results.items():
             expected_steps = set()
@@ -262,7 +262,7 @@ class ReportManager:
                 expected_steps.add("Deduplication")
             if self.main_window.mask_payloads_cb.isChecked():
                 expected_steps.add("Payload Masking")
-            
+
             completed_steps = set(file_result['steps'].keys())
             if expected_steps.issubset(completed_steps):
                 has_completed_files = True
@@ -297,43 +297,43 @@ class ReportManager:
         return global_partial_report
     
     def generate_file_complete_report(self, original_filename: str):
-        """为单个文件生成完整的处理报告"""
+        """Generate complete processing report for a single file"""
         if original_filename not in self.main_window.file_processing_results:
             return
-            
+
         file_results = self.main_window.file_processing_results[original_filename]
         steps_data = file_results['steps']
-        
+
         if not steps_data:
             return
-        
-        # **修复**: 移除重复的文件计数递增（已在main_window.py的FILE_END事件中计数）
-        # self.main_window.processed_files_count += 1  # 移除这行，避免双重计数
-        
+
+        # **Fix**: Remove duplicate file count increment (already counted in main_window.py FILE_END event)
+        # self.main_window.processed_files_count += 1  # Remove this line to avoid double counting
+
         separator_length = 70
         filename_display = original_filename
-        
-        # 文件处理标题
+
+        # File processing title
         header = f"\n{'='*separator_length}\n📄 FILE PROCESSING RESULTS: {filename_display}\n{'='*separator_length}"
         self.main_window.summary_text.append(header)
-        
-        # 获取原始包数（优先从Deduplication步骤获取，因为它包含真正的原始包数）
+
+        # Get original packet count (prioritize from Deduplication step as it contains the true original packet count)
         original_packets = 0
         output_filename = None
         if 'Deduplication' in steps_data:
-            # Deduplication步骤的total_packets是真正的原始包数
+            # Deduplication step's total_packets is the true original packet count
             original_packets = steps_data['Deduplication']['data'].get('total_packets', 0)
             output_filename = steps_data['Deduplication']['data'].get('output_filename')
         elif 'IP Anonymization' in steps_data:
-            # 如果没有去重步骤，从IP匿名化步骤获取
+            # If no deduplication step, get from IP anonymization step
             original_packets = steps_data['IP Anonymization']['data'].get('total_packets', 0)
             output_filename = steps_data['IP Anonymization']['data'].get('output_filename')
         elif 'Payload Masking' in steps_data:
-            # 最后从载荷掩码步骤获取
+            # Finally get from payload masking step
             original_packets = steps_data['Payload Masking']['data'].get('total_packets', 0)
             output_filename = steps_data['Payload Masking']['data'].get('output_filename')
         
-        # 从最后一个处理步骤获取最终输出文件名
+        # Get final output filename from the last processing step
         step_order = ['Deduplication', 'IP Anonymization', 'Payload Masking']
         for step_name in reversed(step_order):
             if step_name in steps_data:
@@ -342,46 +342,46 @@ class ReportManager:
                     output_filename = final_output
                     break
         
-        # 显示原始包数和输出文件名
+        # Display original packet count and output filename
         self.main_window.summary_text.append(f"📦 Original Packets: {original_packets:,}")
         if output_filename:
             self.main_window.summary_text.append(f"📄 Output File: {output_filename}")
         self.main_window.summary_text.append("")
-        
-        # 按处理顺序显示各步骤结果
-        file_ip_mappings = {}  # 存储当前文件的IP映射
-        
-        # **调试日志**: 显示收集到的步骤数据
-        self._logger.info(f"🔍 生成文件报告: {original_filename}")
-        self._logger.info(f"🔍 收集到的步骤: {list(steps_data.keys())}")
+
+        # Display step results in processing order
+        file_ip_mappings = {}  # Store current file's IP mappings
+
+        # **Debug log**: Display collected step data
+        self._logger.info(f"🔍 Generating file report: {original_filename}")
+        self._logger.info(f"🔍 Collected steps: {list(steps_data.keys())}")
         for step_name, step_info in steps_data.items():
-            self._logger.info(f"🔍   {step_name}: 类型={step_info.get('type')}, 数据字段={list(step_info.get('data', {}).keys())}")
-        
-        # 修复：从文件级IP映射缓存中获取IP映射信息
+            self._logger.info(f"🔍   {step_name}: type={step_info.get('type')}, data_fields={list(step_info.get('data', {}).keys())}")
+
+        # Fix: Get IP mapping information from file-level IP mapping cache
         if hasattr(self.main_window, '_current_file_ips') and original_filename in self.main_window._current_file_ips:
             file_ip_mappings = self.main_window._current_file_ips[original_filename]
-        
+
         for step_name in step_order:
             if step_name in steps_data:
                 step_result = steps_data[step_name]
                 step_type = step_result['type']
                 data = step_result['data']
-                
-                self._logger.info(f"🔍 处理步骤 {step_name}: 类型={step_type}")
-                
-                # 对于Payload Masking，记录详细的数据字段
+
+                self._logger.info(f"🔍 Processing step {step_name}: type={step_type}")
+
+                # For Payload Masking, record detailed data fields
                 if step_name == 'Payload Masking':
-                    self._logger.info(f"🔍 Payload Masking数据: packets_processed={data.get('packets_processed')}, packets_modified={data.get('packets_modified')}")
-                    self._logger.info(f"🔍 Payload Masking数据: total_packets={data.get('total_packets')}, masked_packets={data.get('masked_packets')}")
+                    self._logger.info(f"🔍 Payload Masking data: packets_processed={data.get('packets_processed')}, packets_modified={data.get('packets_modified')}")
+                    self._logger.info(f"🔍 Payload Masking data: total_packets={data.get('total_packets')}, masked_packets={data.get('masked_packets')}")
                 
-                if step_type in ['anonymize_ips', 'mask_ip', 'mask_ips']:  # 支持标准命名和旧命名
-                    # 使用新的IP统计数据
+                if step_type in ['anonymize_ips', 'mask_ip', 'mask_ips']:  # Support standard naming and legacy naming
+                    # Use new IP statistics data
                     original_ips = data.get('original_ips', 0)
                     masked_ips = data.get('anonymized_ips', 0)
                     rate = (masked_ips / original_ips * 100) if original_ips > 0 else 0
                     line = f"  🛡️  {step_name:<18} | Original IPs: {original_ips:>3} | Anonymized IPs: {masked_ips:>3} | Rate: {rate:5.1f}%"
 
-                    # IP映射已在上面从缓存中获取
+                    # IP mappings already retrieved from cache above
 
                 elif step_type == 'remove_dupes':
                     unique = data.get('unique_packets', 0)
@@ -390,23 +390,23 @@ class ReportManager:
                     rate = (removed / total_before * 100) if total_before > 0 else 0
                     line = f"  🔄 {step_name:<18} | Unique Pkts: {unique:>4} | Removed Pkts: {removed:>4} | Rate: {rate:5.1f}%"
 
-                elif step_type in ['mask_payloads']:  # 使用标准命名
-                    # 修复：MaskStage返回的字段名称不同
+                elif step_type in ['mask_payloads']:  # Use standard naming
+                    # Fix: MaskStage returns different field names
                     total = data.get('total_packets', data.get('packets_processed', 0))
                     masked = data.get('masked_packets', data.get('packets_modified', 0))
                     rate = (masked / total * 100) if total > 0 else 0
 
-                    # 检查是否是Enhanced Masking的智能处理结果
+                    # Check if this is Enhanced Masking intelligent processing result
                     if self._is_enhanced_masking(data):
                         line = self._generate_enhanced_masking_report_line(step_name, data)
                     else:
                         line = f"  ✂️  {step_name:<18} | Total Pkts: {total:>5} | Masked Pkts: {masked:>4} | Rate: {rate:5.1f}%"
                 else:
                     continue
-                    
+
                 self.main_window.summary_text.append(line)
-        
-        # 如果有IP映射，显示文件级别的IP映射
+
+        # If IP mappings exist, display file-level IP mappings
         if file_ip_mappings:
             self.main_window.summary_text.append("")
             self.main_window.summary_text.append("🔗 IP Mappings for this file:")
@@ -414,28 +414,28 @@ class ReportManager:
             for i, (orig_ip, new_ip) in enumerate(sorted_mappings, 1):
                 self.main_window.summary_text.append(f"   {i:2d}. {orig_ip:<16} → {new_ip}")
         
-        # 如果使用了Enhanced Masking，显示智能处理详细信息
+        # If Enhanced Masking was used, display intelligent processing details
         enhanced_report = self._generate_enhanced_masking_report_for_file(original_filename, separator_length)
         if enhanced_report:
             self.main_window.summary_text.append(enhanced_report)
-        
-        self.main_window.summary_text.append(f"{'='*separator_length}")
-    
-    def generate_processing_finished_report(self):
-        """生成处理完成时的报告"""
-        separator_length = 70  # 保持一致的分隔线长度
 
-        # **修复**: 在停止计时器和重置统计之前，先保存当前的统计数据
-        # 确保Live Dashboard显示的数据不会被重置影响
+        self.main_window.summary_text.append(f"{'='*separator_length}")
+
+    def generate_processing_finished_report(self):
+        """Generate report when processing is complete"""
+        separator_length = 70  # Maintain consistent separator length
+
+        # **Fix**: Save current statistics data before stopping timer and resetting statistics
+        # Ensure Live Dashboard display data is not affected by reset
         current_files_processed = self.main_window.files_processed_count
         current_packets_processed = self.main_window.packets_processed_count
         current_time_elapsed = self.main_window.time_elapsed_label.text()
 
-        # 停止计时器
+        # Stop timer
         if self.main_window.timer and self.main_window.timer.isActive():
             self.main_window.timer.stop()
 
-        # 停止统计管理器的计时
+        # Stop statistics manager timing
         if hasattr(self.main_window, 'pipeline_manager') and hasattr(self.main_window.pipeline_manager, 'statistics'):
             self.main_window.pipeline_manager.statistics.stop_timing()
 
@@ -456,39 +456,39 @@ class ReportManager:
         completion_report += f"⏱️ Time Elapsed: {current_time_elapsed}\n"
         completion_report += f"🔧 Applied Processing Steps: {', '.join(enabled_steps)}\n"
         
-        # 安全处理输出目录显示
+        # Safely handle output directory display
         if self.main_window.current_output_dir:
             completion_report += f"📁 Output Location: {os.path.basename(self.main_window.current_output_dir)}\n"
         else:
             completion_report += f"📁 Output Location: Not specified\n"
-            
+
         completion_report += f"📝 All processed files saved to output directory.\n"
         completion_report += f"{'='*separator_length}\n"
-        
+
         self.main_window.summary_text.append(completion_report)
-        
-        # 修复：添加全局IP映射汇总报告（多文件处理时显示去重的全局IP映射）
+
+        # Fix: Add global IP mapping summary report (display deduplicated global IP mappings for multi-file processing)
         global_ip_report = self._generate_global_ip_mappings_report(separator_length, is_partial=False)
         if global_ip_report:
             self.main_window.summary_text.append(global_ip_report)
-        
-        # 添加Enhanced Masking智能处理总报告
+
+        # Add Enhanced Masking intelligent processing total report
         enhanced_masking_report = self._generate_enhanced_masking_report(separator_length, is_partial=False)
         if enhanced_masking_report:
             self.main_window.summary_text.append(enhanced_masking_report)
-        
-        # 修复：处理完成后自动保存Summary Report到输出目录
+
+        # Fix: Automatically save Summary Report to output directory after processing completion
         self._save_summary_report_to_output()
 
     def set_final_summary_report(self, report: dict):
-        """设置最终的汇总报告，包括详细的IP映射信息。"""
+        """Set final summary report, including detailed IP mapping information."""
         subdir = report.get('path', 'N/A')
         stats = report.get('stats', {})
         total_mapping = report.get('data', {}).get('total_mapping', {})
         
-        separator_length = 70  # 保持一致的分隔线长度
-        
-        # 添加IP映射的汇总信息，包括详细映射表
+        separator_length = 70  # Maintain consistent separator length
+
+        # Add IP mapping summary information, including detailed mapping table
         text = f"\n{'='*separator_length}\n📋 DIRECTORY PROCESSING SUMMARY\n{'='*separator_length}\n"
         text += f"📂 Directory: {subdir}\n\n"
         text += f"🔒 IP Anonymization Summary:\n"
@@ -497,27 +497,27 @@ class ReportManager:
         
         if total_mapping:
             text += f"📝 Complete IP Mapping Table (All Files):\n"
-            # 按原始IP排序显示映射
+            # Display mappings sorted by original IP
             sorted_mappings = sorted(total_mapping.items())
             for i, (orig_ip, new_ip) in enumerate(sorted_mappings, 1):
                 text += f"   {i:2d}. {orig_ip:<16} → {new_ip}\n"
             text += "\n"
-        
+
         text += f"✅ All IP addresses have been successfully anonymized while\n"
         text += f"   preserving network structure and subnet relationships.\n"
         text += f"{'='*separator_length}\n"
-        
+
         self.main_window.summary_text.append(text)
 
     def update_summary_report(self, data: Dict[str, Any]):
-        """更新摘要报告显示"""
+        """Update summary report display"""
         try:
-            # 根据数据类型生成不同的报告
+            # Generate different reports based on data type
             if 'filename' in data:
-                # 单文件处理报告
+                # Single file processing report
                 self._update_file_summary(data)
             elif 'step_results' in data:
-                # 整体处理摘要
+                # Overall processing summary
                 self._update_overall_summary(data)
             else:
                 step_type = data.get('type')
@@ -526,45 +526,45 @@ class ReportManager:
                     if report_data and 'mask_ip' in step_type:
                         self.set_final_summary_report(report_data)
                 else:
-                    self._logger.warning(f"未知的摘要报告数据格式: {data.keys()}")
-                
+                    self._logger.warning(f"Unknown summary report data format: {data.keys()}")
+
         except Exception as e:
-            self._logger.error(f"更新摘要报告时发生错误: {e}")
-    
+            self._logger.error(f"Error occurred while updating summary report: {e}")
+
     def _update_file_summary(self, data: Dict[str, Any]):
-        """更新单文件处理摘要"""
+        """Update single file processing summary"""
         filename = data.get('filename', 'Unknown file')
-        
-        # 获取当前摘要文本
+
+        # Get current summary text
         current_text = self.main_window.summary_text.toPlainText()
-        
-        # 生成文件摘要
+
+        # Generate file summary
         file_summary = self._generate_file_summary_text(data)
-        
-        # 追加到现有文本
+
+        # Append to existing text
         if current_text.strip():
             updated_text = current_text + "\n\n" + file_summary
         else:
             updated_text = file_summary
-        
+
         self.main_window.summary_text.setPlainText(updated_text)
-        
-        # 滚动到底部
+
+        # Scroll to bottom
         cursor = self.main_window.summary_text.textCursor()
         cursor.movePosition(cursor.MoveOperation.End)
         self.main_window.summary_text.setTextCursor(cursor)
     
     def _update_overall_summary(self, data: Dict[str, Any]):
-        """更新整体处理摘要"""
+        """Update overall processing summary"""
         summary_text = self._generate_overall_summary_text(data)
         self.main_window.summary_text.setPlainText(summary_text)
     
     def _generate_file_summary_text(self, data: Dict[str, Any]) -> str:
-        """生成单文件摘要文本"""
+        """Generate single file summary text"""
         filename = data.get('filename', 'Unknown file')
         summary_parts = [f"📄 {filename}"]
         
-        # 处理结果统计
+        # Processing result statistics
         results = data.get('results', {})
         for step_name, result in results.items():
             if isinstance(result, dict):

@@ -1,31 +1,31 @@
-# PktMask 配置模板
-# 版本: 1.0
+# PktMask Configuration Template
+# Version: 1.0
 
-# 配置版本号
+# Configuration version
 config_version: "1.0"
 
-# 用户界面配置
+# User interface configuration
 ui:
-  # 窗口设置
-  window_width: 1200          # 窗口宽度
-  window_height: 800          # 窗口高度
-  window_min_width: 800       # 最小窗口宽度
-  window_min_height: 600      # 最小窗口高度
-  
-  # 主题和外观
-  theme: "auto"               # 主题模式: auto, light, dark
-  language: "zh_CN"           # 界面语言: zh_CN, en_US
-  font_size: 12               # 字体大小 (8-24)
-  
-  # 默认选项（使用标准GUI命名）
-  default_remove_dupes: true  # 默认启用 Remove Dupes
-  default_anonymize_ips: true # 默认启用 Anonymize IPs
-  default_mask_payloads: true # 默认启用 Mask Payloads
-  
-  # 界面行为
-  remember_last_dir: true     # 记住上次使用的目录
-  auto_open_output: false     # 处理完成后自动打开输出目录
-  show_progress_details: true # 显示详细进度信息
+  # Window settings
+  window_width: 1200          # Window width
+  window_height: 800          # Window height
+  window_min_width: 800       # Minimum window width
+  window_min_height: 600      # Minimum window height
+
+  # Theme and appearance
+  theme: "auto"               # Theme mode: auto, light, dark
+  language: "en_US"           # Interface language: zh_CN, en_US
+  font_size: 12               # Font size (8-24)
+
+  # Default options (using standard GUI naming)
+  default_remove_dupes: true  # Default enable Remove Dupes
+  default_anonymize_ips: true # Default enable Anonymize IPs
+  default_mask_payloads: true # Default enable Mask Payloads
+
+  # Interface behavior
+  remember_last_dir: true     # Remember last used directory
+  auto_open_output: false     # Auto open output directory after processing
+  show_progress_details: true # Show detailed progress information
 
 # 处理过程配置
 processing:
@@ -62,54 +62,54 @@ performance:
   cache_cleanup_interval: 300 # 缓存清理间隔(秒) (60-3600)
   
   # 进度报告
-  progress_update_interval: 100  # 进度更新间隔(包数) (10-10000)
-  enable_detailed_stats: true    # 启用详细统计
+  progress_update_interval: 100  # Progress update interval (packet count) (10-10000)
+  enable_detailed_stats: true    # Enable detailed statistics
 
-# 文件处理配置
+# File processing configuration
 file:
-  # 目录设置
-  default_input_dir: null     # 默认输入目录 (null表示无默认值)
-  default_output_dir: null    # 默认输出目录 (null表示无默认值)
-  output_dir_pattern: "{input_dir_name}-Masked-{timestamp}"  # 输出目录命名模式
-  
-  # 文件大小限制
-  max_file_size_gb: 2.0       # 最大文件大小(GB) (0.1-100.0)
-  min_file_size_bytes: 24     # 最小文件大小(字节) (1-1024)
-  
-  # 支持的文件类型
-  supported_extensions:       # 支持的文件扩展名
+  # Directory settings
+  default_input_dir: null     # Default input directory (null means no default)
+  default_output_dir: null    # Default output directory (null means no default)
+  output_dir_pattern: "{input_dir_name}-Masked-{timestamp}"  # Output directory naming pattern
+
+  # File size limits
+  max_file_size_gb: 2.0       # Maximum file size (GB) (0.1-100.0)
+  min_file_size_bytes: 24     # Minimum file size (bytes) (1-1024)
+
+  # Supported file types
+  supported_extensions:       # Supported file extensions
     - ".pcap"
     - ".pcapng"
-  
-  # 输出设置
-  preserve_timestamps: true   # 保留文件时间戳
-  create_backup: false        # 创建原文件备份
-  cleanup_temp_files: true    # 自动清理临时文件
-  
-  # 报告设置
-  generate_html_report: true  # 生成HTML报告
-  generate_json_report: true  # 生成JSON报告
-  include_detailed_stats: true # 包含详细统计信息
 
-# 日志配置
+  # Output settings
+  preserve_timestamps: true   # Preserve file timestamps
+  create_backup: false        # Create original file backup
+  cleanup_temp_files: true    # Auto cleanup temporary files
+
+  # Report settings
+  generate_html_report: true  # Generate HTML report
+  generate_json_report: true  # Generate JSON report
+  include_detailed_stats: true # Include detailed statistics
+
+# Logging configuration
 logging:
-  # 日志级别
-  console_level: "INFO"       # 控制台日志级别: DEBUG, INFO, WARNING, ERROR, CRITICAL
-  file_level: "DEBUG"         # 文件日志级别: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  # Log levels
+  console_level: "INFO"       # Console log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  file_level: "DEBUG"         # File log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
 
-  # 日志文件设置
-  log_file_path: null         # 日志文件路径 (null表示使用默认路径)
-  max_log_size_mb: 10         # 最大日志文件大小(MB) (1-100)
-  log_backup_count: 5         # 日志备份文件数量 (1-20)
+  # Log file settings
+  log_file_path: null         # Log file path (null means use default path)
+  max_log_size_mb: 10         # Maximum log file size (MB) (1-100)
+  log_backup_count: 5         # Log backup file count (1-20)
 
-  # 日志格式
-  include_timestamp: true     # 包含时间戳
-  include_module_name: true   # 包含模块名
-  include_line_number: false  # 包含行号
+  # Log format
+  include_timestamp: true     # Include timestamp
+  include_module_name: true   # Include module name
+  include_line_number: false  # Include line number
 
-  # 详细日志控制
-  enable_protocol_parsing_logs: false  # 启用协议栈解析详细日志 (调试用)
+  # Detailed log control
+  enable_protocol_parsing_logs: false  # Enable protocol stack parsing detailed logs (for debugging)
 
-# 元数据 (自动生成，请勿手动修改)
+# Metadata (auto-generated, do not modify manually)
 created_at: null
-updated_at: null 
+updated_at: null

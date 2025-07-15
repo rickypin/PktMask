@@ -182,7 +182,7 @@ def build_pipeline_config(
     enable_dedup: bool,
     enable_mask: bool
 ) -> Dict:
-    """根据功能开关构建管道配置（使用标准命名规范）"""
+    """Build pipeline configuration based on feature switches (using standard naming conventions)"""
     config: Dict[str, Dict] = {}
     if enable_anon:
         config["anonymize_ips"] = {"enabled": True}
@@ -191,11 +191,11 @@ def build_pipeline_config(
     if enable_mask:
         config["mask_payloads"] = {
             "enabled": True,
-            "protocol": "tls",  # 协议类型
-            "mode": "enhanced",  # 使用增强模式
+            "protocol": "tls",  # Protocol type
+            "mode": "enhanced",  # Use enhanced mode
             "marker_config": {
-                "preserve": {                    # 修复：添加 preserve 嵌套层级
-                    "application_data": False,   # TLSProtocolMarker 期望的配置结构
+                "preserve": {                    # Fix: Add preserve nested level
+                    "application_data": False,   # TLSProtocolMarker expected configuration structure
                     "handshake": True,
                     "alert": True,
                     "change_cipher_spec": True,

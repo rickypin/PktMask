@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-错误处理基础设施
-提供统一的异常处理、错误恢复和用户通知机制
+Error handling infrastructure
+Provides unified exception handling, error recovery and user notification mechanisms
 """
 
 from .handler import (
@@ -33,7 +33,7 @@ from .registry import (
 )
 
 __all__ = [
-    # 核心处理器
+    # Core handlers
     'ErrorHandler',
     'get_error_handler',
     'install_global_exception_handler',
@@ -44,7 +44,7 @@ __all__ = [
     'handle_gui_error',
     'handle_config_error',
     
-    # 错误恢复
+    # Error recovery
     'ErrorRecoveryManager',
     'RecoveryStrategy', 
     'RecoveryAction',
@@ -52,7 +52,7 @@ __all__ = [
     'get_recovery_manager',
     'attempt_recovery',
     
-    # 上下文管理
+    # Context management
     'ErrorContext',
     'create_error_context',
     'get_context_manager',
@@ -63,7 +63,7 @@ __all__ = [
     'clear_operation',
     'with_context',
     
-    # 装饰器
+    # Decorators
     'handle_errors',
     'handle_gui_errors', 
     'handle_processing_errors',

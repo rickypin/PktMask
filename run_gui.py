@@ -2,29 +2,29 @@
 # -*- coding: utf-8 -*-
 
 """
-PktMask GUI应用程序启动脚本（已弃用）
+PktMask GUI application startup script (deprecated)
 """
 
 import warnings
 import sys
 import os
 
-# 显示弃用警告
+# Show deprecation warning
 warnings.warn(
     "\n" + "="*60 + "\n" +
-    "⚠️  run_gui.py 已弃用！\n" +
+    "⚠️  run_gui.py is deprecated!\n" +
     "\n" +
-    "请使用以下方式启动 PktMask：\n" +
-    "  • GUI 模式：./pktmask 或 python pktmask.py\n" +
-    "  • CLI 模式：./pktmask mask|dedup|anon ...\n" +
+    "Please use the following methods to start PktMask:\n" +
+    "  • GUI mode: ./pktmask or python pktmask.py\n" +
+    "  • CLI mode: ./pktmask mask|dedup|anon ...\n" +
     "\n" +
-    "此文件将在下个版本中移除。\n" +
+    "This file will be removed in the next version.\n" +
     "="*60,
     DeprecationWarning,
     stacklevel=2
 )
 
-# 添加src目录到Python路径，以便能够导入pktmask模块
+# Add src directory to Python path to enable importing pktmask module
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 from pktmask.gui.main_window import main

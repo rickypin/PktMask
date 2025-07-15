@@ -31,7 +31,7 @@ class StageStats(BaseModel):
 
 
 class ProcessResult(BaseModel):
-    """一次完整 Pipeline 执行结果，用于 GUI/CLI/MCP 的统一返回值。"""
+    """Complete Pipeline execution result, used as unified return value for GUI/CLI/MCP."""
 
     success: bool = Field(..., description="整体是否成功")
     input_file: str = Field(..., description="输入文件路径")

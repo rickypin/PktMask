@@ -2,26 +2,26 @@
 # -*- coding: utf-8 -*-
 
 """
-数值计算工具模块
-提供统一的数学计算和统计功能
+Numerical calculation utility module
+Provides unified mathematical calculation and statistical functionality
 """
 
 from typing import Union, Optional, Dict, Any
 from ..common.constants import ProcessingConstants, FormatConstants
 
 
-def calculate_percentage(part: Union[int, float], total: Union[int, float], 
+def calculate_percentage(part: Union[int, float], total: Union[int, float],
                         decimal_places: int = FormatConstants.PERCENTAGE_DECIMAL_PLACES) -> float:
     """
-    计算百分比
-    
+    Calculate percentage
+
     Args:
-        part: 部分数值
-        total: 总数值
-        decimal_places: 小数位数
-    
+        part: Partial value
+        total: Total value
+        decimal_places: Decimal places
+
     Returns:
-        百分比值
+        Percentage value
     """
     if total == 0:
         return 0.0
@@ -33,15 +33,15 @@ def calculate_percentage(part: Union[int, float], total: Union[int, float],
 def calculate_rate(processed: Union[int, float], total: Union[int, float],
                   decimal_places: int = FormatConstants.RATE_DECIMAL_PLACES) -> float:
     """
-    计算处理率（百分比的别名，更语义化）
-    
+    Calculate processing rate (semantic alias for percentage)
+
     Args:
-        processed: 已处理数量
-        total: 总数量
-        decimal_places: 小数位数
-    
+        processed: Processed count
+        total: Total count
+        decimal_places: Decimal places
+
     Returns:
-        处理率
+        Processing rate
     """
     return calculate_percentage(processed, total, decimal_places)
 
@@ -49,15 +49,15 @@ def calculate_rate(processed: Union[int, float], total: Union[int, float],
 def calculate_speed(items: Union[int, float], duration_seconds: float,
                    decimal_places: int = 1) -> float:
     """
-    计算处理速度（items/second）
-    
+    Calculate processing speed (items/second)
+
     Args:
-        items: 处理项目数量
-        duration_seconds: 持续时间（秒）
-        decimal_places: 小数位数
-    
+        items: Number of processed items
+        duration_seconds: Duration (seconds)
+        decimal_places: Decimal places
+
     Returns:
-        处理速度（items/second）
+        Processing speed (items/second)
     """
     if duration_seconds <= 0:
         return 0.0
@@ -69,33 +69,33 @@ def calculate_speed(items: Union[int, float], duration_seconds: float,
 def safe_divide(numerator: Union[int, float], denominator: Union[int, float],
                default: Union[int, float] = 0) -> float:
     """
-    安全除法，避免除零错误
-    
+    Safe division to avoid division by zero errors
+
     Args:
-        numerator: 分子
-        denominator: 分母
-        default: 除零时的默认值
-    
+        numerator: Numerator
+        denominator: Denominator
+        default: Default value when dividing by zero
+
     Returns:
-        除法结果
+        Division result
     """
     if denominator == 0:
         return float(default)
     return numerator / denominator
 
 
-def format_number(number: Union[int, float], decimal_places: int = 0, 
+def format_number(number: Union[int, float], decimal_places: int = 0,
                  thousands_separator: bool = True) -> str:
     """
-    格式化数字显示
-    
+    Format number display
+
     Args:
-        number: 要格式化的数字
-        decimal_places: 小数位数
-        thousands_separator: 是否使用千位分隔符
-    
+        number: Number to format
+        decimal_places: Decimal places
+        thousands_separator: Whether to use thousands separator
+
     Returns:
-        格式化的数字字符串
+        Formatted number string
     """
     if decimal_places == 0:
         number = int(number)
@@ -104,7 +104,7 @@ def format_number(number: Union[int, float], decimal_places: int = 0,
         format_str = f"{{:.{decimal_places}f}}"
         formatted = format_str.format(number)
         if thousands_separator:
-            # 处理带小数点的千位分隔符
+            # Handle thousands separator with decimal points
             parts = formatted.split('.')
             parts[0] = f"{int(parts[0]):,}"
             return '.'.join(parts)
@@ -113,14 +113,14 @@ def format_number(number: Union[int, float], decimal_places: int = 0,
 
 def format_size_bytes(size_bytes: int, decimal_places: int = 2) -> str:
     """
-    格式化字节大小为可读格式
-    
+    Format byte size to readable format
+
     Args:
-        size_bytes: 字节大小
-        decimal_places: 小数位数
-    
+        size_bytes: Byte size
+        decimal_places: Decimal places
+
     Returns:
-        格式化的大小字符串，如 "1.23 MB"
+        Formatted size string, e.g., "1.23 MB"
     """
     if size_bytes == 0:
         return "0 B"
@@ -141,13 +141,13 @@ def format_size_bytes(size_bytes: int, decimal_places: int = 2) -> str:
 
 def calculate_statistics(values: list) -> Dict[str, Any]:
     """
-    计算基本统计信息
-    
+    Calculate basic statistical information
+
     Args:
-        values: 数值列表
-    
+        values: List of values
+
     Returns:
-        包含统计信息的字典
+        Dictionary containing statistical information
     """
     if not values:
         return {
@@ -159,8 +159,8 @@ def calculate_statistics(values: list) -> Dict[str, Any]:
             'median': 0
         }
     
-    values = [v for v in values if v is not None]  # 过滤None值
-    
+    values = [v for v in values if v is not None]  # Filter None values
+
     if not values:
         return {
             'count': 0,
@@ -170,13 +170,13 @@ def calculate_statistics(values: list) -> Dict[str, Any]:
             'max': 0,
             'median': 0
         }
-    
+
     count = len(values)
     total = sum(values)
     mean = total / count
     sorted_values = sorted(values)
-    
-    # 计算中位数
+
+    # Calculate median
     if count % 2 == 0:
         median = (sorted_values[count // 2 - 1] + sorted_values[count // 2]) / 2
     else:
@@ -192,53 +192,53 @@ def calculate_statistics(values: list) -> Dict[str, Any]:
     }
 
 
-def format_processing_summary(original_count: int, processed_count: int, 
+def format_processing_summary(original_count: int, processed_count: int,
                             step_name: str, unit_name: str = "items") -> str:
     """
-    格式化处理摘要信息
-    
+    Format processing summary information
+
     Args:
-        original_count: 原始数量
-        processed_count: 处理数量
-        step_name: 处理步骤名称
-        unit_name: 单位名称
-    
+        original_count: Original count
+        processed_count: Processed count
+        step_name: Processing step name
+        unit_name: Unit name
+
     Returns:
-        格式化的摘要字符串
+        Formatted summary string
     """
     rate = calculate_percentage(processed_count, original_count)
     return (f"{step_name}: {format_number(processed_count)} / "
             f"{format_number(original_count)} {unit_name} ({rate:.1f}%)")
 
 
-def clamp(value: Union[int, float], min_value: Union[int, float], 
+def clamp(value: Union[int, float], min_value: Union[int, float],
          max_value: Union[int, float]) -> Union[int, float]:
     """
-    将数值限制在指定范围内
-    
+    Clamp value within specified range
+
     Args:
-        value: 要限制的值
-        min_value: 最小值
-        max_value: 最大值
-    
+        value: Value to clamp
+        min_value: Minimum value
+        max_value: Maximum value
+
     Returns:
-        限制后的值
+        Clamped value
     """
     return max(min_value, min(value, max_value))
 
 
-def normalize_value(value: Union[int, float], min_value: Union[int, float], 
+def normalize_value(value: Union[int, float], min_value: Union[int, float],
                    max_value: Union[int, float]) -> float:
     """
-    将数值标准化到0-1范围
-    
+    Normalize value to 0-1 range
+
     Args:
-        value: 要标准化的值
-        min_value: 最小值
-        max_value: 最大值
-    
+        value: Value to normalize
+        min_value: Minimum value
+        max_value: Maximum value
+
     Returns:
-        标准化后的值（0-1）
+        Normalized value (0-1)
     """
     if max_value == min_value:
         return 0.0
@@ -248,14 +248,14 @@ def normalize_value(value: Union[int, float], min_value: Union[int, float],
 
 def moving_average(values: list, window_size: int) -> list:
     """
-    计算移动平均值
-    
+    Calculate moving average
+
     Args:
-        values: 数值列表
-        window_size: 窗口大小
-    
+        values: List of values
+        window_size: Window size
+
     Returns:
-        移动平均值列表
+        List of moving averages
     """
     if window_size <= 0 or window_size > len(values):
         return values.copy()
@@ -272,15 +272,15 @@ def moving_average(values: list, window_size: int) -> list:
 def calculate_growth_rate(old_value: Union[int, float], new_value: Union[int, float],
                          decimal_places: int = 2) -> float:
     """
-    计算增长率
-    
+    Calculate growth rate
+
     Args:
-        old_value: 旧值
-        new_value: 新值
-        decimal_places: 小数位数
-    
+        old_value: Old value
+        new_value: New value
+        decimal_places: Decimal places
+
     Returns:
-        增长率（百分比）
+        Growth rate (percentage)
     """
     if old_value == 0:
         return float('inf') if new_value > 0 else 0.0

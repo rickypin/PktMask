@@ -1,7 +1,7 @@
 """
-去重处理器
+Deduplication processor
 
-直接实现去重功能，不依赖Legacy Steps。
+Directly implements deduplication functionality without relying on Legacy Steps.
 """
 import os
 from typing import Optional, Set, Dict
@@ -18,9 +18,9 @@ except ImportError:
 
 
 class DeduplicationProcessor(BaseProcessor):
-    """去重处理器
-    
-    直接实现数据包去重功能。
+    """Deduplication processor
+
+    Directly implements packet deduplication functionality.
     """
     
     def __init__(self, config: ProcessorConfig):
@@ -29,16 +29,16 @@ class DeduplicationProcessor(BaseProcessor):
         self._packet_hashes: Set[str] = set()
         
     def _initialize_impl(self):
-        """初始化去重组件"""
+        """Initialize deduplication components"""
         try:
             if rdpcap is None:
-                raise ImportError("Scapy库未安装，无法进行去重处理")
-            
+                raise ImportError("Scapy library not installed, cannot perform deduplication")
+
             self._packet_hashes.clear()
-            self._logger.info("去重处理器初始化成功")
-            
+            self._logger.info("Deduplication processor initialized successfully")
+
         except Exception as e:
-            self._logger.error(f"去重处理器初始化失败: {e}")
+            self._logger.error(f"Deduplication processor initialization failed: {e}")
             raise
             
     def process_file(self, input_path: str, output_path: str) -> ProcessorResult:

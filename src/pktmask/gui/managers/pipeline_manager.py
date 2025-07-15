@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Pipeline管理器 - 负责处理流程控制
+Pipeline Manager - Responsible for processing flow control
 """
 
 from typing import TYPE_CHECKING
@@ -22,55 +22,55 @@ from pktmask.infrastructure.logging import get_logger
 from .statistics_manager import StatisticsManager
 
 class PipelineManager:
-    """Pipeline管理器 - 负责处理流程控制"""
+    """Pipeline Manager - Responsible for processing flow control"""
     
     def __init__(self, main_window: 'MainWindow'):
         self.main_window = main_window
         self.config = main_window.config
         self._logger = get_logger(__name__)
         
-        # 集成统计管理器
+        # Integrate statistics manager
         self.statistics = StatisticsManager()
-        
-        # 处理状态
+
+        # Processing state
         self.processing_thread: 'PipelineThread' = None
         self.user_stopped = False
-        
-        # 保留计时器设置
+
+        # Retain timer setup
         self._setup_timer()
-    
-    # === 直接使用statistics属性，无需额外访问器 ===
-    
+
+    # === Use statistics attribute directly, no additional accessors needed ===
+
     def _setup_timer(self):
-        """设置计时器"""
+        """Set up timer"""
         self.main_window.time_elapsed = 0
         self.main_window.timer = QTimer()
         self.main_window.timer.timeout.connect(self.main_window.update_time_elapsed)
     
     def toggle_pipeline_processing(self):
-        """切换处理流程状态"""
+        """Toggle processing flow state"""
         if self.processing_thread and self.processing_thread.isRunning():
             self.stop_pipeline_processing()
         else:
             self.start_pipeline_processing()
     
     def start_pipeline_processing(self):
-        """开始处理流程"""
+        """Start processing flow"""
         if not self.main_window.base_dir:
             from PyQt6.QtWidgets import QMessageBox
             QMessageBox.warning(self.main_window, "Warning", "Please choose an input folder to process.")
             return
 
-        # 生成实际输出目录路径
+        # Generate actual output directory path
         self.main_window.current_output_dir = self.main_window.file_manager.generate_actual_output_path()
         
-        # 创建输出目录
+        # Create output directory
         try:
             import os
             os.makedirs(self.main_window.current_output_dir, exist_ok=True)
             self.main_window.update_log(f"📁 Created output directory: {os.path.basename(self.main_window.current_output_dir)}")
             
-            # 更新输出路径显示
+            # Update output path display
             self.main_window.output_path_label.setText(os.path.basename(self.main_window.current_output_dir))
         except Exception as e:
             from PyQt6.QtWidgets import QMessageBox
@@ -84,67 +84,67 @@ class PipelineManager:
         self.main_window.files_processed_count = 0
         self.main_window.packets_processed_count = 0
         
-        # 重置Live Dashboard显示
+        # Reset Live Dashboard display
         self.main_window.files_processed_label.setText("0")
         self.main_window.packets_processed_label.setText("0")
         self.main_window.subdirs_files_counted.clear()
         self.main_window.subdirs_packets_counted.clear()
         self.main_window.printed_summary_headers.clear()
-        self.main_window.file_processing_results.clear()  # 清空文件处理结果
-        self.main_window.current_processing_file = None   # 重置当前处理文件
-        self.main_window.global_ip_mappings.clear()      # 清空全局IP映射
-        self.main_window.processed_files_count = 0       # 重置文件计数
-        self.main_window.user_stopped = False            # 重置停止标志
+        self.main_window.file_processing_results.clear()  # Clear file processing results
+        self.main_window.current_processing_file = None   # Reset current processing file
+        self.main_window.global_ip_mappings.clear()      # Clear global IP mappings
+        self.main_window.processed_files_count = 0       # Reset file count
+        self.main_window.user_stopped = False            # Reset stop flag
 
-        # 通过事件协调器禁用控件
+        # Disable controls through event coordinator
         if hasattr(self.main_window, 'event_coordinator'):
             self.main_window.event_coordinator.request_ui_update('enable_controls',
                 controls=['dir_path_label', 'output_path_label', 'anonymize_ips_cb', 'remove_dupes_cb', 'mask_payloads_cb'],
                 enabled=False)
         else:
-            # 备用方案：直接操作
+            # Fallback: direct operation
             self.main_window.dir_path_label.setEnabled(False)
             self.main_window.output_path_label.setEnabled(False)
             for cb in [self.main_window.anonymize_ips_cb, self.main_window.remove_dupes_cb, self.main_window.mask_payloads_cb]:
                 cb.setEnabled(False)
 
-        # 创建并配置新的 PipelineExecutor
+        # Create and configure new PipelineExecutor
         config = build_pipeline_config(
             enable_anon=self.main_window.anonymize_ips_cb.isChecked(),
             enable_dedup=self.main_window.remove_dupes_cb.isChecked(),
             enable_mask=self.main_window.mask_payloads_cb.isChecked()
         )
         if not config:
-            self._logger.warning("未选择任何处理步骤")
+            self._logger.warning("No processing steps selected")
             return
 
         try:
             executor = create_pipeline_executor(config)
         except ConfigurationError as e:
-            self._logger.error(f"配置错误: {str(e)}")
-            self.main_window.update_log(f"配置错误: {str(e)}")
+            self._logger.error(f"Configuration error: {str(e)}")
+            self.main_window.update_log(f"Configuration error: {str(e)}")
             return
-        self._logger.info(f"构建了包含 {len(config)} 个Stage的 PipelineExecutor")
+        self._logger.info(f"Built PipelineExecutor containing {len(config)} Stages")
 
-        # 开始处理
+        # Start processing
         self.start_processing(executor)
     
     def stop_pipeline_processing(self):
-        """停止处理流程"""
-        self.main_window.user_stopped = True  # 设置停止标志
+        """Stop processing flow"""
+        self.main_window.user_stopped = True  # Set stop flag
         self.main_window.update_log("--- Stopping pipeline... ---")
         if self.processing_thread:
             self.processing_thread.stop()
-            # 等待线程安全结束，最多等待 3 秒
+            # Wait for thread to safely end, maximum wait 3 seconds
             if not self.processing_thread.wait(3000):
                 self.main_window.log_text.append("Warning: Pipeline did not stop gracefully, forcing termination.")
                 self.processing_thread.terminate()
                 self.processing_thread.wait()
         
-        # 生成停止时的部分汇总统计
+        # Generate partial summary statistics when stopped
         self.main_window.report_manager.generate_partial_summary_on_stop()
         
-        # 通过事件协调器重新启用控件
+        # Re-enable controls through event coordinator
         if hasattr(self.main_window, 'event_coordinator'):
             self.main_window.event_coordinator.request_ui_update('enable_controls',
                 controls=['dir_path_label', 'output_path_label', 'anonymize_ips_cb', 'remove_dupes_cb', 'mask_payloads_cb', 'start_proc_btn'],
@@ -152,7 +152,7 @@ class PipelineManager:
             self.main_window.event_coordinator.request_ui_update('update_button_text',
                 button='start_proc_btn', text='Start')
         else:
-            # 备用方案：直接操作
+            # Fallback: direct operation
             self.main_window.dir_path_label.setEnabled(True)
             self.main_window.output_path_label.setEnabled(True)
             for cb in [self.main_window.anonymize_ips_cb, self.main_window.remove_dupes_cb, self.main_window.mask_payloads_cb]:
@@ -161,144 +161,144 @@ class PipelineManager:
             self.main_window.start_proc_btn.setText("Start")
     
     def start_processing(self, executor):
-        """启动处理线程"""
+        """Start processing thread"""
         # 导入新的PipelineThread（避免循环导入）
         from ..main_window import ServicePipelineThread
         
-        # 创建处理线程
+        # Create processing thread
         self.processing_thread = ServicePipelineThread(
             executor, 
             self.main_window.base_dir, 
             self.main_window.current_output_dir
         )
         
-        # 连接信号
+        # Connect signals
         self.processing_thread.progress_signal.connect(self.handle_thread_progress)
         self.processing_thread.finished.connect(self.on_thread_finished)
         
-        # 更新UI状态
+        # Update UI state
         self.main_window.start_proc_btn.setText("Stop")
         self.main_window.start_proc_btn.setEnabled(True)
         self.main_window.ui_manager._update_start_button_style()
         
-        # 开始计时（统一使用StatisticsManager）
+        # Start timing (unified use of StatisticsManager)
         self.statistics.start_timing()
         self.main_window.time_elapsed = 0
-        self.main_window.start_time = self.statistics.start_time  # 保持兼容性
-        self.main_window.timer.start(100)  # 每100ms更新一次
-        
-        # 启动线程
+        self.main_window.start_time = self.statistics.start_time  # Maintain compatibility
+        self.main_window.timer.start(100)  # Update every 100ms
+
+        # Start thread
         self.processing_thread.start()
         
-        self._logger.info(f"处理线程已启动，输出目录: {self.main_window.current_output_dir}")
+        self._logger.info(f"Processing thread started, output directory: {self.main_window.current_output_dir}")
         self.main_window.update_log("🚀 Processing started...")
     
     def handle_thread_progress(self, event_type: PipelineEvents, data: dict):
-        """处理线程进度事件"""
+        """Handle thread progress events"""
         try:
-            # 首先让MainWindow处理事件以更新UI统计和收集数据
+            # First let MainWindow handle events to update UI statistics and collect data
             self.main_window.handle_thread_progress(event_type, data)
-            
-            # 然后PipelineManager处理自己的逻辑
-            # 处理管道启动事件
+
+            # Then PipelineManager handles its own logic
+            # Handle pipeline start events
             if event_type in (PipelineEvents.PIPELINE_START, PipelineEvents.PIPELINE_STARTED):
-                # Pipeline发送的是总目录数，但我们需要追踪文件数
+                # Pipeline sends total directory count, but we need to track file count
                 total_dirs = data.get('total_subdirs', data.get('total_files', 0))
-                # 重置文件计数器（通过StatisticsManager）
+                # Reset file counter (through StatisticsManager)
                 self.statistics.update_file_count(0)
-                
-            # 处理子目录开始事件
+
+            # Handle subdirectory start events
             elif event_type == PipelineEvents.SUBDIR_START:
                 dir_name = data.get('name', 'Unknown directory')
                 file_count = data.get('file_count', 0)
-                self.statistics.set_total_files(file_count)  # 设置真正的文件总数
-                
-            # 处理文件完成事件
+                self.statistics.set_total_files(file_count)  # Set actual total file count
+
+            # Handle file completion events
             elif event_type in (PipelineEvents.FILE_END, PipelineEvents.FILE_COMPLETED):
                 self.statistics.increment_file_count()
-                # 更新Live Dashboard显示
+                # Update Live Dashboard display
                 self.main_window.files_processed_label.setText(str(self.statistics.files_processed))
                 self._update_progress()
-                
-            # 处理管道完成事件
+
+            # Handle pipeline completion events
             elif event_type in (PipelineEvents.PIPELINE_END, PipelineEvents.PIPELINE_COMPLETED):
                 self.processing_finished()
                 
-            # 处理步骤摘要事件
+            # Handle step summary events
             elif event_type == PipelineEvents.STEP_SUMMARY:
-                # 重要：收集步骤结果数据用于最终报告
+                # Important: collect step result data for final report
                 self.collect_step_result(data)
-                
-            # 处理错误事件
+
+            # Handle error events
             elif event_type == PipelineEvents.ERROR:
                 error_msg = data.get('message', data.get('error', 'Unknown error'))
-                # MainWindow已经处理了，这里不需要重复
-                
+                # MainWindow has already handled this, no need to repeat
+
         except Exception as e:
-            self._logger.error(f"处理进度事件时发生错误: {e}")
-            self.main_window.processing_error(f"事件处理错误: {str(e)}")
+            self._logger.error(f"Error occurred while processing progress event: {e}")
+            self.main_window.processing_error(f"Event processing error: {str(e)}")
     
     def collect_step_result(self, data: dict):
-        """收集步骤结果"""
+        """Collect step results"""
         step_name = data.get('step_name', '')
         filename = data.get('filename', data.get('path', ''))
         
-        # 收集所有可用的结果数据
+        # Collect all available result data
         result_data = {}
-        
-        # 从data中提取有用的统计信息
+
+        # Extract useful statistics from data
         for key, value in data.items():
             if key not in ['step_name', 'filename', 'path', 'type']:
                 result_data[key] = value
         
-        # 如果有现有的result字段，合并它
+        # If there's an existing result field, merge it
         if 'result' in data:
             if isinstance(data['result'], dict):
                 result_data.update(data['result'])
             else:
                 result_data['result'] = data['result']
         
-        # 委托给StatisticsManager
+        # Delegate to StatisticsManager
         self.statistics.collect_step_result(step_name, filename, result_data)
-        
-        # 注意：实时统计由MainWindow处理
+
+        # Note: Real-time statistics are handled by MainWindow
     
     def get_processing_stats(self) -> dict:
-        """获取处理统计数据"""
+        """Get processing statistics"""
         return self.statistics.get_processing_summary()
     
     def _update_progress(self):
-        """更新进度条"""
+        """Update progress bar"""
         if self.statistics.total_files_to_process > 0:
             progress = int((self.statistics.files_processed / self.statistics.total_files_to_process) * 100)
             self.main_window._animate_progress_to(progress)
     
     def processing_finished(self):
-        """处理完成"""
+        """Processing complete"""
         # 首先清理线程状态，确保UI状态检查正确
         self.processing_thread = None
 
-        # **修复**: 在生成报告之前，确保Live Dashboard显示最终的统计数据
-        # 更新Live Dashboard显示为最终统计数据
+        # **Fix**: Before generating the report, ensure Live Dashboard displays final statistics
+        # Update Live Dashboard to show final statistics
         final_files_processed = self.statistics.files_processed
         final_packets_processed = self.statistics.packets_processed
 
-        # 确保Live Dashboard显示最终的正确数据
+        # Ensure Live Dashboard displays the correct final data
         self.main_window.files_processed_label.setText(str(final_files_processed))
         self.main_window.packets_processed_label.setText(str(final_packets_processed))
 
-        # 委托给ReportManager生成报告
+        # Delegate to ReportManager to generate report
         self.main_window.report_manager.generate_processing_finished_report()
         
         import os
         from pktmask.utils.file_ops import open_directory_in_system
         
-        # 更新输出路径显示
+        # Update output path display
         if self.main_window.current_output_dir:
             self.main_window.output_path_label.setText(os.path.basename(self.main_window.current_output_dir))
         self.main_window.update_log(f"Output directory ready. Click output path to view results.")
         
-        # 如果配置启用，自动打开输出目录
+        # If configuration is enabled, automatically open output directory
         if self.main_window.config.ui.auto_open_output and self.main_window.current_output_dir:
             try:
                 success = open_directory_in_system(self.main_window.current_output_dir)
@@ -309,63 +309,63 @@ class PipelineManager:
             except Exception as e:
                 self._logger.error(f"Error auto-opening output directory: {e}")
         
-        # 使用QTimer.singleShot确保UI更新在事件循环的下一个周期执行
+        # Use QTimer.singleShot to ensure UI updates are executed in the next cycle of the event loop
         from PyQt6.QtCore import QTimer
 
         def update_ui_state():
-            """延迟更新UI状态"""
-            # 直接设置按钮状态
+            """Delayed UI state update"""
+            # Directly set button state
             self.main_window.start_proc_btn.setText("Start")
             self.main_window.start_proc_btn.setEnabled(True)
 
-            # 启用其他控件
+            # Enable other controls
             self.main_window.dir_path_label.setEnabled(True)
             self.main_window.output_path_label.setEnabled(True)
             for cb in [self.main_window.anonymize_ips_cb, self.main_window.remove_dupes_cb, self.main_window.mask_payloads_cb]:
                 cb.setEnabled(True)
 
-            # 更新按钮样式
+            # Update button style
             self.main_window.ui_manager._update_start_button_style()
 
         def ensure_final_stats_display():
-            """确保最终统计数据正确显示在Live Dashboard中"""
-            # **修复**: 再次确保Live Dashboard显示最终的正确统计数据
-            # 防止任何后续操作意外重置显示
+            """Ensure final statistics are correctly displayed in Live Dashboard"""
+            # **Fix**: Again ensure Live Dashboard displays the correct final statistics
+            # Prevent any subsequent operations from accidentally resetting the display
             self.main_window.files_processed_label.setText(str(final_files_processed))
             self.main_window.packets_processed_label.setText(str(final_packets_processed))
 
-        # 延迟100ms执行UI更新
+        # Delay 100ms to execute UI update
         QTimer.singleShot(100, update_ui_state)
 
-        # **修复**: 延迟200ms再次确保统计数据显示正确，防止被其他操作覆盖
+        # **Fix**: Delay 200ms to again ensure statistics display is correct, preventing overwrite by other operations
         QTimer.singleShot(200, ensure_final_stats_display)
 
-        self._logger.info("处理流程完成")
+        self._logger.info("Processing flow completed")
     
     def on_thread_finished(self):
-        """线程结束处理"""
-        # 线程清理已在processing_finished中处理，这里不需要重复
+        """Thread completion handling"""
+        # Thread cleanup is already handled in processing_finished, no need to repeat here
         self.processing_thread = None
     
     def reset_processing_state(self):
-        """重置处理状态（仅在开始新处理时调用）"""
-        # 使用statistics管理器重置数据
+        """Reset processing state (only called when starting new processing)"""
+        # Use statistics manager to reset data
         self.statistics.reset_all_statistics()
         self.user_stopped = False
 
-        # **修复**: 通过事件协调器通知UI更新，但只在开始新处理时重置显示
-        # 这样可以避免处理完成后意外重置Live Dashboard显示
+        # **Fix**: Notify UI update through event coordinator, but only reset display when starting new processing
+        # This avoids accidentally resetting Live Dashboard display after processing completion
         if hasattr(self.main_window, 'event_coordinator'):
             self.main_window.event_coordinator.notify_statistics_change(action='reset')
 
-        # 停止计时器
+        # Stop timer
         if self.main_window.timer.isActive():
             self.main_window.timer.stop()
     
     def generate_partial_summary_on_stop(self):
-        """生成停止时的部分摘要"""
+        """Generate partial summary when stopped"""
         try:
-            # 从StatisticsManager获取数据
+            # Get data from StatisticsManager
             stats = self.statistics.get_processing_summary()
             partial_data = {
                 **stats,
@@ -375,23 +375,23 @@ class PipelineManager:
             self.main_window.report_manager.set_final_summary_report(partial_data)
             
         except Exception as e:
-            self._logger.error(f"生成部分摘要时发生错误: {e}")
+            self._logger.error(f"Error occurred while generating partial summary: {e}")
     
     def _generate_final_report(self):
-        """生成最终报告"""
+        """Generate final report"""
         try:
-            # 从StatisticsManager获取数据
+            # Get data from StatisticsManager
             stats = self.statistics.get_processing_summary()
             final_data = {
                 **stats,
                 'status': 'completed',
                 'output_directory': self.main_window.current_output_dir
             }
-            
+
             self.main_window.report_manager.set_final_summary_report(final_data)
-            
+
         except Exception as e:
-            self._logger.error(f"生成最终报告时发生错误: {e}")
-    
-    # 旧的_build_pipeline_config方法已移除，使用服务层的build_pipeline_config函数
+            self._logger.error(f"Error occurred while generating final report: {e}")
+
+    # Old _build_pipeline_config method has been removed, use service layer's build_pipeline_config function
     pass

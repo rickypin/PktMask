@@ -10,46 +10,46 @@ from ..common.exceptions import ProcessingError, NetworkError
 from ..common.constants import ProcessingConstants
 
 class AnonymizationStrategy(ABC):
-    """IP 匿名化策略的抽象基类。"""
+    """Abstract base class for IP anonymization strategies."""
 
     @abstractmethod
     def create_mapping(self, files_to_process: List[str], subdir_path: str, error_log: List) -> Dict[str, str]:
         """
-        根据一组文件创建从原始IP到匿名IP的映射。
+        Create mapping from original IPs to anonymous IPs based on a set of files.
 
         Args:
-            files_to_process: 待处理的文件列表。
-            subdir_path: 文件所在的子目录。
-            error_log: 用于记录错误的列表。
+            files_to_process: List of files to be processed.
+            subdir_path: Subdirectory where files are located.
+            error_log: List for recording errors.
 
         Returns:
-            一个字典，将每个原始IP映射到其新的匿名IP。
+            A dictionary mapping each original IP to its new anonymous IP.
         """
         pass
 
     @abstractmethod
     def reset(self):
-        """重置策略的内部状态，以便处理新的目录。"""
+        """Reset the strategy's internal state for processing new directories."""
         pass
 
     @abstractmethod
     def build_mapping_from_directory(self, all_pcap_files: List[str]):
-        """根据目录中的所有文件构建IP映射。"""
+        """Build IP mapping based on all files in the directory."""
         pass
 
     @abstractmethod
     def anonymize_packet(self, pkt) -> Tuple[object, bool]:
-        """匿名化单个数据包。"""
+        """Anonymize a single packet."""
         pass
 
     @abstractmethod
     def get_ip_map(self) -> Dict[str, str]:
-        """获取当前构建的IP映射。"""
+        """Get the currently built IP mapping."""
         pass
 
 
 def ip_sort_key(ip_str: str) -> tuple:
-    """根据 IP 字符串生成排序键"""
+    """Generate sorting key based on IP string"""
     # This is a utility function, can be kept here or moved to a utils file.
     # For now, it's closely tied to the hierarchical strategy's need for sorted IPs.
     try:
@@ -69,25 +69,25 @@ def ip_sort_key(ip_str: str) -> tuple:
 
 def _safe_hash(input_str: str) -> int:
     """
-    安全的哈希函数，确保确定性和分布均匀性
+    Safe hash function ensuring determinism and uniform distribution
     """
     import hashlib
-    # 使用SHA256确保更好的分布和确定性
+    # Use SHA256 to ensure better distribution and determinism
     hash_obj = hashlib.sha256(input_str.encode('utf-8'))
     return int(hash_obj.hexdigest()[:ProcessingConstants.HASH_DIGEST_LENGTH], ProcessingConstants.HEX_BASE)
 
-def _generate_unique_segment(original_seg: str, seed_base: str, used_values: Set[str], 
+def _generate_unique_segment(original_seg: str, seed_base: str, used_values: Set[str],
                            min_val: int = ProcessingConstants.IPV4_MIN_SEGMENT, max_val: int = ProcessingConstants.IPV4_MAX_SEGMENT, max_attempts: int = 100) -> str:
     """
-    生成唯一的IP段值，避免冲突
-    
+    Generate unique IP segment value, avoiding conflicts
+
     Args:
-        original_seg: 原始段值
-        seed_base: 种子基础字符串
-        used_values: 已使用的值集合
-        min_val: 最小值
-        max_val: 最大值
-        max_attempts: 最大尝试次数
+        original_seg: Original segment value
+        seed_base: Seed base string
+        used_values: Set of already used values
+        min_val: Minimum value
+        max_val: Maximum value
+        max_attempts: Maximum number of attempts
     """
     if not original_seg.isdigit():
         raise ValueError(f"Invalid segment: {original_seg}")
@@ -96,11 +96,11 @@ def _generate_unique_segment(original_seg: str, seed_base: str, used_values: Set
     if orig_int < min_val or orig_int > max_val:
         raise ValueError(f"Segment out of range: {original_seg}")
     
-    # 基于种子生成确定性随机数生成器
+    # Generate deterministic random number generator based on seed
     seed_value = _safe_hash(f"{seed_base}_{original_seg}")
     local_random = random.Random(seed_value)
     
-    # 计算候选范围
+    # Calculate candidate range
     n = len(original_seg)
     if n == 1:
         delta = 3
@@ -109,24 +109,24 @@ def _generate_unique_segment(original_seg: str, seed_base: str, used_values: Set
     else:
         delta = 20
     
-    # 首先尝试邻近值范围
+    # First try adjacent value range
     cand_lower = max(min_val, orig_int - delta)
     cand_upper = min(max_val, orig_int + delta)
     
-    # 生成候选值，避免原值和已使用值
+    # Generate candidate values, avoiding original value and used values
     candidates = []
     for val in range(cand_lower, cand_upper + 1):
         if val != orig_int and str(val) not in used_values:
             candidates.append(val)
     
-    # 如果邻近范围没有可用值，扩展到全范围
+    # If no available values in adjacent range, expand to full range
     if not candidates:
         for val in range(min_val, max_val + 1):
             if val != orig_int and str(val) not in used_values:
                 candidates.append(val)
     
     if not candidates:
-        # 如果没有可用值，使用简单的偏移
+        # If no available values, use simple offset
         for offset in range(1, max_val - min_val + 1):
             val = (orig_int + offset) % (max_val - min_val + 1) + min_val
             if str(val) not in used_values:
@@ -134,24 +134,24 @@ def _generate_unique_segment(original_seg: str, seed_base: str, used_values: Set
                 break
     
     if candidates:
-        # 使用确定性随机选择
+        # Use deterministic random selection
         choice_idx = local_random.randint(0, len(candidates) - 1)
         result = str(candidates[choice_idx])
         used_values.add(result)
         return result
     else:
-        # 最后手段：强制生成不冲突的值
+        # Last resort: force generate non-conflicting value
         for val in range(min_val, max_val + 1):
             if str(val) not in used_values:
                 used_values.add(str(val))
                 return str(val)
         
-        # 如果真的没有可用值，返回原值（不应该发生）
+        # If really no available values, return original value (should not happen)
         return original_seg
 
 def _generate_new_ipv4_address_hierarchical(original_ip: str, freq1, freq2, freq3, maps, used_segments) -> str:
     """
-    基于频率的分层IPv4地址生成，确保高频网段一致性
+    Frequency-based hierarchical IPv4 address generation, ensuring consistency for high-frequency subnets
     """
     ipv4_first_map, ipv4_second_map, ipv4_third_map = maps
     used_a, used_ab, used_abc = used_segments
@@ -163,7 +163,7 @@ def _generate_new_ipv4_address_hierarchical(original_ip: str, freq1, freq2, freq
         return original_ip
     A, B, C, D = parts
     
-    # A段处理 - 高频A段保持一致映射
+    # A segment processing - maintain consistent mapping for high-frequency A segments
     if freq1.get(A, 0) >= 2:
         if A not in ipv4_first_map:
             ipv4_first_map[A] = _generate_unique_segment(
@@ -175,56 +175,56 @@ def _generate_new_ipv4_address_hierarchical(original_ip: str, freq1, freq2, freq
             A, f"first_single_{A}", used_a, 1, 255
         )
     
-    # A.B段处理 - 关键修正：高频A.B段保持一致映射
-    key2 = ".".join(parts[:2])  # 原始A.B段，如"140.216"
+    # A.B segment processing - key fix: maintain consistent mapping for high-frequency A.B segments
+    key2 = ".".join(parts[:2])  # Original A.B segment, e.g. "140.216"
     
     if freq2.get(key2, 0) >= 2:
-        # 高频A.B段：必须保持一致映射
+        # High-frequency A.B segment: must maintain consistent mapping
         if key2 not in ipv4_second_map:
-            # 为这个高频A.B段分配一个新的B段值
+            # Assign a new B segment value for this high-frequency A.B segment
             ipv4_second_map[key2] = _generate_unique_segment(
                 B, f"second_freq_{key2}", used_ab, 0, 255
             )
         newB = ipv4_second_map[key2]
         
-        # 构建新的A.B段组合并记录
+        # Build new A.B segment combination and record
         new_ab = f"{newA}.{newB}"
         used_ab.add(new_ab)
     else:
-        # 低频A.B段：为每个独立的A.B段生成唯一映射
+        # Low-frequency A.B segment: generate unique mapping for each independent A.B segment
         if key2 not in ipv4_second_map:
             ipv4_second_map[key2] = _generate_unique_segment(
                 B, f"second_single_{key2}", used_ab, 0, 255
             )
         newB = ipv4_second_map[key2]
         
-        # 构建新的A.B段组合并记录
+        # Build new A.B segment combination and record
         new_ab = f"{newA}.{newB}"
         used_ab.add(new_ab)
     
-    # A.B.C段处理 - 高频A.B.C段保持一致映射
-    key3 = ".".join(parts[:3])  # 原始A.B.C段，如"140.216.190"
+    # A.B.C segment processing - maintain consistent mapping for high-frequency A.B.C segments
+    key3 = ".".join(parts[:3])  # Original A.B.C segment, e.g. "140.216.190"
     
     if freq3.get(key3, 0) >= 2:
-        # 高频A.B.C段：必须保持一致映射
+        # High-frequency A.B.C segment: must maintain consistent mapping
         if key3 not in ipv4_third_map:
             ipv4_third_map[key3] = _generate_unique_segment(
                 C, f"third_freq_{key3}", used_abc, 0, 255
             )
         newC = ipv4_third_map[key3]
         
-        # 构建新的A.B.C段组合并记录
+        # Build new A.B.C segment combination and record
         new_abc = f"{newA}.{newB}.{newC}"
         used_abc.add(new_abc)
     else:
-        # 低频A.B.C段：为每个独立的A.B.C段生成唯一映射
+        # Low-frequency A.B.C segment: generate unique mapping for each independent A.B.C segment
         if key3 not in ipv4_third_map:
             ipv4_third_map[key3] = _generate_unique_segment(
                 C, f"third_single_{key3}", used_abc, 0, 255
             )
         newC = ipv4_third_map[key3]
         
-        # 构建新的A.B.C段组合并记录
+        # Build new A.B.C segment combination and record
         new_abc = f"{newA}.{newB}.{newC}"
         used_abc.add(new_abc)
     
@@ -232,7 +232,7 @@ def _generate_new_ipv4_address_hierarchical(original_ip: str, freq1, freq2, freq
 
 def _generate_new_ipv6_address_hierarchical(original_ip: str, freqs, maps) -> str:
     """
-    基于频率的分层IPv6地址生成
+    Frequency-based hierarchical IPv6 address generation
     """
     try:
         ip_obj = ipaddress.IPv6Address(original_ip)

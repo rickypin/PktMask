@@ -204,49 +204,49 @@ class TestModuleCoverage:
         original_headless = os.environ.get('PKTMASK_HEADLESS', '')
         
         try:
-            # 临时设置为正常模式以测试完整的GUI启动路径
+            # Temporarily set to normal mode to test complete GUI startup path
             os.environ['PKTMASK_TEST_MODE'] = 'false'
             os.environ['PKTMASK_HEADLESS'] = 'false'
-            
-            # 测试手动调用main函数（不会实际启动GUI）
+
+            # Test manual call to main function (won't actually start GUI)
             pktmask.__main__.main()
-            
-            # 验证GUI组件被正确调用
+
+            # Verify GUI components are called correctly
             mock_qapp.assert_called_once()
             mock_main_window.assert_called_once()
             mock_window.show.assert_called_once()
             mock_app_instance.exec.assert_called_once()
             mock_exit.assert_called_once_with(0)
-            
+
         finally:
-            # 恢复原始环境变量
+            # Restore original environment variables
             os.environ['PKTMASK_TEST_MODE'] = original_test_mode
             os.environ['PKTMASK_HEADLESS'] = original_headless
-    
+
     def test_services_module_all_export(self):
-        """测试services模块导出功能"""
+        """Test services module export functionality"""
         import pktmask.services
-        
-        # 验证__all__列表
+
+        # Verify __all__ list
         all_items = pktmask.services.__all__
         assert isinstance(all_items, list)
-        
-        # 验证所有__all__中的项都可以从模块中访问
+
+        # Verify all items in __all__ can be accessed from module
         for item in all_items:
             assert hasattr(pktmask.services, item)
-    
+
     def test_main_module_import_path_coverage(self):
-        """测试主模块导入路径覆盖"""
-        # 测试不同方式导入主模块
+        """Test main module import path coverage"""
+        # Test different ways to import main module
         import pktmask.__main__
         from pktmask import __main__
         
         assert pktmask.__main__ is __main__
     
     def test_services_module_namespace_coverage(self):
-        """测试services模块命名空间覆盖"""
+        """Test services module namespace coverage"""
         import pktmask.services
-        
-        # 验证模块在正确的命名空间中
+
+        # Verify module is in correct namespace
         assert 'pktmask.services' in sys.modules
-        assert sys.modules['pktmask.services'] is pktmask.services 
+        assert sys.modules['pktmask.services'] is pktmask.services

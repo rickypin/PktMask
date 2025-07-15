@@ -1,57 +1,57 @@
-# Scripts 目录说明
+# Scripts Directory Description
 
-本目录包含项目开发、测试、维护相关的脚本工具。这些脚本主要供开发者使用，而非最终用户。
+This directory contains script tools related to project development, testing, and maintenance. These scripts are primarily for developers, not end users.
 
-## 目录结构
+## Directory Structure
 
 ### `adhoc/`
-临时脚本和一次性工具，包括：
-- 备份版本的工具
-- 快速验证脚本
-- 实验性代码
+Temporary scripts and one-time tools, including:
+- Backup version tools
+- Quick verification scripts
+- Experimental code
 
 ### `build/`
-构建和打包相关脚本：
-- `build_app.sh` - 应用构建脚本
+Build and packaging related scripts:
+- `build_app.sh` - Application build script
 
 ### `debug/`
-调试和问题诊断工具：
-- 组件诊断脚本
-- 问题排查工具
+Debugging and problem diagnosis tools:
+- Component diagnostic scripts
+- Troubleshooting tools
 
 ### `maintenance/`
-系统维护和审计脚本：
-- `audit_dependencies.py` - 依赖审计工具
+System maintenance and audit scripts:
+- `audit_dependencies.py` - Dependency audit tool
 
 ### `migration/`
-版本迁移和数据迁移脚本：
-- 适配器迁移工具
-- 导入路径更新工具
-- 架构迁移辅助脚本
+Version migration and data migration scripts:
+- Adapter migration tools
+- Import path update tools
+- Architecture migration assistance scripts
 
 ### `test/`
-测试辅助脚本：
-- `adapter_baseline.py` - 适配器基线测试
-- `adapter_performance_test.py` - 性能测试
-- `verify_adapter_migration.py` - 迁移验证
-- `verify_single_entrypoint.py` - 入口点验证
+Testing assistance scripts:
+- `adapter_baseline.py` - Adapter baseline testing
+- `adapter_performance_test.py` - Performance testing
+- `verify_adapter_migration.py` - Migration verification
+- `verify_single_entrypoint.py` - Entry point verification
 
 ### `validation/`
-数据验证和分析脚本：
-- TLS 数据包分析工具
-- 端到端验证脚本
-- 掩码结果验证工具
+Data validation and analysis scripts:
+- TLS packet analysis tools
+- End-to-end verification scripts
+- Masking result validation tools
 
-## 使用说明
+## Usage Instructions
 
-### 运行脚本
-大部分脚本可以直接运行：
+### Running Scripts
+Most scripts can be run directly:
 ```bash
 python scripts/maintenance/audit_dependencies.py
 ```
 
-### 测试脚本
-运行测试相关脚本：
+### Test Scripts
+Run test-related scripts:
 ```bash
 python scripts/test/adapter_baseline.py
 ```

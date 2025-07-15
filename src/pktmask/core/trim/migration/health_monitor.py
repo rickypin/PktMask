@@ -86,11 +86,11 @@ class HealthMonitor:
         self.config = config
         self.logger = logging.getLogger(__name__)
         
-        # 监控配置
+        # Monitoring configuration
         self.health_check_interval = config.get('health_check_interval_seconds', 300)
         self.metrics_retention_days = config.get('metrics_retention_days', 30)
-        
-        # 告警阈值
+
+        # Alert thresholds
         self.alert_thresholds = config.get('alert_thresholds', {
             'health_score_warning': 0.8,
             'health_score_critical': 0.6,
@@ -185,7 +185,7 @@ class HealthMonitor:
         return 1.0
     
     def analyze_resource_usage_health(self, metrics: MigrationMetrics) -> float:
-        """分析资源使用健康度"""
+        """Analyze resource usage health"""
         memory_warning = self.alert_thresholds['memory_usage_warning']
         memory_critical = self.alert_thresholds['memory_usage_critical']
         
@@ -204,9 +204,9 @@ class HealthMonitor:
         return min(memory_score, cpu_score)
     
     def analyze_business_metrics_health(self, metrics: MigrationMetrics) -> float:
-        """分析业务指标健康度"""
-        # 基于吞吐量变化进行评估
-        if metrics.throughput_pps < 10:  # 吞吐量过低
+        """Analyze business metrics health"""
+        # Evaluate based on throughput changes
+        if metrics.throughput_pps < 10:  # Throughput too low
             return 0.5
         
         return 1.0
@@ -281,21 +281,21 @@ class HealthMonitor:
         return alerts
     
     def monitor_dual_strategy_health(self, migration_state: MigrationState) -> HealthReport:
-        """监控双策略健康状态"""
-        self.logger.info("开始健康检查...")
+        """Monitor dual strategy health status"""
+        self.logger.info("Starting health check...")
         
-        # 收集当前指标
+        # Collect current metrics
         current_metrics = self.collect_current_metrics(migration_state)
         self.metrics_history.append(current_metrics)
-        
-        # 分析各维度健康度
+
+        # Analyze health in various dimensions
         strategy_health = self.analyze_strategy_selection_health(current_metrics)
         performance_health = self.analyze_performance_health(current_metrics)
         error_health = self.analyze_error_rate_health(current_metrics)
         resource_health = self.analyze_resource_usage_health(current_metrics)
         business_health = self.analyze_business_metrics_health(current_metrics)
         
-        # 计算整体健康分数（加权平均）
+        # Calculate overall health score (weighted average)
         weights = {
             'strategy': 0.25,
             'performance': 0.25,
@@ -312,7 +312,7 @@ class HealthMonitor:
             business_health * weights['business']
         )
         
-        # 确定健康状态
+        # Determine health status
         if overall_score >= 0.8:
             health_status = HealthStatus.HEALTHY
         elif overall_score >= 0.6:
@@ -320,7 +320,7 @@ class HealthMonitor:
         else:
             health_status = HealthStatus.CRITICAL
         
-        # 生成健康报告
+        # Generate health report
         health_report = HealthReport(
             overall_health_score=overall_score,
             health_status=health_status,

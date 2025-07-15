@@ -19,8 +19,8 @@ from ..migration.health_monitor import HealthAlert
 
 @dataclass
 class AlertConfig:
-    """告警配置"""
-    # 邮件告警配置
+    """Alert configuration"""
+    # Email alert configuration
     enable_email_alerts: bool = False
     smtp_server: str = "localhost"
     smtp_port: int = 587
@@ -28,21 +28,21 @@ class AlertConfig:
     smtp_password: str = ""
     email_from: str = "pktmask@company.com"
     email_recipients: List[str] = field(default_factory=list)
-    
-    # Slack告警配置
+
+    # Slack alert configuration
     enable_slack_alerts: bool = False
     slack_webhook_url: str = ""
     slack_channel: str = "#pktmask-alerts"
-    
-    # 日志告警配置
+
+    # Log alert configuration
     enable_log_alerts: bool = True
     alert_log_file: str = "/var/log/pktmask/alerts.log"
-    
-    # 告警抑制配置
+
+    # Alert suppression configuration
     alert_cooldown_minutes: int = 15
     max_alerts_per_hour: int = 10
-    
-    # 告警升级配置
+
+    # Alert escalation configuration
     enable_escalation: bool = False
     escalation_timeout_minutes: int = 30
     escalation_contacts: List[str] = field(default_factory=list)
@@ -158,7 +158,7 @@ class AlertSystem:
                 error_message = str(e)
                 self.logger.error(f"告警发送失败: {e}")
             
-            # 记录告警
+            # Record alert
             alert_record = AlertRecord(
                 alert=alert,
                 sent_time=datetime.now(),
@@ -167,21 +167,21 @@ class AlertSystem:
                 error_message=error_message
             )
             self.alert_history.append(alert_record)
-            
-            # 更新抑制缓存
+
+            # Update suppression cache
             self._update_suppression_cache(alert)
-            
-            # 更新计数器
+
+            # Update counter
             self._update_rate_limit_counter()
-            
+
             return success
-            
+
         except Exception as e:
-            self.logger.error(f"告警系统异常: {e}")
+            self.logger.error(f"Alert system exception: {e}")
             return False
     
     def _is_alert_suppressed(self, alert: HealthAlert) -> bool:
-        """检查告警是否被抑制"""
+        """Check if alert is suppressed"""
         alert_key = f"{alert.severity}_{hash(alert.message)}"
         
         if alert_key in self.suppression_cache:
@@ -332,12 +332,12 @@ class AlertSystem:
                     "text": alert.message,
                     "fields": [
                         {
-                            "title": "时间",
+                            "title": "Time",
                             "value": alert.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
                             "short": True
                         },
                         {
-                            "title": "严重程度",
+                            "title": "Severity",
                             "value": alert.severity,
                             "short": True
                         }
@@ -350,7 +350,7 @@ class AlertSystem:
             # 添加建议措施
             if alert.recommended_actions:
                 payload["attachments"][0]["fields"].append({
-                    "title": "建议措施",
+                    "title": "Recommended Actions",
                     "value": "\n".join(f"• {action}" for action in alert.recommended_actions),
                     "short": False
                 })
@@ -437,24 +437,24 @@ class AlertSystem:
         self.logger.info("告警抑制缓存已清空")
     
     def test_alert_channels(self) -> Dict[str, bool]:
-        """测试告警渠道"""
+        """Test alert channels"""
         test_alert = HealthAlert(
             severity="LOW",
-            message="告警系统测试消息",
-            recommended_actions=["这是一个测试告警，无需处理"]
+            message="Alert system test message",
+            recommended_actions=["This is a test alert, no action needed"]
         )
         
         results = {}
         
-        # 测试邮件
+        # Test email
         if self.config.enable_email_alerts:
             results['email'] = self._send_email_alert(test_alert)
-        
-        # 测试Slack
+
+        # Test Slack
         if self.config.enable_slack_alerts:
             results['slack'] = self._send_slack_alert(test_alert)
-        
-        # 测试日志
+
+        # Test logs
         if self.config.enable_log_alerts:
             try:
                 self._send_log_alert(test_alert)
