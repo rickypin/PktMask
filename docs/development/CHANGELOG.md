@@ -1,5 +1,35 @@
 # 变更日志
 
+## v0.2.1 (2025-07-15)
+
+### 🐛 关键Bug修复
+
+#### 架构重构后功能修复
+- **修复 NewMaskPayloadStage 构造函数缺陷** - 添加缺失的 `self.config` 属性初始化
+- **修复 PipelineExecutor 输出路径错误** - 纠正返回 `current_input` 而非 `output_path` 的问题
+- **修复缺失的 validate_inputs 方法** - 用内联验证替换不存在的方法调用
+- **修复 IP匿名化变量作用域错误** - 解决 `encap_adapter` 变量访问超出作用域的问题
+- **修复 TrimmingResult 类未定义问题** - 统一类名映射，添加向后兼容别名
+
+#### 功能恢复验证
+- ✅ **MaskStage 功能完全恢复** - Basic和Enhanced模式均正常工作
+- ✅ **IP匿名化功能完全恢复** - 层次化匿名化策略正常运行
+- ✅ **完整Pipeline正常工作** - 去重+匿名化+掩码全流程验证通过
+- ✅ **输出文件正确生成** - 所有处理结果文件正常输出
+
+#### 性能表现
+- **处理能力**: 101个数据包处理正常
+- **掩码效率**: 59个数据包载荷成功掩码
+- **匿名化效率**: 2个IP地址成功匿名化
+- **总体耗时**: 完整Pipeline约1.5秒
+
+### 📚 文档更新
+- 新增 [架构重构后Bug修复报告](../architecture/POST_MIGRATION_BUG_FIXES_REPORT.md)
+- 更新 [遗留架构移除报告](../architecture/LEGACY_ARCHITECTURE_REMOVAL_REPORT.md)
+- 完善错误诊断和修复流程文档
+
+---
+
 ## v0.2.0 (2025-01-27)
 
 ### 🏗️ 架构重构与简化

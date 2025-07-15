@@ -23,6 +23,8 @@ class NewMaskPayloadStage(StageBase):
     - Marker模块: 协议分析和规则生成
     - Masker模块: 通用载荷掩码应用
     """
+
+    name: str = "NewMaskPayloadStage"
     
     def __init__(self, config: Dict[str, Any]):
         """初始化新一代掩码处理阶段
@@ -244,7 +246,7 @@ class NewMaskPayloadStage(StageBase):
     
     def get_display_name(self) -> str:
         """获取显示名称"""
-        return "Mask Payloads (v2)"
+        return "Payload Masking Stage"
     
     def get_description(self) -> str:
         """获取描述信息"""

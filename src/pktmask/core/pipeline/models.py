@@ -29,6 +29,16 @@ class StageStats(BaseModel):
     class Config:
         frozen = True
 
+    @property
+    def original_ips(self) -> int:
+        """Get the number of original IPs processed (for IP anonymization stages)"""
+        return self.extra_metrics.get('original_ips', 0)
+
+    @property
+    def anonymized_ips(self) -> int:
+        """Get the number of anonymized IPs (for IP anonymization stages)"""
+        return self.extra_metrics.get('anonymized_ips', 0)
+
 
 class ProcessResult(BaseModel):
     """Complete Pipeline execution result, used as unified return value for GUI/CLI/MCP."""

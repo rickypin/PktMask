@@ -133,14 +133,38 @@ def process_directory(
 
 def _handle_stage_progress(stage, stats, progress_callback):
     """处理阶段进度回调"""
-    # Emit log with stage-specific action wording
+    # Get standardized display name for the stage
+    stage_display_name = _get_stage_display_name(stage.name)
+
+    # Emit log with stage-specific action wording and correct statistics
     if stage.name == 'DedupStage' or stage.name == 'DeduplicationStage':
-        msg = f"    - {stage.name}: processed {stats.packets_processed} pkts, removed {stats.packets_modified} pkts"
+        msg = f"    - {stage_display_name}: processed {stats.packets_processed} pkts, removed {stats.packets_modified} pkts"
     elif stage.name == 'AnonStage':
-        msg = f"    - {stage.name}: processed {stats.packets_processed} pkts, Anonymized {stats.packets_modified} ips"
+        # For IP anonymization, show IP statistics instead of packet statistics
+        original_ips = getattr(stats, 'original_ips', 0) or stats.extra_metrics.get('original_ips', 0)
+        anonymized_ips = getattr(stats, 'anonymized_ips', 0) or stats.extra_metrics.get('anonymized_ips', 0)
+        if original_ips > 0:
+            msg = f"    - {stage_display_name}: processed {original_ips} IPs, anonymized {anonymized_ips} IPs"
+        else:
+            # Fallback to packet count if IP statistics are not available
+            msg = f"    - {stage_display_name}: processed {stats.packets_processed} pkts, anonymized {stats.packets_modified} IPs"
     else:
-        msg = f"    - {stage.name}: processed {stats.packets_processed} pkts, masked {stats.packets_modified} pkts"
+        msg = f"    - {stage_display_name}: processed {stats.packets_processed} pkts, masked {stats.packets_modified} pkts"
     progress_callback(PipelineEvents.LOG, {'message': msg})
+
+
+def _get_stage_display_name(stage_name: str) -> str:
+    """Get standardized display name for stage based on naming consistency guide"""
+    stage_name_mapping = {
+        'DedupStage': 'Deduplication Stage',
+        'DeduplicationStage': 'Deduplication Stage',
+        'AnonStage': 'IP Anonymization Stage',
+        'NewMaskPayloadStage': 'Payload Masking Stage',
+        'MaskStage': 'Payload Masking Stage',
+        'MaskPayloadStage': 'Payload Masking Stage',
+        'Mask Payloads (v2)': 'Payload Masking Stage'
+    }
+    return stage_name_mapping.get(stage_name, stage_name)
 
 # 停止管道执行
 # Dummy implementation; replace ... with real logic

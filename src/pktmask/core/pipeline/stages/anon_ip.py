@@ -66,10 +66,22 @@ class AnonStage(StageBase):
 
         stats_dict: Dict[str, Any] = result.stats or {}
 
+        # Extract IP-specific statistics for proper logging
+        original_ips = int(stats_dict.get("original_ips", 0))
+        anonymized_ips = int(stats_dict.get("anonymized_ips", 0))
+
+        # Create enhanced extra_metrics with IP statistics
+        enhanced_metrics = stats_dict.copy()
+        enhanced_metrics.update({
+            'original_ips': original_ips,
+            'anonymized_ips': anonymized_ips,
+            'ip_mappings_count': len(stats_dict.get('ip_mappings', {}))
+        })
+
         return StageStats(
             stage_name=self.name,
             packets_processed=int(stats_dict.get("total_packets", 0)),
             packets_modified=int(stats_dict.get("anonymized_packets", 0)),
             duration_ms=duration_ms,
-            extra_metrics=stats_dict,
-        ) 
+            extra_metrics=enhanced_metrics,
+        )

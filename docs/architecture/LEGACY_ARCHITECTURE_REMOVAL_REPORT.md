@@ -552,11 +552,38 @@ class NewMaskPayloadStage(StageBase):
 
 ---
 
+---
+
+## 🔄 后续发现和修复
+
+### 重要更新 (2025-07-15 23:10)
+
+在架构移除完成后，发现了几个关键bug影响核心功能：
+
+#### 发现的问题
+1. **NewMaskPayloadStage构造函数缺陷** - `self.config`未初始化
+2. **PipelineExecutor输出路径错误** - 返回错误的文件路径
+3. **缺失的validate_inputs方法** - 方法调用但未定义
+4. **IP匿名化变量作用域错误** - `encap_adapter`变量访问错误
+5. **TrimmingResult类未定义** - 类名映射不一致
+
+#### 修复状态
+✅ **所有问题已修复** - 详细修复记录请参考：[架构重构后Bug修复报告](POST_MIGRATION_BUG_FIXES_REPORT.md)
+
+#### 验证结果
+- ✅ maskstage功能完全恢复正常
+- ✅ IP匿名化功能完全恢复正常
+- ✅ 完整Pipeline（去重+匿名化+掩码）正常工作
+- ✅ 所有输出文件正确生成
+
+---
+
 **报告完成日期**: 2025-07-15
 **实施人员**: Augment Agent
 **审核状态**: ✅ 已完成
 **存档位置**: `docs/architecture/LEGACY_ARCHITECTURE_REMOVAL_REPORT.md`
 **相关Issue**: PktMask架构统一第一阶段实施
 **下一步**: 进入第二阶段功能增强
-**文档版本**: v1.0
-**最后更新**: 2025-07-15 22:30
+**文档版本**: v1.1
+**最后更新**: 2025-07-15 23:10
+**后续修复**: 参考 [POST_MIGRATION_BUG_FIXES_REPORT.md](POST_MIGRATION_BUG_FIXES_REPORT.md)

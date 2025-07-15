@@ -1,5 +1,7 @@
 # PktMask
 
+> **🎉 v0.2.1 更新 (2025-07-15)**: 关键功能修复完成！MaskStage和IP匿名化功能已完全恢复正常。详见 [修复摘要](docs/development/CRITICAL_FIXES_SUMMARY.md)。
+
 PktMask is a graphical interface tool for processing network packet files, focusing on IP address anonymization, payload trimming, and packet deduplication. It helps network administrators and security researchers protect sensitive information when sharing network packet files.
 
 ## Features
@@ -43,6 +45,30 @@ PktMask is a graphical interface tool for processing network packet files, focus
 1. Download the latest macOS installer from the [Releases](https://github.com/yourusername/pktmask/releases) page
 2. Double-click the installer to install
 3. Launch PktMask from the Applications folder
+
+## Quick Verification
+
+After installation, you can quickly verify that all functions are working correctly:
+
+```bash
+# Activate virtual environment (if using source installation)
+source .venv/bin/activate
+
+# Test basic mask functionality
+python -m pktmask mask tests/data/tls/ssl_3.pcap -o /tmp/test_basic.pcap --mode basic
+
+# Test enhanced mask with IP anonymization
+python -m pktmask mask tests/data/tls/ssl_3.pcap -o /tmp/test_enhanced.pcap --anon --mode enhanced --verbose
+
+# Test full pipeline (dedup + anon + mask)
+python -m pktmask mask tests/data/tls/ssl_3.pcap -o /tmp/test_full.pcap --dedup --anon --mode enhanced --verbose
+```
+
+Expected results:
+- ✅ All commands should complete successfully
+- ✅ Output files should be generated in `/tmp/`
+- ✅ Enhanced mode should process ~101 packets and modify ~59 packets
+- ✅ IP anonymization should modify all 101 packets
 
 ## Usage
 
