@@ -201,11 +201,10 @@ class UIStrings(Enum):
     # 时间格式
     TIME_INITIAL = "00:00.00"
     
-    # 处理步骤名称
-    STEP_DEDUPLICATION = "Deduplication"
-    STEP_MASK_IP = "MaskIP"
-    STEP_DEDUP = "Dedup"
-    STEP_TRIM = "Trim"
+    # 处理步骤名称（统一使用GUI标准命名）
+    STEP_REMOVE_DUPES = "Remove Dupes"
+    STEP_ANONYMIZE_IPS = "Anonymize IPs"
+    STEP_MASK_PAYLOADS = "Mask Payloads"
     
     # 消息框标题
     MSG_WARNING = "Warning"

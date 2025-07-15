@@ -524,19 +524,6 @@ class PayloadMasker:
             dst_info = f"{ip_layer.dst}:{tcp_layer.dport}"
             self.logger.debug(f"处理数据包: {src_info}->{dst_info}, stream_id={stream_id}, direction={direction}")
 
-            # 检查是否有匹配的规则
-            if stream_id not in rule_lookup or direction not in rule_lookup[stream_id]:
-                # 没有匹配的规则，记录调试信息
-                available_streams = list(rule_lookup.keys())
-                available_directions = {}
-                for sid in available_streams:
-                    available_directions[sid] = list(rule_lookup[sid].keys())
-
-                self.logger.debug(f"无匹配规则: stream_id={stream_id}, direction={direction}")
-                self.logger.debug(f"可用流: {available_streams}")
-                self.logger.debug(f"可用方向: {available_directions}")
-                return packet, False
-
             # 获取 TCP 载荷
             payload = bytes(tcp_layer.payload) if tcp_layer.payload else b''
             if not payload:
@@ -547,16 +534,37 @@ class PayloadMasker:
             seq_start = tcp_layer.seq
             seq_end = tcp_layer.seq + len(payload)
 
-            # 应用保留规则
+            # 获取匹配的规则数据，如果没有匹配规则则使用空规则数据
+            if stream_id in rule_lookup and direction in rule_lookup[stream_id]:
+                rule_data = rule_lookup[stream_id][direction]
+                self.logger.debug(f"找到匹配规则: stream_id={stream_id}, direction={direction}")
+            else:
+                # 没有匹配的规则，使用空规则数据（将导致全掩码处理）
+                rule_data = {'header_only_ranges': [], 'full_preserve_ranges': []}
+                available_streams = list(rule_lookup.keys())
+                available_directions = {}
+                for sid in available_streams:
+                    available_directions[sid] = list(rule_lookup[sid].keys())
+
+                self.logger.debug(f"无匹配规则，执行全掩码: stream_id={stream_id}, direction={direction}")
+                self.logger.debug(f"可用流: {available_streams}")
+                self.logger.debug(f"可用方向: {available_directions}")
+
+            # 应用保留规则（对于无规则的情况，将执行全掩码）
             new_payload = self._apply_keep_rules(
-                payload, seq_start, seq_end,
-                rule_lookup[stream_id][direction]
+                payload, seq_start, seq_end, rule_data
             )
 
             # 检查载荷是否发生变化
-            if new_payload == payload:
-                # 没有修改，原样返回
-                return packet, False
+            if new_payload is None or new_payload == payload:
+                # 如果_apply_keep_rules返回None或未修改，但我们需要确保全掩码处理
+                if rule_data['header_only_ranges'] == [] and rule_data['full_preserve_ranges'] == []:
+                    # 无任何保留规则，执行全掩码
+                    new_payload = b'\x00' * len(payload)
+                    self.logger.debug(f"执行全掩码处理: {len(payload)}字节")
+                else:
+                    # 有规则但未修改，原样返回
+                    return packet, False
 
             # 修改数据包载荷
             modified_packet = self._modify_packet_payload(packet, tcp_layer, new_payload)
@@ -725,10 +733,15 @@ class PayloadMasker:
             return 'reverse'
 
     def _apply_keep_rules(self, payload: bytes, seg_start: int, seg_end: int,
-                         rule_data: Dict) -> Optional[bytes]:
+                         rule_data: Dict) -> bytes:
         """应用保留规则到载荷
 
         基于 TCP_MARKER_REFERENCE.md 的核心算法实现，使用优化的二分查找。
+
+        修改说明：现在总是返回处理后的载荷，实现默认全掩码策略。
+        - 如果有保留规则，则根据规则选择性保留
+        - 如果无保留规则，则返回全零载荷
+        - 不再返回None，确保所有TCP载荷都被处理
 
         Args:
             payload: 原始载荷
@@ -737,10 +750,10 @@ class PayloadMasker:
             rule_data: 规则数据
 
         Returns:
-            修改后的载荷，如果没有修改则返回 None
+            处理后的载荷（总是返回，不再返回None）
         """
         if not payload:
-            return None
+            return b''
 
         # 使用优化的查找算法
         if 'sorted_ranges' in rule_data and rule_data['range_count'] > 10:
@@ -751,13 +764,15 @@ class PayloadMasker:
             return self._apply_keep_rules_simple(payload, seg_start, seg_end, rule_data)
 
     def _apply_keep_rules_simple(self, payload: bytes, seg_start: int, seg_end: int,
-                                rule_data: Dict) -> Optional[bytes]:
+                                rule_data: Dict) -> bytes:
         """简单的保留规则应用（适用于少量规则）
 
         使用规则类型优先级策略处理重叠规则：
         1. TLS头部保留规则 (header_only) 具有最高优先级
         2. 完全保留规则 (full_preserve) 不能覆盖头部保留规则
         3. 避免跨包TLS消息规则覆盖精确的TLS-23头部规则
+
+        修改说明：现在总是返回处理后的载荷，实现默认全掩码策略。
         """
         # 使用预处理的分离策略组
         header_only_ranges = rule_data.get('header_only_ranges', [])
@@ -843,13 +858,15 @@ class PayloadMasker:
         return bytes(buf)
 
     def _apply_keep_rules_optimized(self, payload: bytes, seg_start: int, seg_end: int,
-                                   rule_data: Dict) -> Optional[bytes]:
+                                   rule_data: Dict) -> bytes:
         """优化的保留规则应用（使用二分查找，适用于大量规则）
 
         使用规则类型优先级策略处理重叠规则：
         1. TLS头部保留规则 (header_only) 具有最高优先级
         2. 完全保留规则 (full_preserve) 不能覆盖头部保留规则
         3. 避免跨包TLS消息规则覆盖精确的TLS-23头部规则
+
+        修改说明：现在总是返回处理后的载荷，实现默认全掩码策略。
         """
         # 使用预处理的分离策略组
         header_only_ranges = rule_data.get('header_only_ranges', [])

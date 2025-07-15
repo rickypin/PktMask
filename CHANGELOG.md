@@ -1,5 +1,41 @@
 ## [Unreleased]
 
+### Changed
+- **PayloadMasker默认全掩码处理策略** (2025-07-15)
+  - **改动描述**: 修改PayloadMasker模块的默认处理逻辑，实现"mask by default"策略，确保所有TCP载荷都经过掩码处理，显著提升数据安全性。
+  - **核心变更**:
+    - 移除了"无匹配规则时原样返回"的逻辑，改为默认全掩码处理
+    - 对于任何TCP载荷，都先创建全零缓冲区，然后仅根据KeepRuleSet中的规则进行选择性保留
+    - 非TLS协议的TCP载荷（如HTTP、SSH、FTP等）现在被完全掩码，而不是保持原样
+  - **修改文件**: `src/pktmask/core/pipeline/stages/mask_payload_v2/masker/payload_masker.py`
+  - **关键修改**:
+    ```python
+    # 修改前：无规则时原样返回
+    if stream_id not in rule_lookup or direction not in rule_lookup[stream_id]:
+        return packet, False  # ❌ 原样返回，敏感数据暴露
+
+    # 修改后：无规则时执行全掩码
+    if stream_id in rule_lookup and direction in rule_lookup[stream_id]:
+        rule_data = rule_lookup[stream_id][direction]
+    else:
+        rule_data = {'header_only_ranges': [], 'full_preserve_ranges': []}
+        # 将导致全掩码处理
+    ```
+  - **安全性提升**:
+    - **HTTP协议**: 用户名、密码、API密钥等敏感信息现在被完全掩码
+    - **SSH协议**: 版本信息、配置信息等不再泄露
+    - **数据库协议**: SQL查询、数据内容等敏感信息被保护
+    - **自定义协议**: 业务逻辑、配置信息等得到保护
+  - **处理策略变更**:
+    - **修改前**: "默认允许" - 只有TLS流量被处理，其他协议完全保留
+    - **修改后**: "默认拒绝" - 所有TCP载荷默认掩码，只有明确在KeepRuleSet中的数据才被保留
+  - **验证结果**:
+    - 非TLS协议载荷：从原始明文 → 完全掩码（全零）
+    - TLS协议载荷：根据保留规则选择性保留（行为不变）
+    - 统计信息：正确反映掩码字节数和保留字节数
+    - 修改包数：现在包含所有被处理的TCP载荷
+  - **兼容性**: 保持现有TLS处理逻辑、规则优先级策略和接口签名完全不变
+
 ### Fixed
 - **TLS-23消息掩码不一致性问题** (2025-07-14)
   - **问题描述**: GUI界面和命令行脚本在处理多个TLS文件时产生不一致的掩码结果。在多文件场景下，GUI只能正确掩码少数文件，大多数文件的TLS-23消息体未被掩码，而命令行脚本能正确掩码所有文件。
