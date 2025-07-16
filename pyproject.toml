@@ -87,6 +87,20 @@ pktmask = "pktmask.__main__:app"
 [tool.hatch.build.targets.wheel]
 packages = ["src/pktmask"]
 
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "tests/samples",
+    "tests/samples/**",
+    "tests/data",
+    "tests/data/**",
+    "tmp/**",
+    "backup/**",
+    "*.log",
+    "*.tmp",
+    ".DS_Store",
+    "__pycache__/**"
+]
+
 [tool.pytest.ini_options]
 addopts = "--cov=pktmask --cov-report=term-missing --cov-report=html --html=report.html --cov-fail-under=80"
 testpaths = ["tests"] 

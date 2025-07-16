@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['run_gui.py'],
+    ['pktmask_launcher.py'],
     pathex=['src'],
     binaries=[],
     datas=[
