@@ -487,17 +487,20 @@ class MainWindow(QMainWindow):
         
         # 保持原有的UI更新逻辑
         if event_type == PipelineEvents.PIPELINE_START:
-            self.progress_bar.setMaximum(data.get('total_subdirs', 100))
+            # Initialize progress bar to 0, maximum will be set when we know the actual file count
+            self.progress_bar.setValue(0)
+            self.progress_bar.setMaximum(100)  # Set to 100 for percentage-based progress
         
         elif event_type == PipelineEvents.SUBDIR_START:
-            self._animate_progress_to(data.get('current', 0))  # 使用动画
+            # Reset progress bar to 0% when starting directory processing
+            self.progress_bar.setValue(0)
             self.update_log(f"Processing directory: {data.get('name', 'N/A')}")
         
         elif event_type == PipelineEvents.FILE_START:
             # 不在这里递增文件计数，应该在FILE_END时递增
             file_path = data['path']
             self.current_processing_file = os.path.basename(file_path)
-            self.update_log(f"\nProcessing file: {self.current_processing_file}")
+            self.update_log(f"Processing file: {self.current_processing_file}")
             
             # 初始化当前文件的处理结果记录
             if self.current_processing_file not in self.file_processing_results:
@@ -530,8 +533,10 @@ class MainWindow(QMainWindow):
                 self.current_processing_file = None
 
         elif event_type == PipelineEvents.PACKETS_SCANNED:
-            self.packets_processed_count += data.get('count', 0)
-            self.packets_processed_label.setText(str(self.packets_processed_count))
+            count = data.get('count', 0)
+            if count > 0:
+                self.pipeline_manager.statistics.add_packet_count(count)
+                self.packets_processed_label.setText(str(self.pipeline_manager.statistics.packets_processed))
 
         elif event_type == PipelineEvents.LOG:
             self.update_log(data['message'])
@@ -553,14 +558,16 @@ class MainWindow(QMainWindow):
                     self._counted_files = set()
                 if current_file not in self._counted_files:
                     self._counted_files.add(current_file)
-                    self.packets_processed_count += packets_processed
-                    self.packets_processed_label.setText(str(self.packets_processed_count))
-                    self._logger.debug(f"Updated packet count: file={current_file}, packets={packets_processed}, total={self.packets_processed_count}")
+                    # Use StatisticsManager's add_packet_count method to properly accumulate
+                    self.pipeline_manager.statistics.add_packet_count(packets_processed)
+                    # Update UI display
+                    self.packets_processed_label.setText(str(self.pipeline_manager.statistics.packets_processed))
+                    self._logger.debug(f"Updated packet count: file={current_file}, packets={packets_processed}, total={self.pipeline_manager.statistics.packets_processed}")
             
             self.collect_step_result(data)
 
         elif event_type == PipelineEvents.PIPELINE_END:
-            self._animate_progress_to(self.progress_bar.maximum())  # 动画到100%
+            self._animate_progress_to(100)  # 动画到100%
             # 注意：处理完成的逻辑由 PipelineManager 负责处理
             
         elif event_type == PipelineEvents.ERROR:

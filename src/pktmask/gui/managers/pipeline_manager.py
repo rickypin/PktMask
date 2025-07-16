@@ -186,6 +186,13 @@ class PipelineManager:
         self.main_window.start_proc_btn.setEnabled(True)
         self.main_window.ui_manager._update_start_button_style()
         
+        # Reset statistics before starting new processing
+        self.statistics.reset_all_statistics()
+
+        # Also reset the main window's packet counting cache
+        if hasattr(self.main_window, '_counted_files'):
+            self.main_window._counted_files.clear()
+
         # Start timing (unified use of StatisticsManager)
         self.statistics.start_timing()
         self.main_window.time_elapsed = 0
@@ -276,7 +283,13 @@ class PipelineManager:
         """Update progress bar"""
         if self.statistics.total_files_to_process > 0:
             progress = int((self.statistics.files_processed / self.statistics.total_files_to_process) * 100)
+            # Ensure progress doesn't exceed 100%
+            progress = min(progress, 100)
             self.main_window._animate_progress_to(progress)
+            self._logger.debug(f"Progress updated: {self.statistics.files_processed}/{self.statistics.total_files_to_process} = {progress}%")
+        else:
+            # If no files to process, keep progress at 0
+            self.main_window._animate_progress_to(0)
     
     def processing_finished(self):
         """Processing complete"""

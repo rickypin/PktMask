@@ -138,18 +138,18 @@ def _handle_stage_progress(stage, stats, progress_callback):
 
     # Emit log with stage-specific action wording and correct statistics
     if stage.name == 'DedupStage' or stage.name == 'DeduplicationStage':
-        msg = f"    - {stage_display_name}: processed {stats.packets_processed} pkts, removed {stats.packets_modified} pkts"
+        msg = f"- {stage_display_name}: processed {stats.packets_processed} pkts, removed {stats.packets_modified} pkts"
     elif stage.name == 'AnonStage':
         # For IP anonymization, show IP statistics instead of packet statistics
         original_ips = getattr(stats, 'original_ips', 0) or stats.extra_metrics.get('original_ips', 0)
         anonymized_ips = getattr(stats, 'anonymized_ips', 0) or stats.extra_metrics.get('anonymized_ips', 0)
         if original_ips > 0:
-            msg = f"    - {stage_display_name}: processed {original_ips} IPs, anonymized {anonymized_ips} IPs"
+            msg = f"- {stage_display_name}: processed {original_ips} IPs, anonymized {anonymized_ips} IPs"
         else:
             # Fallback to packet count if IP statistics are not available
-            msg = f"    - {stage_display_name}: processed {stats.packets_processed} pkts, anonymized {stats.packets_modified} IPs"
+            msg = f"- {stage_display_name}: processed {stats.packets_processed} pkts, anonymized {stats.packets_modified} IPs"
     else:
-        msg = f"    - {stage_display_name}: processed {stats.packets_processed} pkts, masked {stats.packets_modified} pkts"
+        msg = f"- {stage_display_name}: processed {stats.packets_processed} pkts, masked {stats.packets_modified} pkts"
     progress_callback(PipelineEvents.LOG, {'message': msg})
 
 
