@@ -9,7 +9,7 @@ UI构建器 - 专注于界面构建和管理
 """
 
 import os
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from PyQt6.QtWidgets import (
     QWidget, QGridLayout, QGroupBox, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QCheckBox, QTextEdit, QProgressBar,
@@ -49,8 +49,9 @@ class UIBuilder:
             self._create_menu_bar()
             self._create_main_layout()
             self._apply_initial_styles()
+            self._check_and_display_dependencies()
             self._show_initial_guides()
-            
+
             self._logger.info("UI interface construction completed")
 
         except Exception as e:
@@ -219,13 +220,61 @@ class UIBuilder:
         theme = self._get_current_theme()
         self.main_window.setStyleSheet(generate_stylesheet(theme))
     
+    def _check_and_display_dependencies(self):
+        """检查依赖并在GUI中显示状态"""
+        try:
+            from pktmask.infrastructure.dependency import DependencyChecker
+
+            checker = DependencyChecker()
+
+            if not checker.are_dependencies_satisfied():
+                # 依赖不满足时显示状态信息
+                status_messages = checker.get_status_messages()
+                self._display_dependency_status(status_messages)
+            # 依赖满足时不显示任何额外信息（保持界面清洁）
+
+        except Exception as e:
+            self._logger.error(f"Dependency check failed: {e}")
+            # 如果依赖检查失败，显示通用错误信息
+            self.main_window.log_text.append("⚠️  Unable to verify system dependencies")
+            self.main_window.log_text.append("   Some features may not work properly")
+            self.main_window.log_text.append("")
+
+    def _display_dependency_status(self, messages: List[str]):
+        """在Log模块中显示依赖状态"""
+        if hasattr(self.main_window, 'log_text'):
+            # 添加依赖状态标题
+            self.main_window.log_text.append("⚠️  Dependency Status Check:")
+            self.main_window.log_text.append("-" * 40)
+
+            # 添加具体状态信息
+            for message in messages:
+                self.main_window.log_text.append(f"❌ {message}")
+
+            # 添加解决建议
+            self.main_window.log_text.append("")
+            self.main_window.log_text.append("💡 Installation Guide:")
+            self.main_window.log_text.append("   • Install Wireshark (includes tshark)")
+            self.main_window.log_text.append("   • Ensure tshark is in system PATH")
+            self.main_window.log_text.append("   • Minimum version required: 4.2.0")
+            self.main_window.log_text.append("   • Download: https://www.wireshark.org/download.html")
+            self.main_window.log_text.append("-" * 40)
+            self.main_window.log_text.append("")
+
     def _show_initial_guides(self):
         """显示初始指引"""
-        self.main_window.log_text.append("Welcome to PktMask!")
-        self.main_window.log_text.append("1. Select an input directory containing pcap/pcapng files")
-        self.main_window.log_text.append("2. Choose processing options")
-        self.main_window.log_text.append("3. Click 'Start Processing' to begin")
-        
+        self.main_window.log_text.append("🚀 Welcome to PktMask!")
+        self.main_window.log_text.append("")
+        self.main_window.log_text.append("┌─ Quick Start Guide ──────────┐")
+        self.main_window.log_text.append("│ 1. Select pcap directory     │")
+        self.main_window.log_text.append("│ 2. Configure actions         │")
+        self.main_window.log_text.append("│ 3. Start processing          │")
+        self.main_window.log_text.append("└──────────────────────────────┘")
+        self.main_window.log_text.append("")
+        self.main_window.log_text.append("💡 Remove Dupes & Anonymize IPs enabled by default")
+        self.main_window.log_text.append("")
+        self.main_window.log_text.append("Processing logs will appear here...")
+
         self.main_window.summary_text.append("Processing summary will appear here...")
     
     # 对话框管理方法

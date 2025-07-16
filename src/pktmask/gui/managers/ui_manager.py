@@ -34,6 +34,7 @@ class UIManager:
         self._setup_main_layout()
         self._connect_signals()
         self._apply_initial_styles()
+        self._check_and_display_dependencies()
         self._show_initial_guides()
     
     def _setup_window_properties(self):
@@ -326,7 +327,49 @@ class UIManager:
         self.apply_stylesheet()
         self._update_path_link_styles()
         self._update_start_button_style()
-    
+
+    def _check_and_display_dependencies(self):
+        """检查依赖并在GUI中显示状态"""
+        try:
+            from pktmask.infrastructure.dependency import DependencyChecker
+
+            checker = DependencyChecker()
+
+            if not checker.are_dependencies_satisfied():
+                # 依赖不满足时显示状态信息
+                status_messages = checker.get_status_messages()
+                self._display_dependency_status(status_messages)
+            # 依赖满足时不显示任何额外信息（保持界面清洁）
+
+        except Exception as e:
+            self._logger.error(f"Dependency check failed: {e}")
+            # 如果依赖检查失败，显示通用错误信息
+            self.main_window.log_text.append("⚠️  Unable to verify system dependencies")
+            self.main_window.log_text.append("   Some features may not work properly")
+            self.main_window.log_text.append("")
+
+    def _display_dependency_status(self, messages):
+        """在Log模块中显示依赖状态"""
+        if hasattr(self.main_window, 'log_text'):
+            # 构建依赖状态消息
+            status_text = "⚠️  Dependency Status Check:\n"
+            status_text += "-" * 40 + "\n"
+
+            # 添加具体状态信息
+            for message in messages:
+                status_text += f"❌ {message}\n"
+
+            # 添加解决建议
+            status_text += "\n💡 Installation Guide:\n"
+            status_text += "   • Install Wireshark (includes tshark)\n"
+            status_text += "   • Ensure tshark is in system PATH\n"
+            status_text += "   • Minimum version required: 4.2.0\n"
+            status_text += "   • Download: https://www.wireshark.org/download.html\n"
+            status_text += "-" * 40 + "\n\n"
+
+            # 使用append而不是setPlaceholderText来显示依赖状态
+            self.main_window.log_text.append(status_text)
+
     def _show_initial_guides(self):
         """Show initial guides"""
         self.main_window.log_text.setPlaceholderText(
