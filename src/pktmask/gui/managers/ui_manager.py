@@ -302,12 +302,19 @@ class UIManager:
     
     def _connect_signals(self):
         """连接信号"""
-        # 目录选择信号
-        self.main_window.dir_path_label.clicked.connect(self.main_window.file_manager.choose_folder)
-        self.main_window.output_path_label.clicked.connect(self.main_window.file_manager.handle_output_click)
-        
-        # 处理按钮信号
-        self.main_window.start_proc_btn.clicked.connect(self.main_window.pipeline_manager.toggle_pipeline_processing)
+        try:
+            # 目录选择信号
+            self.main_window.dir_path_label.clicked.connect(self.main_window.file_manager.choose_folder)
+            self.main_window.output_path_label.clicked.connect(self.main_window.file_manager.handle_output_click)
+
+            # 处理按钮信号
+            self.main_window.start_proc_btn.clicked.connect(self.main_window.pipeline_manager.toggle_pipeline_processing)
+            self._logger.debug("Start button signal connected successfully")
+
+        except Exception as e:
+            self._logger.error(f"Failed to connect start button signal: {e}")
+            import traceback
+            traceback.print_exc()
         
         # checkbox状态变化信号 - 正确调用UIManager的方法
         self.main_window.anonymize_ips_cb.stateChanged.connect(self._update_start_button_state)

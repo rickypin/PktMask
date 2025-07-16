@@ -49,18 +49,32 @@ class PipelineManager:
     
     def toggle_pipeline_processing(self):
         """Toggle processing flow state"""
+        self._logger.debug("toggle_pipeline_processing called")
+
         # Store thread reference to avoid race condition
         thread = self.processing_thread
         if thread and thread.isRunning():
+            self._logger.debug("Stopping pipeline processing")
             self.stop_pipeline_processing()
         else:
+            self._logger.debug("Starting pipeline processing")
             self.start_pipeline_processing()
     
     def start_pipeline_processing(self):
         """Start processing flow"""
+        self._logger.debug("start_pipeline_processing called")
+
         if not self.main_window.base_dir:
+            self._logger.warning("No input directory selected")
             from PyQt6.QtWidgets import QMessageBox
-            QMessageBox.warning(self.main_window, "Warning", "Please choose an input folder to process.")
+            try:
+                QMessageBox.warning(self.main_window, "Warning", "Please choose an input folder to process.")
+                self._logger.debug("Warning dialog shown successfully")
+            except Exception as e:
+                self._logger.error(f"Failed to show warning dialog: {e}")
+                # Fallback: update log text
+                if hasattr(self.main_window, 'update_log'):
+                    self.main_window.update_log("⚠️ Please choose an input folder to process.")
             return
 
         # Generate actual output directory path
