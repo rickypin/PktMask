@@ -11,7 +11,6 @@ from pktmask.services.pipeline_service import (
     PipelineServiceError,
     ConfigurationError,
     create_pipeline_executor,
-    process_path,
     process_directory,
     stop_pipeline,
     build_pipeline_config,
@@ -145,9 +144,9 @@ class TestPipelineService(unittest.TestCase):
         
         mock_callback = Mock()
         
-        process_path(
+        process_directory(
             executor=mock_executor,
-            input_path=self.temp_dir,
+            input_dir=self.temp_dir,
             output_dir=self.output_dir,
             progress_callback=mock_callback,
             is_running_check=lambda: True

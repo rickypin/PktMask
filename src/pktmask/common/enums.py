@@ -200,7 +200,7 @@ class UIStrings(Enum):
     CHECKBOX_WEB_FOCUSED = "Web-Focused Traffic Only (功能已移除)"
     
     # 路径标签默认文本
-    PATH_INPUT_DEFAULT = "Click to select pcap file(s) or directory"
+    PATH_INPUT_DEFAULT = "Click and pick your pcap directory"
     PATH_OUTPUT_DEFAULT = "Auto-create or click for custom"
     
     # 时间格式

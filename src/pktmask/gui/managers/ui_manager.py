@@ -121,7 +121,7 @@ class UIManager:
         input_label.setMaximumHeight(UIConstants.INPUT_LABEL_HEIGHT)
         input_path_layout = QHBoxLayout()
         input_path_layout.setSpacing(8)
-        self.main_window.dir_path_label = QPushButton("Click to select pcap file(s) or directory")
+        self.main_window.dir_path_label = QPushButton("Click and pick your pcap directory")
         self.main_window.dir_path_label.setObjectName("DirPathLabel")
         self.main_window.dir_path_label.setMaximumHeight(UIConstants.BUTTON_MAX_HEIGHT)
         self.main_window.dir_path_label.setCursor(Qt.CursorShape.PointingHandCursor)

@@ -104,8 +104,18 @@ class ServicePipelineThread(QThread):
 
     def run(self):
         try:
-            from pktmask.services.pipeline_service import process_path
-            process_path(
+            import os
+            import platform
+
+            # Windows-specific thread initialization
+            if platform.system() == "Windows":
+                # Ensure proper thread handling on Windows
+                import threading
+                current_thread = threading.current_thread()
+                current_thread.daemon = True
+
+            from pktmask.services.pipeline_service import process_directory
+            process_directory(
                 self._executor,
                 self._base_dir,
                 self._output_dir,
@@ -114,10 +124,19 @@ class ServicePipelineThread(QThread):
             )
         except Exception as e:
             from pktmask.services.pipeline_service import PipelineServiceError
+
+            # Enhanced error handling for Windows
+            error_msg = str(e)
+            if platform.system() == "Windows":
+                if "Permission denied" in error_msg or "Access is denied" in error_msg:
+                    error_msg += "\n\nWindows Tip: Try running as administrator or check file permissions."
+                elif "No such file or directory" in error_msg:
+                    error_msg += "\n\nWindows Tip: Check if the path contains special characters or is too long."
+
             if isinstance(e, PipelineServiceError):
-                self.progress_signal.emit(PipelineEvents.ERROR, {'message': str(e)})
+                self.progress_signal.emit(PipelineEvents.ERROR, {'message': error_msg})
             else:
-                self.progress_signal.emit(PipelineEvents.ERROR, {'message': f'Unexpected error: {str(e)}'})
+                self.progress_signal.emit(PipelineEvents.ERROR, {'message': f'Unexpected error: {error_msg}'})
 
     def stop(self):
         self.is_running = False

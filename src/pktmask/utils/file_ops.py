@@ -44,6 +44,18 @@ def ensure_directory(path: Union[str, Path], create_if_missing: bool = True) -> 
             path.mkdir(parents=True, exist_ok=True)
             logger.debug(f"Created directory: {path}")
             return True
+        except PermissionError as e:
+            # Windows-specific fallback for permission issues
+            import os
+            if os.name == 'nt':
+                try:
+                    os.makedirs(str(path), exist_ok=True)
+                    logger.debug(f"Created directory (Windows fallback): {path}")
+                    return True
+                except Exception as fallback_e:
+                    raise FileError(f"Failed to create directory (Windows): {path}", file_path=str(path)) from fallback_e
+            else:
+                raise FileError(f"Permission denied creating directory: {path}", file_path=str(path)) from e
         except Exception as e:
             raise FileError(f"Failed to create directory: {path}", file_path=str(path)) from e
     
@@ -53,14 +65,17 @@ def ensure_directory(path: Union[str, Path], create_if_missing: bool = True) -> 
 def safe_join(*paths) -> str:
     """
     安全地拼接路径，处理各种边界情况
-    
+
     Args:
         *paths: 要拼接的路径组件
-    
+
     Returns:
         拼接后的路径字符串
     """
-    return str(Path(*[str(p) for p in paths if p]))
+    import os
+    result = Path(*[str(p) for p in paths if p])
+    # Normalize path separators for current platform
+    return str(result).replace('/', os.sep) if os.name == 'nt' else str(result)
 
 
 def get_file_extension(filepath: Union[str, Path]) -> str:

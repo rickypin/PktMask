@@ -80,17 +80,33 @@ class PipelineManager:
         # Generate actual output directory path
         self.main_window.current_output_dir = self.main_window.file_manager.generate_actual_output_path()
         
-        # Create output directory
+        # Create output directory with Windows-compatible approach
         try:
             import os
-            os.makedirs(self.main_window.current_output_dir, exist_ok=True)
-            self.main_window.update_log(f"📁 Created output directory: {os.path.basename(self.main_window.current_output_dir)}")
-            
+            from pathlib import Path
+
+            output_path = Path(self.main_window.current_output_dir)
+
+            # Try standard approach first
+            try:
+                output_path.mkdir(parents=True, exist_ok=True)
+            except PermissionError:
+                # Windows fallback: try with os.makedirs
+                if os.name == 'nt':
+                    os.makedirs(str(output_path), exist_ok=True)
+                else:
+                    raise
+
+            self.main_window.update_log(f"📁 Created output directory: {output_path.name}")
+
             # Update output path display
-            self.main_window.output_path_label.setText(os.path.basename(self.main_window.current_output_dir))
+            self.main_window.output_path_label.setText(output_path.name)
         except Exception as e:
             from PyQt6.QtWidgets import QMessageBox
-            QMessageBox.critical(self.main_window, "Error", f"Failed to create output directory: {str(e)}")
+            error_msg = f"Failed to create output directory: {str(e)}"
+            if os.name == 'nt':
+                error_msg += "\n\nTip: Try running as administrator or select a different output location."
+            QMessageBox.critical(self.main_window, "Error", error_msg)
             return
 
         # Reset UI and counters for new run
