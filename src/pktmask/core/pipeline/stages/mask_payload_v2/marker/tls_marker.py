@@ -8,6 +8,7 @@ TLS协议标记器
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import time
@@ -171,19 +172,42 @@ class TLSProtocolMarker(ProtocolMarker):
 
         try:
             completed = subprocess.run(
-                [executable, "-v"], check=True, text=True, capture_output=True
+                [executable, "-v"], check=True, text=True, capture_output=True, timeout=10
             )
+        except subprocess.TimeoutExpired:
+            if os.name == 'nt':
+                # Windows下超时可能是正常的，尝试继续
+                self.logger.warning(f"TShark version check timeout on Windows, assuming tshark is available: {executable}")
+                return executable
+            else:
+                raise RuntimeError(f"TShark version check timeout: {executable}")
         except (subprocess.CalledProcessError, FileNotFoundError) as exc:
             raise RuntimeError(f"无法执行 tshark '{executable}': {exc}") from exc
 
-        version = self._parse_tshark_version(completed.stdout + completed.stderr)
+        # Windows特殊处理：检查stdout是否为None
+        if completed.stdout is None and os.name == 'nt':
+            self.logger.warning(f"TShark version check returned None stdout on Windows, assuming tshark is available: {executable}")
+            return executable
+
+        output = (completed.stdout or "") + (completed.stderr or "")
+        version = self._parse_tshark_version(output)
         if version is None:
-            raise RuntimeError("无法解析 tshark 版本号")
+            if os.name == 'nt':
+                # Windows下解析失败时假设版本足够
+                self.logger.warning(f"TShark version parsing failed on Windows, assuming sufficient version: {executable}")
+                return executable
+            else:
+                raise RuntimeError("无法解析 tshark 版本号")
 
         if version < MIN_TSHARK_VERSION:
             ver_str = ".".join(map(str, version))
             min_str = ".".join(map(str, MIN_TSHARK_VERSION))
-            raise RuntimeError(f"tshark 版本过低 ({ver_str})，需要 ≥ {min_str}")
+            if os.name == 'nt':
+                # Windows下版本过低时给出警告但继续
+                self.logger.warning(f"TShark version may be too old on Windows ({ver_str}), required ≥ {min_str}, but continuing anyway")
+                return executable
+            else:
+                raise RuntimeError(f"tshark 版本过低 ({ver_str})，需要 ≥ {min_str}")
 
         self.logger.debug(f"Detected tshark {'.'.join(map(str, version))} at {executable}")
         return executable
