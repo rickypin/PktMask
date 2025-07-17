@@ -5,6 +5,7 @@ PktMask 统一依赖检查器
 并提供了标准化的依赖状态报告功能。
 """
 
+import os
 import re
 import shutil
 import subprocess
@@ -190,19 +191,60 @@ class DependencyChecker:
         """查找tshark可执行文件 (复用自scripts/check_tshark_dependencies.py)"""
         # 1. 检查自定义路径
         if custom_path:
-            if Path(custom_path).exists():
+            if Path(custom_path).exists() and self._is_executable(custom_path):
                 return custom_path
             else:
-                self.logger.warning(f"Custom tshark path does not exist: {custom_path}")
+                self.logger.warning(f"Custom tshark path does not exist or is not executable: {custom_path}")
                 return None
-        
+
         # 2. 检查默认路径
         for path in self.DEFAULT_TSHARK_PATHS:
-            if Path(path).exists():
+            if Path(path).exists() and self._is_executable(path):
+                self.logger.debug(f"Found tshark at default path: {path}")
                 return path
-        
+
         # 3. 在系统PATH中搜索
-        return shutil.which('tshark')
+        which_result = shutil.which('tshark')
+        if which_result and self._is_executable(which_result):
+            self.logger.debug(f"Found tshark in system PATH: {which_result}")
+            return which_result
+
+        # 4. Windows特殊处理：检查常见的Wireshark安装位置
+        if os.name == 'nt':  # Windows
+            additional_paths = [
+                r"C:\Program Files\Wireshark\tshark.exe",
+                r"C:\Program Files (x86)\Wireshark\tshark.exe",
+                # 检查用户目录下的便携版本
+                os.path.expanduser(r"~\AppData\Local\Programs\Wireshark\tshark.exe"),
+                # 检查当前目录下的便携版本（打包应用可能包含）
+                os.path.join(os.getcwd(), "tshark.exe"),
+                os.path.join(os.path.dirname(sys.executable), "tshark.exe"),
+            ]
+
+            for path in additional_paths:
+                if Path(path).exists() and self._is_executable(path):
+                    self.logger.debug(f"Found tshark at Windows-specific path: {path}")
+                    return path
+
+        self.logger.warning("TShark executable not found in any known locations")
+        return None
+
+    def _is_executable(self, path: str) -> bool:
+        """检查文件是否可执行"""
+        try:
+            path_obj = Path(path)
+            if not path_obj.exists():
+                return False
+
+            # Windows下检查文件扩展名
+            if os.name == 'nt':
+                return path_obj.suffix.lower() == '.exe'
+            else:
+                # Unix-like系统检查执行权限
+                return os.access(path, os.X_OK)
+        except Exception as e:
+            self.logger.debug(f"Error checking if path is executable: {path}, error: {e}")
+            return False
     
     def _check_tshark_version(self, tshark_path: str) -> Dict[str, any]:
         """检查tshark版本 (复用自scripts/check_tshark_dependencies.py)"""
@@ -215,32 +257,57 @@ class DependencyChecker:
         }
         
         try:
+            self.logger.debug(f"Checking tshark version at path: {tshark_path}")
             proc = subprocess.run(
                 [tshark_path, '-v'],
                 capture_output=True,
                 text=True,
                 timeout=10
             )
-            
+
             if proc.returncode != 0:
-                result['error'] = f"tshark -v returned non-zero exit code: {proc.returncode}"
+                stderr_info = proc.stderr if proc.stderr else "No error details available"
+                result['error'] = f"tshark -v returned non-zero exit code: {proc.returncode}, stderr: {stderr_info}"
+                self.logger.error(f"TShark version check failed: {result['error']}")
                 return result
-            
-            output = proc.stdout + proc.stderr
+
+            # 检查输出是否为None
+            if proc.stdout is None and proc.stderr is None:
+                result['error'] = "tshark -v returned no output (both stdout and stderr are None)"
+                self.logger.error(f"TShark version check returned no output for path: {tshark_path}")
+                return result
+
+            output = (proc.stdout or "") + (proc.stderr or "")
+            if not output.strip():
+                result['error'] = "tshark -v returned empty output"
+                self.logger.error(f"TShark version check returned empty output for path: {tshark_path}")
+                return result
+
             result['version_string'] = output.strip()
-            
+            self.logger.debug(f"TShark version output: {result['version_string'][:200]}...")  # 限制日志长度
+
             version = self._parse_tshark_version(output)
             if version:
                 result['version'] = version
                 result['meets_requirement'] = version >= self.MIN_TSHARK_VERSION
                 result['success'] = True
+                self.logger.debug(f"TShark version parsed: {version}, meets requirement: {result['meets_requirement']}")
             else:
-                result['error'] = "Unable to parse version number"
-                
+                result['error'] = "Unable to parse version number from output"
+                self.logger.error(f"Failed to parse TShark version from output: {output[:200]}...")
+
         except subprocess.TimeoutExpired:
             result['error'] = "tshark -v execution timeout"
+            self.logger.error(f"TShark version check timeout for path: {tshark_path}")
+        except FileNotFoundError:
+            result['error'] = f"tshark executable not found: {tshark_path}"
+            self.logger.error(f"TShark executable not found: {tshark_path}")
+        except PermissionError:
+            result['error'] = f"Permission denied executing tshark: {tshark_path}"
+            self.logger.error(f"Permission denied executing TShark: {tshark_path}")
         except Exception as e:
             result['error'] = f"Version check failed: {e}"
+            self.logger.error(f"TShark version check exception for path: {tshark_path}, error: {e}")
         
         return result
     
@@ -259,7 +326,7 @@ class DependencyChecker:
             'missing_protocols': [],
             'error': None
         }
-        
+
         try:
             proc = subprocess.run(
                 [tshark_path, '-G', 'protocols'],
@@ -267,26 +334,41 @@ class DependencyChecker:
                 text=True,
                 timeout=30
             )
-            
+
             if proc.returncode != 0:
-                result['error'] = f"tshark -G protocols returned non-zero exit code: {proc.returncode}"
+                stderr_info = proc.stderr if proc.stderr else "No error details available"
+                result['error'] = f"tshark -G protocols returned non-zero exit code: {proc.returncode}, stderr: {stderr_info}"
                 return result
-            
+
+            # 检查stdout是否为None (Windows打包环境下可能出现)
+            if proc.stdout is None:
+                result['error'] = "tshark -G protocols returned no output (stdout is None)"
+                self.logger.warning(f"TShark protocol check returned None stdout. Path: {tshark_path}, returncode: {proc.returncode}")
+                return result
+
+            # 检查stdout是否为空字符串
+            if not proc.stdout.strip():
+                result['error'] = "tshark -G protocols returned empty output"
+                self.logger.warning(f"TShark protocol check returned empty stdout. Path: {tshark_path}")
+                return result
+
             protocols = proc.stdout.lower()
-            
+
             for protocol in self.REQUIRED_PROTOCOLS:
                 if protocol in protocols:
                     result['supported_protocols'].append(protocol)
                 else:
                     result['missing_protocols'].append(protocol)
-            
+
             result['success'] = len(result['missing_protocols']) == 0
-            
+
         except subprocess.TimeoutExpired:
             result['error'] = "Protocol support check timeout"
+            self.logger.error(f"TShark protocol check timeout for path: {tshark_path}")
         except Exception as e:
             result['error'] = f"Protocol support check failed: {e}"
-        
+            self.logger.error(f"TShark protocol check exception for path: {tshark_path}, error: {e}")
+
         return result
     
     def _check_json_output(self, tshark_path: str) -> Dict[str, any]:
@@ -295,8 +377,9 @@ class DependencyChecker:
             'success': False,
             'error': None
         }
-        
+
         try:
+            self.logger.debug(f"Checking JSON output support for tshark: {tshark_path}")
             # 创建一个最小的测试命令
             proc = subprocess.run(
                 [tshark_path, '-T', 'json', '-c', '0'],
@@ -304,19 +387,32 @@ class DependencyChecker:
                 text=True,
                 timeout=10
             )
-            
+
+            # 检查stderr是否为None
+            stderr_content = proc.stderr or ""
+
             # 即使没有输入文件，tshark也应该能够识别JSON格式选项
             # 返回码可能不是0，但不应该有格式错误
-            if 'json' in proc.stderr.lower() and 'invalid' in proc.stderr.lower():
+            if 'json' in stderr_content.lower() and 'invalid' in stderr_content.lower():
                 result['error'] = "JSON output format not supported"
+                self.logger.error(f"TShark JSON output not supported: {stderr_content}")
             else:
                 result['success'] = True
-                
+                self.logger.debug("TShark JSON output support confirmed")
+
         except subprocess.TimeoutExpired:
             result['error'] = "JSON output test timeout"
+            self.logger.error(f"TShark JSON output test timeout for path: {tshark_path}")
+        except FileNotFoundError:
+            result['error'] = f"tshark executable not found: {tshark_path}"
+            self.logger.error(f"TShark executable not found during JSON test: {tshark_path}")
+        except PermissionError:
+            result['error'] = f"Permission denied executing tshark: {tshark_path}"
+            self.logger.error(f"Permission denied executing TShark during JSON test: {tshark_path}")
         except Exception as e:
             result['error'] = f"JSON output test failed: {e}"
-        
+            self.logger.error(f"TShark JSON output test exception for path: {tshark_path}, error: {e}")
+
         return result
     
     def _format_version(self, version: Tuple[int, int, int]) -> str:
@@ -325,16 +421,60 @@ class DependencyChecker:
     
     def _format_error_message(self, result: DependencyResult) -> str:
         """格式化错误消息用于GUI显示"""
+        base_name = result.name.upper()
+
         if result.status == DependencyStatus.MISSING:
-            return f"{result.name.upper()} not found in system PATH"
+            msg = f"{base_name} not found in system PATH or default locations"
+            if os.name == 'nt':  # Windows
+                msg += "\n   • Check if Wireshark is installed"
+                msg += "\n   • Verify installation path is correct"
+                msg += "\n   • Try running as administrator"
+            return msg
+
         elif result.status == DependencyStatus.VERSION_MISMATCH:
-            return f"{result.name.upper()} version too old: {result.version_found}, required: ≥{result.version_required}"
+            msg = f"{base_name} version too old: {result.version_found}, required: ≥{result.version_required}"
+            if result.path:
+                msg += f"\n   • Found at: {result.path}"
+            msg += "\n   • Please update Wireshark to latest version"
+            return msg
+
         elif result.status == DependencyStatus.PERMISSION_ERROR:
-            return f"{result.name.upper()} permission denied: {result.error_message}"
+            msg = f"{base_name} permission denied"
+            if result.path:
+                msg += f"\n   • Path: {result.path}"
+            if os.name == 'nt':  # Windows
+                msg += "\n   • Try running as administrator"
+                msg += "\n   • Check Windows security settings"
+            else:
+                msg += "\n   • Check file permissions"
+                msg += "\n   • Try running with sudo"
+            if result.error_message:
+                msg += f"\n   • Details: {result.error_message}"
+            return msg
+
         elif result.status == DependencyStatus.EXECUTION_ERROR:
-            return f"{result.name.upper()} execution error: {result.error_message}"
+            msg = f"{base_name} execution error"
+            if result.path:
+                msg += f"\n   • Path: {result.path}"
+            if result.version_found:
+                msg += f"\n   • Version: {result.version_found}"
+            if result.error_message:
+                # 特殊处理NoneType错误
+                if "NoneType" in result.error_message and "lower" in result.error_message:
+                    msg += "\n   • Issue: Protocol support check failed (Windows compatibility)"
+                    msg += "\n   • This is a known issue in packaged Windows applications"
+                    msg += "\n   • TShark may still work for basic operations"
+                else:
+                    msg += f"\n   • Details: {result.error_message}"
+            return msg
+
         else:
-            return f"{result.name.upper()} unknown error: {result.error_message}"
+            msg = f"{base_name} unknown error"
+            if result.path:
+                msg += f"\n   • Path: {result.path}"
+            if result.error_message:
+                msg += f"\n   • Details: {result.error_message}"
+            return msg
     
     def clear_cache(self):
         """清除缓存"""

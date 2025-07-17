@@ -13,6 +13,7 @@ PktMask TShark 依赖检查脚本
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -57,23 +58,65 @@ def parse_tshark_version(output: str) -> Optional[Tuple[int, int, int]]:
     return None
 
 
+def is_executable(path: str) -> bool:
+    """检查文件是否可执行"""
+    try:
+        path_obj = Path(path)
+        if not path_obj.exists():
+            return False
+
+        # Windows下检查文件扩展名
+        if os.name == 'nt':
+            return path_obj.suffix.lower() == '.exe'
+        else:
+            # Unix-like系统检查执行权限
+            return os.access(path, os.X_OK)
+    except Exception as e:
+        print(f"Error checking if path is executable: {path}, error: {e}", file=sys.stderr)
+        return False
+
+
 def find_tshark_executable(custom_path: Optional[str] = None) -> Optional[str]:
     """查找tshark可执行文件"""
     # 1. 检查自定义路径
     if custom_path:
-        if Path(custom_path).exists():
+        if Path(custom_path).exists() and is_executable(custom_path):
             return custom_path
         else:
-            print(f"❌ 自定义路径不存在: {custom_path}")
+            print(f"❌ 自定义路径不存在或不可执行: {custom_path}")
             return None
-    
+
     # 2. 检查默认路径
     for path in DEFAULT_TSHARK_PATHS:
-        if Path(path).exists():
+        if Path(path).exists() and is_executable(path):
+            print(f"✅ 在默认路径找到tshark: {path}")
             return path
-    
+
     # 3. 在系统PATH中搜索
-    return shutil.which('tshark')
+    which_result = shutil.which('tshark')
+    if which_result and is_executable(which_result):
+        print(f"✅ 在系统PATH中找到tshark: {which_result}")
+        return which_result
+
+    # 4. Windows特殊处理：检查常见的Wireshark安装位置
+    if os.name == 'nt':  # Windows
+        additional_paths = [
+            r"C:\Program Files\Wireshark\tshark.exe",
+            r"C:\Program Files (x86)\Wireshark\tshark.exe",
+            # 检查用户目录下的便携版本
+            os.path.expanduser(r"~\AppData\Local\Programs\Wireshark\tshark.exe"),
+            # 检查当前目录下的便携版本（打包应用可能包含）
+            os.path.join(os.getcwd(), "tshark.exe"),
+            os.path.join(os.path.dirname(sys.executable), "tshark.exe"),
+        ]
+
+        for path in additional_paths:
+            if Path(path).exists() and is_executable(path):
+                print(f"✅ 在Windows特定路径找到tshark: {path}")
+                return path
+
+    print("❌ 在所有已知位置都未找到tshark可执行文件")
+    return None
 
 
 def check_tshark_version(tshark_path: str) -> Dict[str, any]:
@@ -125,7 +168,7 @@ def check_protocol_support(tshark_path: str) -> Dict[str, any]:
         'missing_protocols': [],
         'error': None
     }
-    
+
     try:
         proc = subprocess.run(
             [tshark_path, '-G', 'protocols'],
@@ -133,26 +176,41 @@ def check_protocol_support(tshark_path: str) -> Dict[str, any]:
             text=True,
             timeout=30
         )
-        
+
         if proc.returncode != 0:
-            result['error'] = f"tshark -G protocols 返回非零退出码: {proc.returncode}"
+            stderr_info = proc.stderr if proc.stderr else "No error details available"
+            result['error'] = f"tshark -G protocols 返回非零退出码: {proc.returncode}, stderr: {stderr_info}"
             return result
-        
+
+        # 检查stdout是否为None (Windows打包环境下可能出现)
+        if proc.stdout is None:
+            result['error'] = "tshark -G protocols 返回空输出 (stdout is None)"
+            print(f"Warning: TShark protocol check returned None stdout. Path: {tshark_path}, returncode: {proc.returncode}", file=sys.stderr)
+            return result
+
+        # 检查stdout是否为空字符串
+        if not proc.stdout.strip():
+            result['error'] = "tshark -G protocols 返回空输出"
+            print(f"Warning: TShark protocol check returned empty stdout. Path: {tshark_path}", file=sys.stderr)
+            return result
+
         protocols = proc.stdout.lower()
-        
+
         for protocol in REQUIRED_PROTOCOLS:
             if protocol in protocols:
                 result['supported_protocols'].append(protocol)
             else:
                 result['missing_protocols'].append(protocol)
-        
+
         result['success'] = len(result['missing_protocols']) == 0
-        
+
     except subprocess.TimeoutExpired:
         result['error'] = "tshark -G protocols 执行超时"
+        print(f"Error: TShark protocol check timeout for path: {tshark_path}", file=sys.stderr)
     except Exception as e:
         result['error'] = f"检查协议支持失败: {e}"
-    
+        print(f"Error: TShark protocol check exception for path: {tshark_path}, error: {e}", file=sys.stderr)
+
     return result
 
 
@@ -164,7 +222,7 @@ def check_field_support(tshark_path: str) -> Dict[str, any]:
         'missing_fields': [],
         'error': None
     }
-    
+
     try:
         proc = subprocess.run(
             [tshark_path, '-G', 'fields'],
@@ -172,26 +230,41 @@ def check_field_support(tshark_path: str) -> Dict[str, any]:
             text=True,
             timeout=30
         )
-        
+
         if proc.returncode != 0:
-            result['error'] = f"tshark -G fields 返回非零退出码: {proc.returncode}"
+            stderr_info = proc.stderr if proc.stderr else "No error details available"
+            result['error'] = f"tshark -G fields 返回非零退出码: {proc.returncode}, stderr: {stderr_info}"
             return result
-        
+
+        # 检查stdout是否为None (Windows打包环境下可能出现)
+        if proc.stdout is None:
+            result['error'] = "tshark -G fields 返回空输出 (stdout is None)"
+            print(f"Warning: TShark field check returned None stdout. Path: {tshark_path}, returncode: {proc.returncode}", file=sys.stderr)
+            return result
+
+        # 检查stdout是否为空字符串
+        if not proc.stdout.strip():
+            result['error'] = "tshark -G fields 返回空输出"
+            print(f"Warning: TShark field check returned empty stdout. Path: {tshark_path}", file=sys.stderr)
+            return result
+
         fields = proc.stdout
-        
+
         for field in REQUIRED_FIELDS:
             if field in fields:
                 result['supported_fields'].append(field)
             else:
                 result['missing_fields'].append(field)
-        
+
         result['success'] = len(result['missing_fields']) == 0
-        
+
     except subprocess.TimeoutExpired:
         result['error'] = "tshark -G fields 执行超时"
+        print(f"Error: TShark field check timeout for path: {tshark_path}", file=sys.stderr)
     except Exception as e:
         result['error'] = f"检查字段支持失败: {e}"
-    
+        print(f"Error: TShark field check exception for path: {tshark_path}, error: {e}", file=sys.stderr)
+
     return result
 
 
