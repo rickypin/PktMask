@@ -8,6 +8,7 @@ TLS协议标记器
 from __future__ import annotations
 
 import json
+import platform
 import re
 import subprocess
 import time
@@ -170,8 +171,10 @@ class TLSProtocolMarker(ProtocolMarker):
         executable = tshark_path or "tshark"
 
         try:
-            completed = subprocess.run(
-                [executable, "-v"], check=True, text=True, capture_output=True
+            completed = self._run_tshark_subprocess(
+                [executable, "-v"],
+                timeout=10,
+                description="TShark version check"
             )
         except (subprocess.CalledProcessError, FileNotFoundError) as exc:
             raise RuntimeError(f"无法执行 tshark '{executable}': {exc}") from exc
@@ -195,6 +198,35 @@ class TLSProtocolMarker(ProtocolMarker):
             return None
         return tuple(map(int, m.groups()))  # type: ignore [return-value]
 
+    def _run_tshark_subprocess(self, cmd: List[str], timeout: int = 60, description: str = "TShark command") -> subprocess.CompletedProcess:
+        """Run TShark subprocess with cross-platform optimizations
+
+        Args:
+            cmd: TShark command list
+            timeout: Command timeout in seconds
+            description: Description for logging
+
+        Returns:
+            CompletedProcess result
+
+        Raises:
+            subprocess.CalledProcessError: If command fails
+        """
+        # Windows optimization: prepare subprocess kwargs
+        subprocess_kwargs = {
+            'check': True,
+            'text': True,
+            'capture_output': True,
+            'timeout': timeout
+        }
+
+        # Prevent CMD window flashing on Windows
+        if platform.system() == 'Windows':
+            subprocess_kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+
+        self.logger.debug(f"Executing {description}: {' '.join(cmd[:5])}...")  # Log first 5 args
+        return subprocess.run(cmd, **subprocess_kwargs)
+
     def _scan_tls_messages(self, pcap_path: str) -> List[Dict[str, Any]]:
         """扫描PCAP文件中的TLS消息（复用自tls_flow_analyzer）
 
@@ -205,10 +237,13 @@ class TLSProtocolMarker(ProtocolMarker):
         self.logger.debug("Scanning TLS messages")
 
         # 第一阶段：扫描重组后的TLS消息
+        # Ensure cross-platform path handling
+        pcap_path_str = str(pcap_path)  # Convert Path object to string if needed
+
         cmd_reassembled = [
             self.tshark_exec,
             "-2",  # 两遍分析，启用重组
-            "-r", pcap_path,
+            "-r", pcap_path_str,
             "-T", "json",
             "-e", "frame.number",
             "-e", "frame.protocols",
@@ -236,7 +271,7 @@ class TLSProtocolMarker(ProtocolMarker):
         # 第二阶段：扫描TLS段数据（禁用重组，捕获分段）
         cmd_segments = [
             self.tshark_exec,
-            "-r", pcap_path,
+            "-r", pcap_path_str,
             "-T", "json",
             "-e", "frame.number",
             "-e", "frame.protocols",
@@ -265,14 +300,23 @@ class TLSProtocolMarker(ProtocolMarker):
 
         try:
             # 执行第一阶段扫描
-            completed_reassembled = subprocess.run(cmd_reassembled, check=True, text=True, capture_output=True)
+            completed_reassembled = self._run_tshark_subprocess(
+                cmd_reassembled,
+                timeout=60,
+                description="TLS reassembled scan"
+            )
             packets_reassembled = json.loads(completed_reassembled.stdout)
 
             # 执行第二阶段扫描
-            completed_segments = subprocess.run(cmd_segments, check=True, text=True, capture_output=True)
+            completed_segments = self._run_tshark_subprocess(
+                cmd_segments,
+                timeout=60,
+                description="TLS segments scan"
+            )
             packets_segments = json.loads(completed_segments.stdout)
 
         except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
+            self.logger.error(f"TLS message scan failed: {exc}")
             raise RuntimeError(f"TLS消息扫描失败: {exc}") from exc
 
         # 合并两阶段的结果
@@ -413,9 +457,12 @@ class TLSProtocolMarker(ProtocolMarker):
 
     def _analyze_single_tcp_flow(self, pcap_path: str, stream_id: str) -> Optional[Dict[str, Any]]:
         """分析单个TCP流（复用自tls_flow_analyzer逻辑）"""
+        # Ensure cross-platform path handling
+        pcap_path_str = str(pcap_path)  # Convert Path object to string if needed
+
         cmd = [
             self.tshark_exec,
-            "-r", pcap_path,
+            "-r", pcap_path_str,
             "-Y", f"tcp.stream == {stream_id}",
             "-T", "json",
             "-e", "frame.number",
@@ -441,10 +488,14 @@ class TLSProtocolMarker(ProtocolMarker):
                 cmd.extend(["-d", spec])
 
         try:
-            completed = subprocess.run(cmd, check=True, text=True, capture_output=True)
+            completed = self._run_tshark_subprocess(
+                cmd,
+                timeout=30,
+                description=f"TCP stream {stream_id} analysis"
+            )
             packets = json.loads(completed.stdout)
-        except (subprocess.CalledProcessError, json.JSONDecodeError):
-            self.logger.warning(f"TCP flow analysis failed (stream {stream_id})")
+        except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
+            self.logger.warning(f"TCP flow analysis failed (stream {stream_id}): {exc}")
             return None
 
         if not packets:

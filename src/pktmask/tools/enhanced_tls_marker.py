@@ -539,12 +539,20 @@ def main(argv: list[str] | None = None) -> None:
 
     # 执行 tshark
     try:
-        completed = subprocess.run(
-            tshark_cmd,
-            check=True,
-            text=True,
-            capture_output=True,
-        )
+        # Windows optimization: prevent CMD window flashing
+        subprocess_kwargs = {
+            'check': True,
+            'text': True,
+            'capture_output': True,
+            'timeout': 120  # Longer timeout for file processing
+        }
+
+        # Prevent CMD window flashing on Windows
+        import platform
+        if platform.system() == 'Windows':
+            subprocess_kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+
+        completed = subprocess.run(tshark_cmd, **subprocess_kwargs)
     except subprocess.CalledProcessError as exc:
         sys.stderr.write(f"[enhanced-tls-marker] Error: tshark execution failed: {exc}\n")
         sys.exit(3)

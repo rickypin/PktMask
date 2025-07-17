@@ -42,9 +42,20 @@ def _check_tshark_version(tshark_path: str | None, verbose: bool = False) -> str
     executable = tshark_path or "tshark"
 
     try:
-        completed = subprocess.run(
-            [executable, "-v"], check=True, text=True, capture_output=True
-        )
+        # Windows optimization: prevent CMD window flashing
+        subprocess_kwargs = {
+            'check': True,
+            'text': True,
+            'capture_output': True,
+            'timeout': 10
+        }
+
+        # Prevent CMD window flashing on Windows
+        import platform
+        if platform.system() == 'Windows':
+            subprocess_kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+
+        completed = subprocess.run([executable, "-v"], **subprocess_kwargs)
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
         sys.stderr.write(
             f"[tls23-marker] Error: Cannot execute '{executable}': {exc}\n"
@@ -195,12 +206,20 @@ def main(argv: list[str] | None = None) -> None:
         sys.stdout.write(f"[tls23-marker] Running command: {' '.join(tshark_cmd)}\n")
 
     try:
-        completed = subprocess.run(
-            tshark_cmd,
-            check=True,
-            text=True,
-            capture_output=True,
-        )
+        # Windows optimization: prevent CMD window flashing
+        subprocess_kwargs = {
+            'check': True,
+            'text': True,
+            'capture_output': True,
+            'timeout': 120  # Longer timeout for file processing
+        }
+
+        # Prevent CMD window flashing on Windows
+        import platform
+        if platform.system() == 'Windows':
+            subprocess_kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+
+        completed = subprocess.run(tshark_cmd, **subprocess_kwargs)
     except subprocess.CalledProcessError as exc:
         sys.stderr.write(f"[tls23-marker] Error: tshark execution failed: {exc}\n")
         sys.exit(3)
@@ -351,9 +370,19 @@ def main(argv: list[str] | None = None) -> None:
         ]
 
         try:
-            completed_stream = subprocess.run(
-                stream_cmd, check=True, text=True, capture_output=True
-            )
+            # Windows optimization: prevent CMD window flashing
+            subprocess_kwargs = {
+                'check': True,
+                'text': True,
+                'capture_output': True,
+                'timeout': 60  # Timeout for stream analysis
+            }
+
+            # Prevent CMD window flashing on Windows
+            if platform.system() == 'Windows':
+                subprocess_kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+
+            completed_stream = subprocess.run(stream_cmd, **subprocess_kwargs)
         except subprocess.CalledProcessError:
             continue  # 跳过无法解析的流
 
