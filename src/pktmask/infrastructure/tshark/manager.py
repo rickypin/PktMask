@@ -349,7 +349,7 @@ class TSharkManager:
         }
 
         try:
-            # Check protocol support
+            # Check protocol support (cross-platform)
             result = subprocess.run(
                 [tshark_path, '-G', 'protocols'],
                 capture_output=True,
@@ -358,7 +358,14 @@ class TSharkManager:
             )
             if result.returncode == 0:
                 protocols = result.stdout.lower()
-                capabilities['tls_protocol_support'] = 'tls' in protocols and 'ssl' in protocols
+                # Check for TLS/SSL protocol support without external commands
+                tls_found = 'tls' in protocols
+                ssl_found = 'ssl' in protocols
+                capabilities['tls_protocol_support'] = tls_found and ssl_found
+
+                self.logger.debug(f"Protocol check: TLS={tls_found}, SSL={ssl_found}")
+            else:
+                self.logger.warning(f"Protocol check failed: {result.stderr}")
 
             # Check JSON output support
             result = subprocess.run(
@@ -398,17 +405,33 @@ class TSharkManager:
 
                 all_required_fields = required_basic_fields + required_tls_fields + required_ip_fields
 
-                capabilities['field_extraction_support'] = all(
-                    field in fields for field in all_required_fields
-                )
+                # Check each field individually for better debugging (cross-platform)
+                field_results = {}
+                missing_fields = []
+
+                for field in all_required_fields:
+                    field_found = field in fields
+                    field_results[field] = field_found
+                    if not field_found:
+                        missing_fields.append(field)
+
+                capabilities['field_extraction_support'] = len(missing_fields) == 0
+
+                if missing_fields:
+                    self.logger.debug(f"Missing fields: {missing_fields}")
+                else:
+                    self.logger.debug("All required fields found")
 
                 # Specific TLS capabilities
+                basic_tls_fields = required_tls_fields[:4]  # Basic TLS record fields
                 capabilities['tls_record_parsing'] = all(
-                    field in fields for field in required_tls_fields[:4]  # Basic TLS record fields
+                    field_results.get(field, False) for field in basic_tls_fields
                 )
 
-                capabilities['tls_app_data_extraction'] = 'tls.app_data' in fields
-                capabilities['tcp_stream_tracking'] = 'tcp.stream' in fields
+                capabilities['tls_app_data_extraction'] = field_results.get('tls.app_data', False)
+                capabilities['tcp_stream_tracking'] = field_results.get('tcp.stream', False)
+            else:
+                self.logger.warning(f"Field extraction check failed: {result.stderr}")
 
             # Check two-pass analysis support (-2 flag)
             result = subprocess.run(

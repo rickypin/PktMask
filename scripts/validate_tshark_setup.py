@@ -9,6 +9,7 @@ Can be used for troubleshooting and verification of cross-platform TShark setup.
 import argparse
 import sys
 import os
+import platform
 from pathlib import Path
 
 # Add src directory to Python path
@@ -195,7 +196,13 @@ Examples:
         action="store_true",
         help="Run only basic TShark detection"
     )
-    
+
+    parser.add_argument(
+        "--windows-fix",
+        action="store_true",
+        help="Run Windows-specific TShark fixes (Windows only)"
+    )
+
     args = parser.parse_args()
     
     print_header("PktMask TShark Setup Validation")
@@ -204,7 +211,26 @@ Examples:
     
     # Track overall success
     all_tests_passed = True
-    
+
+    # Windows-specific fixes
+    if args.windows_fix and platform.system() == 'Windows':
+        print_section("Windows TShark Fix")
+        try:
+            import subprocess
+            result = subprocess.run([
+                sys.executable,
+                'scripts/windows_tshark_fix.py',
+                '--auto-fix'
+            ], cwd=Path(__file__).parent.parent)
+
+            if result.returncode == 0:
+                print("✅ Windows TShark fix completed")
+            else:
+                print("❌ Windows TShark fix failed")
+                print("   Please run: python scripts/windows_tshark_fix.py --auto-fix")
+        except Exception as e:
+            print(f"❌ Error running Windows fix: {e}")
+
     # Basic TShark validation (always run unless report-only)
     if not args.report:
         basic_success = validate_basic_tshark(args.tshark_path)
@@ -246,6 +272,15 @@ Examples:
         print("   • Check TShark is in system PATH")
         print("   • Verify TShark version >= 4.2.0")
         print("   • Ensure TLS/SSL protocol support is enabled")
+
+        # Windows-specific suggestions
+        if platform.system() == 'Windows':
+            print("\n🪟 Windows-specific solutions:")
+            print("   • Run: python scripts/windows_tshark_fix.py --auto-fix")
+            print("   • Install Wireshark with 'Command Line Tools' option")
+            print("   • Use Chocolatey: choco install wireshark")
+            print("   • See: docs/WINDOWS_TSHARK_TROUBLESHOOTING.md")
+
         sys.exit(1)
 
 
