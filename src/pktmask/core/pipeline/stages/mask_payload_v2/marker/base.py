@@ -53,20 +53,34 @@ class ProtocolMarker(ABC):
     
     def initialize(self) -> bool:
         """初始化标记器
-        
+
         Returns:
             初始化是否成功
         """
         if self._initialized:
+            self.logger.debug(f"{self.__class__.__name__} already initialized, skipping")
             return True
-        
+
         try:
+            import platform
+            self.logger.info(f"Starting {self.__class__.__name__} initialization on {platform.system()}")
+            self.logger.debug(f"Config: {self.config}")
+
             self._initialize_components()
             self._initialized = True
             self.logger.info(f"{self.__class__.__name__} 初始化成功")
             return True
         except Exception as e:
+            import traceback
             self.logger.error(f"{self.__class__.__name__} 初始化失败: {e}")
+            self.logger.error(f"Exception type: {type(e).__name__}")
+            self.logger.error(f"Exception details: {str(e)}")
+
+            # 记录完整的错误堆栈
+            self.logger.error(f"{self.__class__.__name__} initialization failure traceback:")
+            for line in traceback.format_exc().splitlines():
+                self.logger.error(f"[{self.__class__.__name__}] {line}")
+
             return False
     
     def _initialize_components(self) -> None:

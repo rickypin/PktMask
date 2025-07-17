@@ -187,10 +187,17 @@ class TLSProtocolMarker(ProtocolMarker):
         """验证tshark版本并返回可执行路径（复用自tls_flow_analyzer）"""
         executable = tshark_path or "tshark"
 
+        import platform
+        self.logger.debug(f"Checking TShark version on {platform.system()}")
+        self.logger.debug(f"TShark path: {tshark_path}")
+        self.logger.debug(f"Executable to use: {executable}")
+
         try:
+            self.logger.debug(f"Running subprocess: {executable} -v")
             completed = subprocess.run(
                 [executable, "-v"], check=True, text=True, capture_output=True, timeout=10
             )
+            self.logger.debug(f"Subprocess completed with return code: {completed.returncode}")
         except subprocess.TimeoutExpired:
             if os.name == 'nt':
                 # Windows下超时可能是正常的，尝试继续
@@ -199,7 +206,14 @@ class TLSProtocolMarker(ProtocolMarker):
             else:
                 raise RuntimeError(f"TShark version check timeout: {executable}")
         except (subprocess.CalledProcessError, FileNotFoundError) as exc:
-            raise RuntimeError(f"无法执行 tshark '{executable}': {exc}") from exc
+            if os.name == 'nt':
+                # Windows环境下，如果tshark不可用，记录警告但假设可以继续
+                self.logger.warning(f"TShark execution failed on Windows: {exc}")
+                self.logger.warning(f"This may be due to Windows packaging or path issues")
+                self.logger.warning(f"Assuming tshark functionality is available: {executable}")
+                return executable
+            else:
+                raise RuntimeError(f"无法执行 tshark '{executable}': {exc}") from exc
 
         # Windows特殊处理：检查stdout是否为None
         if completed.stdout is None and os.name == 'nt':

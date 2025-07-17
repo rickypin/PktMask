@@ -1,0 +1,48 @@
+2025-07-17 15:57:50,532 - pktmask.pktmask.infrastructure.dependency.checker - DEBUG - Found tshark at default path: /usr/local/bin/tshark
+2025-07-17 15:57:50,533 - pktmask.pktmask.infrastructure.dependency.checker - DEBUG - Checking tshark version at path: /usr/local/bin/tshark
+2025-07-17 15:57:50,634 - pktmask.pktmask.infrastructure.dependency.checker - DEBUG - TShark version output: TShark (Wireshark) 4.4.7 (v4.4.7-0-g7980339b1630).
+
+Copyright 1998-2025 Gerald Combs <gerald@wireshark.org> and contributors.
+Licensed under the terms of the GNU General Public License (version 2 or l...
+2025-07-17 15:57:50,635 - pktmask.pktmask.infrastructure.dependency.checker - DEBUG - TShark version parsed: (4, 4, 7), meets requirement: True
+2025-07-17 15:57:50,784 - pktmask.pktmask.infrastructure.dependency.checker - DEBUG - Checking JSON output support for tshark: /usr/local/bin/tshark
+2025-07-17 15:57:50,948 - pktmask.pktmask.infrastructure.dependency.checker - DEBUG - TShark JSON output support confirmed
+2025-07-17 15:57:51,021 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - Starting TLSProtocolMarker initialization on Darwin
+2025-07-17 15:57:51,021 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Config: {}
+2025-07-17 15:57:51,021 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - Initializing TLS analyzer components on Darwin
+2025-07-17 15:57:51,021 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - TShark path config: None
+2025-07-17 15:57:51,021 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Checking TShark version and availability...
+2025-07-17 15:57:51,021 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Checking TShark version on Darwin
+2025-07-17 15:57:51,021 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - TShark path: None
+2025-07-17 15:57:51,021 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Executable to use: tshark
+2025-07-17 15:57:51,021 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Running subprocess: tshark -v
+2025-07-17 15:57:51,124 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Subprocess completed with return code: 0
+2025-07-17 15:57:51,124 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Detected tshark 4.4.7 at tshark
+2025-07-17 15:57:51,124 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLS analyzer initialization completed, using tshark: tshark
+2025-07-17 15:57:51,124 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLSProtocolMarker 初始化成功
+2025-07-17 15:57:51,125 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - Starting TLSProtocolMarker initialization on Darwin
+2025-07-17 15:57:51,125 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Config: {'tshark_path': None}
+2025-07-17 15:57:51,125 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - Initializing TLS analyzer components on Darwin
+2025-07-17 15:57:51,125 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - TShark path config: None
+2025-07-17 15:57:51,125 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Checking TShark version and availability...
+2025-07-17 15:57:51,125 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Checking TShark version on Darwin
+2025-07-17 15:57:51,125 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - TShark path: None
+2025-07-17 15:57:51,125 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Executable to use: tshark
+2025-07-17 15:57:51,125 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Running subprocess: tshark -v
+2025-07-17 15:57:51,226 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Subprocess completed with return code: 0
+2025-07-17 15:57:51,226 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Detected tshark 4.4.7 at tshark
+2025-07-17 15:57:51,226 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLS analyzer initialization completed, using tshark: tshark
+2025-07-17 15:57:51,226 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLSProtocolMarker 初始化成功
+2025-07-17 15:57:51,226 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - Starting TLSProtocolMarker initialization on Darwin
+2025-07-17 15:57:51,226 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Config: {'tshark_path': 'tshark'}
+2025-07-17 15:57:51,226 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - Initializing TLS analyzer components on Darwin
+2025-07-17 15:57:51,226 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - TShark path config: tshark
+2025-07-17 15:57:51,226 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Checking TShark version and availability...
+2025-07-17 15:57:51,226 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Checking TShark version on Darwin
+2025-07-17 15:57:51,226 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - TShark path: tshark
+2025-07-17 15:57:51,226 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Executable to use: tshark
+2025-07-17 15:57:51,226 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Running subprocess: tshark -v
+2025-07-17 15:57:51,327 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Subprocess completed with return code: 0
+2025-07-17 15:57:51,327 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Detected tshark 4.4.7 at tshark
+2025-07-17 15:57:51,327 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLS analyzer initialization completed, using tshark: tshark
+2025-07-17 15:57:51,327 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLSProtocolMarker 初始化成功

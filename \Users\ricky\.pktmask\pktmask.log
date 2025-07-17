@@ -1,0 +1,51 @@
+2025-07-17 16:00:30 - pktmask.PipelineService - INFO - create_pipeline_executor:37 - [Service] Starting pipeline executor creation on Darwin
+2025-07-17 16:00:30 - pktmask.PipelineService - INFO - create_pipeline_executor:38 - [Service] Config received: {'anonymize_ips': {'enabled': True}, 'remove_dupes': {'enabled': True}, 'mask_payloads': {'enabled': True, 'protocol': 'tls', 'mode': 'enhanced', 'marker_config': {'preserve': {'application_data': False, 'handshake': True, 'alert': True, 'change_cipher_spec': True, 'heartbeat': True}}, 'masker_config': {'preserve_ratio': 0.3}}}
+2025-07-17 16:00:30 - pktmask.PipelineService - DEBUG - create_pipeline_executor:41 - [Service] Importing PipelineExecutor...
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:57 - [Service] Failed to create executor on Darwin
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:58 - [Service] Config was: {'anonymize_ips': {'enabled': True}, 'remove_dupes': {'enabled': True}, 'mask_payloads': {'enabled': True, 'protocol': 'tls', 'mode': 'enhanced', 'marker_config': {'preserve': {'application_data': False, 'handshake': True, 'alert': True, 'change_cipher_spec': True, 'heartbeat': True}}, 'masker_config': {'preserve_ratio': 0.3}}}
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:59 - [Service] Exception type: ModuleNotFoundError
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:60 - [Service] Exception message: No module named 'nt'
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:61 - [Service] Full traceback:
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service] Traceback (most recent call last):
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]   File "/Users/ricky/Downloads/PktMask/src/pktmask/services/pipeline_service.py", line 42, in create_pipeline_executor
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     from pktmask.core.pipeline.executor import PipelineExecutor
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]   File "/Users/ricky/Downloads/PktMask/src/pktmask/core/pipeline/__init__.py", line 1, in <module>
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     from .models import PacketList, StageStats, ProcessResult  # noqa: F401
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]   File "/Users/ricky/Downloads/PktMask/src/pktmask/core/pipeline/models.py", line 7, in <module>
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     class PacketList(BaseModel):
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     ...<8 lines>...
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]             frozen = True  # PacketList 本身仅作为只读数据传递
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]             ^^^^^^^^^^^^^
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]   File "/Users/ricky/Downloads/PktMask/.venv/lib/python3.13/site-packages/pydantic/_internal/_model_construction.py", line 237, in __new__
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     complete_model_class(
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     ~~~~~~~~~~~~~~~~~~~~^
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]         cls,
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]         ^^^^
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     ...<3 lines>...
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]         create_model_module=_create_model_module,
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     )
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     ^
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]   File "/Users/ricky/Downloads/PktMask/.venv/lib/python3.13/site-packages/pydantic/_internal/_model_construction.py", line 620, in complete_model_class
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     cls.__pydantic_validator__ = create_schema_validator(
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]                                  ~~~~~~~~~~~~~~~~~~~~~~~^
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]         schema,
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]         ^^^^^^^
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     ...<5 lines>...
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]         config_wrapper.plugin_settings,
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     )
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     ^
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]   File "/Users/ricky/Downloads/PktMask/.venv/lib/python3.13/site-packages/pydantic/plugin/_schema_validator.py", line 37, in create_schema_validator
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     from ._loader import get_plugins
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]   File "/Users/ricky/Downloads/PktMask/.venv/lib/python3.13/site-packages/pydantic/plugin/_loader.py", line 3, in <module>
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     import importlib.metadata as importlib_metadata
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]   File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/importlib/metadata/__init__.py", line 12, in <module>
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     import zipfile
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]   File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/zipfile/__init__.py", line 10, in <module>
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     import shutil
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]   File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/shutil.py", line 40, in <module>
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service]     import nt
+2025-07-17 16:00:30 - pktmask.PipelineService - ERROR - create_pipeline_executor:65 - [Service] ModuleNotFoundError: No module named 'nt'
