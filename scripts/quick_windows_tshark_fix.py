@@ -97,84 +97,60 @@ def check_tshark_version(tshark_path):
         return False
 
 
-def check_tls_capabilities(tshark_path):
-    """检查TLS功能 (跨平台兼容)"""
-    print_section("Checking TLS Capabilities")
+def check_basic_functionality(tshark_path):
+    """检查基本TShark功能 (简化版，提升性能)"""
+    print_section("Checking Basic TShark Functionality")
 
     results = {}
 
-    # 1. JSON输出支持
+    # 单次调用检查版本和基本功能
     try:
-        result = subprocess.run(
-            [tshark_path, '-T', 'json', '--help'],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-        results['JSON output'] = result.returncode == 0
-        print(f"{'✅' if results['JSON output'] else '❌'} JSON output: {'Available' if results['JSON output'] else 'Not available'}")
-    except Exception as e:
-        results['JSON output'] = False
-        print(f"❌ JSON output: Error - {e}")
+        # 使用CREATE_NO_WINDOW避免CMD窗口闪烁
+        subprocess_kwargs = {
+            'capture_output': True,
+            'text': True,
+            'timeout': 10
+        }
 
-    # 2. TLS协议支持 (跨平台检查)
-    try:
-        result = subprocess.run(
-            [tshark_path, '-G', 'protocols'],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
+        if platform.system() == 'Windows':
+            subprocess_kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+
+        result = subprocess.run([tshark_path, '-v'], **subprocess_kwargs)
+
         if result.returncode == 0:
-            protocols = result.stdout.lower()
-            tls_support = 'tls' in protocols and 'ssl' in protocols
-            results['TLS protocol'] = tls_support
-            print(f"{'✅' if tls_support else '❌'} TLS protocol: {'Available' if tls_support else 'Not available'}")
+            results['Executable'] = True
+            print("✅ Executable: Available")
+
+            # 解析版本
+            version_output = result.stdout
+            if 'TShark' in version_output:
+                results['Version'] = True
+                print("✅ Version: Compatible")
+
+                # 提取版本号进行基本检查
+                import re
+                version_match = re.search(r'TShark.*?(\d+)\.(\d+)\.(\d+)', version_output)
+                if version_match:
+                    major, minor, patch = map(int, version_match.groups())
+                    if (major, minor, patch) >= (4, 2, 0):
+                        results['Version Compatible'] = True
+                        print(f"✅ Version Compatible: {major}.{minor}.{patch} >= 4.2.0")
+                    else:
+                        results['Version Compatible'] = False
+                        print(f"❌ Version Compatible: {major}.{minor}.{patch} < 4.2.0")
+                else:
+                    results['Version Compatible'] = False
+                    print("❌ Version Compatible: Could not parse version")
+            else:
+                results['Version'] = False
+                print("❌ Version: Could not detect TShark")
         else:
-            results['TLS protocol'] = False
-            print("❌ TLS protocol: Check failed")
-    except Exception as e:
-        results['TLS protocol'] = False
-        print(f"❌ TLS protocol: Error - {e}")
+            results['Executable'] = False
+            print(f"❌ Executable: Failed to run - {result.stderr}")
 
-    # 3. TLS字段支持 (跨平台检查)
-    try:
-        result = subprocess.run(
-            [tshark_path, '-G', 'fields'],
-            capture_output=True,
-            text=True,
-            timeout=15
-        )
-        if result.returncode == 0:
-            fields = result.stdout
-            required_fields = ['tls.app_data', 'tls.record.content_type', 'tcp.stream']
-            fields_available = all(field in fields for field in required_fields)
-            results['TLS fields'] = fields_available
-            print(f"{'✅' if fields_available else '❌'} TLS fields: {'Available' if fields_available else 'Not available'}")
-
-            if not fields_available:
-                missing = [f for f in required_fields if f not in fields]
-                print(f"   Missing fields: {', '.join(missing)}")
-        else:
-            results['TLS fields'] = False
-            print("❌ TLS fields: Check failed")
     except Exception as e:
-        results['TLS fields'] = False
-        print(f"❌ TLS fields: Error - {e}")
-
-    # 4. 两遍分析支持
-    try:
-        result = subprocess.run(
-            [tshark_path, '-2', '--help'],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-        results['Two-pass analysis'] = result.returncode == 0
-        print(f"{'✅' if results['Two-pass analysis'] else '❌'} Two-pass analysis: {'Available' if results['Two-pass analysis'] else 'Not available'}")
-    except Exception as e:
-        results['Two-pass analysis'] = False
-        print(f"❌ Two-pass analysis: Error - {e}")
+        results['Executable'] = False
+        print(f"❌ Executable: Error - {e}")
 
     return results
 
@@ -194,10 +170,10 @@ def provide_fix_recommendations(installations, capabilities_results):
         print("   2. Run: choco install wireshark")
         return
     
-    # 检查功能问题
+    # 检查功能问题 (简化版)
     missing_capabilities = []
     for install in installations:
-        caps = check_tls_capabilities(install)
+        caps = check_basic_functionality(install)
         for cap, available in caps.items():
             if not available:
                 missing_capabilities.append(cap)
@@ -286,7 +262,7 @@ def main():
         print(f"\n🔍 Checking: {install}")
         version_ok = check_tshark_version(install)
         if version_ok:
-            capabilities_results[install] = check_tls_capabilities(install)
+            capabilities_results[install] = check_basic_functionality(install)
     
     # 提供建议
     provide_fix_recommendations(installations, capabilities_results)

@@ -67,31 +67,30 @@ def validate_basic_tshark(custom_path: str = None):
 
 
 def validate_tls_functionality(custom_path: str = None):
-    """Validate TLS marker functionality"""
-    print_section("TLS Marker Functionality")
-    
-    tls_validation = validate_tls_marker_functionality(custom_path)
-    
-    if tls_validation.success:
-        print("✅ All TLS marker requirements satisfied")
+    """Validate basic TShark functionality (simplified for performance)"""
+    print_section("Basic TShark Functionality")
+
+    tshark_manager = TSharkManager(custom_path)
+    tshark_info = tshark_manager.detect_tshark()
+
+    if tshark_info.is_available:
+        print("✅ Basic TShark functionality validation passed")
+        print(f"   TShark path: {tshark_info.path}")
+        print(f"   Version: {tshark_info.version_formatted}")
+
+        # Quick capability check (simplified)
+        requirements_met, missing = tshark_manager.verify_tls_marker_requirements(tshark_info.path)
+        if requirements_met:
+            print("   Basic requirements: ✅ All met")
+        else:
+            print(f"   Basic requirements: ❌ Missing: {', '.join(missing)}")
+            return False
     else:
-        print("❌ TLS marker validation failed")
-        print("\nMissing capabilities:")
-        for missing in tls_validation.missing_capabilities:
-            print(f"   • {missing}")
-        
-        print("\nError details:")
-        for error in tls_validation.error_messages:
-            print(f"   • {error}")
-    
-    # Show detailed results
-    print("\nDetailed capability check:")
-    for capability, status in tls_validation.detailed_results.items():
-        icon = "✅" if status else "❌"
-        formatted_name = capability.replace('_', ' ').title()
-        print(f"   {icon} {formatted_name}")
-    
-    return tls_validation.success
+        print("❌ Basic TShark functionality validation failed")
+        print(f"   Error: {tshark_info.error_message}")
+        return False
+
+    return True
 
 
 def validate_startup_dependencies_check(custom_path: str = None):

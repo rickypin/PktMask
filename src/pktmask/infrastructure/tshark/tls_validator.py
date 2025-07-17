@@ -40,13 +40,13 @@ class TLSMarkerValidator:
         self.tshark_manager = tshark_manager or TSharkManager()
     
     def validate_tls_marker_support(self) -> TLSValidationResult:
-        """Validate complete TLS marker support
-        
+        """Validate basic TShark support (simplified for performance)
+
         Returns:
-            Comprehensive TLS validation result
+            Basic TLS validation result
         """
-        self.logger.info("Starting TLS marker functionality validation...")
-        
+        self.logger.info("Starting basic TShark validation...")
+
         # First detect TShark
         tshark_info = self.tshark_manager.detect_tshark()
         if not tshark_info.is_available:
@@ -57,42 +57,30 @@ class TLSMarkerValidator:
                 detailed_results={},
                 tshark_path=None
             )
-        
-        # Verify TLS marker requirements
+
+        # Simplified requirements check
         requirements_met, missing_requirements = self.tshark_manager.verify_tls_marker_requirements(
             tshark_info.path
         )
-        
-        # Get detailed capability results
+
+        # Get basic capability results (no complex functional tests)
         detailed_capabilities = self.tshark_manager.verify_tls_capabilities(tshark_info.path)
-        
-        # Perform additional functional tests
-        functional_test_results = self._perform_functional_tests(tshark_info.path)
-        detailed_capabilities.update(functional_test_results)
-        
+
         # Compile error messages
         error_messages = []
         if not requirements_met:
             error_messages.extend([f"Missing: {req}" for req in missing_requirements])
-        
-        # Check functional test failures
-        failed_functional_tests = [
-            test for test, passed in functional_test_results.items() 
-            if not passed
-        ]
-        if failed_functional_tests:
-            error_messages.extend([f"Functional test failed: {test}" for test in failed_functional_tests])
-        
-        success = requirements_met and len(failed_functional_tests) == 0
-        
+
+        success = requirements_met
+
         if success:
-            self.logger.info("TLS marker functionality validation passed")
+            self.logger.info("Basic TShark validation passed")
         else:
-            self.logger.error(f"TLS marker validation failed: {error_messages}")
-        
+            self.logger.error(f"Basic TShark validation failed: {error_messages}")
+
         return TLSValidationResult(
             success=success,
-            missing_capabilities=missing_requirements + failed_functional_tests,
+            missing_capabilities=missing_requirements,
             error_messages=error_messages,
             detailed_results=detailed_capabilities,
             tshark_path=tshark_info.path

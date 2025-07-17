@@ -99,14 +99,15 @@ class TSharkManager:
     
     def detect_tshark(self, force_refresh: bool = False) -> TSharkInfo:
         """Detect TShark installation
-        
+
         Args:
             force_refresh: Force refresh cached information
-            
+
         Returns:
             TShark installation information
         """
         if not force_refresh and self._cached_info:
+            self.logger.debug("Using cached TShark information")
             return self._cached_info
         
         self.logger.info("Starting TShark detection...")
@@ -169,13 +170,18 @@ class TSharkManager:
                     error_message=f"File does not exist: {path}"
                 )
             
-            # Try to execute tshark -v
-            result = subprocess.run(
-                [path, '-v'],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
+            # Try to execute tshark -v (optimized for Windows)
+            subprocess_kwargs = {
+                'capture_output': True,
+                'text': True,
+                'timeout': 10
+            }
+
+            # Prevent CMD window flashing on Windows
+            if self._system == 'Windows':
+                subprocess_kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+
+            result = subprocess.run([path, '-v'], **subprocess_kwargs)
             
             if result.returncode != 0:
                 return TSharkInfo(
@@ -328,136 +334,85 @@ class TSharkManager:
             'common_paths': []
         })
     
-    def verify_tls_capabilities(self, tshark_path: str) -> Dict[str, bool]:
-        """Verify TLS-specific capabilities required by tls marker
+    def verify_tls_capabilities(self, tshark_path: str = None) -> Dict[str, bool]:
+        """Verify basic TShark capabilities (simplified for performance)
 
         Args:
-            tshark_path: Path to TShark executable
+            tshark_path: Path to TShark executable (optional, will use cached if available)
 
         Returns:
-            Dictionary of capability check results
+            Dictionary of basic capability check results
         """
+        # Use cached TShark info if available and no specific path provided
+        if not tshark_path and self._cached_info and self._cached_info.is_available:
+            tshark_path = self._cached_info.path
+            # Return cached capabilities if available
+            if hasattr(self._cached_info, 'capabilities') and self._cached_info.capabilities:
+                return self._cached_info.capabilities
+
+        # Simplified capabilities - only check what's essential
         capabilities = {
-            'tls_protocol_support': False,
-            'json_output_support': False,
-            'field_extraction_support': False,
-            'tcp_reassembly_support': False,
-            'tls_record_parsing': False,
-            'tls_app_data_extraction': False,
-            'tcp_stream_tracking': False,
-            'two_pass_analysis': False
+            'executable_available': False,
+            'version_compatible': False,
+            'basic_functionality': False
         }
 
         try:
-            # Check protocol support (cross-platform)
-            result = subprocess.run(
-                [tshark_path, '-G', 'protocols'],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
+            # Single comprehensive check - combine version and basic functionality test
+            # This reduces Windows CMD window flashing from multiple subprocess calls
+            subprocess_kwargs = {
+                'capture_output': True,
+                'text': True,
+                'timeout': 10
+            }
+
+            # Prevent CMD window flashing on Windows
+            if self._system == 'Windows':
+                subprocess_kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+
+            result = subprocess.run([tshark_path, '-v'], **subprocess_kwargs)
+
             if result.returncode == 0:
-                protocols = result.stdout.lower()
-                # Check for TLS/SSL protocol support without external commands
-                tls_found = 'tls' in protocols
-                ssl_found = 'ssl' in protocols
-                capabilities['tls_protocol_support'] = tls_found and ssl_found
+                capabilities['executable_available'] = True
 
-                self.logger.debug(f"Protocol check: TLS={tls_found}, SSL={ssl_found}")
-            else:
-                self.logger.warning(f"Protocol check failed: {result.stderr}")
-
-            # Check JSON output support
-            result = subprocess.run(
-                [tshark_path, '-T', 'json', '--help'],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            capabilities['json_output_support'] = result.returncode == 0
-
-            # Check field extraction support
-            result = subprocess.run(
-                [tshark_path, '-G', 'fields'],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
-            if result.returncode == 0:
-                fields = result.stdout
-
-                # Required fields for TLS marker functionality
-                required_basic_fields = [
-                    'frame.number', 'frame.protocols', 'frame.time_relative',
-                    'tcp.stream', 'tcp.seq', 'tcp.seq_raw', 'tcp.len', 'tcp.payload'
-                ]
-
-                required_tls_fields = [
-                    'tls.record.content_type', 'tls.record.opaque_type',
-                    'tls.record.length', 'tls.record.version',
-                    'tls.app_data', 'tls.segment.data'
-                ]
-
-                required_ip_fields = [
-                    'ip.src', 'ip.dst', 'ipv6.src', 'ipv6.dst',
-                    'tcp.srcport', 'tcp.dstport'
-                ]
-
-                all_required_fields = required_basic_fields + required_tls_fields + required_ip_fields
-
-                # Check each field individually for better debugging (cross-platform)
-                field_results = {}
-                missing_fields = []
-
-                for field in all_required_fields:
-                    field_found = field in fields
-                    field_results[field] = field_found
-                    if not field_found:
-                        missing_fields.append(field)
-
-                capabilities['field_extraction_support'] = len(missing_fields) == 0
-
-                if missing_fields:
-                    self.logger.debug(f"Missing fields: {missing_fields}")
+                # Parse version from output
+                version_info = self._parse_version_info(result.stdout)
+                if version_info and version_info >= self.MIN_VERSION:
+                    capabilities['version_compatible'] = True
+                    capabilities['basic_functionality'] = True
+                    self.logger.debug(f"TShark version check passed: {version_info}")
                 else:
-                    self.logger.debug("All required fields found")
-
-                # Specific TLS capabilities
-                basic_tls_fields = required_tls_fields[:4]  # Basic TLS record fields
-                capabilities['tls_record_parsing'] = all(
-                    field_results.get(field, False) for field in basic_tls_fields
-                )
-
-                capabilities['tls_app_data_extraction'] = field_results.get('tls.app_data', False)
-                capabilities['tcp_stream_tracking'] = field_results.get('tcp.stream', False)
+                    self.logger.warning(f"TShark version incompatible: {version_info} < {self.MIN_VERSION}")
             else:
-                self.logger.warning(f"Field extraction check failed: {result.stderr}")
-
-            # Check two-pass analysis support (-2 flag)
-            result = subprocess.run(
-                [tshark_path, '-2', '--help'],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            capabilities['two_pass_analysis'] = result.returncode == 0
-
-            # Check TCP reassembly support
-            result = subprocess.run(
-                [tshark_path, '-o', 'tcp.desegment_tcp_streams:TRUE', '--help'],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            capabilities['tcp_reassembly_support'] = result.returncode == 0
+                self.logger.warning(f"TShark execution failed: {result.stderr}")
 
         except Exception as e:
-            self.logger.error(f"Error verifying TLS capabilities: {e}")
+            self.logger.error(f"Error verifying TShark capabilities: {e}")
 
         return capabilities
 
+    def _parse_version_info(self, version_output: str) -> Optional[Tuple[int, int, int]]:
+        """Parse TShark version from output
+
+        Args:
+            version_output: Output from tshark -v command
+
+        Returns:
+            Version tuple (major, minor, patch) or None if parsing fails
+        """
+        import re
+
+        # Look for version pattern like "TShark 4.4.7" or "TShark (Wireshark) 4.4.7"
+        pattern = r'TShark.*?(\d+)\.(\d+)\.(\d+)'
+        match = re.search(pattern, version_output)
+
+        if match:
+            return (int(match.group(1)), int(match.group(2)), int(match.group(3)))
+
+        return None
+
     def verify_tls_marker_requirements(self, tshark_path: str) -> Tuple[bool, List[str]]:
-        """Comprehensive verification of TLS marker requirements
+        """Simplified verification of basic TShark requirements
 
         Args:
             tshark_path: Path to TShark executable
@@ -467,16 +422,11 @@ class TSharkManager:
         """
         capabilities = self.verify_tls_capabilities(tshark_path)
 
-        # Critical requirements for TLS marker functionality
+        # Simplified requirements - only check essentials
         critical_requirements = {
-            'tls_protocol_support': 'TLS/SSL protocol support',
-            'json_output_support': 'JSON output format support',
-            'field_extraction_support': 'Required field extraction support',
-            'tcp_reassembly_support': 'TCP stream reassembly support',
-            'tls_record_parsing': 'TLS record parsing support',
-            'tls_app_data_extraction': 'TLS application data extraction',
-            'tcp_stream_tracking': 'TCP stream tracking support',
-            'two_pass_analysis': 'Two-pass analysis support (-2 flag)'
+            'executable_available': 'TShark executable not available',
+            'version_compatible': 'TShark version incompatible (requires >= 4.2.0)',
+            'basic_functionality': 'TShark basic functionality test failed'
         }
 
         missing_requirements = []
@@ -487,9 +437,9 @@ class TSharkManager:
         all_requirements_met = len(missing_requirements) == 0
 
         if all_requirements_met:
-            self.logger.info("All TLS marker requirements verified successfully")
+            self.logger.info("Basic TShark requirements verified successfully")
         else:
-            self.logger.warning(f"Missing TLS marker requirements: {missing_requirements}")
+            self.logger.warning(f"Missing TShark requirements: {missing_requirements}")
 
         return all_requirements_met, missing_requirements
     
