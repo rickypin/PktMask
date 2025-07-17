@@ -213,11 +213,17 @@ def build_pipeline_config(
     if enable_dedup:
         config["remove_dupes"] = {"enabled": True}
     if enable_mask:
+        # 获取应用配置中的 TShark 路径
+        from pktmask.config.settings import get_app_config
+        app_config = get_app_config()
+        tshark_path = app_config.tools.tshark.custom_executable
+
         config["mask_payloads"] = {
             "enabled": True,
             "protocol": "tls",  # Protocol type
             "mode": "enhanced",  # Use enhanced mode
             "marker_config": {
+                "tshark_path": tshark_path,  # 添加 TShark 路径配置
                 "preserve": {                    # Fix: Add preserve nested level
                     "application_data": False,   # TLSProtocolMarker expected configuration structure
                     "handshake": True,

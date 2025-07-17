@@ -54,6 +54,7 @@ class TestPipelineService(unittest.TestCase):
                 "protocol": "tls",
                 "mode": "enhanced",
                 "marker_config": {
+                    "tshark_path": None,  # 默认为 None，会自动查找
                     "preserve": {
                         "application_data": False,
                         "handshake": True,

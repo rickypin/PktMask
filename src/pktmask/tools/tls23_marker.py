@@ -43,7 +43,7 @@ def _check_tshark_version(tshark_path: str | None, verbose: bool = False) -> str
 
     try:
         completed = subprocess.run(
-            [executable, "-v"], check=True, text=True, capture_output=True
+            [executable, "-v"], check=True, text=True, capture_output=True, encoding='utf-8', errors='replace'
         )
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
         sys.stderr.write(
@@ -200,6 +200,8 @@ def main(argv: list[str] | None = None) -> None:
             check=True,
             text=True,
             capture_output=True,
+            encoding='utf-8',
+            errors='replace'
         )
     except subprocess.CalledProcessError as exc:
         sys.stderr.write(f"[tls23-marker] Error: tshark execution failed: {exc}\n")
@@ -352,7 +354,7 @@ def main(argv: list[str] | None = None) -> None:
 
         try:
             completed_stream = subprocess.run(
-                stream_cmd, check=True, text=True, capture_output=True
+                stream_cmd, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace'
             )
         except subprocess.CalledProcessError:
             continue  # 跳过无法解析的流
@@ -587,7 +589,7 @@ def main(argv: list[str] | None = None) -> None:
                 sys.stdout.write(f"[tls23-marker] Calling editcap for annotation: {short_preview}\n")
 
             try:
-                subprocess.run(editcap_cmd, check=True)
+                subprocess.run(editcap_cmd, check=True, encoding='utf-8', errors='replace')
                 if args.verbose:
                     sys.stdout.write(f"[tls23-marker] Generated annotated file: {annotated_path}\n")
             except subprocess.CalledProcessError as exc:

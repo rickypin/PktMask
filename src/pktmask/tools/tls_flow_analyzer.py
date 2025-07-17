@@ -135,7 +135,7 @@ class TLSFlowAnalyzer:
         
         try:
             completed = subprocess.run(
-                [executable, "-v"], check=True, text=True, capture_output=True
+                [executable, "-v"], check=True, text=True, capture_output=True, encoding='utf-8', errors='replace'
             )
         except (subprocess.CalledProcessError, FileNotFoundError) as exc:
             raise RuntimeError(f"无法执行 tshark '{executable}': {exc}") from exc
@@ -232,14 +232,14 @@ class TLSFlowAnalyzer:
 
         # 执行第一次扫描（重组）
         try:
-            completed_reassembled = subprocess.run(cmd_reassembled, check=True, text=True, capture_output=True)
+            completed_reassembled = subprocess.run(cmd_reassembled, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace')
             packets_reassembled = json.loads(completed_reassembled.stdout)
         except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
             raise RuntimeError(f"重组TLS消息扫描失败: {exc}") from exc
 
         # 执行第二次扫描（段数据）
         try:
-            completed_segments = subprocess.run(cmd_segments, check=True, text=True, capture_output=True)
+            completed_segments = subprocess.run(cmd_segments, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace')
             packets_segments = json.loads(completed_segments.stdout)
         except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
             raise RuntimeError(f"TLS段数据扫描失败: {exc}") from exc
@@ -409,7 +409,7 @@ class TLSFlowAnalyzer:
                 cmd.extend(["-d", spec])
 
         try:
-            completed = subprocess.run(cmd, check=True, text=True, capture_output=True)
+            completed = subprocess.run(cmd, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace')
             packets = json.loads(completed.stdout)
         except subprocess.CalledProcessError as e:
             self.logger.warning(f"TCP流分析失败 (stream {stream_id}): {e.stderr}")

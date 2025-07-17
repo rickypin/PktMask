@@ -61,7 +61,7 @@ def _check_tshark_version(tshark_path: str | None, verbose: bool = False) -> str
 
     try:
         completed = subprocess.run(
-            [executable, "-v"], check=True, text=True, capture_output=True
+            [executable, "-v"], check=True, text=True, capture_output=True, encoding='utf-8', errors='replace'
         )
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
         sys.stderr.write(
@@ -544,6 +544,8 @@ def main(argv: list[str] | None = None) -> None:
             check=True,
             text=True,
             capture_output=True,
+            encoding='utf-8',
+            errors='replace'
         )
     except subprocess.CalledProcessError as exc:
         sys.stderr.write(f"[enhanced-tls-marker] Error: tshark execution failed: {exc}\n")

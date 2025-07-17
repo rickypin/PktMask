@@ -9,7 +9,7 @@ import yaml
 import json
 from pathlib import Path
 from typing import Optional, Dict, Any, Union
-from dataclasses import dataclass, asdict, field
+from dataclasses import dataclass, asdict, field, fields
 from datetime import datetime
 
 
@@ -214,7 +214,15 @@ class AppConfig:
             if tools_data:
                 tshark_data = tools_data.get('tshark', {})
                 if tshark_data:
-                    tools_settings.tshark = TSharkSettings(**tshark_data)
+                    # 过滤掉不支持的参数，避免 TypeError
+                    valid_tshark_params = {}
+                    tshark_fields = {f.name for f in fields(TSharkSettings)}
+                    for key, value in tshark_data.items():
+                        if key in tshark_fields:
+                            valid_tshark_params[key] = value
+                        else:
+                            print(f"警告: 忽略不支持的 TShark 配置参数: {key}")
+                    tools_settings.tshark = TSharkSettings(**valid_tshark_params)
                 
                 # 处理TShark增强配置
                 tshark_enhanced_data = tools_data.get('tshark_enhanced', {})

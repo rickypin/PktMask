@@ -11,6 +11,9 @@ import json
 import re
 import subprocess
 import time
+import shutil
+import platform
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from .base import ProtocolMarker
@@ -167,11 +170,11 @@ class TLSProtocolMarker(ProtocolMarker):
 
     def _check_tshark_version(self, tshark_path: Optional[str]) -> str:
         """验证tshark版本并返回可执行路径（复用自tls_flow_analyzer）"""
-        executable = tshark_path or "tshark"
+        executable = self._find_tshark_executable(tshark_path)
 
         try:
             completed = subprocess.run(
-                [executable, "-v"], check=True, text=True, capture_output=True
+                [executable, "-v"], check=True, text=True, capture_output=True, encoding='utf-8', errors='replace'
             )
         except (subprocess.CalledProcessError, FileNotFoundError) as exc:
             raise RuntimeError(f"无法执行 tshark '{executable}': {exc}") from exc
@@ -194,6 +197,55 @@ class TLSProtocolMarker(ProtocolMarker):
         if not m:
             return None
         return tuple(map(int, m.groups()))  # type: ignore [return-value]
+
+    def _find_tshark_executable(self, custom_path: Optional[str] = None) -> str:
+        """查找tshark可执行文件，支持Windows和macOS双平台"""
+        # 1. 检查自定义路径
+        if custom_path:
+            if Path(custom_path).exists():
+                return custom_path
+            else:
+                self.logger.warning(f"自定义tshark路径不存在: {custom_path}")
+
+        # 2. 检查默认路径（按平台）
+        system = platform.system()
+        default_paths = []
+
+        if system == "Windows":
+            default_paths = [
+                'C:\\Program Files\\Wireshark\\tshark.exe',
+                'C:\\Program Files (x86)\\Wireshark\\tshark.exe',
+            ]
+        elif system == "Darwin":  # macOS
+            default_paths = [
+                '/Applications/Wireshark.app/Contents/MacOS/tshark',
+                '/usr/local/bin/tshark',
+                '/opt/homebrew/bin/tshark',
+            ]
+        else:  # Linux and others
+            default_paths = [
+                '/usr/bin/tshark',
+                '/usr/local/bin/tshark',
+                '/opt/wireshark/bin/tshark',
+            ]
+
+        for path in default_paths:
+            if Path(path).exists():
+                self.logger.debug(f"Found tshark at: {path}")
+                return path
+
+        # 3. 在系统PATH中搜索
+        tshark_in_path = shutil.which('tshark')
+        if tshark_in_path:
+            self.logger.debug(f"Found tshark in PATH: {tshark_in_path}")
+            return tshark_in_path
+
+        # 4. 如果都找不到，抛出错误
+        raise RuntimeError(
+            f"无法找到tshark可执行文件。请确保已安装Wireshark，或在配置中指定tshark路径。\n"
+            f"当前系统: {system}\n"
+            f"已检查路径: {default_paths}"
+        )
 
     def _scan_tls_messages(self, pcap_path: str) -> List[Dict[str, Any]]:
         """扫描PCAP文件中的TLS消息（复用自tls_flow_analyzer）
@@ -265,11 +317,11 @@ class TLSProtocolMarker(ProtocolMarker):
 
         try:
             # 执行第一阶段扫描
-            completed_reassembled = subprocess.run(cmd_reassembled, check=True, text=True, capture_output=True)
+            completed_reassembled = subprocess.run(cmd_reassembled, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace')
             packets_reassembled = json.loads(completed_reassembled.stdout)
 
             # 执行第二阶段扫描
-            completed_segments = subprocess.run(cmd_segments, check=True, text=True, capture_output=True)
+            completed_segments = subprocess.run(cmd_segments, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace')
             packets_segments = json.loads(completed_segments.stdout)
 
         except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
@@ -441,7 +493,7 @@ class TLSProtocolMarker(ProtocolMarker):
                 cmd.extend(["-d", spec])
 
         try:
-            completed = subprocess.run(cmd, check=True, text=True, capture_output=True)
+            completed = subprocess.run(cmd, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace')
             packets = json.loads(completed.stdout)
         except (subprocess.CalledProcessError, json.JSONDecodeError):
             self.logger.warning(f"TCP flow analysis failed (stream {stream_id})")

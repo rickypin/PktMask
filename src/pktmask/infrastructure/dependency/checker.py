@@ -219,7 +219,9 @@ class DependencyChecker:
                 [tshark_path, '-v'],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
+                encoding='utf-8',
+                errors='replace'
             )
             
             if proc.returncode != 0:
@@ -265,7 +267,9 @@ class DependencyChecker:
                 [tshark_path, '-G', 'protocols'],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
+                encoding='utf-8',
+                errors='replace'
             )
             
             if proc.returncode != 0:
@@ -302,7 +306,9 @@ class DependencyChecker:
                 [tshark_path, '-T', 'json', '-c', '0'],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
+                encoding='utf-8',
+                errors='replace'
             )
             
             # 即使没有输入文件，tshark也应该能够识别JSON格式选项
