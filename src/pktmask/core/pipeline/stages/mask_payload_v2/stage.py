@@ -70,22 +70,48 @@ class NewMaskPayloadStage(StageBase):
             config: 可选的配置参数
         """
         if self._initialized:
+            self.logger.debug("NewMaskPayloadStage already initialized, skipping")
             return
 
         try:
-            self.logger.info("Starting NewMaskPayloadStage initialization")
+            import platform
+            self.logger.info(f"Starting NewMaskPayloadStage initialization on {platform.system()}")
+            self.logger.debug(f"Current config: {self.config}")
 
             # 更新配置（如果提供）
             if config:
+                self.logger.debug(f"Updating config with: {config}")
                 self.config.update(config)
 
             # 创建 Marker 模块
-            self.marker = self._create_marker()
-            if not self.marker.initialize():
-                raise RuntimeError("Marker模块初始化失败")
+            self.logger.debug("Creating Marker module...")
+            try:
+                self.marker = self._create_marker()
+                self.logger.debug("Marker module created, initializing...")
+
+                marker_success = self.marker.initialize()
+                if not marker_success:
+                    raise RuntimeError("Marker模块初始化返回False")
+                self.logger.info("Marker module initialized successfully")
+
+            except Exception as e:
+                self.logger.error(f"Marker module creation/initialization failed: {e}")
+                import traceback
+                for line in traceback.format_exc().splitlines():
+                    self.logger.error(f"[Marker] {line}")
+                raise
 
             # 创建 Masker 模块
-            self.masker = self._create_masker()
+            self.logger.debug("Creating Masker module...")
+            try:
+                self.masker = self._create_masker()
+                self.logger.info("Masker module created successfully")
+            except Exception as e:
+                self.logger.error(f"Masker module creation failed: {e}")
+                import traceback
+                for line in traceback.format_exc().splitlines():
+                    self.logger.error(f"[Masker] {line}")
+                raise
 
             self._initialized = True
             self.logger.info("NewMaskPayloadStage initialization successful")
@@ -95,6 +121,13 @@ class NewMaskPayloadStage(StageBase):
 
         except Exception as e:
             self.logger.error(f"NewMaskPayloadStage initialization failed: {e}")
+            self.logger.error(f"Exception type: {type(e).__name__}")
+
+            # 记录完整的错误信息
+            import traceback
+            self.logger.error("Full initialization failure traceback:")
+            for line in traceback.format_exc().splitlines():
+                self.logger.error(f"[Stage] {line}")
             raise
     
     def process_file(self, input_path: Union[str, Path],

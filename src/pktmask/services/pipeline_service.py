@@ -23,19 +23,59 @@ logger = get_logger("PipelineService")
 def create_pipeline_executor(config: Dict) -> object:
     """
     创建管道执行器
-    
+
     Args:
         config: 管道配置字典，包含各阶段的启用状态和参数
-        
+
     Returns:
         执行器对象（对 GUI 不透明）
     """
     try:
+        import traceback
+        import platform
+
+        logger.info(f"[Service] Starting pipeline executor creation on {platform.system()}")
+        logger.info(f"[Service] Config received: {config}")
+
+        # 详细记录导入过程
+        logger.debug("[Service] Importing PipelineExecutor...")
         from pktmask.core.pipeline.executor import PipelineExecutor
-        return PipelineExecutor(config)
+        logger.debug("[Service] PipelineExecutor import successful")
+
+        # 详细记录创建过程
+        logger.debug("[Service] Creating PipelineExecutor instance...")
+        executor = PipelineExecutor(config)
+        logger.info(f"[Service] PipelineExecutor created successfully with {len(executor.stages)} stages")
+
+        return executor
+
     except Exception as e:
-        logger.error(f"[Service] Failed to create executor: {e}")
-        raise PipelineServiceError("Failed to create executor")
+        import traceback
+        import platform
+
+        # 详细的错误日志
+        logger.error(f"[Service] Failed to create executor on {platform.system()}")
+        logger.error(f"[Service] Config was: {config}")
+        logger.error(f"[Service] Exception type: {type(e).__name__}")
+        logger.error(f"[Service] Exception message: {str(e)}")
+        logger.error(f"[Service] Full traceback:")
+
+        # 记录完整的堆栈跟踪
+        for line in traceback.format_exc().splitlines():
+            logger.error(f"[Service] {line}")
+
+        # 尝试分析具体的失败原因
+        error_msg = str(e).lower()
+        if "import" in error_msg:
+            logger.error("[Service] Error appears to be import-related")
+        elif "tshark" in error_msg:
+            logger.error("[Service] Error appears to be tshark-related")
+        elif "permission" in error_msg:
+            logger.error("[Service] Error appears to be permission-related")
+        elif "timeout" in error_msg:
+            logger.error("[Service] Error appears to be timeout-related")
+
+        raise PipelineServiceError(f"Failed to create executor: {str(e)}")
 
 # 处理目录中的所有 PCAP 文件
 # Dummy implementation; replace ... with real logic

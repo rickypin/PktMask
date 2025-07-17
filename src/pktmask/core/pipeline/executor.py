@@ -43,9 +43,33 @@ class PipelineExecutor:
     # 构造与 Pipeline 组装
     # ---------------------------------------------------------------------
     def __init__(self, config: Optional[Dict] | None = None):
+        import platform
+
         self._config: Dict = config or {}
         self._logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
-        self.stages: List[StageBase] = self._build_pipeline(self._config)
+
+        self._logger.info(f"[Executor] Initializing PipelineExecutor on {platform.system()}")
+        self._logger.info(f"[Executor] Config: {self._config}")
+
+        try:
+            self._logger.debug("[Executor] Starting pipeline build...")
+            self.stages: List[StageBase] = self._build_pipeline(self._config)
+            self._logger.info(f"[Executor] Pipeline build completed with {len(self.stages)} stages")
+
+            # 记录每个stage的信息
+            for i, stage in enumerate(self.stages):
+                self._logger.info(f"[Executor] Stage {i+1}: {stage.name}")
+
+        except Exception as e:
+            self._logger.error(f"[Executor] Pipeline build failed: {e}")
+            self._logger.error(f"[Executor] Exception type: {type(e).__name__}")
+
+            # 记录详细的堆栈跟踪
+            import traceback
+            for line in traceback.format_exc().splitlines():
+                self._logger.error(f"[Executor] {line}")
+
+            raise
 
     # ------------------------------------------------------------------
     # 公共接口
@@ -249,40 +273,81 @@ class PipelineExecutor:
         """根据配置动态装配 Pipeline。"""
 
         stages: List[StageBase] = []
+        self._logger.debug(f"[Executor] Building pipeline with config keys: {list(config.keys())}")
 
         # ------------------------------------------------------------------
         # Remove Dupes Stage (标准命名：remove_dupes，向后兼容：dedup)
         # ------------------------------------------------------------------
+        self._logger.debug("[Executor] Checking Remove Dupes stage...")
         dedup_cfg = self._get_config_with_fallback(config, "remove_dupes", "dedup")
         if dedup_cfg.get("enabled", False):
-            from pktmask.core.pipeline.stages.dedup import DeduplicationStage
+            try:
+                self._logger.debug("[Executor] Creating DeduplicationStage...")
+                from pktmask.core.pipeline.stages.dedup import DeduplicationStage
 
-            stage = DeduplicationStage(dedup_cfg)
-            stage.initialize()
-            stages.append(stage)
+                stage = DeduplicationStage(dedup_cfg)
+                self._logger.debug("[Executor] Initializing DeduplicationStage...")
+                stage.initialize()
+                stages.append(stage)
+                self._logger.info("[Executor] DeduplicationStage added successfully")
+            except Exception as e:
+                self._logger.error(f"[Executor] Failed to create/initialize DeduplicationStage: {e}")
+                raise
+        else:
+            self._logger.debug("[Executor] Remove Dupes stage disabled or not configured")
 
         # ------------------------------------------------------------------
         # Anonymize IPs Stage (标准命名：anonymize_ips，向后兼容：anon)
         # ------------------------------------------------------------------
+        self._logger.debug("[Executor] Checking Anonymize IPs stage...")
         anon_cfg = self._get_config_with_fallback(config, "anonymize_ips", "anon")
         if anon_cfg.get("enabled", False):
-            from pktmask.core.pipeline.stages.anon_ip import AnonStage
+            try:
+                self._logger.debug("[Executor] Creating AnonStage...")
+                from pktmask.core.pipeline.stages.anon_ip import AnonStage
 
-            stage = AnonStage(anon_cfg)
-            stage.initialize()
-            stages.append(stage)
+                stage = AnonStage(anon_cfg)
+                self._logger.debug("[Executor] Initializing AnonStage...")
+                stage.initialize()
+                stages.append(stage)
+                self._logger.info("[Executor] AnonStage added successfully")
+            except Exception as e:
+                self._logger.error(f"[Executor] Failed to create/initialize AnonStage: {e}")
+                raise
+        else:
+            self._logger.debug("[Executor] Anonymize IPs stage disabled or not configured")
 
         # ------------------------------------------------------------------
         # Mask Payloads Stage (标准命名：mask_payloads，向后兼容：mask)
         # ------------------------------------------------------------------
+        self._logger.debug("[Executor] Checking Mask Payloads stage...")
         mask_cfg = self._get_config_with_fallback(config, "mask_payloads", "mask")
         if mask_cfg.get("enabled", False):
-            # 直接使用新一代双模块架构
-            from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage
+            try:
+                self._logger.debug("[Executor] Creating NewMaskPayloadStage...")
+                self._logger.debug(f"[Executor] Mask config: {mask_cfg}")
 
-            # 创建 MaskStage 实例
-            stage = NewMaskPayloadStage(mask_cfg)
-            stage.initialize()
-            stages.append(stage)
+                # 直接使用新一代双模块架构
+                from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage
 
-        return stages 
+                # 创建 MaskStage 实例
+                stage = NewMaskPayloadStage(mask_cfg)
+                self._logger.debug("[Executor] Initializing NewMaskPayloadStage...")
+                stage.initialize()
+                stages.append(stage)
+                self._logger.info("[Executor] NewMaskPayloadStage added successfully")
+            except Exception as e:
+                self._logger.error(f"[Executor] Failed to create/initialize NewMaskPayloadStage: {e}")
+                self._logger.error(f"[Executor] Mask config was: {mask_cfg}")
+
+                # 特别记录mask stage的错误，因为这可能是主要问题
+                import traceback
+                self._logger.error("[Executor] NewMaskPayloadStage failure traceback:")
+                for line in traceback.format_exc().splitlines():
+                    self._logger.error(f"[Executor] {line}")
+                raise
+        else:
+            self._logger.debug("[Executor] Mask Payloads stage disabled or not configured")
+
+        self._logger.info(f"[Executor] Pipeline build completed with {len(stages)} stages")
+        return stages

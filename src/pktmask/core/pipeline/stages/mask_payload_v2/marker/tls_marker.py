@@ -87,9 +87,26 @@ class TLSProtocolMarker(ProtocolMarker):
 
     def _initialize_components(self) -> None:
         """初始化TLS分析组件"""
-        # 验证tshark可用性
-        self.tshark_exec = self._check_tshark_version(self.tshark_path)
-        self.logger.info(f"TLS analyzer initialization completed, using tshark: {self.tshark_exec}")
+        import platform
+
+        self.logger.info(f"Initializing TLS analyzer components on {platform.system()}")
+        self.logger.debug(f"TShark path config: {self.tshark_path}")
+
+        try:
+            # 验证tshark可用性
+            self.logger.debug("Checking TShark version and availability...")
+            self.tshark_exec = self._check_tshark_version(self.tshark_path)
+            self.logger.info(f"TLS analyzer initialization completed, using tshark: {self.tshark_exec}")
+        except Exception as e:
+            self.logger.error(f"TLS analyzer component initialization failed: {e}")
+            self.logger.error(f"Exception type: {type(e).__name__}")
+
+            # 记录详细的错误信息
+            import traceback
+            self.logger.error("TLS analyzer initialization failure traceback:")
+            for line in traceback.format_exc().splitlines():
+                self.logger.error(f"[TLS] {line}")
+            raise
 
     def analyze_file(self, pcap_path: str, config: Dict[str, Any]) -> KeepRuleSet:
         """分析TLS流量并生成保留规则

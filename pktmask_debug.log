@@ -1,0 +1,83 @@
+2025-07-17 15:39:37,797 - pktmask.PipelineService - INFO - [Service] Starting pipeline executor creation on Darwin
+2025-07-17 15:39:37,799 - pktmask.PipelineService - INFO - [Service] Config received: {'anonymize_ips': {'enabled': True}, 'remove_dupes': {'enabled': True}, 'mask_payloads': {'enabled': True, 'protocol': 'tls', 'mode': 'enhanced', 'marker_config': {'preserve': {'application_data': False, 'handshake': True, 'alert': True, 'change_cipher_spec': True, 'heartbeat': True}}, 'masker_config': {'preserve_ratio': 0.3}}}
+2025-07-17 15:39:37,799 - pktmask.PipelineService - DEBUG - [Service] Importing PipelineExecutor...
+2025-07-17 15:39:37,936 - pktmask.PipelineService - DEBUG - [Service] PipelineExecutor import successful
+2025-07-17 15:39:37,936 - pktmask.PipelineService - DEBUG - [Service] Creating PipelineExecutor instance...
+2025-07-17 15:39:37,936 - pktmask.core.pipeline.executor.PipelineExecutor - INFO - [Executor] Initializing PipelineExecutor on Darwin
+2025-07-17 15:39:37,936 - pktmask.core.pipeline.executor.PipelineExecutor - INFO - [Executor] Config: {'anonymize_ips': {'enabled': True}, 'remove_dupes': {'enabled': True}, 'mask_payloads': {'enabled': True, 'protocol': 'tls', 'mode': 'enhanced', 'marker_config': {'preserve': {'application_data': False, 'handshake': True, 'alert': True, 'change_cipher_spec': True, 'heartbeat': True}}, 'masker_config': {'preserve_ratio': 0.3}}}
+2025-07-17 15:39:37,936 - pktmask.core.pipeline.executor.PipelineExecutor - DEBUG - [Executor] Starting pipeline build...
+2025-07-17 15:39:37,936 - pktmask.core.pipeline.executor.PipelineExecutor - DEBUG - [Executor] Building pipeline with config keys: ['anonymize_ips', 'remove_dupes', 'mask_payloads']
+2025-07-17 15:39:37,936 - pktmask.core.pipeline.executor.PipelineExecutor - DEBUG - [Executor] Checking Remove Dupes stage...
+2025-07-17 15:39:37,936 - pktmask.core.pipeline.executor.PipelineExecutor - DEBUG - [Executor] Creating DeduplicationStage...
+2025-07-17 15:39:38,184 - pktmask.reporting - INFO - HTML template loaded successfully
+2025-07-17 15:39:38,185 - pktmask.core.pipeline.executor.PipelineExecutor - DEBUG - [Executor] Initializing DeduplicationStage...
+2025-07-17 15:39:38,185 - pktmask.deduplicator - INFO - Deduplication processor initialized successfully
+2025-07-17 15:39:38,185 - pktmask.core.pipeline.executor.PipelineExecutor - INFO - [Executor] DeduplicationStage added successfully
+2025-07-17 15:39:38,185 - pktmask.core.pipeline.executor.PipelineExecutor - DEBUG - [Executor] Checking Anonymize IPs stage...
+2025-07-17 15:39:38,185 - pktmask.core.pipeline.executor.PipelineExecutor - DEBUG - [Executor] Creating AnonStage...
+2025-07-17 15:39:38,185 - pktmask.core.pipeline.executor.PipelineExecutor - DEBUG - [Executor] Initializing AnonStage...
+2025-07-17 15:39:38,185 - pktmask.ip_anonymizer - INFO - IP anonymization processor initialization successful
+2025-07-17 15:39:38,185 - pktmask.core.pipeline.executor.PipelineExecutor - INFO - [Executor] AnonStage added successfully
+2025-07-17 15:39:38,185 - pktmask.core.pipeline.executor.PipelineExecutor - DEBUG - [Executor] Checking Mask Payloads stage...
+2025-07-17 15:39:38,185 - pktmask.core.pipeline.executor.PipelineExecutor - DEBUG - [Executor] Creating NewMaskPayloadStage...
+2025-07-17 15:39:38,185 - pktmask.core.pipeline.executor.PipelineExecutor - DEBUG - [Executor] Mask config: {'enabled': True, 'protocol': 'tls', 'mode': 'enhanced', 'marker_config': {'preserve': {'application_data': False, 'handshake': True, 'alert': True, 'change_cipher_spec': True, 'heartbeat': True}}, 'masker_config': {'preserve_ratio': 0.3}}
+2025-07-17 15:39:38,187 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - NewMaskPayloadStage created: protocol=tls, mode=enhanced
+2025-07-17 15:39:38,187 - pktmask.core.pipeline.executor.PipelineExecutor - DEBUG - [Executor] Initializing NewMaskPayloadStage...
+2025-07-17 15:39:38,187 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - Starting NewMaskPayloadStage initialization on Darwin
+2025-07-17 15:39:38,187 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - DEBUG - Current config: {'enabled': True, 'protocol': 'tls', 'mode': 'enhanced', 'marker_config': {'preserve': {'application_data': False, 'handshake': True, 'alert': True, 'change_cipher_spec': True, 'heartbeat': True}}, 'masker_config': {'preserve_ratio': 0.3}}
+2025-07-17 15:39:38,187 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - DEBUG - Creating Marker module...
+2025-07-17 15:39:38,194 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - DEBUG - Marker module created, initializing...
+2025-07-17 15:39:38,194 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - Initializing TLS analyzer components on Darwin
+2025-07-17 15:39:38,194 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - TShark path config: None
+2025-07-17 15:39:38,195 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Checking TShark version and availability...
+2025-07-17 15:39:38,496 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Detected tshark 4.4.7 at tshark
+2025-07-17 15:39:38,496 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLS analyzer initialization completed, using tshark: tshark
+2025-07-17 15:39:38,496 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLSProtocolMarker 初始化成功
+2025-07-17 15:39:38,496 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - Marker module initialized successfully
+2025-07-17 15:39:38,496 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - DEBUG - Creating Masker module...
+2025-07-17 15:39:38,501 - pktmask.core.pipeline.stages.mask_payload_v2.masker.memory_optimizer.MemoryOptimizer - INFO - 内存优化器初始化: 最大内存=2048MB, GC阈值=80.0%
+2025-07-17 15:39:38,501 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: memory_error
+2025-07-17 15:39:38,501 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: input_error
+2025-07-17 15:39:38,501 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: output_error
+2025-07-17 15:39:38,501 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - INFO - 错误处理器初始化: 最大重试=3, 自动恢复=启用
+2025-07-17 15:39:38,501 - pktmask.core.pipeline.stages.mask_payload_v2.masker.data_validator.DataValidator - INFO - 数据验证器初始化: 校验和验证=启用
+2025-07-17 15:39:38,501 - pktmask.core.pipeline.stages.mask_payload_v2.masker.fallback_handler.FallbackHandler - INFO - 降级处理器初始化: 默认模式=copy_original, 启用=是
+2025-07-17 15:39:38,501 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: input_error
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: processing_error
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - PayloadMasker initialized: chunk_size=1000, verify_checksums=True, memory_limit=2048MB
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - Masker module created successfully
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - NewMaskPayloadStage initialization successful
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.executor.PipelineExecutor - INFO - [Executor] NewMaskPayloadStage added successfully
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.executor.PipelineExecutor - INFO - [Executor] Pipeline build completed with 3 stages
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.executor.PipelineExecutor - INFO - [Executor] Pipeline build completed with 3 stages
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.executor.PipelineExecutor - INFO - [Executor] Stage 1: DeduplicationStage
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.executor.PipelineExecutor - INFO - [Executor] Stage 2: AnonStage
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.executor.PipelineExecutor - INFO - [Executor] Stage 3: NewMaskPayloadStage
+2025-07-17 15:39:38,502 - pktmask.PipelineService - INFO - [Service] PipelineExecutor created successfully with 3 stages
+2025-07-17 15:39:38,502 - pktmask.deduplicator - INFO - Deduplication processor initialized successfully
+2025-07-17 15:39:38,502 - pktmask.ip_anonymizer - INFO - IP anonymization processor initialization successful
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - NewMaskPayloadStage created: protocol=tls, mode=enhanced
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - Starting NewMaskPayloadStage initialization on Darwin
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - DEBUG - Current config: {'enabled': True, 'protocol': 'tls'}
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - DEBUG - Creating Marker module...
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - DEBUG - Marker module created, initializing...
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - Initializing TLS analyzer components on Darwin
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - TShark path config: None
+2025-07-17 15:39:38,502 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Checking TShark version and availability...
+2025-07-17 15:39:38,607 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - DEBUG - Detected tshark 4.4.7 at tshark
+2025-07-17 15:39:38,607 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLS analyzer initialization completed, using tshark: tshark
+2025-07-17 15:39:38,607 - pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker - INFO - TLSProtocolMarker 初始化成功
+2025-07-17 15:39:38,607 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - Marker module initialized successfully
+2025-07-17 15:39:38,607 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - DEBUG - Creating Masker module...
+2025-07-17 15:39:38,607 - pktmask.core.pipeline.stages.mask_payload_v2.masker.memory_optimizer.MemoryOptimizer - INFO - 内存优化器初始化: 最大内存=2048MB, GC阈值=80.0%
+2025-07-17 15:39:38,607 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: memory_error
+2025-07-17 15:39:38,607 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: input_error
+2025-07-17 15:39:38,607 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: output_error
+2025-07-17 15:39:38,607 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - INFO - 错误处理器初始化: 最大重试=3, 自动恢复=启用
+2025-07-17 15:39:38,607 - pktmask.core.pipeline.stages.mask_payload_v2.masker.data_validator.DataValidator - INFO - 数据验证器初始化: 校验和验证=启用
+2025-07-17 15:39:38,607 - pktmask.core.pipeline.stages.mask_payload_v2.masker.fallback_handler.FallbackHandler - INFO - 降级处理器初始化: 默认模式=copy_original, 启用=是
+2025-07-17 15:39:38,608 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: input_error
+2025-07-17 15:39:38,608 - pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler.ErrorRecoveryHandler - DEBUG - 注册恢复处理器: processing_error
+2025-07-17 15:39:38,608 - pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker - INFO - PayloadMasker initialized: chunk_size=1000, verify_checksums=True, memory_limit=2048MB
+2025-07-17 15:39:38,608 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - Masker module created successfully
+2025-07-17 15:39:38,608 - pktmask.core.pipeline.stages.mask_payload_v2.stage.NewMaskPayloadStage - INFO - NewMaskPayloadStage initialization successful
