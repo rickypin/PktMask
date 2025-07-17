@@ -41,22 +41,73 @@ def ensure_directory(path: Union[str, Path], create_if_missing: bool = True) -> 
     
     if create_if_missing:
         try:
+            import os
+            import platform
+
+            # Enhanced Windows-specific directory creation logging
+            if platform.system() == "Windows":
+                logger.debug(f"Windows directory creation attempt: {path}")
+
+                # Check parent directory permissions
+                parent_path = path.parent
+                if parent_path.exists():
+                    parent_writable = os.access(parent_path, os.W_OK)
+                    logger.debug(f"Parent directory writable: {parent_writable}")
+                    if not parent_writable:
+                        logger.warning(f"Parent directory not writable: {parent_path}")
+
+                # Check for path length issues on Windows
+                path_str = str(path)
+                if len(path_str) > 260:
+                    logger.warning(f"Path length ({len(path_str)}) exceeds Windows limit (260): {path_str[:100]}...")
+
+                # Check for invalid characters in Windows paths
+                invalid_chars = '<>:"|?*'
+                if any(char in path_str for char in invalid_chars):
+                    logger.warning(f"Path contains invalid Windows characters: {path_str}")
+
             path.mkdir(parents=True, exist_ok=True)
             logger.debug(f"Created directory: {path}")
+
+            # Verify directory creation on Windows
+            if platform.system() == "Windows" and path.exists():
+                logger.debug(f"Windows directory creation verified: {path}")
+                # Test write access
+                try:
+                    test_file = path / ".pktmask_write_test"
+                    test_file.touch()
+                    test_file.unlink()
+                    logger.debug(f"Windows directory write access confirmed: {path}")
+                except Exception as write_test_e:
+                    logger.warning(f"Windows directory write test failed: {write_test_e}")
+
             return True
+
         except PermissionError as e:
-            # Windows-specific fallback for permission issues
+            # Enhanced Windows-specific fallback for permission issues
             import os
             if os.name == 'nt':
+                logger.warning(f"Windows permission error, attempting fallback: {e}")
                 try:
+                    # Try alternative Windows directory creation method
                     os.makedirs(str(path), exist_ok=True)
                     logger.debug(f"Created directory (Windows fallback): {path}")
+
+                    # Verify fallback creation
+                    if path.exists():
+                        logger.debug(f"Windows fallback directory creation verified: {path}")
+                    else:
+                        logger.error(f"Windows fallback directory creation failed - directory does not exist: {path}")
+
                     return True
                 except Exception as fallback_e:
+                    logger.error(f"Windows fallback directory creation failed: {fallback_e}")
                     raise FileError(f"Failed to create directory (Windows): {path}", file_path=str(path)) from fallback_e
             else:
+                logger.error(f"Permission denied creating directory: {path}")
                 raise FileError(f"Permission denied creating directory: {path}", file_path=str(path)) from e
         except Exception as e:
+            logger.error(f"Failed to create directory: {path}, error: {e}")
             raise FileError(f"Failed to create directory: {path}", file_path=str(path)) from e
     
     return False
@@ -230,21 +281,85 @@ def copy_file_safely(src: Union[str, Path], dst: Union[str, Path],
         raise FileError(f"Destination file exists and overwrite is disabled: {dst}", file_path=str(dst))
     
     try:
+        import platform
+        import os
+
+        # Enhanced Windows-specific file copy logging
+        if platform.system() == "Windows":
+            logger.debug(f"Windows file copy operation: {src} -> {dst}")
+
+            # Check source file details
+            src_size = src_path.stat().st_size
+            logger.debug(f"Source file size: {src_size} bytes ({src_size / (1024*1024):.2f} MB)")
+
+            # Check source file permissions
+            if not os.access(src_path, os.R_OK):
+                logger.error(f"Source file not readable: {src}")
+                raise FileError(f"Source file not readable: {src}", file_path=str(src))
+
+            # Check for file locks (Windows-specific)
+            try:
+                with open(src_path, 'rb') as test_file:
+                    test_file.read(1)
+                logger.debug(f"Source file access test passed: {src}")
+            except Exception as lock_e:
+                logger.warning(f"Source file may be locked: {lock_e}")
+
+            # Check destination path encoding
+            try:
+                dst_str = str(dst_path)
+                dst_str.encode('utf-8').decode('utf-8')
+                logger.debug(f"Destination path encoding check passed: {dst}")
+            except UnicodeError as enc_e:
+                logger.error(f"Destination path encoding error: {enc_e}")
+                raise FileError(f"Destination path encoding error: {dst}", file_path=str(dst)) from enc_e
+
         # Ensure destination directory exists
         ensure_directory(dst_path.parent)
 
-        # Copy file
-        shutil.copy2(src_path, dst_path)
-        logger.debug(f"Copied file: {src} -> {dst}")
+        # Enhanced file copy with Windows-specific error handling
+        if platform.system() == "Windows":
+            try:
+                # Use shutil.copy2 for metadata preservation
+                shutil.copy2(src_path, dst_path)
+                logger.debug(f"Windows file copy completed: {src} -> {dst}")
+
+                # Verify copy on Windows
+                if dst_path.exists():
+                    dst_size = dst_path.stat().st_size
+                    src_size = src_path.stat().st_size
+                    if dst_size == src_size:
+                        logger.debug(f"Windows file copy verification passed: sizes match ({dst_size} bytes)")
+                    else:
+                        logger.warning(f"Windows file copy size mismatch: src={src_size}, dst={dst_size}")
+                else:
+                    logger.error(f"Windows file copy failed: destination file does not exist")
+                    raise FileError(f"Copy failed - destination file not created: {dst}", file_path=str(dst))
+
+            except PermissionError as perm_e:
+                logger.error(f"Windows file copy permission error: {perm_e}")
+                raise FileError(f"Permission denied copying file (Windows): {src} -> {dst}", file_path=str(src)) from perm_e
+            except OSError as os_e:
+                logger.error(f"Windows file copy OS error: {os_e}")
+                raise FileError(f"OS error copying file (Windows): {src} -> {dst}", file_path=str(src)) from os_e
+        else:
+            # Standard copy for non-Windows platforms
+            shutil.copy2(src_path, dst_path)
+            logger.debug(f"Copied file: {src} -> {dst}")
+
         return True
 
+    except FileError:
+        # Re-raise FileError as-is
+        raise
     except Exception as e:
+        logger.error(f"Unexpected error copying file: {src} -> {dst}, error: {e}")
         raise FileError(f"Failed to copy file: {src} -> {dst}", file_path=str(src)) from e
 
 
 def delete_file_safely(filepath: Union[str, Path]) -> bool:
     """
-    Safely delete a file
+    Safely delete a file with enhanced Windows-specific logging
 
     Args:
         filepath: File path to delete
@@ -252,16 +367,94 @@ def delete_file_safely(filepath: Union[str, Path]) -> bool:
     Returns:
         Whether deletion was successful
     """
+    import platform
+    import os
+
     path = Path(filepath)
-    
+
     if not path.exists():
         logger.debug(f"File does not exist, nothing to delete: {filepath}")
         return True
-    
+
+    # Enhanced Windows-specific file deletion logging
+    if platform.system() == "Windows":
+        logger.debug(f"Windows file deletion attempt: {filepath}")
+
+        try:
+            # Check file properties before deletion
+            file_size = path.stat().st_size
+            logger.debug(f"File to delete size: {file_size} bytes")
+
+            # Check if file is read-only
+            if not os.access(path, os.W_OK):
+                logger.warning(f"File is read-only, attempting to change permissions: {filepath}")
+                try:
+                    # Try to remove read-only attribute on Windows
+                    import stat
+                    path.chmod(stat.S_IWRITE)
+                    logger.debug(f"Successfully changed file permissions: {filepath}")
+                except Exception as chmod_e:
+                    logger.warning(f"Failed to change file permissions: {chmod_e}")
+
+            # Check for file locks (Windows-specific)
+            try:
+                with open(path, 'r+b') as test_file:
+                    pass  # Just test if we can open for writing
+                logger.debug(f"File lock check passed: {filepath}")
+            except Exception as lock_e:
+                logger.warning(f"File may be locked or in use: {lock_e}")
+
+        except Exception as check_e:
+            logger.warning(f"Pre-deletion checks failed: {check_e}")
+
     try:
-        path.unlink()
-        logger.debug(f"Deleted file: {filepath}")
-        return True
+        if platform.system() == "Windows":
+            # Windows-specific deletion with retry logic
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    path.unlink()
+                    logger.debug(f"Windows file deletion successful (attempt {attempt + 1}): {filepath}")
+
+                    # Verify deletion on Windows
+                    if path.exists():
+                        logger.warning(f"File still exists after deletion attempt: {filepath}")
+                        if attempt < max_retries - 1:
+                            import time
+                            time.sleep(0.1)  # Brief delay before retry
+                            continue
+                        else:
+                            logger.error(f"File deletion verification failed: {filepath}")
+                            return False
+                    else:
+                        logger.debug(f"Windows file deletion verified: {filepath}")
+                        return True
+
+                except PermissionError as perm_e:
+                    logger.warning(f"Windows file deletion permission error (attempt {attempt + 1}): {perm_e}")
+                    if attempt < max_retries - 1:
+                        import time
+                        time.sleep(0.1)  # Brief delay before retry
+                        continue
+                    else:
+                        logger.error(f"Windows file deletion failed after {max_retries} attempts: {filepath}")
+                        return False
+
+                except Exception as del_e:
+                    logger.warning(f"Windows file deletion error (attempt {attempt + 1}): {del_e}")
+                    if attempt < max_retries - 1:
+                        import time
+                        time.sleep(0.1)  # Brief delay before retry
+                        continue
+                    else:
+                        logger.error(f"Windows file deletion failed after {max_retries} attempts: {filepath}")
+                        return False
+        else:
+            # Standard deletion for non-Windows platforms
+            path.unlink()
+            logger.debug(f"Deleted file: {filepath}")
+            return True
+
     except Exception as e:
         logger.warning(f"Failed to delete file: {filepath}, error: {e}")
         return False

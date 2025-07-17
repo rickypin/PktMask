@@ -67,7 +67,7 @@ class PipelineExecutor:
         input_path = Path(input_path)
         output_path = Path(output_path)
         if not input_path.exists():
-            raise FileNotFoundError(f"输入文件不存在: {input_path}")
+            raise FileNotFoundError(f"Input file does not exist: {input_path}")
 
         temp_dir = Path(tempfile.mkdtemp(prefix="pktmask_pipeline_"))
 
@@ -100,19 +100,55 @@ class PipelineExecutor:
                     current_input = stage_output
 
                 except Exception as e:
-                    error_msg = f"Stage {stage.name} 执行失败: {str(e)}"
+                    # Enhanced error logging with professional English
+                    import platform
+                    error_msg = f"Stage {stage.name} execution failed: {str(e)}"
                     errors.append(error_msg)
-                    
+
+                    # Log detailed error information for debugging
+                    self._logger.error(f"Pipeline stage failure details:")
+                    self._logger.error(f" - Stage: {stage.name}")
+                    self._logger.error(f" - Input file: {current_input}")
+                    self._logger.error(f" - Output file: {stage_output}")
+                    self._logger.error(f" - Platform: {platform.system()}")
+                    self._logger.error(f" - Error: {str(e)}", exc_info=True)
+
+                    # Windows-specific error analysis
+                    if platform.system() == "Windows":
+                        self._logger.error(f" - Windows-specific diagnostics:")
+                        try:
+                            import os
+                            if os.path.exists(current_input):
+                                self._logger.error(f"   • Input file exists: Yes")
+                                self._logger.error(f"   • Input file readable: {os.access(current_input, os.R_OK)}")
+                                self._logger.error(f"   • Input file size: {os.path.getsize(current_input)} bytes")
+                            else:
+                                self._logger.error(f"   • Input file exists: No")
+
+                            output_dir = Path(stage_output).parent
+                            if output_dir.exists():
+                                self._logger.error(f"   • Output directory exists: Yes")
+                                self._logger.error(f"   • Output directory writable: {os.access(output_dir, os.W_OK)}")
+                            else:
+                                self._logger.error(f"   • Output directory exists: No")
+
+                        except Exception as diag_e:
+                            self._logger.error(f"   • Diagnostic check failed: {diag_e}")
+
                     # 创建失败统计
                     failed_stats = StageStats(
                         stage_name=stage.name,
                         packets_processed=0,
                         packets_modified=0,
                         duration_ms=0.0,
-                        extra_metrics={"error": str(e)},
+                        extra_metrics={
+                            "error": str(e),
+                            "error_type": type(e).__name__,
+                            "platform": platform.system()
+                        },
                     )
                     stage_stats_list.append(failed_stats)
-                    
+
                     # 如果任何 Stage 失败，则整个过程失败
                     break
 
@@ -131,8 +167,8 @@ class PipelineExecutor:
             return result
 
         except Exception as e:
-            # 处理顶级异常
-            error_msg = f"Pipeline 执行失败: {str(e)}"
+            # Handle top-level pipeline exceptions
+            error_msg = f"Pipeline execution failed: {str(e)}"
             return ProcessResult(
                 success=False,
                 input_file=str(input_path),
@@ -143,8 +179,56 @@ class PipelineExecutor:
             )
 
         finally:
-            # 清理临时目录
-            shutil.rmtree(temp_dir, ignore_errors=True)
+            # Enhanced temporary file cleanup with Windows-specific logging
+            try:
+                import platform
+                import os
+
+                # Log temporary directory cleanup start
+                self._logger.debug(f"Cleaning up temporary directory: {temp_dir}")
+
+                # Windows-specific temporary file handling
+                if platform.system() == "Windows":
+                    try:
+                        # Check temporary directory contents before cleanup
+                        if temp_dir.exists():
+                            temp_files = list(temp_dir.iterdir())
+                            self._logger.debug(f"Windows temp cleanup: {len(temp_files)} files to remove")
+
+                            # Try to remove files individually for better error reporting
+                            for temp_file in temp_files:
+                                try:
+                                    if temp_file.is_file():
+                                        temp_file.unlink()
+                                        self._logger.debug(f"Removed temp file: {temp_file.name}")
+                                    elif temp_file.is_dir():
+                                        shutil.rmtree(temp_file, ignore_errors=True)
+                                        self._logger.debug(f"Removed temp directory: {temp_file.name}")
+                                except Exception as file_e:
+                                    self._logger.warning(f"Failed to remove temp file {temp_file.name}: {file_e}")
+
+                            # Remove the main temporary directory
+                            temp_dir.rmdir()
+                            self._logger.debug("Windows temp directory cleanup completed successfully")
+                        else:
+                            self._logger.debug("Temporary directory does not exist, nothing to clean")
+
+                    except Exception as win_e:
+                        self._logger.warning(f"Windows-specific temp cleanup failed, falling back to standard cleanup: {win_e}")
+                        # Fallback to standard cleanup
+                        shutil.rmtree(temp_dir, ignore_errors=True)
+                else:
+                    # Standard cleanup for non-Windows platforms
+                    shutil.rmtree(temp_dir, ignore_errors=True)
+                    self._logger.debug("Standard temporary directory cleanup completed")
+
+            except Exception as cleanup_e:
+                self._logger.error(f"Temporary directory cleanup failed: {cleanup_e}")
+                # Ensure cleanup doesn't fail the entire pipeline
+                try:
+                    shutil.rmtree(temp_dir, ignore_errors=True)
+                except:
+                    pass  # Ignore final cleanup errors
 
     # ------------------------------------------------------------------
     # 内部方法
@@ -156,7 +240,7 @@ class PipelineExecutor:
             return config[standard_key]
         # 回退到旧键名
         elif legacy_key in config:
-            self._logger.warning(f"使用了旧配置键名 '{legacy_key}'，建议更新为 '{standard_key}'")
+            self._logger.warning(f"Using legacy configuration key '{legacy_key}', recommend updating to '{standard_key}'")
             return config[legacy_key]
         # 返回空配置
         return {}

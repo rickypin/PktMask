@@ -248,13 +248,13 @@ PROCESS_DISPLAY_NAMES = {
     # Legacy naming - maintain backward compatibility (non-standard naming removed)
 }
 
-# 错误消息
+# Error messages (professional English)
 ERROR_MESSAGES = {
-    "file_not_found": "文件未找到: {path}",
-    "invalid_file_format": "不支持的文件格式: {format}",
-    "processing_failed": "处理失败: {reason}",
-    "config_load_failed": "配置加载失败: {reason}",
-    "permission_denied": "权限不足: {path}",
-    "disk_space_insufficient": "磁盘空间不足",
-    "invalid_input": "输入无效: {input}"
-} 
+    "file_not_found": "File not found: {path}",
+    "invalid_file_format": "Unsupported file format: {format}",
+    "processing_failed": "Processing failed: {reason}",
+    "config_load_failed": "Configuration loading failed: {reason}",
+    "permission_denied": "Permission denied: {path}",
+    "disk_space_insufficient": "Insufficient disk space",
+    "invalid_input": "Invalid input: {input}"
+}

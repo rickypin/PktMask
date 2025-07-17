@@ -233,7 +233,7 @@ class DataService:
         return info
     
     def add_log_message(self, message: str):
-        """添加日志消息"""
+        """Add log message with timestamp"""
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_message = f"[{timestamp}] {message}"
         self.log_messages.append(formatted_message)
