@@ -12,9 +12,10 @@ import sys
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 
 from pktmask.infrastructure.logging import get_logger
+from pktmask.infrastructure.tshark import TSharkManager, TSharkStatus, TLSMarkerValidator
 
 
 class DependencyStatus(Enum):
@@ -65,9 +66,20 @@ class DependencyChecker:
         "frame.number", "frame.time_relative"
     ]
     
-    def __init__(self):
+    def __init__(self, custom_tshark_path: Optional[str] = None):
+        """初始化依赖检查器
+
+        Args:
+            custom_tshark_path: 自定义TShark路径
+        """
         self.logger = get_logger(__name__)
         self._cache = {}  # 简单的结果缓存
+
+        # 使用新的TSharkManager
+        self.tshark_manager = TSharkManager(custom_path=custom_tshark_path)
+
+        # TLS marker验证器
+        self.tls_validator = TLSMarkerValidator(tshark_manager=self.tshark_manager)
     
     def check_all_dependencies(self, use_cache: bool = True) -> Dict[str, DependencyResult]:
         """检查所有依赖
@@ -108,75 +120,73 @@ class DependencyChecker:
                 messages.append(self._format_error_message(result))
         
         return messages
+
+    def get_tshark_installation_guide(self) -> Dict[str, Any]:
+        """获取TShark安装指导
+
+        Returns:
+            平台特定的安装指导信息
+        """
+        return self.tshark_manager.get_installation_guide()
+
+    def validate_tls_marker_functionality(self) -> Dict[str, any]:
+        """验证TLS marker功能的完整性
+
+        Returns:
+            TLS marker验证结果详情
+        """
+        tls_validation = self.tls_validator.validate_tls_marker_support()
+
+        return {
+            'success': tls_validation.success,
+            'missing_capabilities': tls_validation.missing_capabilities,
+            'error_messages': tls_validation.error_messages,
+            'detailed_results': tls_validation.detailed_results,
+            'tshark_path': tls_validation.tshark_path,
+            'validation_report': self.tls_validator.generate_validation_report(tls_validation)
+        }
     
     def check_tshark(self) -> DependencyResult:
-        """检查tshark依赖 - 整合现有逻辑"""
+        """检查tshark依赖 - 使用新的TSharkManager"""
         try:
-            # 1. 查找可执行文件
-            tshark_path = self._find_tshark_executable()
-            if not tshark_path:
-                return DependencyResult(
-                    name="tshark",
-                    status=DependencyStatus.MISSING,
-                    version_required=self._format_version(self.MIN_TSHARK_VERSION),
-                    error_message="TShark executable not found in system PATH or default locations"
-                )
-            
-            # 2. 检查版本
-            version_result = self._check_tshark_version(tshark_path)
-            if not version_result['success']:
-                return DependencyResult(
-                    name="tshark",
-                    status=DependencyStatus.EXECUTION_ERROR,
-                    path=tshark_path,
-                    version_required=self._format_version(self.MIN_TSHARK_VERSION),
-                    error_message=version_result['error']
-                )
-            
-            # 3. 检查版本要求
-            if not version_result['meets_requirement']:
-                return DependencyResult(
-                    name="tshark",
-                    status=DependencyStatus.VERSION_MISMATCH,
-                    path=tshark_path,
-                    version_found=self._format_version(version_result['version']),
-                    version_required=self._format_version(self.MIN_TSHARK_VERSION),
-                    error_message=f"TShark version too old: {self._format_version(version_result['version'])}, required: ≥{self._format_version(self.MIN_TSHARK_VERSION)}"
-                )
-            
-            # 4. 检查协议支持 (简化版本，仅检查关键协议)
-            protocol_result = self._check_protocol_support(tshark_path)
-            if not protocol_result['success']:
-                return DependencyResult(
-                    name="tshark",
-                    status=DependencyStatus.EXECUTION_ERROR,
-                    path=tshark_path,
-                    version_found=self._format_version(version_result['version']),
-                    version_required=self._format_version(self.MIN_TSHARK_VERSION),
-                    error_message=f"Protocol support check failed: {protocol_result['error']}"
-                )
-            
-            # 5. 检查JSON输出支持
-            json_result = self._check_json_output(tshark_path)
-            if not json_result['success']:
-                return DependencyResult(
-                    name="tshark",
-                    status=DependencyStatus.EXECUTION_ERROR,
-                    path=tshark_path,
-                    version_found=self._format_version(version_result['version']),
-                    version_required=self._format_version(self.MIN_TSHARK_VERSION),
-                    error_message=f"JSON output not supported: {json_result['error']}"
-                )
-            
-            # 所有检查通过
+            # 使用TSharkManager进行检测
+            tshark_info = self.tshark_manager.detect_tshark()
+
+            # 转换TSharkStatus到DependencyStatus
+            status_mapping = {
+                TSharkStatus.AVAILABLE: DependencyStatus.SATISFIED,
+                TSharkStatus.MISSING: DependencyStatus.MISSING,
+                TSharkStatus.VERSION_TOO_LOW: DependencyStatus.VERSION_MISMATCH,
+                TSharkStatus.EXECUTION_ERROR: DependencyStatus.EXECUTION_ERROR,
+                TSharkStatus.PERMISSION_ERROR: DependencyStatus.PERMISSION_ERROR
+            }
+
+            dependency_status = status_mapping.get(tshark_info.status, DependencyStatus.EXECUTION_ERROR)
+
+            # 如果TShark可用，进行TLS功能验证
+            if tshark_info.is_available:
+                # 使用专门的TLS marker验证器
+                tls_validation = self.tls_validator.validate_tls_marker_support()
+
+                if not tls_validation.success:
+                    return DependencyResult(
+                        name="tshark",
+                        status=DependencyStatus.EXECUTION_ERROR,
+                        path=tshark_info.path,
+                        version_found=tshark_info.version_formatted,
+                        version_required=self._format_version(self.MIN_TSHARK_VERSION),
+                        error_message=f"TLS marker validation failed: {'; '.join(tls_validation.error_messages)}"
+                    )
+
             return DependencyResult(
                 name="tshark",
-                status=DependencyStatus.SATISFIED,
-                path=tshark_path,
-                version_found=self._format_version(version_result['version']),
-                version_required=self._format_version(self.MIN_TSHARK_VERSION)
+                status=dependency_status,
+                path=tshark_info.path,
+                version_found=tshark_info.version_formatted if tshark_info.version else None,
+                version_required=self._format_version(self.MIN_TSHARK_VERSION),
+                error_message=tshark_info.error_message if tshark_info.error_message else None
             )
-            
+
         except Exception as e:
             self.logger.error(f"TShark dependency check failed: {e}")
             return DependencyResult(

@@ -146,19 +146,33 @@ ERROR_HANDLING_DEFAULTS = {
 EXTERNAL_TOOLS_DEFAULTS = {
     'tshark': {
         'executable_paths': [
+            # Linux paths
             '/usr/bin/tshark',
             '/usr/local/bin/tshark',
             '/opt/wireshark/bin/tshark',
+            '/snap/bin/wireshark.tshark',  # Snap package
+
+            # macOS paths
+            '/Applications/Wireshark.app/Contents/MacOS/tshark',
+            '/usr/local/bin/tshark',  # Intel Homebrew
+            '/opt/homebrew/bin/tshark',  # Apple Silicon Homebrew
+            '/opt/wireshark/bin/tshark',
+
+            # Windows paths
             'C:\\Program Files\\Wireshark\\tshark.exe',
             'C:\\Program Files (x86)\\Wireshark\\tshark.exe',
-            '/Applications/Wireshark.app/Contents/MacOS/tshark'
+            'C:\\ProgramData\\chocolatey\\bin\\tshark.exe',  # Chocolatey
+            'C:\\tools\\wireshark\\tshark.exe',  # Alternative Chocolatey path
+            'C:\\chocolatey\\bin\\tshark.exe',  # Legacy Chocolatey path
         ],
         'custom_executable': None,
         'enable_reassembly': True,
         'enable_defragmentation': True,
         'timeout_seconds': 300,
         'max_memory_mb': 1024,
-        'quiet_mode': True
+        'quiet_mode': True,
+        'min_version': '4.2.0',
+        'auto_detect': True
     }
 }
 

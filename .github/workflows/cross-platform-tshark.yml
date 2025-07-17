@@ -1,0 +1,231 @@
+name: Cross-Platform TShark Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'src/pktmask/infrastructure/tshark/**'
+      - 'src/pktmask/infrastructure/startup/**'
+      - 'scripts/validate_tshark_setup.py'
+      - 'tests/infrastructure/test_tshark_manager.py'
+      - '.github/workflows/cross-platform-tshark.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'src/pktmask/infrastructure/tshark/**'
+      - 'src/pktmask/infrastructure/startup/**'
+      - 'scripts/validate_tshark_setup.py'
+      - 'tests/infrastructure/test_tshark_manager.py'
+
+jobs:
+  test-cross-platform:
+    name: Test TShark Integration on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.9', '3.10', '3.11']
+        exclude:
+          # Reduce matrix size for efficiency
+          - os: windows-latest
+            python-version: '3.9'
+          - os: macos-latest
+            python-version: '3.9'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wireshark-common tshark
+        # Add user to wireshark group for permissions
+        sudo usermod -a -G wireshark $USER
+        # Verify installation
+        tshark -v || echo "TShark installation verification failed"
+    
+    - name: Install system dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        # Install Wireshark via Homebrew
+        brew install --cask wireshark
+        # Verify installation
+        /Applications/Wireshark.app/Contents/MacOS/tshark -v || echo "TShark installation verification failed"
+        # Add to PATH for easier access
+        echo "/Applications/Wireshark.app/Contents/MacOS" >> $GITHUB_PATH
+    
+    - name: Install system dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        # Install Wireshark via Chocolatey
+        choco install wireshark -y
+        # Verify installation
+        & "C:\Program Files\Wireshark\tshark.exe" -v
+        # Add to PATH
+        echo "C:\Program Files\Wireshark" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      shell: powershell
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov
+        # Install project dependencies if requirements.txt exists
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      shell: bash
+    
+    - name: Verify TShark installation
+      run: |
+        echo "=== TShark Installation Verification ==="
+        tshark -v
+        echo "=== TShark Path ==="
+        which tshark || where tshark || echo "TShark not found in PATH"
+      shell: bash
+    
+    - name: Run unit tests
+      run: |
+        echo "=== Running TShark Manager Unit Tests ==="
+        python -m pytest tests/infrastructure/test_tshark_manager.py -v --tb=short
+      shell: bash
+    
+    - name: Run TShark validation script
+      run: |
+        echo "=== Running TShark Validation Script ==="
+        python scripts/validate_tshark_setup.py --basic-only
+      shell: bash
+    
+    - name: Run comprehensive TShark validation
+      run: |
+        echo "=== Running Comprehensive TShark Validation ==="
+        python scripts/validate_tshark_setup.py --all
+      shell: bash
+      continue-on-error: true  # Allow this to fail without failing the entire job
+    
+    - name: Generate TShark validation report
+      run: |
+        echo "=== Generating TShark Validation Report ==="
+        python scripts/validate_tshark_setup.py --report > tshark_validation_report_${{ matrix.os }}.txt
+        cat tshark_validation_report_${{ matrix.os }}.txt
+      shell: bash
+    
+    - name: Upload validation report
+      uses: actions/upload-artifact@v3
+      with:
+        name: tshark-validation-report-${{ matrix.os }}-py${{ matrix.python-version }}
+        path: tshark_validation_report_${{ matrix.os }}.txt
+        retention-days: 30
+    
+    - name: Test startup dependency validation
+      run: |
+        echo "=== Testing Startup Dependency Validation ==="
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        from pktmask.infrastructure.startup import validate_startup_dependencies
+        result = validate_startup_dependencies(strict_mode=False)
+        print(f'Startup validation: {\"PASSED\" if result.success else \"FAILED\"}')
+        if not result.success:
+            print('Missing dependencies:', result.missing_dependencies)
+            for error in result.error_messages:
+                print(f'  - {error}')
+        sys.exit(0 if result.success else 1)
+        "
+      shell: bash
+    
+    - name: Test TLS marker functionality
+      run: |
+        echo "=== Testing TLS Marker Functionality ==="
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        from pktmask.infrastructure.tshark import validate_tls_marker_functionality
+        result = validate_tls_marker_functionality()
+        print(f'TLS marker validation: {\"PASSED\" if result.success else \"FAILED\"}')
+        if not result.success:
+            print('Missing capabilities:', result.missing_capabilities)
+            for error in result.error_messages:
+                print(f'  - {error}')
+        sys.exit(0 if result.success else 1)
+        "
+      shell: bash
+
+  test-without-tshark:
+    name: Test Error Handling Without TShark
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Ensure TShark is not installed
+      run: |
+        # Remove any existing TShark installation
+        sudo apt-get remove -y wireshark-common tshark || true
+        # Verify TShark is not available
+        ! command -v tshark
+    
+    - name: Test error handling without TShark
+      run: |
+        echo "=== Testing Error Handling Without TShark ==="
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        from pktmask.infrastructure.tshark import TSharkManager
+        manager = TSharkManager()
+        info = manager.detect_tshark()
+        print(f'Detection status: {info.status}')
+        print(f'Error message: {info.error_message}')
+        # Should fail gracefully
+        assert not info.is_available
+        print('✅ Error handling test passed')
+        "
+    
+    - name: Test installation guide generation
+      run: |
+        echo "=== Testing Installation Guide Generation ==="
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        from pktmask.infrastructure.tshark import TSharkManager
+        manager = TSharkManager()
+        guide = manager.get_installation_guide()
+        print(f'Platform: {guide.get(\"platform\", \"Unknown\")}')
+        print(f'Methods available: {len(guide.get(\"methods\", []))}')
+        assert 'platform' in guide
+        assert 'methods' in guide
+        print('✅ Installation guide test passed')
+        "
+
+  summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [test-cross-platform, test-without-tshark]
+    if: always()
+    
+    steps:
+    - name: Check test results
+      run: |
+        echo "=== Cross-Platform TShark Integration Test Summary ==="
+        echo "Cross-platform tests: ${{ needs.test-cross-platform.result }}"
+        echo "Error handling tests: ${{ needs.test-without-tshark.result }}"
+        
+        if [[ "${{ needs.test-cross-platform.result }}" == "success" && "${{ needs.test-without-tshark.result }}" == "success" ]]; then
+          echo "✅ All tests passed!"
+          exit 0
+        else
+          echo "❌ Some tests failed"
+          exit 1
+        fi

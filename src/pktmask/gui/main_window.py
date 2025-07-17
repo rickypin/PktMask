@@ -28,6 +28,8 @@ from pktmask.common.constants import UIConstants, FormatConstants, SystemConstan
 from pktmask.utils import current_timestamp, format_milliseconds_to_time, open_directory_in_system, current_time
 from pktmask.infrastructure.logging import get_logger
 from pktmask.config import get_app_config
+from pktmask.infrastructure.startup import validate_startup_dependencies
+from pktmask.gui.dialogs import DependencyErrorDialog
 from .stylesheet import generate_stylesheet
 
 # PROCESS_DISPLAY_NAMES moved to common.constants
@@ -158,7 +160,9 @@ class MainWindow(QMainWindow):
         self.start_time: Optional[QTime] = None
         self.user_stopped = False  # 用户停止标志
 
-        
+        # 检查依赖项
+        self._check_dependencies()
+
         # 先初始化管理器
         self._init_managers()
         
@@ -169,6 +173,58 @@ class MainWindow(QMainWindow):
         self.ui_manager.init_ui()
         
         self._logger.info("PktMask main window initialization completed")
+
+    def _check_dependencies(self):
+        """检查应用程序依赖项"""
+        try:
+            # 获取自定义TShark路径（如果配置了）
+            custom_tshark_path = None
+            if hasattr(self.config, 'tools') and hasattr(self.config.tools, 'tshark'):
+                custom_tshark_path = self.config.tools.tshark.custom_executable
+
+            # 验证依赖项（非严格模式，允许在警告下继续）
+            validation_result = validate_startup_dependencies(
+                custom_tshark_path=custom_tshark_path,
+                strict_mode=False
+            )
+
+            if not validation_result.success:
+                self._handle_dependency_validation_failure(validation_result)
+            else:
+                self._logger.info("All dependencies validated successfully")
+
+        except Exception as e:
+            self._logger.error(f"Dependency validation failed: {e}")
+            # 在依赖检查失败时显示警告但允许继续
+            QMessageBox.warning(
+                self,
+                "Dependency Check Warning",
+                f"Failed to validate dependencies: {str(e)}\n\n"
+                "The application may not function correctly. "
+                "Please check your TShark installation."
+            )
+
+    def _handle_dependency_validation_failure(self, validation_result):
+        """处理依赖验证失败"""
+        self._logger.warning(f"Dependency validation failed: {validation_result.missing_dependencies}")
+
+        # 使用专门的依赖错误对话框
+        dependency_dialog = DependencyErrorDialog(validation_result, parent=self)
+
+        # 显示对话框并处理结果
+        result = dependency_dialog.exec()
+
+        if result == QDialog.DialogCode.Accepted:
+            # 用户选择继续或配置了自定义路径
+            custom_path = dependency_dialog.get_custom_tshark_path()
+            if custom_path:
+                self._logger.info(f"User configured custom TShark path: {custom_path}")
+                # 这里可以保存自定义路径到配置中
+                # self.config.tools.tshark.custom_executable = custom_path
+        else:
+            # 用户选择退出应用程序
+            self._logger.info("User chose to exit due to dependency issues")
+            sys.exit(1)
     
     def _init_managers(self):
         """初始化所有管理器"""

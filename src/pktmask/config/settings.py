@@ -92,12 +92,24 @@ class LoggingSettings:
 class TSharkSettings:
     """TShark工具设置"""
     executable_paths: list = field(default_factory=lambda: [
+        # Linux paths
         '/usr/bin/tshark',
         '/usr/local/bin/tshark',
         '/opt/wireshark/bin/tshark',
+        '/snap/bin/wireshark.tshark',  # Snap package
+
+        # macOS paths
+        '/Applications/Wireshark.app/Contents/MacOS/tshark',
+        '/usr/local/bin/tshark',  # Intel Homebrew
+        '/opt/homebrew/bin/tshark',  # Apple Silicon Homebrew
+        '/opt/wireshark/bin/tshark',
+
+        # Windows paths
         'C:\\Program Files\\Wireshark\\tshark.exe',
         'C:\\Program Files (x86)\\Wireshark\\tshark.exe',
-        '/Applications/Wireshark.app/Contents/MacOS/tshark'
+        'C:\\ProgramData\\chocolatey\\bin\\tshark.exe',  # Chocolatey
+        'C:\\tools\\wireshark\\tshark.exe',  # Alternative Chocolatey path
+        'C:\\chocolatey\\bin\\tshark.exe',  # Legacy Chocolatey path
     ])
     custom_executable: Optional[str] = None
     enable_reassembly: bool = True
@@ -105,6 +117,8 @@ class TSharkSettings:
     timeout_seconds: int = 300
     max_memory_mb: int = 1024
     quiet_mode: bool = True
+    min_version: str = '4.2.0'
+    auto_detect: bool = True
 
 
 @dataclass

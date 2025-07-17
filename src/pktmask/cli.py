@@ -5,6 +5,7 @@ import warnings
 import typer
 
 from pktmask.core.pipeline.executor import PipelineExecutor
+from pktmask.infrastructure.startup import validate_tshark_dependency
 
 # ---------------------------------------------------------------------------
 # Typer Application Initialization
@@ -25,6 +26,31 @@ def _run_pipeline(
     verbose: bool = False,
 ) -> None:
     """Build pipeline configuration and execute."""
+
+    # Check TShark dependency before processing
+    validation_result = validate_tshark_dependency()
+    if not validation_result.success:
+        typer.echo("❌ TShark dependency validation failed:", err=True)
+        for error in validation_result.error_messages:
+            typer.echo(f"   {error}", err=True)
+
+        # Show installation guide
+        if 'tshark' in validation_result.installation_guides:
+            guide = validation_result.installation_guides['tshark']
+            platform = guide.get('platform', 'your system')
+            typer.echo(f"\n📋 To install TShark on {platform}:", err=True)
+
+            methods = guide.get('methods', [])
+            if methods:
+                primary_method = methods[0]
+                typer.echo(f"   {primary_method['description']}", err=True)
+                if primary_method.get('commands'):
+                    for cmd in primary_method['commands']:
+                        typer.echo(f"   $ {cmd}", err=True)
+                elif primary_method.get('url'):
+                    typer.echo(f"   Download: {primary_method['url']}", err=True)
+
+        raise typer.Exit(1)
 
     cfg = {
         "remove_dupes": {"enabled": enable_dedup},
