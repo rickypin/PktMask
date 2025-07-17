@@ -106,6 +106,13 @@ class ServicePipelineThread(QThread):
         try:
             import os
             import platform
+            from pktmask.infrastructure.logging import get_logger
+
+            logger = get_logger("ServicePipelineThread")
+            logger.info(f"ServicePipelineThread.run() started")
+
+            # Send immediate log to verify thread is running
+            self.progress_signal.emit(PipelineEvents.LOG, {'message': '🔄 Processing thread started'})
 
             # Windows-specific thread initialization
             if platform.system() == "Windows":
@@ -113,6 +120,24 @@ class ServicePipelineThread(QThread):
                 import threading
                 current_thread = threading.current_thread()
                 current_thread.daemon = True
+                logger.info(f"Windows thread initialization completed")
+                self.progress_signal.emit(PipelineEvents.LOG, {'message': f'🪟 Windows thread initialized'})
+
+            # Validate inputs before processing
+            if not self._base_dir or not os.path.exists(self._base_dir):
+                error_msg = f"Input directory does not exist or is invalid: {self._base_dir}"
+                logger.error(error_msg)
+                self.progress_signal.emit(PipelineEvents.ERROR, {'message': error_msg})
+                return
+
+            if not self._output_dir:
+                error_msg = "Output directory is not specified"
+                logger.error(error_msg)
+                self.progress_signal.emit(PipelineEvents.ERROR, {'message': error_msg})
+                return
+
+            logger.info(f"Starting directory processing: {self._base_dir} -> {self._output_dir}")
+            self.progress_signal.emit(PipelineEvents.LOG, {'message': f'📂 Starting directory processing...'})
 
             from pktmask.services.pipeline_service import process_directory
             process_directory(
@@ -122,6 +147,11 @@ class ServicePipelineThread(QThread):
                 progress_callback=self.progress_signal.emit,
                 is_running_check=lambda: self.is_running
             )
+
+            logger.info(f"Directory processing completed successfully")
+
+        except Exception as e:
+            logger.error(f"ServicePipelineThread.run() failed: {e}", exc_info=True)
         except Exception as e:
             from pktmask.services.pipeline_service import PipelineServiceError
 

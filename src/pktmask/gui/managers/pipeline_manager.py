@@ -115,6 +115,33 @@ class PipelineManager:
         self.main_window.all_ip_reports.clear()
         self.main_window.files_processed_count = 0
         self.main_window.packets_processed_count = 0
+
+        # Add immediate test log to verify log system is working
+        self.main_window.update_log("🧪 Log system test - if you see this, logging is working")
+        self.main_window.update_log(f"📂 Input directory: {self.main_window.base_dir}")
+
+        # Check if input directory contains pcap files
+        try:
+            import os
+            from pathlib import Path
+            input_path = Path(self.main_window.base_dir)
+            pcap_files = []
+            for file in input_path.iterdir():
+                if file.is_file() and file.suffix.lower() in ['.pcap', '.pcapng']:
+                    pcap_files.append(file.name)
+
+            if pcap_files:
+                self.main_window.update_log(f"✅ Found {len(pcap_files)} pcap/pcapng files:")
+                for i, filename in enumerate(pcap_files[:5]):  # Show first 5 files
+                    self.main_window.update_log(f"   {i+1}. {filename}")
+                if len(pcap_files) > 5:
+                    self.main_window.update_log(f"   ... and {len(pcap_files) - 5} more files")
+            else:
+                self.main_window.update_log("⚠️ No pcap/pcapng files found in input directory")
+                self.main_window.update_log("   Please ensure the directory contains .pcap or .pcapng files")
+
+        except Exception as e:
+            self.main_window.update_log(f"❌ Error checking input directory: {e}")
         
         # Reset Live Dashboard display
         self.main_window.files_processed_label.setText("0")
@@ -140,23 +167,53 @@ class PipelineManager:
             for cb in [self.main_window.anonymize_ips_cb, self.main_window.remove_dupes_cb, self.main_window.mask_payloads_cb]:
                 cb.setEnabled(False)
 
-        # Create and configure new PipelineExecutor
-        config = build_pipeline_config(
-            enable_anon=self.main_window.anonymize_ips_cb.isChecked(),
-            enable_dedup=self.main_window.remove_dupes_cb.isChecked(),
-            enable_mask=self.main_window.mask_payloads_cb.isChecked()
-        )
-        if not config:
-            self._logger.warning("No processing steps selected")
-            return
-
+        # Create and configure new PipelineExecutor with enhanced debugging
         try:
+            self._logger.debug("Building pipeline configuration...")
+            self.main_window.update_log("⚙️ Building pipeline configuration...")
+
+            # Check feature selections
+            anon_enabled = self.main_window.anonymize_ips_cb.isChecked()
+            dedup_enabled = self.main_window.remove_dupes_cb.isChecked()
+            mask_enabled = self.main_window.mask_payloads_cb.isChecked()
+
+            self._logger.debug(f"Feature selections: anon={anon_enabled}, dedup={dedup_enabled}, mask={mask_enabled}")
+
+            config = build_pipeline_config(
+                enable_anon=anon_enabled,
+                enable_dedup=dedup_enabled,
+                enable_mask=mask_enabled
+            )
+
+            self._logger.debug(f"Built configuration: {config}")
+
+            if not config:
+                self._logger.warning("No processing steps selected")
+                self.main_window.update_log("⚠️ No processing steps selected")
+                self.main_window.update_log("   Please enable at least one processing feature:")
+                self.main_window.update_log("   • Remove Dupes (recommended)")
+                self.main_window.update_log("   • Anonymize IPs")
+                self.main_window.update_log("   • Mask Payloads")
+                return
+
+            self.main_window.update_log(f"✅ Configuration built with {len(config)} stages")
+
+            self._logger.debug("Creating pipeline executor...")
+            self.main_window.update_log("🔧 Creating pipeline executor...")
+
             executor = create_pipeline_executor(config)
+
+            self._logger.info(f"Built PipelineExecutor containing {len(config)} Stages")
+            self.main_window.update_log(f"✅ Pipeline executor created successfully")
+
         except ConfigurationError as e:
             self._logger.error(f"Configuration error: {str(e)}")
-            self.main_window.update_log(f"Configuration error: {str(e)}")
+            self.main_window.update_log(f"❌ Configuration error: {str(e)}")
             return
-        self._logger.info(f"Built PipelineExecutor containing {len(config)} Stages")
+        except Exception as e:
+            self._logger.error(f"Unexpected error creating pipeline: {str(e)}", exc_info=True)
+            self.main_window.update_log(f"❌ Failed to create pipeline: {str(e)}")
+            return
 
         # Start processing
         self.start_processing(executor)
@@ -229,11 +286,36 @@ class PipelineManager:
         self.main_window.start_time = self.statistics.start_time  # Maintain compatibility
         self.main_window.timer.start(100)  # Update every 100ms
 
-        # Start thread
-        self.processing_thread.start()
-        
-        self._logger.info(f"Processing thread started, output directory: {self.main_window.current_output_dir}")
-        self.main_window.update_log("🚀 Processing started...")
+        # Start thread with enhanced debugging
+        try:
+            self.processing_thread.start()
+            self._logger.info(f"Processing thread started successfully, output directory: {self.main_window.current_output_dir}")
+            self.main_window.update_log("🚀 Processing started...")
+
+            # Add immediate debug log to verify log system is working
+            self.main_window.update_log(f"📂 Input directory: {self.main_window.base_dir}")
+            self.main_window.update_log(f"📁 Output directory: {self.main_window.current_output_dir}")
+
+            # Log processing configuration
+            config_info = []
+            if self.main_window.remove_dupes_cb.isChecked():
+                config_info.append("Remove Dupes")
+            if self.main_window.anonymize_ips_cb.isChecked():
+                config_info.append("Anonymize IPs")
+            if self.main_window.mask_payloads_cb.isChecked():
+                config_info.append("Mask Payloads")
+
+            if config_info:
+                self.main_window.update_log(f"⚙️ Enabled features: {', '.join(config_info)}")
+            else:
+                self.main_window.update_log("⚠️ No processing features enabled")
+
+        except Exception as e:
+            self._logger.error(f"Failed to start processing thread: {e}", exc_info=True)
+            self.main_window.update_log(f"❌ Failed to start processing: {str(e)}")
+            # Reset UI state on failure
+            self.main_window.start_proc_btn.setText("Start")
+            self.main_window.start_proc_btn.setEnabled(True)
     
     def handle_thread_progress(self, event_type: PipelineEvents, data: dict):
         """Handle thread progress events"""
