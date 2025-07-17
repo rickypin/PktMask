@@ -40,6 +40,117 @@ def create_pipeline_executor(config: Dict) -> object:
 # 处理目录中的所有 PCAP 文件
 # Dummy implementation; replace ... with real logic
 
+def process_path(
+    executor: object,
+    input_path: str,
+    output_dir: str,
+    progress_callback: Callable[[PipelineEvents, Dict], None],
+    is_running_check: Callable[[], bool]
+) -> None:
+    """
+    处理输入路径（文件或目录）
+
+    Args:
+        executor: 执行器对象
+        input_path: 输入路径（文件或目录）
+        output_dir: 输出目录路径
+        progress_callback: 进度回调函数
+        is_running_check: 检查是否继续运行的函数
+    """
+    import os
+
+    if os.path.isfile(input_path):
+        # 处理单个文件
+        process_single_file(executor, input_path, output_dir, progress_callback, is_running_check)
+    elif os.path.isdir(input_path):
+        # 处理目录
+        process_directory(executor, input_path, output_dir, progress_callback, is_running_check)
+    else:
+        logger.error(f"[Service] Invalid input path: {input_path}")
+        progress_callback(PipelineEvents.ERROR, {'message': f'Invalid input path: {input_path}'})
+
+def process_single_file(
+    executor: object,
+    input_file: str,
+    output_dir: str,
+    progress_callback: Callable[[PipelineEvents, Dict], None],
+    is_running_check: Callable[[], bool]
+) -> None:
+    """
+    处理单个 PCAP 文件
+
+    Args:
+        executor: 执行器对象
+        input_file: 输入文件路径
+        output_dir: 输出目录路径
+        progress_callback: 进度回调函数
+        is_running_check: 检查是否继续运行的函数
+    """
+    try:
+        import os
+        logger.info(f"[Service] Starting single file processing: {input_file}")
+
+        # 发送管道开始事件
+        progress_callback(PipelineEvents.PIPELINE_START, {'total_subdirs': 1})
+
+        # 验证文件是否为PCAP文件
+        if not input_file.endswith(('.pcap', '.pcapng')):
+            progress_callback(PipelineEvents.LOG, {'message': 'Selected file is not a PCAP file'})
+            progress_callback(PipelineEvents.PIPELINE_END, {})
+            return
+
+        # 发送子目录开始事件（单文件模式）
+        progress_callback(PipelineEvents.SUBDIR_START, {
+            'name': os.path.basename(input_file),
+            'current': 1,
+            'total': 1,
+            'file_count': 1
+        })
+
+        # 处理文件
+        if is_running_check():
+            # 发送文件开始事件
+            progress_callback(PipelineEvents.FILE_START, {'path': input_file})
+
+            try:
+                # 构造输出文件名
+                base_name, ext = os.path.splitext(os.path.basename(input_file))
+                output_path = os.path.join(output_dir, f"{base_name}_processed{ext}")
+
+                # 使用 executor 处理文件
+                result = executor.run(input_file, output_path, progress_cb=lambda stage, stats: _handle_stage_progress(stage, stats, progress_callback))
+
+                # 发送步骤摘要事件
+                for stage_stats in result.stage_stats:
+                    progress_callback(PipelineEvents.STEP_SUMMARY, {
+                        'step_name': stage_stats.stage_name,
+                        'filename': os.path.basename(input_file),
+                        'packets_processed': stage_stats.packets_processed,
+                        'packets_modified': stage_stats.packets_modified,
+                        'duration_ms': stage_stats.duration_ms,
+                        **stage_stats.extra_metrics
+                    })
+
+            except Exception as e:
+                progress_callback(PipelineEvents.ERROR, {
+                    'message': f"Error processing file {os.path.basename(input_file)}: {str(e)}"
+                })
+
+            # 发送文件完成事件
+            progress_callback(PipelineEvents.FILE_END, {'path': input_file})
+
+        # 发送子目录结束事件
+        progress_callback(PipelineEvents.SUBDIR_END, {'name': os.path.basename(input_file)})
+
+        # 发送管道结束事件
+        progress_callback(PipelineEvents.PIPELINE_END, {})
+
+        logger.info(f"[Service] Completed single file processing: {input_file}")
+
+    except Exception as e:
+        logger.error(f"[Service] Single file processing failed: {e}")
+        raise PipelineServiceError(f"Single file processing failed: {str(e)}")
+
 def process_directory(
     executor: object,
     input_dir: str,
@@ -49,7 +160,7 @@ def process_directory(
 ) -> None:
     """
     处理目录中的所有 PCAP 文件
-    
+
     Args:
         executor: 执行器对象
         input_dir: 输入目录路径

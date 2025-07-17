@@ -14,7 +14,7 @@ from PyQt6.QtCore import QObject, QTimer, QTime, pyqtSignal
 from PyQt6.QtWidgets import QApplication
 
 from pktmask.infrastructure.logging import get_logger
-from pktmask.infrastructure.config import get_app_config
+from pktmask.config import get_app_config
 
 
 class ProcessingState:
@@ -144,13 +144,30 @@ class AppController(QObject):
     
     def _validate_inputs(self) -> bool:
         """验证输入参数"""
-        # 检查输入目录
+        # 检查输入路径（文件或目录）
         if not hasattr(self.main_window, 'base_dir') or not self.main_window.base_dir:
-            self.error_occurred.emit("Please select input directory")
+            self.error_occurred.emit("Please select input file or directory")
             return False
 
         if not os.path.exists(self.main_window.base_dir):
-            self.error_occurred.emit("Input directory does not exist")
+            self.error_occurred.emit("Input path does not exist")
+            return False
+
+        # 验证输入路径类型
+        if os.path.isfile(self.main_window.base_dir):
+            # 验证文件类型
+            if not self.main_window.base_dir.lower().endswith(('.pcap', '.pcapng')):
+                self.error_occurred.emit("Selected file is not a PCAP/PCAPNG file")
+                return False
+        elif os.path.isdir(self.main_window.base_dir):
+            # 验证目录中是否有PCAP文件
+            pcap_files = [f for f in os.listdir(self.main_window.base_dir)
+                         if f.lower().endswith(('.pcap', '.pcapng'))]
+            if not pcap_files:
+                self.error_occurred.emit("No PCAP files found in selected directory")
+                return False
+        else:
+            self.error_occurred.emit("Invalid input path")
             return False
 
         # Check processing options
@@ -158,7 +175,7 @@ class AppController(QObject):
         if not any(config.values()):
             self.error_occurred.emit("Please select at least one processing option")
             return False
-            
+
         return True
     
     def _prepare_processing(self) -> bool:

@@ -14,7 +14,7 @@ from datetime import datetime
 from PyQt6.QtWidgets import QFileDialog
 
 from pktmask.infrastructure.logging import get_logger
-from pktmask.infrastructure.config import get_app_config
+from pktmask.config import get_app_config
 from pktmask.utils.time import current_timestamp
 from pktmask.utils.file_ops import open_directory_in_system
 
@@ -100,21 +100,91 @@ class DataService:
         self._logger.info("Data service initialization completed")
     
     def select_input_directory(self) -> bool:
-        """Select input directory"""
+        """Select input path (directory or file) with enhanced dual-mode selection"""
+        try:
+            from PyQt6.QtWidgets import QMessageBox
+
+            # Show selection mode dialog
+            reply = QMessageBox.question(
+                self.main_window,
+                "Select Input Mode",
+                "Choose input selection mode:\n\n"
+                "• Yes: Select individual pcap/pcapng file\n"
+                "• No: Select directory for batch processing\n"
+                "• Cancel: Cancel selection",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel,
+                QMessageBox.StandardButton.No  # Default to directory selection
+            )
+
+            if reply == QMessageBox.StandardButton.Cancel:
+                return False
+
+            if reply == QMessageBox.StandardButton.Yes:
+                # File selection mode
+                return self._select_individual_file()
+            else:
+                # Directory selection mode
+                return self._select_directory()
+
+        except Exception as e:
+            self._logger.error(f"Error in input selection: {e}")
+            return False
+
+    def _select_individual_file(self) -> bool:
+        """Select individual pcap/pcapng file"""
+        try:
+            file_path, _ = QFileDialog.getOpenFileName(
+                self.main_window,
+                "Select PCAP/PCAPNG File",
+                self.last_opened_dir,
+                "PCAP Files (*.pcap *.pcapng);;All Files (*)"
+            )
+
+            if file_path:
+                self.input_dir = file_path  # Store file path directly
+                self.last_opened_dir = os.path.dirname(file_path)
+
+                # Update UI display with file indicator
+                if hasattr(self.main_window, 'dir_path_label'):
+                    file_name = os.path.basename(file_path)
+                    self.main_window.dir_path_label.setText(f"📄 {file_name}")
+
+                # Auto-generate output path
+                self._generate_default_output_path()
+
+                # Update main window properties (compatibility)
+                self.main_window.base_dir = file_path
+
+                # Update button state
+                if hasattr(self.main_window, 'ui_builder'):
+                    self.main_window.ui_builder.update_start_button_state()
+
+                self._logger.info(f"Selected input file: {file_path}")
+                return True
+
+            return False
+
+        except Exception as e:
+            self._logger.error(f"Error selecting file: {e}")
+            return False
+
+    def _select_directory(self) -> bool:
+        """Select input directory for batch processing"""
         try:
             dir_path = QFileDialog.getExistingDirectory(
                 self.main_window,
-                "Select Input Folder",
+                "Select Input Directory",
                 self.last_opened_dir
             )
-            
+
             if dir_path:
                 self.input_dir = dir_path
                 self.last_opened_dir = dir_path
-                
-                # Update UI display
+
+                # Update UI display with directory indicator
                 if hasattr(self.main_window, 'dir_path_label'):
-                    self.main_window.dir_path_label.setText(os.path.basename(dir_path))
+                    dir_name = os.path.basename(dir_path)
+                    self.main_window.dir_path_label.setText(f"📁 {dir_name}")
 
                 # Auto-generate output path
                 self._generate_default_output_path()
@@ -129,6 +199,10 @@ class DataService:
                 self._logger.info(f"Selected input directory: {dir_path}")
                 return True
 
+            return False
+
+        except Exception as e:
+            self._logger.error(f"Error selecting directory: {e}")
             return False
 
         except Exception as e:

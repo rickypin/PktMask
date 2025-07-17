@@ -104,8 +104,8 @@ class ServicePipelineThread(QThread):
 
     def run(self):
         try:
-            from pktmask.services.pipeline_service import process_directory
-            process_directory(
+            from pktmask.services.pipeline_service import process_path
+            process_path(
                 self._executor,
                 self._base_dir,
                 self._output_dir,
