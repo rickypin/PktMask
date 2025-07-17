@@ -168,34 +168,47 @@ def main(argv: list[str] | None = None) -> None:
 
     # -------------------- 阶段 2：显式扫描实现 -------------------- #
 
-    # 构造 tshark 命令
-    tshark_cmd: list[str] = [
-        tshark_exec,
+    # 构造 tshark 命令 - 使用跨平台路径处理
+    from pathlib import Path
+
+    # 规范化输入文件路径
+    input_file = str(Path(args.pcap).resolve())
+
+    # 构建命令参数
+    tshark_args = [
         "-2",  # 两遍分析，启用重组
-        "-r",
-        str(args.pcap),
-        "-T",
-        "json",
+        "-r", input_file,
+        "-T", "json",
         # 仅输出必要字段，减少 JSON 体积
-        "-e",
-        "frame.number",
-        "-e",
-        "frame.protocols",
-        "-e",
-        "tls.record.content_type",
-        "-e",
-        "tls.record.opaque_type",
-        "-e",
-        "tls.record.length",
-        "-e",
-        "tls.app_data",  # 直接抓取应用数据 hex
-        "-e",
-        "tcp.stream",
-        "-E",
-        "occurrence=a",  # 展开所有出现
-        "-o",
-        "tcp.desegment_tcp_streams:TRUE",
+        "-e", "frame.number",
+        "-e", "frame.protocols",
+        "-e", "tls.record.content_type",
+        "-e", "tls.record.opaque_type",
+        "-e", "tls.record.length",
+        "-e", "tls.app_data",  # 直接抓取应用数据 hex
+        "-e", "tcp.stream",
+        "-E", "occurrence=a",  # 展开所有出现
+        "-o", "tcp.desegment_tcp_streams:TRUE",
     ]
+
+    # Windows特定的命令行处理
+    if platform.system() == 'Windows':
+        # 确保可执行文件路径正确引用
+        if ' ' in tshark_exec and not (tshark_exec.startswith('"') and tshark_exec.endswith('"')):
+            tshark_exec_quoted = f'"{tshark_exec}"'
+        else:
+            tshark_exec_quoted = tshark_exec
+
+        # 处理包含空格的参数
+        processed_args = []
+        for arg in tshark_args:
+            if ' ' in arg and not (arg.startswith('"') and arg.endswith('"')):
+                processed_args.append(f'"{arg}"')
+            else:
+                processed_args.append(arg)
+        tshark_cmd = [tshark_exec_quoted] + processed_args
+    else:
+        tshark_cmd = [tshark_exec] + tshark_args
 
     # 处理 decode-as
     if args.decode_as:

@@ -75,6 +75,11 @@ class TSharkManager:
             r'C:\Program Files (x86)\Wireshark\tshark.exe',
             r'C:\ProgramData\chocolatey\bin\tshark.exe',  # Chocolatey
             r'C:\tools\wireshark\tshark.exe',  # Alternative Chocolatey path
+            r'C:\chocolatey\bin\tshark.exe',  # Legacy Chocolatey path
+            r'C:\Program Files\Wireshark\bin\tshark.exe',  # Alternative bin location
+            r'C:\Program Files (x86)\Wireshark\bin\tshark.exe',  # Alternative bin location
+            r'C:\Wireshark\tshark.exe',  # Custom installation
+            r'C:\tools\Wireshark\tshark.exe',  # Portable installation
         ],
         'Linux': [  # Linux
             '/usr/bin/tshark',
@@ -181,7 +186,9 @@ class TSharkManager:
             if self._system == 'Windows':
                 subprocess_kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
 
-            result = subprocess.run([path, '-v'], **subprocess_kwargs)
+            # Prepare command with proper path handling
+            cmd = self._prepare_tshark_command(path, ['-v'])
+            result = subprocess.run(cmd, **subprocess_kwargs)
             
             if result.returncode != 0:
                 return TSharkInfo(
@@ -450,7 +457,66 @@ class TSharkManager:
             Cached TShark information or None if not detected yet
         """
         return self._cached_info
-    
+
+    def _prepare_tshark_command(self, tshark_path: str, args: List[str]) -> List[str]:
+        """Prepare TShark command with proper cross-platform path handling
+
+        Args:
+            tshark_path: Path to TShark executable
+            args: Command line arguments
+
+        Returns:
+            Properly formatted command list
+        """
+        cmd = [tshark_path]
+
+        # On Windows, handle paths with spaces properly
+        if self._system == 'Windows':
+            # Ensure the executable path is properly quoted if it contains spaces
+            if ' ' in tshark_path and not (tshark_path.startswith('"') and tshark_path.endswith('"')):
+                cmd[0] = f'"{tshark_path}"'
+
+            # Process arguments for Windows
+            processed_args = []
+            for arg in args:
+                # Quote arguments that contain spaces or special characters
+                if ' ' in arg or any(char in arg for char in ['&', '|', '<', '>', '^']):
+                    if not (arg.startswith('"') and arg.endswith('"')):
+                        processed_args.append(f'"{arg}"')
+                    else:
+                        processed_args.append(arg)
+                else:
+                    processed_args.append(arg)
+            cmd.extend(processed_args)
+        else:
+            # Unix-like systems: use arguments as-is
+            cmd.extend(args)
+
+        return cmd
+
+    def prepare_file_processing_command(self, tshark_path: str, input_file: str,
+                                      additional_args: List[str] = None) -> List[str]:
+        """Prepare TShark command for file processing with cross-platform path handling
+
+        Args:
+            tshark_path: Path to TShark executable
+            input_file: Input file path
+            additional_args: Additional command line arguments
+
+        Returns:
+            Properly formatted command list for file processing
+        """
+        if additional_args is None:
+            additional_args = []
+
+        # Normalize file path for the current platform
+        normalized_file = str(Path(input_file).resolve())
+
+        # Build base command
+        args = ['-r', normalized_file] + additional_args
+
+        return self._prepare_tshark_command(tshark_path, args)
+
     def set_custom_path(self, path: str) -> bool:
         """Set custom TShark path and verify it
         

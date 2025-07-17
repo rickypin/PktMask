@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from .base import ProtocolMarker
 from .types import KeepRule, KeepRuleSet, FlowInfo
+from pktmask.infrastructure.tshark.manager import TSharkManager
 
 
 # TLS协议类型映射（复用自tls_flow_analyzer）
@@ -82,14 +83,21 @@ class TLSProtocolMarker(ProtocolMarker):
         self.tshark_path = config.get('tshark_path')
         self.decode_as = config.get('decode_as', [])
 
+        # 初始化TShark管理器
+        self.tshark_manager = TSharkManager(custom_path=self.tshark_path)
+
         # 注释：移除序列号状态管理，直接使用绝对序列号
         # self.seq_state = {}
 
     def _initialize_components(self) -> None:
         """初始化TLS分析组件"""
         # 验证tshark可用性
-        self.tshark_exec = self._check_tshark_version(self.tshark_path)
-        self.logger.info(f"TLS analyzer initialization completed, using tshark: {self.tshark_exec}")
+        tshark_info = self.tshark_manager.detect_tshark()
+        if not tshark_info.is_available:
+            raise RuntimeError(f"TShark not available: {tshark_info.error_message}")
+
+        self.tshark_exec = tshark_info.path
+        self.logger.info(f"TLS analyzer initialization completed, using tshark: {self.tshark_exec} (version: {tshark_info.version_formatted})")
 
     def analyze_file(self, pcap_path: str, config: Dict[str, Any]) -> KeepRuleSet:
         """分析TLS流量并生成保留规则
@@ -237,13 +245,9 @@ class TLSProtocolMarker(ProtocolMarker):
         self.logger.debug("Scanning TLS messages")
 
         # 第一阶段：扫描重组后的TLS消息
-        # Ensure cross-platform path handling
-        pcap_path_str = str(pcap_path)  # Convert Path object to string if needed
-
-        cmd_reassembled = [
-            self.tshark_exec,
+        # Use TSharkManager for proper cross-platform path handling
+        reassembled_args = [
             "-2",  # 两遍分析，启用重组
-            "-r", pcap_path_str,
             "-T", "json",
             "-e", "frame.number",
             "-e", "frame.protocols",
@@ -268,10 +272,12 @@ class TLSProtocolMarker(ProtocolMarker):
             "-o", "tcp.desegment_tcp_streams:TRUE",
         ]
 
+        cmd_reassembled = self.tshark_manager.prepare_file_processing_command(
+            self.tshark_exec, pcap_path, reassembled_args
+        )
+
         # 第二阶段：扫描TLS段数据（禁用重组，捕获分段）
-        cmd_segments = [
-            self.tshark_exec,
-            "-r", pcap_path_str,
+        segments_args = [
             "-T", "json",
             "-e", "frame.number",
             "-e", "frame.protocols",
@@ -291,6 +297,10 @@ class TLSProtocolMarker(ProtocolMarker):
             "-E", "occurrence=a",
             "-o", "tcp.desegment_tcp_streams:FALSE",
         ]
+
+        cmd_segments = self.tshark_manager.prepare_file_processing_command(
+            self.tshark_exec, pcap_path, segments_args
+        )
 
         # 添加解码规则
         if self.decode_as:
@@ -457,12 +467,8 @@ class TLSProtocolMarker(ProtocolMarker):
 
     def _analyze_single_tcp_flow(self, pcap_path: str, stream_id: str) -> Optional[Dict[str, Any]]:
         """分析单个TCP流（复用自tls_flow_analyzer逻辑）"""
-        # Ensure cross-platform path handling
-        pcap_path_str = str(pcap_path)  # Convert Path object to string if needed
-
-        cmd = [
-            self.tshark_exec,
-            "-r", pcap_path_str,
+        # Use TSharkManager for proper cross-platform path handling
+        flow_args = [
             "-Y", f"tcp.stream == {stream_id}",
             "-T", "json",
             "-e", "frame.number",
@@ -485,7 +491,11 @@ class TLSProtocolMarker(ProtocolMarker):
 
         if self.decode_as:
             for spec in self.decode_as:
-                cmd.extend(["-d", spec])
+                flow_args.extend(["-d", spec])
+
+        cmd = self.tshark_manager.prepare_file_processing_command(
+            self.tshark_exec, pcap_path, flow_args
+        )
 
         try:
             completed = self._run_tshark_subprocess(

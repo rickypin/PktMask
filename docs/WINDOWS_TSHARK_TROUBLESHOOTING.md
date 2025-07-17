@@ -30,6 +30,8 @@ Missing: Two-pass analysis support (-2 flag)
 3. **缺少依赖库**: Windows下缺少必要的网络协议库
 4. **权限问题**: TShark无法访问必要的系统资源
 5. **路径问题**: TShark可执行文件路径配置错误
+6. **文件路径处理问题**: Windows下包含空格的文件路径未正确转义
+7. **命令行参数格式问题**: Windows特定的命令行参数处理不当
 
 ---
 
@@ -98,7 +100,49 @@ choco install wireshark --version=4.4.7
 C:\ProgramData\chocolatey\bin\tshark.exe -v
 ```
 
-### 方案3: 手动配置和修复
+### 方案3: 使用Windows专用验证脚本 (推荐)
+
+#### 运行Windows特定验证
+```cmd
+# 运行Windows专用TShark验证脚本
+python scripts/validate_windows_tshark.py
+
+# 这个脚本会检查:
+# - TShark检测和版本验证
+# - Windows路径处理（包含空格的路径）
+# - 命令行参数格式化
+# - 文件处理能力
+# - 跨平台兼容性问题
+```
+
+#### 预期输出示例
+```
+🔍 Starting Windows TShark validation...
+
+📋 Testing TShark detection...
+✅ TShark detected: C:\Program Files\Wireshark\tshark.exe
+   Version: 4.4.7
+
+📋 Testing path handling...
+✅ Spaces in executable path handled correctly
+✅ Special characters in filenames handled correctly
+
+📋 Testing command line processing...
+✅ Basic commands work correctly
+✅ Complex arguments work correctly
+✅ JSON output capability confirmed
+
+📋 Testing file processing...
+✅ File processing command preparation works
+
+============================================================
+🔍 WINDOWS TSHARK VALIDATION REPORT
+============================================================
+
+📊 Overall Status: ✅ PASS
+```
+
+### 方案4: 手动配置和修复
 
 #### 检查当前TShark状态
 ```cmd
@@ -251,13 +295,49 @@ set PATH=%PATH%;C:\Program Files\Wireshark
 setx PATH "%PATH%;C:\Program Files\Wireshark"
 ```
 
+### Q5: 文件路径包含空格导致处理失败
+**A**: 这是Windows平台常见问题，PktMask v3.2+已修复：
+```cmd
+# 问题示例：文件路径包含空格
+# 错误: C:\Users\User Name\Documents\test file.pcap
+# 解决: 使用引号或更新到最新版本
+
+# 临时解决方案：将文件移动到无空格路径
+move "C:\Users\User Name\Documents\test file.pcap" "C:\temp\test_file.pcap"
+
+# 或者更新PktMask到最新版本（推荐）
+```
+
+### Q6: 命令行参数解析错误
+**A**: Windows命令行参数需要特殊处理：
+```cmd
+# 运行Windows验证脚本检查
+python scripts/validate_windows_tshark.py
+
+# 如果验证失败，尝试重新安装PktMask
+pip install --upgrade pktmask
+```
+
+### Q7: "CREATE_NO_WINDOW" 相关错误
+**A**: 这是Windows进程创建优化，如果出现问题：
+```cmd
+# 检查Python版本（需要3.7+）
+python --version
+
+# 更新Python或使用兼容版本
+# Windows 10/11 推荐使用 Python 3.9+
+```
+
 ---
 
 ## 快速解决工具
 
 ### 自动诊断脚本
 ```cmd
-# 快速诊断和修复建议
+# Windows专用验证脚本（推荐）
+python scripts/validate_windows_tshark.py
+
+# 传统诊断脚本
 python scripts/quick_windows_tshark_fix.py
 
 # 全面诊断和自动修复
@@ -270,7 +350,25 @@ python scripts/validate_tshark_setup.py --windows-fix --all
 ### 集成验证
 ```cmd
 # 运行Windows特定的修复和验证
+python scripts/validate_windows_tshark.py
+
+# 如果上述脚本不可用，使用传统方法
 python scripts/validate_tshark_setup.py --windows-fix --all
+```
+
+### 故障排除流程
+```cmd
+# 1. 首先运行Windows专用验证
+python scripts/validate_windows_tshark.py
+
+# 2. 如果验证失败，检查具体错误类型：
+#    - 检测失败：重新安装Wireshark
+#    - 路径问题：检查文件路径中的空格和特殊字符
+#    - 命令行问题：更新PktMask到最新版本
+#    - 权限问题：以管理员权限运行
+
+# 3. 修复后重新验证
+python scripts/validate_windows_tshark.py
 ```
 
 ---
@@ -279,11 +377,47 @@ python scripts/validate_tshark_setup.py --windows-fix --all
 
 如果问题仍然存在，请提供以下信息：
 
-1. Windows版本: `winver`
-2. TShark版本: `tshark -v`
-3. 完整错误日志
-4. 验证脚本输出: `python scripts/validate_tshark_setup.py --all`
-5. 诊断脚本输出: `python scripts/quick_windows_tshark_fix.py`
-6. 安装方法和路径
+1. **系统信息**:
+   ```cmd
+   # Windows版本
+   winver
 
-提交Issue到PktMask项目仓库，标题格式：`[Windows] TShark validation failed: [具体错误]`
+   # Python版本
+   python --version
+
+   # PktMask版本
+   python -c "import pktmask; print(pktmask.__version__)"
+   ```
+
+2. **TShark信息**:
+   ```cmd
+   # TShark版本
+   tshark -v
+
+   # TShark路径
+   where tshark
+   ```
+
+3. **验证脚本输出**:
+   ```cmd
+   # Windows专用验证（推荐）
+   python scripts/validate_windows_tshark.py > windows_validation.log 2>&1
+
+   # 传统验证
+   python scripts/validate_tshark_setup.py --all > tshark_validation.log 2>&1
+   ```
+
+4. **错误日志**: 完整的错误消息和堆栈跟踪
+
+5. **文件路径信息**:
+   - 输入文件路径（是否包含空格或特殊字符）
+   - TShark安装路径
+   - PktMask安装路径
+
+6. **安装方法**: Wireshark安装方式（官方安装程序/Chocolatey/其他）
+
+**提交Issue格式**:
+- 仓库: PktMask项目仓库
+- 标题: `[Windows] TShark validation failed: [具体错误描述]`
+- 标签: `windows`, `tshark`, `bug`
+- 附件: 验证脚本输出日志文件
