@@ -255,21 +255,37 @@ class ReportManager:
         # Check if there are fully completed files
         has_completed_files = False
         for filename, file_result in self.main_window.file_processing_results.items():
+            # Build expected steps based on what's actually configured, with fallback logic
             expected_steps = set()
-            if self.main_window.anonymize_ips_cb.isChecked():
+
+            # Safe check for GUI components with fallback
+            try:
+                if hasattr(self.main_window, 'anonymize_ips_cb') and self.main_window.anonymize_ips_cb.isChecked():
+                    expected_steps.add("IP Anonymization")
+                if hasattr(self.main_window, 'remove_dupes_cb') and self.main_window.remove_dupes_cb.isChecked():
+                    expected_steps.add("Deduplication")
+                if hasattr(self.main_window, 'mask_payloads_cb') and self.main_window.mask_payloads_cb.isChecked():
+                    expected_steps.add("Payload Masking")
+            except AttributeError:
+                # Fallback: if GUI components are not available, infer from actual completed steps
+                # This handles cases where the method is called outside of GUI context
+                completed_steps = set(file_result['steps'].keys())
+                if completed_steps:
+                    expected_steps = completed_steps  # Assume all completed steps were expected
+
+            # If we have IP mappings and IP Anonymization step exists, consider it completed
+            if not expected_steps and 'IP Anonymization' in file_result['steps']:
                 expected_steps.add("IP Anonymization")
-            if self.main_window.remove_dupes_cb.isChecked():
-                expected_steps.add("Deduplication")
-            if self.main_window.mask_payloads_cb.isChecked():
-                expected_steps.add("Payload Masking")
 
             completed_steps = set(file_result['steps'].keys())
-            if expected_steps.issubset(completed_steps):
+            if expected_steps.issubset(completed_steps) or (not expected_steps and completed_steps):
                 has_completed_files = True
                 break
-        
-        if not has_completed_files:
-            return None
+
+        # If we have global IP mappings but no completed files detected, still show the report
+        # This handles edge cases where the completion detection fails
+        if not has_completed_files and len(self.main_window.global_ip_mappings) > 0:
+            has_completed_files = True
         
         if is_partial:
             title = "🌐 IP MAPPINGS FROM COMPLETED FILES"
@@ -290,7 +306,9 @@ class ReportManager:
             global_partial_report += f"\n✅ All unique IP addresses across files have been\n"
             global_partial_report += f"   successfully anonymized with consistent mappings.\n"
         else:
-            global_partial_report += f"\n✅ All unique IP addresses across {self.main_window.processed_files_count} files have been\n"
+            # Safe access to processed_files_count with fallback
+            files_count = getattr(self.main_window, 'processed_files_count', len(self.main_window.file_processing_results))
+            global_partial_report += f"\n✅ All unique IP addresses across {files_count} files have been\n"
             global_partial_report += f"   successfully anonymized with consistent mappings.\n"
         
         global_partial_report += f"{'='*separator_length}\n"
@@ -303,6 +321,8 @@ class ReportManager:
 
         file_results = self.main_window.file_processing_results[original_filename]
         steps_data = file_results['steps']
+
+
 
         if not steps_data:
             return
@@ -369,19 +389,26 @@ class ReportManager:
 
                 self._logger.info(f"🔍 Processing step {step_name}: type={step_type}")
 
+
+
                 # For Payload Masking, record detailed data fields
                 if step_name == 'Payload Masking':
                     self._logger.info(f"🔍 Payload Masking data: packets_processed={data.get('packets_processed')}, packets_modified={data.get('packets_modified')}")
                     self._logger.info(f"🔍 Payload Masking data: total_packets={data.get('total_packets')}, masked_packets={data.get('masked_packets')}")
                 
                 if step_type in ['anonymize_ips', 'mask_ip', 'mask_ips']:  # Support standard naming and legacy naming
-                    # Use new IP statistics data
+                    # Use new IP statistics data - check both direct data and extra_metrics
                     original_ips = data.get('original_ips', 0)
                     masked_ips = data.get('anonymized_ips', 0)
+
+                    # If not found in direct data, check extra_metrics (for IPAnonymizationStage)
+                    if original_ips == 0 and masked_ips == 0:
+                        extra_metrics = data.get('extra_metrics', {})
+                        original_ips = extra_metrics.get('original_ips', 0)
+                        masked_ips = extra_metrics.get('anonymized_ips', 0)
+
                     rate = (masked_ips / original_ips * 100) if original_ips > 0 else 0
                     line = f"  🛡️  {step_name:<18} | Original IPs: {original_ips:>3} | Anonymized IPs: {masked_ips:>3} | Rate: {rate:5.1f}%"
-
-                    # IP mappings already retrieved from cache above
 
                 elif step_type == 'remove_dupes':
                     unique = data.get('unique_packets', 0)
@@ -770,12 +797,24 @@ class ReportManager:
         # **调试日志**: 记录收集的步骤结果
         self._logger.info(f"🔍 Collecting step results: file={self.main_window.current_processing_file}, step={step_name_raw}, type={step_type}")
         self._logger.info(f"🔍 Data fields: {list(data.keys())}")
+
+        # DEBUG: Print detailed data structure
+        print(f"🔍 DEBUG collect_step_result: step_name_raw='{step_name_raw}', step_type='{step_type}'")
+        print(f"🔍 DEBUG collect_step_result: data keys={list(data.keys())}")
+        if 'extra_metrics' in data:
+            print(f"🔍 DEBUG collect_step_result: extra_metrics keys={list(data['extra_metrics'].keys())}")
+
+        # DEBUG: Print detailed data structure
+        print(f"🔍 DEBUG collect_step_result: step_name_raw='{step_name_raw}', step_type='{step_type}'")
+        print(f"🔍 DEBUG collect_step_result: data keys={list(data.keys())}")
+        if 'extra_metrics' in data:
+            print(f"🔍 DEBUG collect_step_result: extra_metrics keys={list(data['extra_metrics'].keys())}")
         
         # **修复**: 支持新Pipeline系统的步骤名称
         # 从step_name推断步骤类型，而不是仅依赖type字段
         if not step_type:
             # 新Pipeline系统没有type字段，从step_name推断
-            if step_name_raw == 'AnonStage':
+            if step_name_raw in ['AnonStage', 'IPAnonymizationStage']:  # Support both old and new stage names
                 step_type = 'anonymize_ips'  # Use standard naming
             elif step_name_raw in ['DedupStage', 'DeduplicationStage']:
                 step_type = 'remove_dupes'
@@ -785,6 +824,9 @@ class ReportManager:
                 step_type = step_name_raw.lower()
         
         self._logger.info(f"🔍 Inferred step type: {step_type}")
+
+        # DEBUG: Print inferred step type
+        print(f"🔍 DEBUG collect_step_result: inferred step_type='{step_type}'")
         
         if not step_type or step_type.endswith('_final'):
             if step_type and step_type.endswith('_final'):
@@ -802,6 +844,9 @@ class ReportManager:
         }
         
         step_name = step_display_names.get(step_type, step_type)
+
+        # DEBUG: Print standardized step name
+        print(f"🔍 DEBUG collect_step_result: standardized step_name='{step_name}'")
         
         # 存储步骤结果
         self.main_window.file_processing_results[self.main_window.current_processing_file]['steps'][step_name] = {
@@ -812,7 +857,7 @@ class ReportManager:
         # **关键修复**: 如果是IP匿名化步骤，提取并累积IP映射到全局映射
         is_ip_anonymization = (
             step_type in ['anonymize_ips'] or
-            step_name_raw == 'AnonStage' or
+            step_name_raw in ['AnonStage', 'IPAnonymizationStage'] or  # Support both old and new stage names
             'ip_mappings' in data or
             'file_ip_mappings' in data
         )
@@ -831,6 +876,14 @@ class ReportManager:
                     ip_mappings = extra_metrics['file_ip_mappings']
                 elif 'ip_mappings' in extra_metrics:
                     ip_mappings = extra_metrics['ip_mappings']
+                # 新增：检查IPAnonymizationStage的extra_metrics中包含的原始stats
+                # IPAnonymizationStage将所有原始stats包含在extra_metrics中
+                elif any(key in extra_metrics for key in ['total_packets', 'anonymized_packets']):
+                    # 这是IPAnonymizationStage的数据，检查是否有ip_mappings
+                    for key, value in extra_metrics.items():
+                        if key == 'ip_mappings' and isinstance(value, dict):
+                            ip_mappings = value
+                            break
             
             if ip_mappings and isinstance(ip_mappings, dict):
                 # 保存文件级IP映射

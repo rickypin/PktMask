@@ -182,9 +182,9 @@ class PipelineExecutor:
         # ------------------------------------------------------------------
         anon_cfg = self._get_config_with_fallback(config, "anonymize_ips", "anon")
         if anon_cfg.get("enabled", False):
-            from pktmask.core.pipeline.stages.anon_ip import AnonStage
+            from pktmask.core.pipeline.stages.ip_anonymization import IPAnonymizationStage
 
-            stage = AnonStage(anon_cfg)
+            stage = IPAnonymizationStage(anon_cfg)
             stage.initialize()
             stages.append(stage)
 
