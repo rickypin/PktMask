@@ -36,11 +36,7 @@ class DesktopEventCoordinator(QObject):
     error_occurred = pyqtSignal(str)    # Error event dedicated signal
     progress_updated = pyqtSignal(int)  # Progress update dedicated signal
 
-    # Legacy compatibility signals
-    statistics_updated = pyqtSignal(dict)
-    ui_update_requested = pyqtSignal(str, dict)
-    file_operation_requested = pyqtSignal(str, dict)
-    report_generation_requested = pyqtSignal(str, dict)
+
 
     # Structured data signals for enhanced processing
     pipeline_event_data = pyqtSignal(object)  # PipelineEventData
@@ -88,21 +84,9 @@ class DesktopEventCoordinator(QObject):
         # Emit general signal
         self.event_emitted.emit(event)
 
-        # Legacy compatibility
-        self._emit_legacy_signals(event)
 
-    def _emit_legacy_signals(self, event: DesktopEvent):
-        """Emit legacy signals for backward compatibility"""
-        legacy_data = event.to_dict()
 
-        if event.type in (EventType.PIPELINE_START, EventType.PIPELINE_END):
-            self.statistics_updated.emit(legacy_data)
-        elif 'ui_update' in event.data:
-            self.ui_update_requested.emit(event.data.get('action', ''), legacy_data)
-        elif 'file_operation' in event.data:
-            self.file_operation_requested.emit(event.data.get('operation', ''), legacy_data)
-        elif 'report_request' in event.data:
-            self.report_generation_requested.emit(event.data.get('report_type', ''), legacy_data)
+
     
     def emit_fast(self, event_type: str, message: str, **data):
         """Fast event emission (reduces object creation)"""
@@ -166,6 +150,11 @@ class DesktopEventCoordinator(QObject):
         if hasattr(self.main_window, 'pipeline_manager') and hasattr(self.main_window.pipeline_manager, 'statistics'):
             return self.main_window.pipeline_manager.statistics.get_processing_summary()
         return {}
+
+    def reset_all_data(self):
+        """重置所有数据（用于重置状态）"""
+        self.emit_fast(EventType.GUI_UPDATE, "Reset all data", action='reset')
+        self._logger.debug("Reset all data requested")
 
     def clear_subscribers(self):
         """Clear all subscribers (memory management)"""

@@ -6,9 +6,10 @@ a = Analysis(
     pathex=['src'],
     binaries=[],
     datas=[
-        ('src/pktmask/resources/log_template.html', 'resources'),
-        ('src/pktmask/resources/summary.md', 'resources'),
-        ('src/pktmask/resources/config_template.yaml', 'resources'),
+        ('config/templates/log_template.html', 'resources'),
+        ('config/templates/summary.md', 'resources'),
+        ('config/templates/config_template.yaml', 'resources'),
+        ('config/templates/tls_flow_analysis_template.html', 'resources'),
     ],
     hiddenimports=[
         'markdown',

@@ -172,17 +172,7 @@ class KeepAll(MaskSpec):
         return "完全保留载荷"
 
 
-def create_http_header_mask(header_length: int) -> MaskSpec:
-    """
-    创建HTTP头保留掩码
-    
-    Args:
-        header_length: HTTP头部长度
-        
-    Returns:
-        保留HTTP头的掩码规范
-    """
-    return MaskAfter(header_length)
+
 
 
 def create_tls_record_mask(record_header_length: int = 5) -> MaskSpec:

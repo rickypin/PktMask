@@ -116,9 +116,10 @@ a = Analysis(
     pathex=[str(src_path)],
     binaries=[],
     datas=[
-        (str(src_path / 'pktmask' / 'resources' / 'log_template.html'), 'resources'),
-        (str(src_path / 'pktmask' / 'resources' / 'summary.md'), 'resources'),
-        (str(src_path / 'pktmask' / 'resources' / 'config_template.yaml'), 'resources'),
+        (str(Path.cwd() / 'config' / 'templates' / 'log_template.html'), 'resources'),
+        (str(Path.cwd() / 'config' / 'templates' / 'summary.md'), 'resources'),
+        (str(Path.cwd() / 'config' / 'templates' / 'config_template.yaml'), 'resources'),
+        (str(Path.cwd() / 'config' / 'templates' / 'tls_flow_analysis_template.html'), 'resources'),
     ],
     hiddenimports=windows_hidden_imports,
     hookspath=['hooks'] if os.path.exists('hooks') else [],

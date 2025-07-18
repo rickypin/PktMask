@@ -203,10 +203,7 @@ class StrategyFactory:
         Returns:
             最佳策略实例，如果没有合适策略则返回None
         """
-        # HTTP协议直接返回默认策略（HTTP支持已移除）
-        if protocol_info.name.upper() in ['HTTP', 'HTTPS']:
-            self.logger.info(f"HTTP protocol support has been removed, using default strategy")
-            return self.get_strategy_by_name('default', config)
+
         
         # 获取支持该协议的所有策略
         strategy_names = self.registry.get_strategies_for_protocol(protocol_info.name)

@@ -8,11 +8,8 @@ PktMask 适配器模块
 __version__ = "1.0.0"
 
 # 核心适配器
-# PipelineProcessorAdapter已删除，直接使用StageBase架构
 from .encapsulation_adapter import ProcessingAdapter
 from .statistics_adapter import StatisticsDataAdapter
-
-# 兼容性适配器已移除 - 直接使用 core.pipeline.stages 中的实现
 
 # 异常类
 from .adapter_exceptions import (
@@ -39,7 +36,7 @@ __all__ = [
     'ProcessingAdapter',
     'StatisticsDataAdapter',
     
-    # 兼容性适配器已移除
+
     
     # 异常类
     'AdapterError',

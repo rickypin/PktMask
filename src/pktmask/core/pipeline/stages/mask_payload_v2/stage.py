@@ -139,7 +139,7 @@ class NewMaskPayloadStage(StageBase):
             raise
 
     def _process_with_dual_module_mode(self, input_path: Path, output_path: Path, start_time: float) -> StageStats:
-        """使用新版双模块架构处理文件"""
+        """使用双模块架构处理文件"""
         self.logger.debug("Using dual-module architecture processing mode")
 
         # Phase 1: Call Marker module to generate KeepRuleSet

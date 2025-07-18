@@ -202,8 +202,7 @@ class MainWindow(QMainWindow):
         self.event_coordinator.subscribe('statistics_data', self._handle_statistics_data)
         
         # 连接Qt信号
-        self.event_coordinator.statistics_updated.connect(self._handle_statistics_update)
-        self.event_coordinator.ui_update_requested.connect(lambda action, data: self._handle_ui_update_request(action, data))
+        # statistics_updated 和 ui_update_requested 信号已移除，使用新的事件系统
         
         # 新增：连接结构化数据信号（如果可用）
         if hasattr(self.event_coordinator, 'pipeline_event_data'):
@@ -211,14 +210,7 @@ class MainWindow(QMainWindow):
         if hasattr(self.event_coordinator, 'statistics_data_updated'):
             self.event_coordinator.statistics_data_updated.connect(self._handle_statistics_data)
 
-#    def _setup_manager_subscriptions(self):
-#        """设置管理器间的事件订阅关系"""
-        # UI管理器订阅统计变化
-#        self.event_coordinator.subscribe('statistics_changed', self._handle_statistics_update)
-        
-#        # 连接Qt信号
-#        self.event_coordinator.ui_update_requested.connect(self._handle_ui_update_request)
-#        self._logger.debug("Manager event subscription setup completed")
+
     
     def _handle_statistics_update(self, data: dict):
         """处理统计数据更新"""
