@@ -215,7 +215,9 @@ class DependencyChecker:
         }
         
         try:
-            proc = subprocess.run(
+            # Use hidden subprocess to prevent cmd window popup on Windows
+            from ...utils.subprocess_utils import run_hidden_subprocess
+            proc = run_hidden_subprocess(
                 [tshark_path, '-v'],
                 capture_output=True,
                 text=True,
@@ -263,7 +265,9 @@ class DependencyChecker:
         }
         
         try:
-            proc = subprocess.run(
+            # Use hidden subprocess to prevent cmd window popup on Windows
+            from ...utils.subprocess_utils import run_hidden_subprocess
+            proc = run_hidden_subprocess(
                 [tshark_path, '-G', 'protocols'],
                 capture_output=True,
                 text=True,
@@ -301,8 +305,9 @@ class DependencyChecker:
         }
         
         try:
-            # 创建一个最小的测试命令
-            proc = subprocess.run(
+            # 创建一个最小的测试命令 - Use hidden subprocess to prevent cmd window popup on Windows
+            from ...utils.subprocess_utils import run_hidden_subprocess
+            proc = run_hidden_subprocess(
                 [tshark_path, '-T', 'json', '-c', '0'],
                 capture_output=True,
                 text=True,

@@ -134,7 +134,9 @@ class TLSFlowAnalyzer:
         executable = tshark_path or "tshark"
         
         try:
-            completed = subprocess.run(
+            # Use hidden subprocess to prevent cmd window popup on Windows
+            from ..utils.subprocess_utils import run_hidden_subprocess
+            completed = run_hidden_subprocess(
                 [executable, "-v"], check=True, text=True, capture_output=True, encoding='utf-8', errors='replace'
             )
         except (subprocess.CalledProcessError, FileNotFoundError) as exc:

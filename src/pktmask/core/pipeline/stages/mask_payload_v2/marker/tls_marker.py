@@ -173,7 +173,9 @@ class TLSProtocolMarker(ProtocolMarker):
         executable = self._find_tshark_executable(tshark_path)
 
         try:
-            completed = subprocess.run(
+            # Use hidden subprocess to prevent cmd window popup on Windows
+            from ......utils.subprocess_utils import run_hidden_subprocess
+            completed = run_hidden_subprocess(
                 [executable, "-v"], check=True, text=True, capture_output=True, encoding='utf-8', errors='replace'
             )
         except (subprocess.CalledProcessError, FileNotFoundError) as exc:
@@ -316,12 +318,15 @@ class TLSProtocolMarker(ProtocolMarker):
                 cmd_segments.extend(["-d", spec])
 
         try:
+            # Use hidden subprocess to prevent cmd window popup on Windows
+            from ......utils.subprocess_utils import run_hidden_subprocess
+
             # 执行第一阶段扫描
-            completed_reassembled = subprocess.run(cmd_reassembled, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace')
+            completed_reassembled = run_hidden_subprocess(cmd_reassembled, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace')
             packets_reassembled = json.loads(completed_reassembled.stdout)
 
             # 执行第二阶段扫描
-            completed_segments = subprocess.run(cmd_segments, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace')
+            completed_segments = run_hidden_subprocess(cmd_segments, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace')
             packets_segments = json.loads(completed_segments.stdout)
 
         except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
@@ -493,7 +498,9 @@ class TLSProtocolMarker(ProtocolMarker):
                 cmd.extend(["-d", spec])
 
         try:
-            completed = subprocess.run(cmd, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace')
+            # Use hidden subprocess to prevent cmd window popup on Windows
+            from ......utils.subprocess_utils import run_hidden_subprocess
+            completed = run_hidden_subprocess(cmd, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace')
             packets = json.loads(completed.stdout)
         except (subprocess.CalledProcessError, json.JSONDecodeError):
             self.logger.warning(f"TCP flow analysis failed (stream {stream_id})")

@@ -262,31 +262,9 @@ def open_directory_in_system(directory: Union[str, Path]) -> bool:
     Returns:
         Whether successfully opened
     """
-    import platform
-    import subprocess
-    
-    directory = Path(directory)
-    
-    if not directory.exists() or not directory.is_dir():
-        logger.warning(f"Directory does not exist: {directory}")
-        return False
-    
-    try:
-        system = platform.system()
-        
-        if system == SystemConstants.MACOS_SYSTEM_NAME:
-            subprocess.run([SystemConstants.MACOS_OPEN_COMMAND, str(directory)])
-        elif system == SystemConstants.WINDOWS_SYSTEM_NAME:
-            subprocess.run([SystemConstants.WINDOWS_OPEN_COMMAND, str(directory)])
-        else:  # Linux and others
-            subprocess.run([SystemConstants.LINUX_OPEN_COMMAND, str(directory)])
-        
-        logger.debug(f"Opened directory in system file manager: {directory}")
-        return True
-        
-    except Exception as e:
-        logger.error(f"Failed to open directory: {directory}, error: {e}")
-        return False
+    # Use the new hidden subprocess utility to prevent cmd window popup on Windows
+    from .subprocess_utils import open_directory_hidden
+    return open_directory_hidden(directory)
 
 
 def generate_output_filename(input_filename: str, suffix: str,

@@ -42,7 +42,9 @@ def _check_tshark_version(tshark_path: str | None, verbose: bool = False) -> str
     executable = tshark_path or "tshark"
 
     try:
-        completed = subprocess.run(
+        # Use hidden subprocess to prevent cmd window popup on Windows
+        from ..utils.subprocess_utils import run_hidden_subprocess
+        completed = run_hidden_subprocess(
             [executable, "-v"], check=True, text=True, capture_output=True, encoding='utf-8', errors='replace'
         )
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
@@ -195,7 +197,9 @@ def main(argv: list[str] | None = None) -> None:
         sys.stdout.write(f"[tls23-marker] Running command: {' '.join(tshark_cmd)}\n")
 
     try:
-        completed = subprocess.run(
+        # Use hidden subprocess to prevent cmd window popup on Windows
+        from ..utils.subprocess_utils import run_hidden_subprocess
+        completed = run_hidden_subprocess(
             tshark_cmd,
             check=True,
             text=True,
@@ -353,7 +357,9 @@ def main(argv: list[str] | None = None) -> None:
         ]
 
         try:
-            completed_stream = subprocess.run(
+            # Use hidden subprocess to prevent cmd window popup on Windows
+            from ..utils.subprocess_utils import run_hidden_subprocess
+            completed_stream = run_hidden_subprocess(
                 stream_cmd, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace'
             )
         except subprocess.CalledProcessError:
@@ -589,7 +595,9 @@ def main(argv: list[str] | None = None) -> None:
                 sys.stdout.write(f"[tls23-marker] Calling editcap for annotation: {short_preview}\n")
 
             try:
-                subprocess.run(editcap_cmd, check=True, encoding='utf-8', errors='replace')
+                # Use hidden subprocess to prevent cmd window popup on Windows
+                from ..utils.subprocess_utils import run_hidden_subprocess
+                run_hidden_subprocess(editcap_cmd, check=True, encoding='utf-8', errors='replace')
                 if args.verbose:
                     sys.stdout.write(f"[tls23-marker] Generated annotated file: {annotated_path}\n")
             except subprocess.CalledProcessError as exc:

@@ -60,7 +60,9 @@ def _check_tshark_version(tshark_path: str | None, verbose: bool = False) -> str
     executable = tshark_path or "tshark"
 
     try:
-        completed = subprocess.run(
+        # Use hidden subprocess to prevent cmd window popup on Windows
+        from ..utils.subprocess_utils import run_hidden_subprocess
+        completed = run_hidden_subprocess(
             [executable, "-v"], check=True, text=True, capture_output=True, encoding='utf-8', errors='replace'
         )
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
@@ -539,7 +541,9 @@ def main(argv: list[str] | None = None) -> None:
 
     # 执行 tshark
     try:
-        completed = subprocess.run(
+        # Use hidden subprocess to prevent cmd window popup on Windows
+        from ..utils.subprocess_utils import run_hidden_subprocess
+        completed = run_hidden_subprocess(
             tshark_cmd,
             check=True,
             text=True,
