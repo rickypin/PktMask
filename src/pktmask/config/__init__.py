@@ -26,15 +26,27 @@ if str(config_path) not in sys.path:
     sys.path.insert(0, str(config_path))
 
 # 重新导出配置接口
-from config.app.settings import (
-    AppConfig, UISettings, ProcessingSettings, LoggingSettings,
-    get_app_config, reload_app_config, save_app_config
-)
-from config.app.defaults import (
-    DEFAULT_UI_CONFIG, DEFAULT_PROCESSING_CONFIG, DEFAULT_LOGGING_CONFIG,
-    get_default_config_dict, get_processor_config,
-    is_valid_theme, is_valid_log_level, is_valid_dedup_algorithm
-)
+try:
+    from config.app.settings import (
+        AppConfig, UISettings, ProcessingSettings, LoggingSettings,
+        get_app_config, reload_app_config, save_app_config
+    )
+    from config.app.defaults import (
+        DEFAULT_UI_CONFIG, DEFAULT_PROCESSING_CONFIG, DEFAULT_LOGGING_CONFIG,
+        get_default_config_dict, get_processor_config,
+        is_valid_theme, is_valid_log_level, is_valid_dedup_algorithm
+    )
+except ImportError:
+    # 如果无法导入，直接从本地导入
+    from .settings import (
+        AppConfig, UISettings, ProcessingSettings, LoggingSettings,
+        get_app_config, reload_app_config, save_app_config
+    )
+    from .defaults import (
+        DEFAULT_UI_CONFIG, DEFAULT_PROCESSING_CONFIG, DEFAULT_LOGGING_CONFIG,
+        get_default_config_dict, get_processor_config,
+        is_valid_theme, is_valid_log_level, is_valid_dedup_algorithm
+    )
 
 __all__ = [
     # 主要配置类

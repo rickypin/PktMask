@@ -6,7 +6,6 @@
 
 from typing import Optional, Dict, Any
 
-
 class AdapterError(Exception):
     """
     适配器基础异常类
@@ -36,58 +35,9 @@ class AdapterError(Exception):
             return f"{base_msg} (Context: {context_str})"
         return base_msg
 
-
 class ConfigurationError(AdapterError):
     """配置相关异常"""
     pass
-
-
-class MissingConfigError(ConfigurationError):
-    """缺少必要配置"""
-    
-    def __init__(self, config_key: str, adapter_name: str):
-        super().__init__(
-            f"Missing required configuration: {config_key}",
-            context={"adapter": adapter_name, "missing_key": config_key}
-        )
-
-
-class InvalidConfigError(ConfigurationError):
-    """配置格式错误"""
-    
-    def __init__(self, config_key: str, expected_type: str, actual_value: Any):
-        super().__init__(
-            f"Invalid configuration value for {config_key}",
-            context={
-                "key": config_key,
-                "expected_type": expected_type,
-                "actual_value": str(actual_value)
-            }
-        )
-
-
-class DataFormatError(AdapterError):
-    """数据格式异常"""
-    pass
-
-
-class InputFormatError(DataFormatError):
-    """输入数据格式错误"""
-    
-    def __init__(self, expected_format: str, actual_format: str = "unknown"):
-        super().__init__(
-            f"Invalid input format",
-            context={
-                "expected": expected_format,
-                "actual": actual_format
-            }
-        )
-
-
-class OutputFormatError(DataFormatError):
-    """输出数据格式错误"""
-    pass
-
 
 class ProcessingError(AdapterError):
     """处理过程异常"""

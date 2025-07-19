@@ -27,7 +27,7 @@ from pktmask.utils.path import resource_path
 from pktmask.common.constants import UIConstants, FormatConstants, SystemConstants, PROCESS_DISPLAY_NAMES
 from pktmask.utils import current_timestamp, format_milliseconds_to_time, open_directory_in_system, current_time
 from pktmask.infrastructure.logging import get_logger
-from pktmask.config import get_app_config
+from pktmask.config.settings import get_app_config
 from .stylesheet import generate_stylesheet
 
 # PROCESS_DISPLAY_NAMES moved to common.constants
