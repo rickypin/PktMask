@@ -11,15 +11,13 @@ from .file_manager import FileManager
 from .pipeline_manager import PipelineManager
 from .report_manager import ReportManager
 from .dialog_manager import DialogManager
-from .statistics_manager import StatisticsManager
 from .event_coordinator import EventCoordinator
 
 __all__ = [
     'UIManager',
-    'FileManager', 
+    'FileManager',
     'PipelineManager',
     'ReportManager',
     'DialogManager',
-    'StatisticsManager',
     'EventCoordinator'
-] 
+]

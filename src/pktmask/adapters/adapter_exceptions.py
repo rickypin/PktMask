@@ -89,41 +89,6 @@ class OutputFormatError(DataFormatError):
     pass
 
 
-class CompatibilityError(AdapterError):
-    """兼容性异常"""
-    pass
-
-
-
-
-
 class ProcessingError(AdapterError):
     """处理过程异常"""
     pass
-
-
-class TimeoutError(ProcessingError):
-    """处理超时"""
-    
-    def __init__(self, operation: str, timeout_seconds: float):
-        super().__init__(
-            f"Operation timed out: {operation}",
-            context={
-                "operation": operation,
-                "timeout": f"{timeout_seconds}s"
-            }
-        )
-
-
-class ResourceError(ProcessingError):
-    """资源不足"""
-    
-    def __init__(self, resource_type: str, details: str = ""):
-        super().__init__(
-            f"Insufficient {resource_type}",
-            context={
-                "resource": resource_type,
-                "details": details
-            }
-        )
-

@@ -13,10 +13,7 @@ from pktmask.adapters.adapter_exceptions import (
     DataFormatError,
     InputFormatError,
     OutputFormatError,
-    CompatibilityError,
-    ProcessingError,
-    TimeoutError,
-    ResourceError
+    ProcessingError
 )
 
 
@@ -75,27 +72,7 @@ class TestAdapterExceptions:
         assert error.context["actual"] == "unknown"
     
 
-    
-    def test_timeout_error(self):
-        """测试超时异常"""
-        error = TimeoutError("data_processing", 30.5)
-        
-        assert "Operation timed out: data_processing" in str(error)
-        assert error.context["operation"] == "data_processing"
-        assert error.context["timeout"] == "30.5s"
-        assert isinstance(error, ProcessingError)
-    
-    def test_resource_error(self):
-        """测试资源不足异常"""
-        error = ResourceError("memory", "需要至少 4GB")
-        
-        assert "Insufficient memory" in str(error)
-        assert error.context["resource"] == "memory"
-        assert error.context["details"] == "需要至少 4GB"
-        
-        # 测试无详情的情况
-        error = ResourceError("disk_space")
-        assert error.context["details"] == ""
+
     
     def test_exception_hierarchy(self):
         """测试异常层次结构"""

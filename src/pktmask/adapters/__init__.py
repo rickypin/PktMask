@@ -20,10 +20,7 @@ from .adapter_exceptions import (
     DataFormatError,
     InputFormatError,
     OutputFormatError,
-    CompatibilityError,
-    ProcessingError,
-    TimeoutError,
-    ResourceError
+    ProcessingError
 )
 
 __all__ = [
@@ -44,8 +41,5 @@ __all__ = [
     'DataFormatError',
     'InputFormatError',
     'OutputFormatError',
-    'CompatibilityError',
     'ProcessingError',
-    'TimeoutError',
-    'ResourceError',
 ]
