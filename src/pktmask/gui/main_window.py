@@ -544,7 +544,7 @@ class MainWindow(QMainWindow):
 
             # 只从去重阶段计算包数（它总是第一个运行的Stage）
             # **修复**: 支持新旧两种Stage名称，并且只要有包数就计算（不要求>0）
-            if (step_name in ['DedupStage', 'DeduplicationStage']) and packets_processed >= 0:
+            if (step_name in ['DeduplicationStage']) and packets_processed >= 0:
                 # 检查这个文件是否已经计算过包数
                 if not hasattr(self, '_counted_files'):
                     self._counted_files = set()

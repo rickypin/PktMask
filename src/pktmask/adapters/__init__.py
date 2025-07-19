@@ -21,8 +21,6 @@ from .adapter_exceptions import (
     InputFormatError,
     OutputFormatError,
     CompatibilityError,
-    VersionMismatchError,
-    FeatureNotSupportedError,
     ProcessingError,
     TimeoutError,
     ResourceError
@@ -47,8 +45,6 @@ __all__ = [
     'InputFormatError',
     'OutputFormatError',
     'CompatibilityError',
-    'VersionMismatchError',
-    'FeatureNotSupportedError',
     'ProcessingError',
     'TimeoutError',
     'ResourceError',

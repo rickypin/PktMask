@@ -137,7 +137,7 @@ def _handle_stage_progress(stage, stats, progress_callback):
     stage_display_name = _get_stage_display_name(stage.name)
 
     # Emit log with stage-specific action wording and correct statistics
-    if stage.name == 'DedupStage' or stage.name == 'DeduplicationStage':
+    if stage.name == 'DeduplicationStage':
         msg = f"- {stage_display_name}: processed {stats.packets_processed} pkts, removed {stats.packets_modified} pkts"
     elif stage.name in ['AnonStage', 'IPAnonymizationStage']:
         # For IP anonymization, show IP statistics instead of packet statistics
@@ -156,7 +156,6 @@ def _handle_stage_progress(stage, stats, progress_callback):
 def _get_stage_display_name(stage_name: str) -> str:
     """Get standardized display name for stage based on naming consistency guide"""
     stage_name_mapping = {
-        'DedupStage': 'Deduplication Stage',
         'DeduplicationStage': 'Deduplication Stage',
         'AnonStage': 'IP Anonymization Stage',
         'IPAnonymizationStage': 'IP Anonymization Stage',  # New StageBase implementation

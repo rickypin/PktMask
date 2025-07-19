@@ -94,30 +94,7 @@ class CompatibilityError(AdapterError):
     pass
 
 
-class VersionMismatchError(CompatibilityError):
-    """版本不匹配"""
-    
-    def __init__(self, required_version: str, current_version: str):
-        super().__init__(
-            f"Version mismatch",
-            context={
-                "required": required_version,
-                "current": current_version
-            }
-        )
 
-
-class FeatureNotSupportedError(CompatibilityError):
-    """功能不支持"""
-    
-    def __init__(self, feature_name: str, adapter_name: str):
-        super().__init__(
-            f"Feature not supported: {feature_name}",
-            context={
-                "feature": feature_name,
-                "adapter": adapter_name
-            }
-        )
 
 
 class ProcessingError(AdapterError):

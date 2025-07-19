@@ -28,7 +28,7 @@ from .types import (
     EncapsulationType, ParsingError
 )
 from .detector import EncapsulationDetector
-from ...config import get_app_config
+from ...config.settings import get_app_config
 
 
 class ProtocolStackParser:

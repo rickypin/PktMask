@@ -14,8 +14,6 @@ from pktmask.adapters.adapter_exceptions import (
     InputFormatError,
     OutputFormatError,
     CompatibilityError,
-    VersionMismatchError,
-    FeatureNotSupportedError,
     ProcessingError,
     TimeoutError,
     ResourceError
@@ -76,22 +74,7 @@ class TestAdapterExceptions:
         error = InputFormatError("json")
         assert error.context["actual"] == "unknown"
     
-    def test_version_mismatch_error(self):
-        """测试版本不匹配异常"""
-        error = VersionMismatchError("2.0", "1.5")
-        
-        assert "Version mismatch" in str(error)
-        assert error.context["required"] == "2.0"
-        assert error.context["current"] == "1.5"
-        assert isinstance(error, CompatibilityError)
-    
-    def test_feature_not_supported_error(self):
-        """测试功能不支持异常"""
-        error = FeatureNotSupportedError("async_processing", "LegacyAdapter")
-        
-        assert "Feature not supported: async_processing" in str(error)
-        assert error.context["feature"] == "async_processing"
-        assert error.context["adapter"] == "LegacyAdapter"
+
     
     def test_timeout_error(self):
         """测试超时异常"""
@@ -127,8 +110,6 @@ class TestAdapterExceptions:
         assert issubclass(DataFormatError, AdapterError)
         
         # 兼容性异常层次
-        assert issubclass(VersionMismatchError, CompatibilityError)
-        assert issubclass(FeatureNotSupportedError, CompatibilityError)
         assert issubclass(CompatibilityError, AdapterError)
         
         # 处理异常层次

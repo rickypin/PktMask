@@ -816,7 +816,7 @@ class ReportManager:
             # 新Pipeline系统没有type字段，从step_name推断
             if step_name_raw in ['AnonStage', 'IPAnonymizationStage']:  # Support both old and new stage names
                 step_type = 'anonymize_ips'  # Use standard naming
-            elif step_name_raw in ['DedupStage', 'DeduplicationStage']:
+            elif step_name_raw in ['DeduplicationStage']:
                 step_type = 'remove_dupes'
             elif step_name_raw in ['MaskStage', 'MaskPayloadStage', 'NewMaskPayloadStage', 'Mask Payloads (v2)', 'Payload Masking Stage']:
                 step_type = 'mask_payloads'  # Use standard naming

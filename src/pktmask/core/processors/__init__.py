@@ -1,19 +1,12 @@
 """
-简化的处理器系统
+统一的处理器系统
 
-替代复杂的插件架构，提供简单直观的处理器模式。
+简化的StageBase处理器系统，提供统一的处理器访问接口。
+所有处理器都基于StageBase架构，使用标准化配置。
 """
 
-from .base_processor import BaseProcessor, ProcessorConfig, ProcessorResult
 from .registry import ProcessorRegistry
-from .ip_anonymizer import IPAnonymizer
-from .deduplicator import Deduplicator
 
 __all__ = [
-    'BaseProcessor',
-    'ProcessorConfig',
-    'ProcessorResult',
     'ProcessorRegistry',
-    'IPAnonymizer',
-    'Deduplicator',
 ]
