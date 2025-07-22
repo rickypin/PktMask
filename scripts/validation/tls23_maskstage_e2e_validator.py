@@ -760,7 +760,8 @@ def run_maskstage_internal(input_path: Path, output_path: Path, verbose: bool = 
                 }
             },
             "masker_config": {
-                "preserve_ratio": 0.3
+                "chunk_size": 1000,
+                "verify_checksums": True
             }
         }
     }
@@ -803,7 +804,8 @@ def run_maskstage_direct(input_path: Path, output_path: Path, verbose: bool = Fa
             }
         },
         "masker_config": {
-            "preserve_ratio": 0.3
+            "chunk_size": 1000,
+            "verify_checksums": True
         }
     }
 

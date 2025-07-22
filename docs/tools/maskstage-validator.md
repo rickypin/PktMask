@@ -87,11 +87,10 @@ python3 scripts/validation/tls23_maskstage_e2e_validator.py \
 # 通过PipelineExecutor调用，验证完整集成
 config = {
     "dedup": {"enabled": False},
-    "anon": {"enabled": False}, 
+    "anon": {"enabled": False},
     "mask": {
         "enabled": True,
         "mode": "enhanced",
-        "preserve_ratio": 0.3,
         "tls_strategy_enabled": True,
         "enable_tshark_preprocessing": True
     }
@@ -111,7 +110,6 @@ stats = executor.run(input_path, output_path)
 # 直接调用MaskStage，测试Stage独立功能
 config = {
     "mode": "enhanced",
-    "preserve_ratio": 0.3,
     "tls_strategy_enabled": True,
     "enable_tshark_preprocessing": True
 }

@@ -129,7 +129,6 @@ class TestEnhancedConfigSupport:
     def test_legacy_parameter_mapping(self):
         """测试旧版参数映射"""
         config = {
-            'preserve_ratio': 0.5,
             'min_preserve_bytes': 200,
             'enable_tls_processing': False,
             'fallback_config': {
@@ -137,16 +136,15 @@ class TestEnhancedConfigSupport:
                 'max_retries': 3
             }
         }
-        
+
         stage = NewMaskPayloadStage(config)
-        
+
         # 验证参数映射
         masker_config = stage.normalized_config['masker_config']
-        assert masker_config['preserve_ratio'] == 0.5
         assert masker_config['min_preserve_bytes'] == 200
         assert masker_config['fallback_config']['enable_fallback'] is True
         assert masker_config['fallback_config']['max_retries'] == 3
-        
+
         marker_config = stage.normalized_config['marker_config']
         assert marker_config['enable_tls_processing'] is False
     
@@ -160,21 +158,15 @@ class TestEnhancedConfigSupport:
                     'preserve_handshake': False
                 }
             },
-            # 旧版参数
-            'preserve_ratio': 0.3,
             # TLS 配置
             'tls_23_header_preserve_bytes': 10
         }
-        
+
         stage = NewMaskPayloadStage(config)
-        
+
         # 新格式应该优先
         assert stage.protocol == 'tls'
-        
-        # 但旧版参数应该被映射
-        masker_config = stage.normalized_config['masker_config']
-        assert masker_config['preserve_ratio'] == 0.3
-        
+
         # TLS 配置应该被合并
         marker_config = stage.normalized_config['marker_config']
         assert marker_config['tls']['preserve_handshake'] is False  # 来自新格式

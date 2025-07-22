@@ -167,7 +167,7 @@ class TestAPICompatibility:
             {'mode': 'processor_adapter'},  # 旧版模式
             {'recipe': MaskingRecipe(total_packets=5)},
             {'recipe_dict': {'total_packets': 3, 'instructions': []}},
-            {'preserve_ratio': 0.5, 'min_preserve_bytes': 100},
+            {'min_preserve_bytes': 100},
             {'enable_anon': True, 'enable_mask': True},
             {}  # 空配置
         ]

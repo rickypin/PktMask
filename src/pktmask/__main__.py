@@ -20,11 +20,13 @@ def main(ctx: typer.Context):
     # When there are subcommands, Typer handles automatically
 
 # Import and register CLI commands (no nesting, keep simple)
-from pktmask.cli import cmd_mask, cmd_dedup, cmd_anon
+from pktmask.cli import cmd_mask, cmd_dedup, cmd_anon, cmd_batch, cmd_info
 
 app.command("mask", help="Process PCAP files (Remove Dupes, Anonymize IPs, Mask Payloads)")(cmd_mask)
 app.command("dedup", help="Execute Remove Dupes only")(cmd_dedup)
 app.command("anon", help="Execute Anonymize IPs only")(cmd_anon)
+app.command("batch", help="Batch process all PCAP files in a directory with full pipeline")(cmd_batch)
+app.command("info", help="Display information about PCAP files or directories")(cmd_info)
 
 if __name__ == "__main__":
     app()

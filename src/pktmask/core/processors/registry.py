@@ -222,8 +222,7 @@ class ProcessorRegistry:
             },
             "masker_config": {
                 "chunk_size": 1000,
-                "verify_checksums": True,
-                "preserve_ratio": 0.3
+                "verify_checksums": True
             }
         }
 
