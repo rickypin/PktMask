@@ -32,6 +32,7 @@ from .memory_optimizer import MemoryOptimizer
 from .error_handler import ErrorRecoveryHandler, ErrorSeverity, ErrorCategory
 from .data_validator import DataValidator
 from .fallback_handler import FallbackHandler, FallbackMode
+from ....resource_manager import ResourceManager
 
 
 class PayloadMasker:
@@ -68,7 +69,20 @@ class PayloadMasker:
         self.enable_performance_monitoring = config.get('enable_performance_monitoring', True)
         self.max_memory_usage = config.get('max_memory_usage', 2 * 1024 * 1024 * 1024)  # 2GB
 
-        # 初始化内存优化器
+        # 初始化统一资源管理器
+        resource_config = config.get('resource_manager', {})
+        resource_config.setdefault('memory_monitor', {
+            'max_memory_mb': self.max_memory_usage // (1024 * 1024),
+            'pressure_threshold': 0.8,
+            'monitoring_interval': 100
+        })
+        resource_config.setdefault('buffer_manager', {
+            'default_buffer_size': min(self.chunk_size, 100),
+            'auto_resize': True
+        })
+        self.resource_manager = ResourceManager(resource_config)
+
+        # 保持向后兼容性的内存优化器（逐步废弃）
         memory_config = config.get('memory_optimizer', {})
         memory_config.setdefault('max_memory_mb', self.max_memory_usage // (1024 * 1024))
         self.memory_optimizer = MemoryOptimizer(memory_config)
@@ -89,7 +103,10 @@ class PayloadMasker:
         fallback_config.setdefault('enable_fallback', True)
         self.fallback_handler = FallbackHandler(fallback_config)
 
-        # 注册内存压力回调
+        # 注册内存压力回调（新的统一方式）
+        self.resource_manager.memory_monitor.register_pressure_callback(self._handle_memory_pressure_unified)
+
+        # 保持向后兼容性
         self.memory_optimizer.register_memory_callback(self._handle_memory_pressure)
 
         # 注册自定义错误恢复处理器
@@ -218,8 +235,8 @@ class PayloadMasker:
                 process = psutil.Process()
                 initial_memory = process.memory_info().rss
 
-            packet_buffer = []
-            buffer_size = min(self.chunk_size, 100)  # 批处理缓冲区大小
+            # 使用统一的缓冲区管理
+            packet_buffer = self.resource_manager.create_buffer("packet_buffer")
 
             # 使用错误处理包装文件操作
             def process_file():
@@ -248,14 +265,11 @@ class PayloadMasker:
                             # 对于单个数据包错误，添加原始数据包以保持完整性
                             packet_buffer.append(packet)
 
-                        # 内存压力检查
-                        if self.memory_optimizer.check_memory_pressure():
-                            # 如果内存压力过高，立即写入缓冲区并清理
-                            self._flush_packet_buffer(packet_buffer, writer)
-
-                        # 批量写入以提高性能
-                        elif len(packet_buffer) >= buffer_size:
-                            self._flush_packet_buffer(packet_buffer, writer)
+                        # 统一的缓冲区管理：检查是否需要刷新缓冲区
+                        if self.resource_manager.should_flush_buffer("packet_buffer"):
+                            # 刷新缓冲区并写入
+                            buffered_packets = self.resource_manager.flush_buffer("packet_buffer")
+                            self._write_packets_to_file(buffered_packets, writer)
 
                         # 定期报告进度
                         if stats.processed_packets % self.chunk_size == 0:
@@ -268,7 +282,9 @@ class PayloadMasker:
                                 self.logger.debug(f"Processed {stats.processed_packets} packets")
 
                     # 写入剩余的缓冲区数据包
-                    self._flush_packet_buffer(packet_buffer, writer)
+                    remaining_packets = self.resource_manager.flush_buffer("packet_buffer")
+                    if remaining_packets:
+                        self._write_packets_to_file(remaining_packets, writer)
 
             # 执行文件处理，带重试机制
             self.error_handler.retry_operation(
@@ -1087,7 +1103,7 @@ class PayloadMasker:
             }
 
     def _flush_packet_buffer(self, packet_buffer: list, writer):
-        """刷新数据包缓冲区
+        """刷新数据包缓冲区（保持向后兼容性）
 
         Args:
             packet_buffer: 数据包缓冲区
@@ -1104,6 +1120,67 @@ class PayloadMasker:
                 ErrorCategory.OUTPUT_ERROR,
                 {"buffer_size": len(packet_buffer)}
             )
+            raise
+
+    def _write_packets_to_file(self, packets: list, writer):
+        """统一的数据包写入方法
+
+        Args:
+            packets: 数据包列表
+            writer: PcapWriter实例
+        """
+        try:
+            for packet in packets:
+                writer.write(packet)
+            self.logger.debug(f"Written {len(packets)} packets to file")
+        except Exception as e:
+            self.error_handler.handle_error(
+                e,
+                ErrorSeverity.HIGH,
+                ErrorCategory.OUTPUT_ERROR,
+                {"packet_count": len(packets)}
+            )
+            raise
+
+    def _handle_memory_pressure_unified(self, pressure: float) -> None:
+        """统一的内存压力处理回调
+
+        Args:
+            pressure: 内存压力值 (0.0 to 1.0)
+        """
+        self.logger.warning(f"Memory pressure detected: {pressure*100:.1f}%")
+
+        # 在高内存压力下刷新所有缓冲区
+        if pressure > 0.9:
+            self.logger.warning("High memory pressure, flushing all buffers")
+            # 这里可以添加更多的内存压力处理逻辑
+
+    def cleanup(self) -> None:
+        """清理PayloadMasker资源"""
+        self.logger.debug("Starting PayloadMasker cleanup")
+
+        try:
+            # 清理统一资源管理器
+            if hasattr(self, 'resource_manager'):
+                self.resource_manager.cleanup()
+
+            # 清理其他组件
+            if hasattr(self, 'error_handler') and hasattr(self.error_handler, 'cleanup'):
+                self.error_handler.cleanup()
+
+            if hasattr(self, 'data_validator') and hasattr(self.data_validator, 'cleanup'):
+                self.data_validator.cleanup()
+
+            if hasattr(self, 'fallback_handler') and hasattr(self.fallback_handler, 'cleanup'):
+                self.fallback_handler.cleanup()
+
+            # 重置状态
+            self._reset_processing_state()
+
+            self.logger.debug("PayloadMasker cleanup completed")
+
+        except Exception as e:
+            self.logger.error(f"Error during PayloadMasker cleanup: {e}")
             raise
 
     def _register_custom_recovery_handlers(self):

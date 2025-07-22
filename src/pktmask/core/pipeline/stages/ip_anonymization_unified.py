@@ -15,6 +15,7 @@ from pktmask.core.pipeline.models import StageStats
 from pktmask.core.strategy import HierarchicalAnonymizationStrategy
 from pktmask.utils.reporting import FileReporter
 from pktmask.infrastructure.logging import get_logger
+from pktmask.common.exceptions import ProcessingError, ResourceError
 
 
 class UnifiedIPAnonymizationStage(StageBase):
@@ -27,129 +28,156 @@ class UnifiedIPAnonymizationStage(StageBase):
     name: str = "UnifiedIPAnonymizationStage"
     
     def __init__(self, config: Dict[str, Any]):
-        """初始化统一IP匿名化阶段
-        
+        """Initialize unified IP anonymization stage.
+
         Args:
-            config: 配置字典，支持以下参数：
-                - method: 匿名化方法 (默认: "prefix_preserving")
-                - ipv4_prefix: IPv4前缀长度 (默认: 24)
-                - ipv6_prefix: IPv6前缀长度 (默认: 64)
-                - enabled: 是否启用 (默认: True)
-                - name: 阶段名称
-                - priority: 优先级
+            config: Configuration dictionary with the following parameters:
+                - method: Anonymization method (default: "prefix_preserving")
+                - ipv4_prefix: IPv4 prefix length (default: 24)
+                - ipv6_prefix: IPv6 prefix length (default: 64)
+                - enabled: Whether stage is enabled (default: True)
+                - name: Stage name
+                - priority: Processing priority
         """
-        super().__init__()
-        
-        # 配置解析
+        super().__init__(config)
+
+        # Parse configuration
         self.method = config.get('method', 'prefix_preserving')
         self.ipv4_prefix = config.get('ipv4_prefix', 24)
         self.ipv6_prefix = config.get('ipv6_prefix', 64)
         self.enabled = config.get('enabled', True)
         self.stage_name = config.get('name', 'ip_anonymization')
         self.priority = config.get('priority', 0)
-        
-        # 日志记录器
+
+        # Logger
         self.logger = get_logger('unified_ip_anonymization')
-        
-        # 核心组件 - 直接初始化，无延迟加载
+
+        # Core components - direct initialization, no lazy loading
         self._strategy: Optional[HierarchicalAnonymizationStrategy] = None
         self._reporter: Optional[FileReporter] = None
 
-        # 使用完整的HierarchicalAnonymizationStrategy进行IP匿名化
+        # Use full HierarchicalAnonymizationStrategy for IP anonymization
         self._use_simple_strategy = False
-        
-        # 统计信息
+
+        # Statistics
         self._stats = {}
-        
+
         self.logger.info(f"UnifiedIPAnonymizationStage created: method={self.method}")
     
-    def initialize(self, config: Optional[Dict] = None) -> None:
-        """初始化IP匿名化组件"""
+    def initialize(self, config: Optional[Dict] = None) -> bool:
+        """Initialize IP anonymization components.
+
+        Args:
+            config: Optional configuration parameters
+
+        Returns:
+            bool: True if initialization successful, False otherwise
+        """
+        if self._initialized:
+            return True
+
         try:
+            # Update configuration if provided
+            if config:
+                self.config.update(config)
+
             if self._use_simple_strategy:
-                # 使用简化策略，避免encapsulation adapter问题
+                # Use simplified strategy to avoid encapsulation adapter issues
+                from pktmask.core.strategy import SimpleIPAnonymizationStrategy
                 self._strategy = SimpleIPAnonymizationStrategy()
             else:
-                # 使用完整的HierarchicalAnonymizationStrategy
+                # Use full HierarchicalAnonymizationStrategy
                 self._strategy = HierarchicalAnonymizationStrategy()
 
             self._reporter = FileReporter()
 
-            super().initialize(config)
+            self._initialized = True
             self.logger.info("Unified IP anonymization stage initialization successful")
+            return True
 
         except Exception as e:
             self.logger.error(f"Unified IP anonymization stage initialization failed: {e}")
-            raise
+            return False
     
-    def process_file(self, input_path: str | Path, output_path: str | Path) -> StageStats:
-        """处理文件 - 直接实现IP匿名化，无适配器层
-        
+    def process_file(self, input_path: Path, output_path: Path) -> StageStats:
+        """Process file - direct IP anonymization implementation without adapter layer.
+
         Args:
-            input_path: 输入文件路径
-            output_path: 输出文件路径
-            
+            input_path: Input file path
+            output_path: Output file path
+
         Returns:
-            StageStats: 标准统计信息格式
+            StageStats: Standard statistics format
+
+        Raises:
+            FileNotFoundError: If input file does not exist
+            ValueError: If input path is not a file
+            RuntimeError: If stage is not initialized
         """
         if not self._initialized:
-            self.initialize()
-            if not self._initialized:
-                raise RuntimeError("UnifiedIPAnonymizationStage 未初始化")
-        
-        # 路径标准化
-        input_path = Path(input_path)
-        output_path = Path(output_path)
-        
-        # 验证输入
-        if not input_path.exists():
-            raise FileNotFoundError(f"输入文件不存在: {input_path}")
-        if not input_path.is_file():
-            raise ValueError(f"输入路径不是文件: {input_path}")
-        
+            if not self.initialize():
+                raise RuntimeError("UnifiedIPAnonymizationStage initialization failed")
+
+        # Validate input with enhanced error handling
+        self.validate_file_access(input_path, "IP anonymization")
+
         self.logger.info(f"Starting IP anonymization: {input_path} -> {output_path}")
-        
+
         start_time = time.time()
-        
+
         try:
             # 重置统计信息
             self._stats.clear()
-            
-            # 使用Scapy处理PCAP文件
-            from scapy.all import rdpcap, wrpcap
-            
-            # 读取数据包
-            packets = rdpcap(str(input_path))
+
+            # Import Scapy with error handling
+            try:
+                from scapy.all import rdpcap, wrpcap
+            except ImportError as e:
+                raise ProcessingError("Scapy library not available for IP anonymization") from e
+
+            # 读取数据包 with retry mechanism
+            def load_packets():
+                return rdpcap(str(input_path))
+
+            packets = self.retry_operation(load_packets, f"loading packets from {input_path}")
             total_packets = len(packets)
             
             self.logger.info(f"Loaded {total_packets} packets from {input_path}")
-            
-            # 关键修复：先构建IP映射表
-            self.logger.info("Analyzing IP addresses and building mapping table...")
-            self._strategy.build_mapping_from_directory([str(input_path)])
-            ip_mappings = self._strategy.get_ip_map()
-            self.logger.info(f"IP mapping construction completed: {len(ip_mappings)} IP addresses")
-            
-            # 开始匿名化数据包
+
+            # 关键修复：先构建IP映射表 with error handling
+            with self.safe_operation("IP mapping construction"):
+                self.logger.info("Analyzing IP addresses and building mapping table...")
+                self._strategy.build_mapping_from_directory([str(input_path)])
+                ip_mappings = self._strategy.get_ip_map()
+                self.logger.info(f"IP mapping construction completed: {len(ip_mappings)} IP addresses")
+
+            # 开始匿名化数据包 with error handling
             self.logger.info("Starting packet anonymization")
             anonymized_packets = 0
-            
-            # 处理每个数据包
             anonymized_pkts = []
-            for packet in packets:
-                modified_packet, was_modified = self._strategy.anonymize_packet(packet)
-                anonymized_pkts.append(modified_packet)
-                if was_modified:
-                    anonymized_packets += 1
-            
-            # 保存匿名化后的数据包
-            if anonymized_pkts:
-                wrpcap(str(output_path), anonymized_pkts)
-                self.logger.info(f"Saved {len(anonymized_pkts)} anonymized packets to {output_path}")
-            else:
-                # 如果没有数据包，创建空文件
-                output_path.touch()
-                self.logger.warning("No packets to save, created empty output file")
+
+            # 处理每个数据包 with individual packet error handling
+            for i, packet in enumerate(packets):
+                try:
+                    modified_packet, was_modified = self._strategy.anonymize_packet(packet)
+                    anonymized_pkts.append(modified_packet)
+                    if was_modified:
+                        anonymized_packets += 1
+                except Exception as e:
+                    self.logger.warning(f"Failed to anonymize packet {i+1}/{total_packets}: {e}. Using original packet.")
+                    anonymized_pkts.append(packet)  # Keep original packet to maintain file integrity
+
+            # 保存匿名化后的数据包 with error handling
+            def save_packets():
+                if anonymized_pkts:
+                    wrpcap(str(output_path), anonymized_pkts)
+                    self.logger.info(f"Saved {len(anonymized_pkts)} anonymized packets to {output_path}")
+                else:
+                    # 如果没有数据包，创建空文件
+                    output_path.touch()
+                    self.logger.warning("No packets to save, created empty output file")
+
+            self.retry_operation(save_packets, f"saving anonymized packets to {output_path}")
             
             processing_time = time.time() - start_time
             duration_ms = processing_time * 1000
@@ -201,14 +229,18 @@ class UnifiedIPAnonymizationStage(StageBase):
             )
             
         except FileNotFoundError as e:
-            error_msg = f"File not found: {e}"
-            self.logger.error(error_msg)
-            raise
-            
+            self.handle_file_operation_error(e, input_path, "IP anonymization")
+
+        except ImportError as e:
+            raise ProcessingError(f"Required dependency not available for IP anonymization: {e}") from e
+
+        except MemoryError as e:
+            raise ResourceError(f"Insufficient memory for IP anonymization of {input_path}", resource_type="memory") from e
+
         except Exception as e:
             error_msg = f"IP anonymization processing failed: {e}"
-            self.logger.error(error_msg)
-            raise
+            self.logger.error(error_msg, exc_info=True)
+            raise ProcessingError(error_msg) from e
     
     def get_display_name(self) -> str:
         """获取显示名称"""
@@ -244,6 +276,19 @@ class UnifiedIPAnonymizationStage(StageBase):
     def reset_stats(self):
         """重置统计信息"""
         self._stats.clear()
+
+    def _cleanup_stage_specific(self) -> None:
+        """Stage特定的资源清理"""
+        # 清理IP映射和统计信息
+        if self._strategy:
+            # 重置策略状态
+            if hasattr(self._strategy, 'reset'):
+                self._strategy.reset()
+
+        # 清理统计信息
+        self._stats.clear()
+
+        self.logger.debug("UnifiedIPAnonymizationStage specific cleanup completed")
 
 
 class SimpleIPAnonymizationStrategy:

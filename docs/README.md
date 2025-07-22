@@ -65,11 +65,28 @@ API 接口参考和使用说明
 - **最后更新**: 2025-07-22
 - **维护状态**: ✅ 活跃维护
 
+### 📋 文档管理体系
+- **[文档结构使用说明](DOCS_DIRECTORY_STRUCTURE_GUIDE.md)** - 完整的文档管理规范和操作指导
+- **[快速管理指南](QUICK_DOCS_MANAGEMENT_GUIDE.md)** - 日常文档操作的快速参考
+
+### 🛠️ 文档管理工具
+```bash
+# 创建新文档
+./scripts/docs/manage-docs.sh create user-guide new-feature
+
+# 运行质量检查
+./scripts/docs/manage-docs.sh check
+
+# 生成统计报告
+./scripts/docs/manage-docs.sh stats
+```
+
 ### 贡献文档
-1. 遵循 [编码规范](dev/coding-standards.md) 中的文档规范
-2. 在相应目录添加新文档
-3. 更新相关的 README.md 索引
-4. 提交 Pull Request
+1. 使用文档管理工具创建新文档
+2. 遵循 [编码规范](dev/coding-standards.md) 中的文档规范
+3. 运行质量检查确保规范性
+4. 更新相关的 README.md 索引
+5. 提交 Pull Request
 
 ### 报告问题
 如果发现文档问题，请：

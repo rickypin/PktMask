@@ -15,6 +15,7 @@ from typing import Dict, Any, Optional, Set
 from pktmask.core.pipeline.base_stage import StageBase
 from pktmask.core.pipeline.models import StageStats
 from pktmask.infrastructure.logging import get_logger
+from pktmask.common.exceptions import ProcessingError, ResourceError
 
 
 class UnifiedDeduplicationStage(StageBase):
@@ -27,119 +28,154 @@ class UnifiedDeduplicationStage(StageBase):
     name: str = "UnifiedDeduplicationStage"
     
     def __init__(self, config: Dict[str, Any]):
-        """初始化统一去重阶段
-        
+        """Initialize unified deduplication stage.
+
         Args:
-            config: 配置字典，支持以下参数：
-                - algorithm: 去重算法 (默认: "md5")
-                - enabled: 是否启用 (默认: True)
-                - name: 阶段名称
-                - priority: 优先级
+            config: Configuration dictionary with the following parameters:
+                - algorithm: Deduplication algorithm (default: "md5")
+                - enabled: Whether stage is enabled (default: True)
+                - name: Stage name
+                - priority: Processing priority
         """
-        super().__init__()
-        
-        # 配置解析
+        super().__init__(config)
+
+        # Parse configuration
         self.algorithm = config.get('algorithm', 'md5')
         self.enabled = config.get('enabled', True)
         self.stage_name = config.get('name', 'deduplication')
         self.priority = config.get('priority', 0)
-        
-        # 日志记录器
+
+        # Logger
         self.logger = get_logger('unified_deduplication')
-        
-        # 去重状态
+
+        # Deduplication state
         self._packet_hashes: Set[str] = set()
-        
-        # 统计信息
+
+        # Statistics
         self._stats = {}
-        
+
         self.logger.info(f"UnifiedDeduplicationStage created: algorithm={self.algorithm}")
     
-    def initialize(self, config: Optional[Dict] = None) -> None:
-        """初始化去重组件"""
+    def initialize(self, config: Optional[Dict] = None) -> bool:
+        """Initialize deduplication components.
+
+        Args:
+            config: Optional configuration parameters
+
+        Returns:
+            bool: True if initialization successful, False otherwise
+        """
+        if self._initialized:
+            return True
+
         try:
-            # 检查Scapy可用性
+            # Check Scapy availability
             from scapy.all import rdpcap, wrpcap
-            
-            # 清空哈希集合
+
+            # Clear hash set
             self._packet_hashes.clear()
-            
-            super().initialize(config)
+
+            # Update configuration if provided
+            if config:
+                self.config.update(config)
+
+            self._initialized = True
             self.logger.info("Unified deduplication stage initialization successful")
-            
+            return True
+
         except ImportError as e:
             error_msg = f"Scapy library not available: {e}"
             self.logger.error(error_msg)
-            raise RuntimeError(error_msg)
+            return False
         except Exception as e:
             self.logger.error(f"Unified deduplication stage initialization failed: {e}")
-            raise
+            return False
     
-    def process_file(self, input_path: str | Path, output_path: str | Path) -> StageStats:
-        """处理文件 - 直接实现去重逻辑，无适配器层
-        
+    def process_file(self, input_path: Path, output_path: Path) -> StageStats:
+        """Process file - direct deduplication logic implementation without adapter layer.
+
         Args:
-            input_path: 输入文件路径
-            output_path: 输出文件路径
-            
+            input_path: Input file path
+            output_path: Output file path
+
         Returns:
-            StageStats: 标准统计信息格式
+            StageStats: Standard statistics format
+
+        Raises:
+            FileNotFoundError: If input file does not exist
+            ValueError: If input path is not a file
+            RuntimeError: If stage is not initialized
         """
         if not self._initialized:
-            self.initialize()
-            if not self._initialized:
-                raise RuntimeError("UnifiedDeduplicationStage 未初始化")
-        
-        # 路径标准化
-        input_path = Path(input_path)
-        output_path = Path(output_path)
-        
-        # 验证输入
-        if not input_path.exists():
-            raise FileNotFoundError(f"输入文件不存在: {input_path}")
-        if not input_path.is_file():
-            raise ValueError(f"输入路径不是文件: {input_path}")
-        
+            if not self.initialize():
+                raise RuntimeError("UnifiedDeduplicationStage initialization failed")
+
+        # Validate input with enhanced error handling
+        self.validate_file_access(input_path, "deduplication")
+
         self.logger.info(f"Starting deduplication: {input_path} -> {output_path}")
-        
+
         start_time = time.time()
-        
+
         try:
             # 重置统计信息和去重状态
             self._stats.clear()
             self._packet_hashes.clear()  # 清空哈希集合，确保每个文件独立处理
 
-            # 使用Scapy处理PCAP文件
-            from scapy.all import rdpcap, wrpcap
-            
-            # 读取数据包
-            packets = rdpcap(str(input_path))
+            # Import Scapy with error handling
+            try:
+                from scapy.all import rdpcap, wrpcap
+            except ImportError as e:
+                raise ProcessingError("Scapy library not available for deduplication") from e
+
+            # 读取数据包 with retry mechanism and memory monitoring
+            def load_packets():
+                # Check memory pressure before loading
+                if self.resource_manager.get_memory_pressure() > 0.8:
+                    self.logger.warning("High memory pressure detected before loading packets")
+                return rdpcap(str(input_path))
+
+            packets = self.retry_operation(load_packets, f"loading packets from {input_path}")
             total_packets = len(packets)
             
             self.logger.info(f"Loaded {total_packets} packets from {input_path}")
-            
-            # 去重处理
+
+            # 去重处理 with memory monitoring and error handling
             unique_packets = []
             removed_count = 0
+
+            with self.safe_operation("packet deduplication"):
+                for i, packet in enumerate(packets):
+                    try:
+                        # Monitor memory pressure during processing
+                        if i % 1000 == 0 and self.resource_manager.get_memory_pressure() > 0.9:
+                            self.logger.warning(f"High memory pressure during deduplication at packet {i}/{total_packets}")
+
+                        # 生成数据包哈希 with error handling
+                        packet_hash = self._generate_packet_hash(packet)
+
+                        if packet_hash not in self._packet_hashes:
+                            self._packet_hashes.add(packet_hash)
+                            unique_packets.append(packet)
+                        else:
+                            removed_count += 1
+
+                    except Exception as e:
+                        self.logger.warning(f"Failed to process packet {i+1}/{total_packets} during deduplication: {e}. "
+                                          f"Treating as unique packet.")
+                        unique_packets.append(packet)  # Keep packet to maintain file integrity
             
-            for packet in packets:
-                # 生成数据包哈希
-                packet_hash = self._generate_packet_hash(packet)
-                
-                if packet_hash not in self._packet_hashes:
-                    self._packet_hashes.add(packet_hash)
-                    unique_packets.append(packet)
+            # 保存去重后的数据包 with error handling
+            def save_unique_packets():
+                if unique_packets:
+                    wrpcap(str(output_path), unique_packets)
+                    self.logger.info(f"Saved {len(unique_packets)} unique packets to {output_path}")
                 else:
-                    removed_count += 1
-            
-            # 保存去重后的数据包
-            if unique_packets:
-                wrpcap(str(output_path), unique_packets)
-                self.logger.info(f"Saved {len(unique_packets)} unique packets to {output_path}")
-            else:
-                # 如果没有唯一数据包，创建空文件
-                output_path.touch()
-                self.logger.warning("No unique packets found, created empty output file")
+                    # 如果没有唯一数据包，创建空文件
+                    output_path.touch()
+                    self.logger.warning("No unique packets found, created empty output file")
+
+            self.retry_operation(save_unique_packets, f"saving deduplicated packets to {output_path}")
             
             processing_time = time.time() - start_time
             duration_ms = processing_time * 1000
@@ -186,18 +222,36 @@ class UnifiedDeduplicationStage(StageBase):
             )
             
         except FileNotFoundError as e:
-            error_msg = f"File not found: {e}"
-            self.logger.error(error_msg)
-            raise
-            
+            self.handle_file_operation_error(e, input_path, "deduplication")
+
+        except ImportError as e:
+            raise ProcessingError(f"Required dependency not available for deduplication: {e}") from e
+
+        except MemoryError as e:
+            # Clear hash set to free memory
+            self._packet_hashes.clear()
+            raise ResourceError(f"Insufficient memory for deduplication of {input_path}", resource_type="memory") from e
+
         except Exception as e:
             error_msg = f"Deduplication processing failed: {e}"
-            self.logger.error(error_msg)
-            raise
+            self.logger.error(error_msg, exc_info=True)
+            # Clear hash set on error to prevent state corruption
+            self._packet_hashes.clear()
+            raise ProcessingError(error_msg) from e
     
     def get_display_name(self) -> str:
         """获取显示名称"""
         return "Remove Dupes"
+
+    def _cleanup_stage_specific(self) -> None:
+        """Stage特定的资源清理"""
+        # 清理去重状态
+        self._packet_hashes.clear()
+
+        # 清理统计信息
+        self._stats.clear()
+
+        self.logger.debug("UnifiedDeduplicationStage specific cleanup completed")
     
     def get_description(self) -> str:
         """获取描述"""

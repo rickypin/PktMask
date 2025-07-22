@@ -99,8 +99,23 @@ def process_directory(
                 
                 # 使用 executor 处理文件
                 result = executor.run(input_path, output_path, progress_cb=lambda stage, stats: _handle_stage_progress(stage, stats, progress_callback))
-                
-                # 发送步骤摘要事件
+
+                # Check if processing was successful
+                if not result.success:
+                    # Send error information to GUI for failed processing
+                    for error in result.errors:
+                        progress_callback(PipelineEvents.ERROR, {
+                            'message': f"File {os.path.basename(input_path)}: {error}"
+                        })
+
+                    # Send user-friendly error messages from stage statistics
+                    for stage_stats in result.stage_stats:
+                        if 'user_message' in stage_stats.extra_metrics:
+                            progress_callback(PipelineEvents.ERROR, {
+                                'message': f"File {os.path.basename(input_path)}: {stage_stats.extra_metrics['user_message']}"
+                            })
+
+                # 发送步骤摘要事件 (for both successful and failed stages)
                 for stage_stats in result.stage_stats:
                     progress_callback(PipelineEvents.STEP_SUMMARY, {
                         'step_name': stage_stats.stage_name,
@@ -110,10 +125,14 @@ def process_directory(
                         'duration_ms': stage_stats.duration_ms,
                         **stage_stats.extra_metrics
                     })
-                
+
             except Exception as e:
+                # Log the exception with full context
+                logger.error(f"[Service] Unexpected error processing file {input_path}: {e}", exc_info=True)
+
+                # Send user-friendly error message to GUI
                 progress_callback(PipelineEvents.ERROR, {
-                    'message': f"Error processing file {os.path.basename(input_path)}: {str(e)}"
+                    'message': f"Unexpected error processing file {os.path.basename(input_path)}: {str(e)}"
                 })
             
             # 发送文件完成事件

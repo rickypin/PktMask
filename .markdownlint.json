@@ -1,0 +1,69 @@
+{
+  "default": true,
+  "MD001": true,
+  "MD003": {
+    "style": "atx"
+  },
+  "MD004": {
+    "style": "dash"
+  },
+  "MD007": {
+    "indent": 2
+  },
+  "MD009": {
+    "br_spaces": 2
+  },
+  "MD010": {
+    "code_blocks": false
+  },
+  "MD012": {
+    "maximum": 2
+  },
+  "MD013": {
+    "line_length": 120,
+    "code_blocks": false,
+    "tables": false
+  },
+  "MD022": {
+    "lines_above": 1,
+    "lines_below": 1
+  },
+  "MD024": {
+    "allow_different_nesting": true
+  },
+  "MD025": {
+    "front_matter_title": ""
+  },
+  "MD026": {
+    "punctuation": ".,;:!?"
+  },
+  "MD029": {
+    "style": "ordered"
+  },
+  "MD033": {
+    "allowed_elements": [
+      "br",
+      "sub",
+      "sup",
+      "details",
+      "summary",
+      "img",
+      "kbd",
+      "mark"
+    ]
+  },
+  "MD034": false,
+  "MD036": {
+    "punctuation": ".,;:!?。，；：！？"
+  },
+  "MD040": true,
+  "MD041": {
+    "front_matter_title": ""
+  },
+  "MD046": {
+    "style": "fenced"
+  },
+  "MD048": {
+    "style": "backtick"
+  }
+}

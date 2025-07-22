@@ -1,8 +1,15 @@
 # Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
 *$py.class
+
+# C extensions
 *.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -27,20 +34,52 @@ wheels/
 *.swp
 *.swo
 
-# OS
+# Operating System Files
+# macOS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Windows
 Thumbs.db
+Thumbs.db:encryptable
+ehthumbs_vista.db
+*.stackdump
 
 # Project specific
 tests/samples/
 tests/data/
 
-# Coverage / report artifacts
+# Project Output Files
+# Test coverage reports
 htmlcov/
 demo_test_reports/htmlcov/
 output/reports/coverage/
 reports/coverage/
-output/
+
+# Temporary analysis and validation outputs (can be regenerated)
+output/tmp/
+output/maskstage_validation/
+output/monitoring/
 tmp/
 
-.venv/ 
+# Keep other output directories but ignore specific temporary subdirectories
+# output/ - commented out to allow selective ignoring
+
+.venv/
+
+# Maintenance and Cleanup Files
+# Backup files created during cleanup operations
+cleanup_backup_*.tar.gz
+cleanup_backup_*.zip
+
+# Temporary backup directories
+backup_temp_*/
+backup_refactor_*/
+
+# Log files from maintenance scripts
+cleanup_*.log
+maintenance_*.log

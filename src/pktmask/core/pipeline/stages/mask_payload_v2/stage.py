@@ -27,32 +27,29 @@ class NewMaskPayloadStage(StageBase):
     name: str = "NewMaskPayloadStage"
     
     def __init__(self, config: Dict[str, Any]):
-        """初始化新一代掩码处理阶段
+        """Initialize new generation mask payload stage.
 
         Args:
-            config: 配置字典，支持以下参数：
-                - protocol: 协议类型 ("tls", "http", "auto")
-                - marker_config: Marker模块配置
-                - masker_config: Masker模块配置
-                - mode: 处理模式 ("enhanced", "basic")
+            config: Configuration dictionary with the following parameters:
+                - protocol: Protocol type ("tls", "http", "auto")
+                - marker_config: Marker module configuration
+                - masker_config: Masker module configuration
+                - mode: Processing mode ("enhanced", "basic")
         """
-        super().__init__()
+        super().__init__(config)
         self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
 
-        # 保存原始配置
-        self.config = config.copy()
-
-        # 配置解析
+        # Parse configuration
         self.protocol = config.get('protocol', 'tls')
         self.mode = config.get('mode', 'enhanced')
         self.marker_config = config.get('marker_config', {})
         self.masker_config = config.get('masker_config', {})
 
-        # 模块实例（延迟初始化）
+        # Module instances (lazy initialization)
         self.marker = None
         self.masker = None
 
-        # 配置验证器（可选）
+        # Optional configuration validator
         self.config_validator = None
 
         self.logger.info(f"NewMaskPayloadStage created: protocol={self.protocol}, mode={self.mode}")
@@ -63,75 +60,77 @@ class NewMaskPayloadStage(StageBase):
 
 
 
-    def initialize(self, config: Optional[Dict] = None) -> None:
-        """初始化阶段
+    def initialize(self, config: Optional[Dict] = None) -> bool:
+        """Initialize the stage.
 
         Args:
-            config: 可选的配置参数
+            config: Optional configuration parameters
+
+        Returns:
+            bool: True if initialization successful, False otherwise
         """
         if self._initialized:
-            return
+            return True
 
         try:
             self.logger.info("Starting NewMaskPayloadStage initialization")
 
-            # 更新配置（如果提供）
+            # Update configuration if provided
             if config:
                 self.config.update(config)
 
-            # 创建 Marker 模块
+            # Create Marker module
             self.marker = self._create_marker()
             if not self.marker.initialize():
-                raise RuntimeError("Marker模块初始化失败")
+                self.logger.error("Marker module initialization failed")
+                return False
 
-            # 创建 Masker 模块
+            # Create Masker module
             self.masker = self._create_masker()
 
             self._initialized = True
             self.logger.info("NewMaskPayloadStage initialization successful")
-
-            # 调用父类初始化
-            super().initialize(config)
+            return True
 
         except Exception as e:
             self.logger.error(f"NewMaskPayloadStage initialization failed: {e}")
-            raise
+            return False
     
-    def process_file(self, input_path: Union[str, Path],
-                    output_path: Union[str, Path]) -> StageStats:
-        """处理文件
+    def process_file(self, input_path: Path, output_path: Path) -> StageStats:
+        """Process a single file.
 
         Args:
-            input_path: 输入文件路径
-            output_path: 输出文件路径
+            input_path: Input file path
+            output_path: Output file path
 
         Returns:
-            StageStats: 处理统计信息
+            StageStats: Processing statistics and results
+
+        Raises:
+            FileNotFoundError: If input file does not exist
+            ValueError: If input path is not a file
+            RuntimeError: If stage is not initialized
         """
         if not self._initialized:
-            self.initialize()
-            if not self._initialized:
-                raise RuntimeError("NewMaskPayloadStage 未初始化")
+            if not self.initialize():
+                raise RuntimeError("NewMaskPayloadStage initialization failed")
 
-        # 验证输入参数
-        if not Path(input_path).exists():
-            raise FileNotFoundError(f"输入文件不存在: {input_path}")
-        if not Path(input_path).is_file():
-            raise ValueError(f"输入路径不是文件: {input_path}")
-
-        input_path = Path(input_path)
-        output_path = Path(output_path)
+        # Validate input parameters
+        if not input_path.exists():
+            raise FileNotFoundError(f"Input file does not exist: {input_path}")
+        if not input_path.is_file():
+            raise ValueError(f"Input path is not a file: {input_path}")
 
         self.logger.info(f"Starting file processing: {input_path} -> {output_path}")
 
         start_time = time.time()
 
         try:
-            # 检查是否为 basic 模式（降级处理）
+            # Check for basic mode (fallback processing)
             if self.mode == 'basic':
                 return self._process_with_basic_mode(input_path, output_path, start_time)
 
-            # 双模块处理模式
+            # Dual-module processing mode
             return self._process_with_dual_module_mode(input_path, output_path, start_time)
 
         except Exception as e:
@@ -142,23 +141,160 @@ class NewMaskPayloadStage(StageBase):
         """使用双模块架构处理文件"""
         self.logger.debug("Using dual-module architecture processing mode")
 
-        # Phase 1: Call Marker module to generate KeepRuleSet
-        self.logger.debug("Phase 1: Generate keep rules")
-        keep_rules = self.marker.analyze_file(str(input_path), self.config)
+        # 优化：检查是否需要创建临时文件副本以避免重复读取
+        working_input_path = self._prepare_input_file(input_path)
 
-        # Phase 2: Call Masker module to apply rules
-        self.logger.debug("Phase 2: Apply masking rules")
-        masking_stats = self.masker.apply_masking(str(input_path), str(output_path), keep_rules)
+        try:
+            # Phase 1: Call Marker module to generate KeepRuleSet
+            self.logger.debug("Phase 1: Generate keep rules")
+            keep_rules = self.marker.analyze_file(str(working_input_path), self.config)
 
-        # 阶段3: 转换统计信息
-        stage_stats = self._convert_to_stage_stats(masking_stats)
+            # Phase 2: Call Masker module to apply rules
+            self.logger.debug("Phase 2: Apply masking rules")
+            masking_stats = self.masker.apply_masking(str(working_input_path), str(output_path), keep_rules)
+
+            # 阶段3: 转换统计信息
+            stage_stats = self._convert_to_stage_stats(masking_stats)
+        finally:
+            # 清理临时文件（如果创建了的话）
+            self._cleanup_input_file(working_input_path, input_path)
 
         self.logger.info(f"Dual-module processing completed: processed_packets={stage_stats.packets_processed}, "
                         f"modified_packets={stage_stats.packets_modified}")
 
         return stage_stats
 
+    def _prepare_input_file(self, input_path: Path) -> Path:
+        """准备输入文件，实现简单的文件读取优化
 
+        策略：
+        1. 小文件（<50MB）：直接使用原文件，性能影响可忽略
+        2. 中等文件（50-200MB）：记录性能提示，但不做优化（避免过度工程化）
+        3. 大文件（>200MB）：创建临时硬链接，减少磁盘I/O
+
+        Args:
+            input_path: 原始输入文件路径
+
+        Returns:
+            工作文件路径（可能是原路径或临时文件路径）
+        """
+        try:
+            file_size = input_path.stat().st_size
+            file_size_mb = file_size / (1024 * 1024)
+
+            # 小文件：直接使用，性能影响可忽略
+            if file_size_mb < 50:
+                self.logger.debug(f"Small file ({file_size_mb:.1f}MB), using direct access")
+                return input_path
+
+            # 中等文件：记录提示但不优化
+            elif file_size_mb < 200:
+                self.logger.info(f"Medium file ({file_size_mb:.1f}MB), dual-module processing may cause some I/O overhead")
+                return input_path
+
+            # 大文件：创建临时硬链接优化
+            else:
+                return self._create_temp_hardlink(input_path, file_size_mb)
+
+        except Exception as e:
+            self.logger.warning(f"Failed to check file size: {e}, using direct access")
+            return input_path
+
+    def _create_temp_hardlink(self, input_path: Path, file_size_mb: float) -> Path:
+        """为大文件创建临时硬链接，避免重复I/O
+
+        Args:
+            input_path: 原始文件路径
+            file_size_mb: 文件大小（MB）
+
+        Returns:
+            临时硬链接路径
+        """
+        import tempfile
+        import os
+
+        try:
+            # Use TemporaryDirectory context manager for automatic cleanup
+            # Note: We can't use 'with' here since we need to return the path
+            # Instead, we'll create the directory and register it for cleanup
+            temp_dir = Path(tempfile.mkdtemp(prefix="pktmask_stage_"))
+            temp_file = temp_dir / f"input_{input_path.name}"
+
+            # 创建硬链接（不占用额外磁盘空间）with enhanced error handling
+            try:
+                os.link(str(input_path), str(temp_file))
+            except OSError as e:
+                # Handle cross-device link errors or permission issues
+                self.logger.warning(f"Cannot create hardlink (cross-device or permission issue): {e}. "
+                                  f"Falling back to direct access.")
+                # Clean up temp directory immediately since hardlink failed
+                try:
+                    temp_dir.rmdir()
+                except OSError as cleanup_error:
+                    self.logger.debug(f"Failed to cleanup temp directory after hardlink failure: {cleanup_error}")
+                return input_path
+
+            # Register temp file and directory for cleanup tracking
+            self.resource_manager.register_temp_file(temp_file)
+            # Also register a cleanup callback for the directory
+            self.resource_manager.register_cleanup_callback(
+                lambda: self._cleanup_temp_directory(temp_dir)
+            )
+
+            self.logger.info(f"Created temporary hardlink for large file ({file_size_mb:.1f}MB): {temp_file}")
+            return temp_file
+
+        except Exception as e:
+            self.logger.warning(f"Failed to create hardlink for optimization: {e}, using direct access")
+            return input_path
+
+    def _cleanup_temp_directory(self, temp_dir: Path) -> None:
+        """Clean up temporary directory safely
+
+        Args:
+            temp_dir: Temporary directory to clean up
+        """
+        if temp_dir and temp_dir.exists() and temp_dir.name.startswith("pktmask_stage_"):
+            try:
+                # Try to remove directory (will only succeed if empty)
+                temp_dir.rmdir()
+                self.logger.debug(f"Cleaned up temporary directory: {temp_dir}")
+            except OSError as e:
+                # Directory not empty or other error - this is expected if files remain
+                self.logger.debug(f"Could not remove temporary directory {temp_dir}: {e} "
+                                f"(directory may not be empty or already cleaned)")
+
+    def _cleanup_input_file(self, working_path: Path, original_path: Path) -> None:
+        """清理工作文件和临时目录
+
+        Args:
+            working_path: 工作文件路径
+            original_path: 原始文件路径
+        """
+        # 如果工作路径与原始路径不同，说明创建了临时文件，需要清理
+        if working_path != original_path:
+            with self.safe_operation("temporary file cleanup"):
+                if working_path.exists():
+                    try:
+                        # 删除临时文件
+                        working_path.unlink()
+                        self.logger.debug(f"Cleaned up temporary file: {working_path}")
+                    except OSError as e:
+                        self.logger.warning(f"Failed to delete temporary file {working_path}: {e}")
+                        # Continue with directory cleanup even if file deletion fails
+
+                    # 删除临时目录（如果为空）
+                    temp_dir = working_path.parent
+                    if temp_dir.name.startswith("pktmask_stage_"):
+                        try:
+                            temp_dir.rmdir()  # 只删除空目录
+                            self.logger.debug(f"Cleaned up temporary directory: {temp_dir}")
+                        except OSError as e:
+                            # 目录不为空或其他错误，记录但不抛出异常
+                            self.logger.debug(f"Could not remove temporary directory {temp_dir}: {e} "
+                                            f"(directory may not be empty)")
+                else:
+                    self.logger.debug(f"Temporary file already cleaned up: {working_path}")
 
     def _process_with_basic_mode(self, input_path: Path, output_path: Path, start_time: float) -> StageStats:
         """基础模式处理（透传复制）"""
@@ -262,14 +398,13 @@ class NewMaskPayloadStage(StageBase):
             tools.append('tshark')
         return tools
     
-    def cleanup(self) -> None:
-        """清理资源"""
+    def _cleanup_stage_specific(self) -> None:
+        """Stage特定的资源清理"""
         if self.marker:
             self.marker.cleanup()
         if self.masker:
-            # Masker 模块暂时没有清理方法
-            pass
-        self._initialized = False
-        self.logger.debug("NewMaskPayloadStage resource cleanup completed")
+            # 使用新的cleanup方法
+            self.masker.cleanup()
+        self.logger.debug("NewMaskPayloadStage specific cleanup completed")
 
 
