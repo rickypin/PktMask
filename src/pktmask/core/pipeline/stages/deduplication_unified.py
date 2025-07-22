@@ -105,9 +105,10 @@ class UnifiedDeduplicationStage(StageBase):
         start_time = time.time()
         
         try:
-            # 重置统计信息
+            # 重置统计信息和去重状态
             self._stats.clear()
-            
+            self._packet_hashes.clear()  # 清空哈希集合，确保每个文件独立处理
+
             # 使用Scapy处理PCAP文件
             from scapy.all import rdpcap, wrpcap
             

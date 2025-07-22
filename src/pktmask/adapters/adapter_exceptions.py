@@ -39,6 +39,50 @@ class ConfigurationError(AdapterError):
     """配置相关异常"""
     pass
 
+class MissingConfigError(ConfigurationError):
+    """缺少必要配置"""
+
+    def __init__(self, config_key: str, adapter_name: str):
+        super().__init__(
+            f"Missing required configuration: {config_key}",
+            context={"adapter": adapter_name, "missing_key": config_key}
+        )
+
+class InvalidConfigError(ConfigurationError):
+    """配置格式错误"""
+
+    def __init__(self, config_key: str, expected_type: str, actual_value):
+        super().__init__(
+            f"Invalid configuration value for {config_key}",
+            context={
+                "key": config_key,
+                "expected_type": expected_type,
+                "actual_value": str(actual_value)
+            }
+        )
+
+class DataFormatError(AdapterError):
+    """数据格式异常"""
+    pass
+
+class InputFormatError(DataFormatError):
+    """输入格式错误"""
+
+    def __init__(self, expected: str, actual: str):
+        super().__init__(
+            f"Invalid input format: expected {expected}, got {actual}",
+            context={"expected": expected, "actual": actual}
+        )
+
+class OutputFormatError(DataFormatError):
+    """输出格式错误"""
+
+    def __init__(self, expected: str, actual: str):
+        super().__init__(
+            f"Invalid output format: expected {expected}, got {actual}",
+            context={"expected": expected, "actual": actual}
+        )
+
 class ProcessingError(AdapterError):
     """处理过程异常"""
     pass
