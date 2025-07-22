@@ -34,12 +34,12 @@ processing:
   max_retry_attempts: 3       # 最大重试次数 (1-10)
   timeout_seconds: 300        # 处理超时时间(秒) (60-3600)
   
-  # Anonymize IPs 设置
+  # Anonymize IPs 设置 (UnifiedIPAnonymizationStage)
   anonymization_strategy: "hierarchical"  # 匿名化策略: hierarchical, random, cryptographic
   preserve_subnet_structure: true         # 保持子网结构
   consistent_mapping: true                # 保持一致性映射
 
-  # Remove Dupes 设置
+  # Remove Dupes 设置 (UnifiedDeduplicationStage)
   dedup_algorithm: "hash_based"           # 去重算法: hash_based, content_based, hybrid
   dedup_threshold: 0.95                   # 去重相似度阈值 (0.0-1.0)
 

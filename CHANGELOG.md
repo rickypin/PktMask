@@ -154,12 +154,13 @@
   - `IpAnonymizationStep` → `IpAnonymizationStage`
   - `IntelligentTrimmingStep` → `IntelligentTrimmingStage`
 
-#### 架构迁移状态（更新说明）
-**重要澄清**: 当前项目处于部分迁移状态，并非完全统一到StageBase架构
+#### 架构统一完成（更新说明）
+**重要更新**: 项目已完成架构统一，所有组件都基于StageBase架构
 
-- ✅ **已迁移**: 载荷掩码功能（NewMaskPayloadStage → StageBase）
-- 🔄 **待迁移**: IP匿名化和去重功能（仍使用BaseProcessor架构）
-- 🔧 **桥接机制**: ProcessorRegistry提供统一访问接口
+- ✅ **已完成**: 载荷掩码功能（NewMaskPayloadStage → StageBase双模块架构）
+- ✅ **已完成**: IP匿名化功能（UnifiedIPAnonymizationStage → StageBase）
+- ✅ **已完成**: 去重功能（UnifiedDeduplicationStage → StageBase）
+- ✅ **统一注册**: ProcessorRegistry提供统一StageBase组件访问
 
 #### 当前推荐使用方式
 ```python
@@ -167,19 +168,20 @@
 from pktmask.core.pipeline.executor import PipelineExecutor
 
 config = {
-    'anonymize_ips': {'enabled': True},    # BaseProcessor系统
-    'remove_dupes': {'enabled': True},     # BaseProcessor系统
-    'mask_payloads': {'enabled': True}     # StageBase系统
+    'anonymize_ips': {'enabled': True},    # UnifiedIPAnonymizationStage
+    'remove_dupes': {'enabled': True},     # UnifiedDeduplicationStage
+    'mask_payloads': {'enabled': True}     # NewMaskPayloadStage (双模块)
 }
 
-executor = PipelineExecutor(config)  # 自动处理新旧架构差异
+executor = PipelineExecutor(config)  # 统一StageBase架构处理
 ```
 
 #### 影响范围
-- ✅ 载荷掩码功能完全迁移到双模块架构
-- 🔄 IP匿名化和去重功能保持BaseProcessor架构
-- 🔧 ProcessorRegistry提供新旧系统的统一桥接
-- 📋 为完整架构统一奠定基础
+- ✅ 载荷掩码功能：双模块架构（Marker + Masker）
+- ✅ IP匿名化功能：统一StageBase实现
+- ✅ 去重功能：统一StageBase实现
+- ✅ ProcessorRegistry：统一StageBase组件注册表
+- ✅ 架构统一完成，提供一致的开发体验
 
 ---
 
@@ -193,12 +195,13 @@ executor = PipelineExecutor(config)  # 自动处理新旧架构差异
 - 提升执行效率 5-10%，降低内存消耗
 - 统一错误处理逻辑，简化降级到透传模式的流程
 
-#### 处理器架构优化（状态更新）
-**澄清**: ProcessorStageAdapter已被移除，当前使用混合架构
+#### 处理器架构统一完成（状态更新）
+**完成**: 所有组件已迁移到统一StageBase架构
 - ✅ 移除 ProcessorStageAdapter 适配层
-- ✅ 载荷掩码迁移到StageBase架构（NewMaskPayloadStage）
-- 🔄 IP匿名化和去重保持BaseProcessor架构
-- 🔧 ProcessorRegistry作为新旧系统桥接层
+- ✅ 载荷掩码：NewMaskPayloadStage（StageBase双模块架构）
+- ✅ IP匿名化：UnifiedIPAnonymizationStage（StageBase架构）
+- ✅ 去重处理：UnifiedDeduplicationStage（StageBase架构）
+- ✅ ProcessorRegistry：统一StageBase组件注册表
 
 ### 🔄 向后兼容性改进
 

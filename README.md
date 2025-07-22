@@ -116,15 +116,15 @@ python -m pktmask
 
 ## Version Notes
 
-### v3.1 Adapter Architecture Refactoring (2025-01)
-- **Unified Adapter Directory**: All adapters migrated to `src/pktmask/adapters/` directory
-  - Simplified import paths, improved code maintainability
-  - Maintains backward compatibility, old import paths still available
+### v3.1 StageBase Architecture Unification (2025-01)
+- **Unified StageBase Architecture**: All processing components migrated to StageBase
+  - UnifiedIPAnonymizationStage: IP anonymization with StageBase
+  - UnifiedDeduplicationStage: Packet deduplication with StageBase
+  - NewMaskPayloadStage: Dual-module payload masking architecture
 - **Unified Exception Handling**: Added complete exception hierarchy
   - 12 specialized exception classes covering various scenarios
   - Supports context information and formatted output
-- **Naming Standards**: Established unified adapter naming conventions
-- **Performance Optimization**: Proxy file overhead <10%, negligible performance impact
+- **Performance Optimization**: Direct StageBase integration, no adapter overhead
 
 ### v3.0 Major Changes
 - **Removed HTTP Protocol Support**: Completely removed HTTP/HTTPS protocol specialized processing functionality
@@ -187,10 +187,10 @@ src/pktmask/
 
 v3.1 version completed major architecture simplification, achieving:
 
-- **Direct Integration**: `ProcessorStage` unified interface, eliminating adapter layer overhead
+- **Unified StageBase Integration**: All components use StageBase interface, eliminating complexity
 - **Desktop Optimized Event System**: Lightweight `DesktopEvent`, no runtime validation overhead
-- **Performance Enhancement**: 159.1x direct integration performance improvement, 20% startup time improvement
-- **Backward Compatibility**: Maintains API stability, deprecated components with warnings
+- **Performance Enhancement**: Direct StageBase integration, 20% startup time improvement
+- **Backward Compatibility**: Maintains API stability through ProcessorRegistry
 
 For detailed documentation, please refer to [docs/architecture/](docs/architecture/)
 

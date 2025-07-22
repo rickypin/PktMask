@@ -10,16 +10,16 @@ from enum import Enum, IntEnum, auto
 
 
 class ProcessingStepType(Enum):
-    """处理步骤类型枚举（使用标准GUI命名）"""
-    ANONYMIZE_IPS = "anonymize_ips"
-    REMOVE_DUPES = "remove_dupes"
-    MASK_PAYLOADS = "mask_payloads"
-    WEB_FOCUSED = "web_focused"  # HTTP功能已移除，保留向后兼容
+    """处理阶段类型枚举（基于统一StageBase架构）"""
+    ANONYMIZE_IPS = "anonymize_ips"  # UnifiedIPAnonymizationStage
+    REMOVE_DUPES = "remove_dupes"    # UnifiedDeduplicationStage
+    MASK_PAYLOADS = "mask_payloads"  # NewMaskPayloadStage (双模块)
+    WEB_FOCUSED = "web_focused"      # HTTP功能已移除，保留向后兼容
 
     # 旧枚举值 - 保持向后兼容
-    MASK_IP = "mask_ip"  # 废弃，使用 ANONYMIZE_IPS
-    DEDUP_PACKET = "dedup_packet"  # 废弃，使用 REMOVE_DUPES
-    TRIM_PACKET = "trim_packet"  # 废弃，使用 MASK_PAYLOADS
+    MASK_IP = "mask_ip"              # 废弃，使用 ANONYMIZE_IPS
+    DEDUP_PACKET = "dedup_packet"    # 废弃，使用 REMOVE_DUPES
+    TRIM_PACKET = "trim_packet"      # 废弃，使用 MASK_PAYLOADS
 
 
 class PipelineStatus(Enum):
