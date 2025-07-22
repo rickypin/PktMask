@@ -9,7 +9,6 @@ __version__ = "1.0.0"
 
 # 核心适配器
 from .encapsulation_adapter import ProcessingAdapter
-from .statistics_adapter import StatisticsDataAdapter
 
 # 异常类
 from .adapter_exceptions import (
@@ -29,7 +28,6 @@ __all__ = [
     
     # 核心适配器
     'ProcessingAdapter',
-    'StatisticsDataAdapter',
     
 
     

@@ -1,66 +1,82 @@
-# PktMask 文档导航
+# PktMask 文档中心
 
-欢迎查阅 PktMask 项目文档。本目录包含了项目的所有文档资料。
+欢迎来到 PktMask 项目文档中心！这里包含了使用和开发 PktMask 所需的所有文档资料。
 
-## 📚 文档结构
+## 📚 文档导航
 
-### 🔄 current/ - 当前版本文档
-这些是与当前代码版本同步的文档，是您应该优先参考的资料。
+### 👥 [用户文档](user/)
+面向最终用户的使用指南和教程
+- **[安装指南](user/installation-guide.md)** - 系统要求和安装步骤
+- **[MaskStage 用户指南](user/maskstage-guide.md)** - 掩码处理功能使用说明
 
-- **[架构文档](current/architecture/)** - 系统架构和设计
-  - [MaskPayloadStage 架构](current/architecture/mask_payload_stage.md) - 核心掩码处理阶段
+### 🛠️ [开发者文档](dev/)
+面向开发者和贡献者的技术文档
+- **[贡献指南](dev/contributing.md)** - 如何参与项目开发
+- **[开发环境设置](dev/development-setup.md)** - 开发环境配置
+- **[编码规范](dev/coding-standards.md)** - 代码风格和规范
 
-- **[用户指南](current/user/)** - 使用说明和教程
-  - [适配器使用指南](current/user/adapters_usage_guide.md) - 适配器模块使用方法
+### 📚 [API 文档](api/)
+API 接口参考和使用说明
+- **[核心 API](api/core-api.md)** - 核心功能 API
+- **[管道 API](api/pipeline-api.md)** - 处理管道 API
+- **[工具 API](api/tools-api.md)** - 工具和实用程序 API
 
-- **[开发文档](current/development/)** - 开发者参考
-  - [重构文档](current/development/refactoring/) - 最新的重构记录
+### 🏛️ [架构文档](architecture/)
+系统架构和设计文档
+- **[系统概览](architecture/system-overview.md)** - 整体架构介绍
+- **[管道架构](architecture/pipeline-architecture.md)** - 处理管道设计
+- **[GUI 架构](architecture/gui-architecture.md)** - 图形界面架构
 
-- **[API 参考](current/api/)** - API 接口文档（待完善）
+### 🔧 [工具文档](tools/)
+专用工具的使用指南
+- **[TLS 流量分析工具](tools/tls-flow-analyzer.md)** - TLS 协议分析
+- **[TLS23 标记工具](tools/tls23-marker.md)** - TLS23 帧标记
+- **[TLS23 验证工具](tools/tls23-validator.md)** - TLS23 端到端验证
+- **[MaskStage 验证工具](tools/maskstage-validator.md)** - MaskStage 功能验证
 
-### 📦 archive/ - 历史文档存档
-包含历史版本、废弃功能和过时设计的文档，仅供参考。
+### 📦 [历史存档](archive/)
+历史文档和已完成项目的记录
+- **[已完成项目](archive/completed-projects/)** - 历史项目文档
+- **[废弃功能](archive/deprecated-features/)** - 不再支持的功能
+- **[遗留文档](archive/legacy-docs/)** - 历史版本文档
 
-- **[design/](archive/design/)** - 历史设计文档
-- **[plans/](archive/plans/)** - 历史计划文档
-- **[deprecated/](archive/deprecated/)** - 废弃功能文档
+## 🚀 快速开始
 
-### 📋 其他重要文档
+### 新用户
+1. **安装 PktMask** → [安装指南](user/installation-guide.md)
+2. **了解基本功能** → [MaskStage 用户指南](user/maskstage-guide.md)
+3. **使用专用工具** → [工具文档](tools/)
 
-- **[文档状态清单](DOCUMENT_STATUS.md)** - 所有文档的状态跟踪
-- **[TLS 工具文档](TLS23_*.md)** - TLS 相关工具的使用说明
-- **[管道执行指南](UNIFIED_PIPELINE_EXECUTION_GUIDE.md)** - 管道系统使用指南
+### 开发者
+1. **设置开发环境** → [开发环境设置](dev/development-setup.md)
+2. **了解系统架构** → [系统概览](architecture/system-overview.md)
+3. **查看 API 文档** → [API 文档](api/)
+4. **参与贡献** → [贡献指南](dev/contributing.md)
 
-## 🔍 快速查找
-
-### 对于用户
-1. 如何使用适配器？→ [适配器使用指南](current/user/adapters_usage_guide.md)
-2. 如何使用 TLS 工具？→ [TLS23 标记工具](TLS23_MARKER_USAGE.md)
-3. 如何运行管道？→ [管道执行指南](UNIFIED_PIPELINE_EXECUTION_GUIDE.md)
-
-### 对于开发者
-1. 系统架构是怎样的？→ [架构文档](current/architecture/)
-2. 最近的更改是什么？→ [重构记录](current/development/refactoring/)
-3. 如何贡献代码？→ [开发指南](development/)
+### 高级用户
+1. **深入了解架构** → [架构文档](architecture/)
+2. **使用高级工具** → [工具文档](tools/)
+3. **查看历史记录** → [历史存档](archive/)
 
 ## 📝 文档维护
 
-### 报告问题
-如果您发现文档有误或过时，请：
-1. 查看[文档状态清单](DOCUMENT_STATUS.md)确认是否已知
-2. 提交 Issue 或 Pull Request
+### 文档状态
+- **版本**: v4.0.0
+- **最后更新**: 2025-07-22
+- **维护状态**: ✅ 活跃维护
 
 ### 贡献文档
-1. 新文档添加到 `current/` 相应目录
-2. 更新[文档状态清单](DOCUMENT_STATUS.md)
-3. 遵循现有的文档格式和命名规范
+1. 遵循 [编码规范](dev/coding-standards.md) 中的文档规范
+2. 在相应目录添加新文档
+3. 更新相关的 README.md 索引
+4. 提交 Pull Request
 
-## 🏷️ 文档版本
-
-- **当前版本**: v3.1
-- **最后更新**: 2025年1月9日
-- **维护团队**: PktMask 开发团队
+### 报告问题
+如果发现文档问题，请：
+1. 检查是否为已知问题
+2. 在 GitHub 提交 Issue
+3. 或直接提交 Pull Request 修复
 
 ---
 
-> 💡 **提示**: 使用 `Ctrl+F` 或 `Cmd+F` 在页面中搜索关键词快速定位所需内容。
+> 💡 **提示**: 每个目录都有详细的 README.md 索引，点击上方链接可快速导航到相关内容。

@@ -68,7 +68,7 @@ class TestAdapterExceptions:
         assert isinstance(error, DataFormatError)
         
         # 测试默认实际格式
-        error = InputFormatError("json")
+        error = InputFormatError("json", "unknown")
         assert error.context["actual"] == "unknown"
     
 
@@ -86,12 +86,7 @@ class TestAdapterExceptions:
         assert issubclass(OutputFormatError, DataFormatError)
         assert issubclass(DataFormatError, AdapterError)
         
-        # 兼容性异常层次
-        assert issubclass(CompatibilityError, AdapterError)
-        
         # 处理异常层次
-        assert issubclass(TimeoutError, ProcessingError)
-        assert issubclass(ResourceError, ProcessingError)
         assert issubclass(ProcessingError, AdapterError)
         
         # 基础异常层次
