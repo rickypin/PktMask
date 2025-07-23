@@ -5,20 +5,20 @@ Domain模块
 """
 
 from .models import (
-    StatisticsData,
-    ProcessingMetrics,
-    TimingData,
+    BaseEventData,
+    BaseStepResult,
+    FileInfo,
+    FileProcessingData,
     FileProcessingResults,
     IPMappingData,
-    ProcessingState,
     PipelineEventData,
-    BaseEventData,
-    StepResultData,
-    BaseStepResult,
-    FileProcessingData,
-    FileInfo,
+    ProcessingMetrics,
+    ProcessingState,
     ReportData,
     ReportSection,
+    StatisticsData,
+    StepResultData,
+    TimingData,
 )
 
 # 注意：适配器已经迁移到 pktmask.adapters 模块

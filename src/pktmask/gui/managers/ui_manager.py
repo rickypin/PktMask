@@ -7,17 +7,19 @@ UI管理器 - 负责界面初始化和样式管理
 
 import os
 from typing import TYPE_CHECKING
-from PyQt6.QtWidgets import *
+
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
+from PyQt6.QtWidgets import *
 
 if TYPE_CHECKING:
     from ..main_window import MainWindow
 
-from pktmask.utils.path import resource_path
 from pktmask.common.constants import UIConstants
-from ..stylesheet import generate_stylesheet
 from pktmask.infrastructure.logging import get_logger
+from pktmask.utils.path import resource_path
+
+from ..stylesheet import generate_stylesheet
 
 
 class UIManager:

@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 import time
 from pathlib import Path
-from typing import Any, Dict, Union, Optional
+from typing import Any, Dict, Optional, Union
 
 from pktmask.core.pipeline.base_stage import StageBase
 from pktmask.core.pipeline.models import StageStats
@@ -222,8 +222,8 @@ class NewMaskPayloadStage(StageBase):
         Returns:
             临时硬链接路径
         """
-        import tempfile
         import os
+        import tempfile
 
         try:
             # Use TemporaryDirectory context manager for automatic cleanup

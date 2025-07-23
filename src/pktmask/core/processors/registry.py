@@ -6,7 +6,8 @@
 """
 
 import logging
-from typing import Dict, Type, List, Optional, Any
+from typing import Any, Dict, List, Optional, Type
+
 from ..pipeline.base_stage import StageBase
 
 
@@ -29,14 +30,14 @@ class ProcessorRegistry:
 
         try:
             # Import all StageBase implementations
-            from ..pipeline.stages.mask_payload_v2.stage import (
-                NewMaskPayloadStage as MaskingProcessor,
+            from ..pipeline.stages.deduplication_unified import (
+                UnifiedDeduplicationStage,
             )
             from ..pipeline.stages.ip_anonymization_unified import (
                 UnifiedIPAnonymizationStage,
             )
-            from ..pipeline.stages.deduplication_unified import (
-                UnifiedDeduplicationStage,
+            from ..pipeline.stages.mask_payload_v2.stage import (
+                NewMaskPayloadStage as MaskingProcessor,
             )
 
             # Register processors with standard naming

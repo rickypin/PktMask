@@ -6,7 +6,8 @@ String formatting utility module
 Provides unified string processing and formatting functionality
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 from ..common.constants import FormatConstants
 
 

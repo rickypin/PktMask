@@ -7,17 +7,18 @@
 """
 
 import functools
-from typing import Dict, Any, Optional, Callable, Type, Union, List
-from .handler import get_error_handler
-from .recovery import RecoveryAction, RecoveryResult
-from .context import (
-    add_recent_action,
-    set_current_operation,
-    set_current_component,
-    clear_operation,
-)
+from typing import Any, Callable, Dict, List, Optional, Type, Union
+
 from ...common.exceptions import PktMaskError
 from ...infrastructure.logging import get_logger
+from .context import (
+    add_recent_action,
+    clear_operation,
+    set_current_component,
+    set_current_operation,
+)
+from .handler import get_error_handler
+from .recovery import RecoveryAction, RecoveryResult
 
 logger = get_logger(__name__)
 

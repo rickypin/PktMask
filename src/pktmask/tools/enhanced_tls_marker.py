@@ -25,7 +25,6 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-
 MIN_TSHARK_VERSION: Tuple[int, int, int] = (4, 2, 0)
 
 # TLS协议类型映射

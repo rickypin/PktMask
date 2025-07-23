@@ -5,8 +5,8 @@ Windows subprocess utilities to prevent cmd window popup
 import platform
 import subprocess
 import sys
-from typing import List, Optional, Dict, Any, Union
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 
 def get_subprocess_creation_flags() -> int:
@@ -134,8 +134,9 @@ def open_directory_hidden(directory: Union[str, Path]) -> bool:
     Returns:
         Whether successfully opened
     """
-    from ..common.constants import SystemConstants
     import logging
+
+    from ..common.constants import SystemConstants
 
     logger = logging.getLogger(__name__)
     directory = Path(directory)

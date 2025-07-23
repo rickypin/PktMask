@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """PktMask Unified Entry Point - Desktop Application Priority"""
 import sys
-import typer
 from typing import Optional
+
+import typer
 
 # Delayed import to avoid loading GUI dependencies for CLI users
 app = typer.Typer(
@@ -23,7 +24,7 @@ def main(ctx: typer.Context):
 
 
 # Import and register CLI commands (no nesting, keep simple)
-from pktmask.cli import cmd_mask, cmd_dedup, cmd_anon, cmd_batch, cmd_info
+from pktmask.cli import cmd_anon, cmd_batch, cmd_dedup, cmd_info, cmd_mask
 
 app.command(
     "mask", help="Process PCAP files (Remove Dupes, Anonymize IPs, Mask Payloads)"

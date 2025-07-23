@@ -8,17 +8,16 @@ TLS协议标记器
 from __future__ import annotations
 
 import json
+import platform
 import re
+import shutil
 import subprocess
 import time
-import shutil
-import platform
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from .base import ProtocolMarker
-from .types import KeepRule, KeepRuleSet, FlowInfo
-
+from .types import FlowInfo, KeepRule, KeepRuleSet
 
 # TLS协议类型映射（复用自tls_flow_analyzer）
 TLS_CONTENT_TYPES = {

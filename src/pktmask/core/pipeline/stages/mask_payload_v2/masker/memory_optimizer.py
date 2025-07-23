@@ -9,9 +9,9 @@ from __future__ import annotations
 import gc
 import logging
 import time
-from dataclasses import dataclass
-from typing import Any, Dict, Optional, Callable
 import weakref
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, Optional
 
 
 @dataclass

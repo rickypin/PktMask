@@ -7,12 +7,12 @@
 from __future__ import annotations
 
 import logging
-import traceback
 import time
+import traceback
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Callable, Union
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Union
 
 
 class ErrorSeverity(Enum):

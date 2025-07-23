@@ -6,8 +6,8 @@ Report Manager - Responsible for report generation and display
 """
 
 import os
-from typing import TYPE_CHECKING, Dict, Any, Optional, List
 from datetime import datetime
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from ..main_window import MainWindow

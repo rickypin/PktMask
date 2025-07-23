@@ -7,14 +7,15 @@ File manager - handles directory selection and file operations
 
 import os
 from typing import TYPE_CHECKING, Optional
+
 from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 if TYPE_CHECKING:
     from ..main_window import MainWindow
 
-from pktmask.utils.time import current_timestamp
-from pktmask.utils.file_ops import open_directory_in_system
 from pktmask.infrastructure.logging import get_logger
+from pktmask.utils.file_ops import open_directory_in_system
+from pktmask.utils.time import current_timestamp
 
 
 class FileManager:

@@ -5,12 +5,13 @@
 """
 
 from datetime import datetime
-from typing import Dict, Any, Optional, List
-from pydantic import BaseModel, Field, validator
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field, validator
 
 from .statistics_data import StatisticsData
-from .step_result_data import StepResultData, FileStepResults
+from .step_result_data import FileStepResults, StepResultData
 
 
 class ReportType(str, Enum):

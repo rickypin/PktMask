@@ -6,11 +6,12 @@
 """
 
 import logging
-from typing import List, Dict, Callable, Optional, Set
-from scapy.packet import Packet
+from typing import Callable, Dict, List, Optional, Set
+
 from scapy.layers.inet import IP
 from scapy.layers.inet6 import IPv6
-from scapy.layers.l2 import Ether, Dot1Q
+from scapy.layers.l2 import Dot1Q, Ether
+from scapy.packet import Packet
 
 try:
     from scapy.layers.l2 import Dot1AD  # 双层VLAN支持
@@ -24,7 +25,7 @@ except ImportError:
     VXLAN = None
 from scapy.layers.inet import GRE
 
-from .types import EncapsulationType, EncapsulationError, UnsupportedEncapsulationError
+from .types import EncapsulationError, EncapsulationType, UnsupportedEncapsulationError
 
 
 class EncapsulationDetector:

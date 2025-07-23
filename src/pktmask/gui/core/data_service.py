@@ -9,14 +9,15 @@
 """
 
 import os
-from typing import Optional, Dict, Any, List
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from PyQt6.QtWidgets import QFileDialog
 
-from pktmask.infrastructure.logging import get_logger
 from pktmask.infrastructure.config import get_app_config
-from pktmask.utils.time import current_timestamp
+from pktmask.infrastructure.logging import get_logger
 from pktmask.utils.file_ops import open_directory_in_system
+from pktmask.utils.time import current_timestamp
 
 
 class ProcessingStats:

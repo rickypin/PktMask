@@ -8,10 +8,10 @@ Lightweight event system designed for desktop applications:
 - Simple serialization
 """
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Dict, Any, Optional, List
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class EventType(str, Enum):

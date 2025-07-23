@@ -1,28 +1,28 @@
-from pathlib import Path
-from typing import Optional, Union, Dict, Any
-import warnings
 import os
 import sys
+import warnings
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, Optional, Union
 
 import typer
 
-from pktmask.services.pipeline_service import (
-    create_pipeline_executor,
-    process_single_file,
-    process_directory_cli,
-    PipelineServiceError,
-    create_gui_compatible_report_data,
-    generate_gui_style_report,
-)
 from pktmask.services.config_service import (
     build_config_from_cli_args,
     validate_pipeline_config,
 )
 from pktmask.services.output_service import (
-    create_output_service,
     OutputFormat,
     OutputLevel,
+    create_output_service,
+)
+from pktmask.services.pipeline_service import (
+    PipelineServiceError,
+    create_gui_compatible_report_data,
+    create_pipeline_executor,
+    generate_gui_style_report,
+    process_directory_cli,
+    process_single_file,
 )
 from pktmask.services.progress_service import create_cli_progress_callback
 from pktmask.services.report_service import get_report_service

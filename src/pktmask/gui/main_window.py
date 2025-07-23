@@ -6,65 +6,68 @@ Main window module
 Implements graphical interface
 """
 
+import json
 import os
 import sys
-import json
-import markdown
 from datetime import datetime
-from typing import Optional, List, Tuple
+from typing import List, Optional, Tuple
+
+import markdown
+from PyQt6.QtCore import (
+    QEasingCurve,
+    QEvent,
+    QObject,
+    QPropertyAnimation,
+    Qt,
+    QThread,
+    QTime,
+    QTimer,
+    pyqtSignal,
+)
+from PyQt6.QtGui import QAction, QColor, QFont, QFontMetrics, QIcon, QTextCursor
 from PyQt6.QtWidgets import (
     QApplication,
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
-    QLabel,
-    QProgressBar,
-    QTextEdit,
+    QCheckBox,
+    QDialog,
     QFileDialog,
+    QFrame,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
     QMessageBox,
+    QProgressBar,
+    QPushButton,
     QScrollArea,
     QSplitter,
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
-    QFrame,
-    QDialog,
-    QCheckBox,
-    QGridLayout,
-    QGroupBox,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import (
-    Qt,
-    QThread,
-    pyqtSignal,
-    QObject,
-    QEvent,
-    QTimer,
-    QTime,
-    QPropertyAnimation,
-    QEasingCurve,
+
+from pktmask.common.constants import (
+    PROCESS_DISPLAY_NAMES,
+    FormatConstants,
+    SystemConstants,
+    UIConstants,
 )
-from PyQt6.QtGui import QFont, QIcon, QTextCursor, QFontMetrics, QColor, QAction
+from pktmask.config.settings import get_app_config
 
 # Refactored imports
 from pktmask.core.events import PipelineEvents
-from pktmask.utils.path import resource_path
-from pktmask.common.constants import (
-    UIConstants,
-    FormatConstants,
-    SystemConstants,
-    PROCESS_DISPLAY_NAMES,
-)
+from pktmask.infrastructure.logging import get_logger
 from pktmask.utils import (
+    current_time,
     current_timestamp,
     format_milliseconds_to_time,
     open_directory_in_system,
-    current_time,
 )
-from pktmask.infrastructure.logging import get_logger
-from pktmask.config.settings import get_app_config
+from pktmask.utils.path import resource_path
+
 from .stylesheet import generate_stylesheet
 
 # PROCESS_DISPLAY_NAMES moved to common.constants
@@ -233,12 +236,12 @@ class MainWindow(QMainWindow):
         """初始化所有管理器"""
         # 导入管理器类
         from .managers import (
-            UIManager,
+            DialogManager,
+            EventCoordinator,
             FileManager,
             PipelineManager,
             ReportManager,
-            DialogManager,
-            EventCoordinator,
+            UIManager,
         )
 
         # 首先创建事件协调器
@@ -335,8 +338,8 @@ class MainWindow(QMainWindow):
     def _handle_pipeline_event_data(self, event_data):
         """处理结构化管道事件数据"""
         try:
-            from pktmask.domain.models.pipeline_event_data import PipelineEventData
             from pktmask.core.events import PipelineEvents
+            from pktmask.domain.models.pipeline_event_data import PipelineEventData
         except ImportError:
             self._logger.warning(
                 "Unable to import structured data model, skipping structured processing"

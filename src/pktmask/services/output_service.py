@@ -3,11 +3,12 @@
 提供统一的输出格式化和显示服务
 """
 
-from typing import Dict, Any, List, Optional, TextIO
-from enum import Enum
-import sys
 import json
+import sys
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, TextIO
+
 from pktmask.infrastructure.logging import get_logger
 
 logger = get_logger("OutputService")

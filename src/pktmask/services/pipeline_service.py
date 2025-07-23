@@ -3,8 +3,9 @@ Pipeline 服务接口
 提供 GUI 与核心管道的解耦接口
 """
 
-from typing import Dict, Callable, Optional, Tuple, Any, List
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
 from pktmask.core.events import PipelineEvents
 from pktmask.infrastructure.logging import get_logger
 
@@ -407,8 +408,8 @@ def process_directory_cli(
         处理结果字典，包含统计信息和状态
     """
     try:
-        import os
         import glob
+        import os
 
         logger.info(f"[Service] Processing directory: {input_dir}")
 

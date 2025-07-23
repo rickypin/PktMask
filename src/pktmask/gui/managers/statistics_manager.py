@@ -5,7 +5,8 @@
 统计数据管理器 - 集中管理所有处理统计数据
 """
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from PyQt6.QtCore import QTime
 
 from pktmask.infrastructure.logging import get_logger
