@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 """PktMask Unified Entry Point - Desktop Application Priority"""
-import sys
-from typing import Optional
 
 import typer
 

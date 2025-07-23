@@ -23,7 +23,7 @@ import re
 import subprocess
 import sys
 import time
-from collections import Counter, defaultdict
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -2038,7 +2038,7 @@ def _apply_type_filter(
 
 def _print_summary(analysis_result: Dict[str, Any], detailed: bool) -> None:
     """Print analysis result summary"""
-    metadata = analysis_result["metadata"]
+    analysis_result["metadata"]
     global_stats = analysis_result["global_statistics"]
     protocol_stats = analysis_result["protocol_type_statistics"]
 

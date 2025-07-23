@@ -42,7 +42,6 @@ class ProtocolMarker(ABC):
         Returns:
             KeepRuleSet: 保留规则集合
         """
-        pass
 
     @abstractmethod
     def get_supported_protocols(self) -> List[str]:
@@ -51,7 +50,6 @@ class ProtocolMarker(ABC):
         Returns:
             支持的协议名称列表
         """
-        pass
 
     def initialize(self) -> bool:
         """初始化标记器
@@ -73,7 +71,6 @@ class ProtocolMarker(ABC):
 
     def _initialize_components(self) -> None:
         """初始化组件，子类可以重写此方法"""
-        pass
 
     def validate_config(self, config: Dict[str, Any]) -> List[str]:
         """验证配置参数

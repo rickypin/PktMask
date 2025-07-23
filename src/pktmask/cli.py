@@ -1,6 +1,3 @@
-import os
-import sys
-import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
@@ -12,8 +9,6 @@ from pktmask.services.config_service import (
     validate_pipeline_config,
 )
 from pktmask.services.output_service import (
-    OutputFormat,
-    OutputLevel,
     create_output_service,
 )
 from pktmask.services.pipeline_service import (
@@ -137,7 +132,7 @@ def _run_unified_pipeline(
             )
 
             # 使用GUI兼容的报告数据格式
-            gui_compatible_data = create_gui_compatible_report_data(result)
+            create_gui_compatible_report_data(result)
 
             report = report_service.finalize_report(
                 success=result["success"],

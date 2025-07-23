@@ -16,7 +16,6 @@ from pktmask.core.events import PipelineEvents
 from pktmask.infrastructure.logging import get_logger
 from pktmask.services import (
     ConfigurationError,
-    PipelineServiceError,
     build_pipeline_config,
     create_pipeline_executor,
 )
@@ -284,13 +283,13 @@ class PipelineManager:
                 PipelineEvents.PIPELINE_STARTED,
             ):
                 # Pipeline sends total directory count, but we need to track file count
-                total_dirs = data.get("total_subdirs", data.get("total_files", 0))
+                data.get("total_subdirs", data.get("total_files", 0))
                 # Reset file counter (through StatisticsManager)
                 self.statistics.update_file_count(0)
 
             # Handle subdirectory start events
             elif event_type == PipelineEvents.SUBDIR_START:
-                dir_name = data.get("name", "Unknown directory")
+                data.get("name", "Unknown directory")
                 file_count = data.get("file_count", 0)
                 self.statistics.set_total_files(
                     file_count
@@ -319,7 +318,7 @@ class PipelineManager:
 
             # Handle error events
             elif event_type == PipelineEvents.ERROR:
-                error_msg = data.get("message", data.get("error", "Unknown error"))
+                data.get("message", data.get("error", "Unknown error"))
                 # MainWindow has already handled this, no need to repeat
 
         except Exception as e:
@@ -512,4 +511,3 @@ class PipelineManager:
             self._logger.error(f"Error occurred while generating final report: {e}")
 
     # Old _build_pipeline_config method has been removed, use service layer's build_pipeline_config function
-    pass

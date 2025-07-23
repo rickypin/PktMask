@@ -8,18 +8,15 @@
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from scapy.packet import Packet
 
 from pktmask.core.encapsulation.detector import EncapsulationDetector
 from pktmask.core.encapsulation.parser import ProtocolStackParser
 from pktmask.core.encapsulation.types import (
-    EncapsulationError,
     EncapsulationResult,
     EncapsulationType,
-    IPLayerInfo,
-    PayloadInfo,
 )
 
 

@@ -12,7 +12,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 
 class FallbackMode(Enum):
@@ -237,7 +237,7 @@ class FallbackHandler:
             with open(skip_marker, "w") as f:
                 f.write(f"Processing skipped at {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
                 f.write(f"Original file: {input_path}\n")
-                f.write(f"Reason: Fallback processing\n")
+                f.write("Reason: Fallback processing\n")
 
             return FallbackResult(
                 success=True,
@@ -276,8 +276,8 @@ class FallbackHandler:
                     f.write(
                         f"Safe mode processing at {time.strftime('%Y-%m-%d %H:%M:%S')}\n"
                     )
-                    f.write(f"Original file preserved without modification\n")
-                    f.write(f"Reason: Fallback to safe mode\n")
+                    f.write("Original file preserved without modification\n")
+                    f.write("Reason: Fallback to safe mode\n")
 
                 result.mode_used = FallbackMode.SAFE_MODE
                 result.message = "安全模式处理完成"

@@ -6,7 +6,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from scapy.packet import Packet
 
@@ -123,16 +123,10 @@ class EncapsulationResult:
 class EncapsulationError(Exception):
     """封装处理相关异常"""
 
-    pass
-
 
 class UnsupportedEncapsulationError(EncapsulationError):
     """不支持的封装类型异常"""
 
-    pass
-
 
 class ParsingError(EncapsulationError):
     """协议解析异常"""
-
-    pass

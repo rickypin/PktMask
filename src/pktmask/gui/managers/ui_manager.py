@@ -5,7 +5,6 @@
 UI管理器 - 负责界面初始化和样式管理
 """
 
-import os
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import *
@@ -437,7 +436,7 @@ class UIManager:
                 summary_md_content
             )
 
-        except Exception as e:
+        except Exception:
             # If reading fails, use fallback content
             formatted_content = (
                 "\n📊 Processing results and statistics will be displayed here.\n\n"

@@ -6,7 +6,7 @@ Numerical calculation utility module
 Provides unified mathematical calculation and statistical functionality
 """
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Union
 
 from ..common.constants import FormatConstants, ProcessingConstants
 

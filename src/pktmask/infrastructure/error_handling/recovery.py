@@ -10,7 +10,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 from ...common.enums import ErrorSeverity
 from ...common.exceptions import PktMaskError
@@ -64,18 +64,15 @@ class RecoveryHandler(ABC):
     @abstractmethod
     def can_handle(self, error: PktMaskError, context: ErrorContext) -> bool:
         """判断是否可以处理此错误"""
-        pass
 
     @abstractmethod
     def recover(self, error: PktMaskError, context: ErrorContext) -> RecoveryResult:
         """执行恢复操作"""
-        pass
 
     @property
     @abstractmethod
     def strategy(self) -> RecoveryStrategy:
         """恢复策略"""
-        pass
 
 
 class RetryRecoveryHandler(RecoveryHandler):

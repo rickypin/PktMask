@@ -6,17 +6,13 @@ Main window module
 Implements graphical interface
 """
 
-import json
 import os
 import sys
-from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import markdown
 from PyQt6.QtCore import (
-    QEasingCurve,
     QEvent,
-    QObject,
     QPropertyAnimation,
     Qt,
     QThread,
@@ -24,35 +20,17 @@ from PyQt6.QtCore import (
     QTimer,
     pyqtSignal,
 )
-from PyQt6.QtGui import QAction, QColor, QFont, QFontMetrics, QIcon, QTextCursor
 from PyQt6.QtWidgets import (
     QApplication,
-    QCheckBox,
     QDialog,
-    QFileDialog,
-    QFrame,
-    QGridLayout,
-    QGroupBox,
-    QHBoxLayout,
     QLabel,
     QMainWindow,
-    QMessageBox,
-    QProgressBar,
     QPushButton,
-    QScrollArea,
-    QSplitter,
-    QTableWidget,
-    QTableWidgetItem,
-    QTabWidget,
     QTextEdit,
     QVBoxLayout,
-    QWidget,
 )
 
 from pktmask.common.constants import (
-    PROCESS_DISPLAY_NAMES,
-    FormatConstants,
-    SystemConstants,
     UIConstants,
 )
 from pktmask.config.settings import get_app_config
@@ -64,11 +42,8 @@ from pktmask.utils import (
     current_time,
     current_timestamp,
     format_milliseconds_to_time,
-    open_directory_in_system,
 )
-from pktmask.utils.path import resource_path
 
-from .stylesheet import generate_stylesheet
 
 # PROCESS_DISPLAY_NAMES moved to common.constants
 
@@ -723,7 +698,6 @@ class MainWindow(QMainWindow):
     def on_thread_finished(self):
         """线程完成时的回调函数，确保UI状态正确恢复"""
         # 线程清理现在由PipelineManager处理
-        pass
 
     def get_elided_text(self, label: QLabel, text: str) -> str:
         """如果文本太长，则省略文本"""

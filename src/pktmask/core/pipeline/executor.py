@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import tempfile
 import time
-import traceback
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 

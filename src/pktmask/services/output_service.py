@@ -7,7 +7,7 @@ import json
 import sys
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, TextIO
+from typing import Any, Dict, Optional, TextIO
 
 from pktmask.infrastructure.logging import get_logger
 

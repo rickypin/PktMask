@@ -42,8 +42,6 @@ class AdapterError(Exception):
 class ConfigurationError(AdapterError):
     """配置相关异常"""
 
-    pass
-
 
 class MissingConfigError(ConfigurationError):
     """缺少必要配置"""
@@ -72,8 +70,6 @@ class InvalidConfigError(ConfigurationError):
 class DataFormatError(AdapterError):
     """数据格式异常"""
 
-    pass
-
 
 class InputFormatError(DataFormatError):
     """输入格式错误"""
@@ -97,5 +93,3 @@ class OutputFormatError(DataFormatError):
 
 class ProcessingError(AdapterError):
     """处理过程异常"""
-
-    pass

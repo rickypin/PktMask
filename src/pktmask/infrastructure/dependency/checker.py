@@ -8,7 +8,6 @@ PktMask 统一依赖检查器
 import re
 import shutil
 import subprocess
-import sys
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path

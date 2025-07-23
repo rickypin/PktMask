@@ -6,7 +6,6 @@
 """
 
 import json
-import os
 from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime
 from pathlib import Path

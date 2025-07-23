@@ -6,7 +6,7 @@
 """
 
 import logging
-from typing import Callable, Dict, List, Optional, Set
+from typing import Callable, Dict, List, Set
 
 from scapy.layers.inet import IP
 from scapy.layers.inet6 import IPv6
@@ -25,7 +25,7 @@ except ImportError:
     VXLAN = None
 from scapy.layers.inet import GRE
 
-from .types import EncapsulationError, EncapsulationType, UnsupportedEncapsulationError
+from .types import EncapsulationError, EncapsulationType
 
 
 class EncapsulationDetector:
