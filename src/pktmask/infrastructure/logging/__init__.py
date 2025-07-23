@@ -1,6 +1,6 @@
 """
 Logging infrastructure for PktMask
-Unified logging management system
+统一的日志管理系统
 """
 
 from .logger import (

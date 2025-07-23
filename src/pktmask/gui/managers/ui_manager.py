@@ -279,20 +279,20 @@ class UIManager:
         self.main_window.dashboard_group = dashboard_group
 
     def _create_log_group(self):
-        """Create log group"""
+        """创建日志组"""
         log_group = QGroupBox("Log")
         log_layout = QVBoxLayout(log_group)
         log_layout.setContentsMargins(12, 20, 12, 12)
         self.main_window.log_text = QTextEdit()
         self.main_window.log_text.setReadOnly(True)
 
-        # Set Log area font size
+        # 设置Log区域的字体大小
         log_font = QFont()
         log_font.setPointSize(12)
         self.main_window.log_text.setFont(log_font)
         log_layout.addWidget(self.main_window.log_text)
 
-        # Save reference
+        # 保存引用
         self.main_window.log_group = log_group
 
     def _create_summary_group(self):
