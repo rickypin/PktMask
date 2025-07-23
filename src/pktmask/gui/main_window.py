@@ -44,7 +44,6 @@ from pktmask.utils import (
     format_milliseconds_to_time,
 )
 
-
 # PROCESS_DISPLAY_NAMES moved to common.constants
 
 
