@@ -1,6 +1,6 @@
 """
-Progress service interface
-Provides unified progress display and callback management services
+进度服务接口
+提供统一的进度显示和回调管理服务
 """
 
 import sys
@@ -16,7 +16,7 @@ logger = get_logger("ProgressService")
 
 
 class ProgressStyle(Enum):
-    """Progress display style"""
+    """进度显示样式"""
 
     NONE = "none"
     SIMPLE = "simple"
@@ -26,7 +26,7 @@ class ProgressStyle(Enum):
 
 @dataclass
 class ProgressState:
-    """Progress status"""
+    """进度状态"""
 
     total_files: int = 0
     processed_files: int = 0
@@ -39,7 +39,7 @@ class ProgressState:
 
 
 class ProgressService:
-    """Unified progress service"""
+    """统一进度服务"""
 
     def __init__(
         self,
@@ -55,16 +55,16 @@ class ProgressService:
         self._last_line_length = 0
 
     def add_callback(self, callback: Callable[[PipelineEvents, Dict], None]):
-        """Add progress callback"""
+        """添加进度回调"""
         self._callbacks.append(callback)
 
     def remove_callback(self, callback: Callable[[PipelineEvents, Dict], None]):
-        """Remove progress callback"""
+        """移除进度回调"""
         if callback in self._callbacks:
             self._callbacks.remove(callback)
 
     def start_processing(self, total_files: int = 1):
-        """Start processing"""
+        """开始处理"""
         self.state.total_files = total_files
         self.state.processed_files = 0
         self.state.start_time = time.time()
@@ -82,7 +82,7 @@ class ProgressService:
                 self._print(f"🚀 Starting processing {total_files} files...")
 
     def start_file(self, filename: str):
-        """Start processing file"""
+        """开始处理文件"""
         self.state.current_file = filename
 
         self._emit_event(
@@ -102,10 +102,10 @@ class ProgressService:
             )
 
     def update_stage(self, stage_name: str, stats: Dict[str, Any]):
-        """Update stage progress"""
+        """更新阶段进度"""
         self.state.current_stage = stage_name
 
-        # Update packet statistics
+        # 更新包统计
         packets_processed = stats.get("packets_processed", 0)
         if packets_processed > 0:
             self.state.processed_packets += packets_processed
@@ -115,7 +115,7 @@ class ProgressService:
             {"step_name": stage_name, "filename": self.state.current_file, **stats},
         )
 
-        # Display stage progress
+        # 显示阶段进度
         if self.style == ProgressStyle.RICH:
             packets_modified = stats.get("packets_modified", 0)
             duration_ms = stats.get("duration_ms", 0.0)
@@ -127,7 +127,7 @@ class ProgressService:
             self._update_progress_line(f"Processing: {stage_name}")
 
     def complete_file(self, filename: str, success: bool = True):
-        """Complete file processing"""
+        """完成文件处理"""
         self.state.processed_files += 1
 
         self._emit_event(
@@ -151,7 +151,7 @@ class ProgressService:
                 self._print(f"❌ Failed: {filename}")
 
     def complete_processing(self):
-        """Complete all processing"""
+        """完成所有处理"""
         end_time = time.time()
         duration = end_time - self.state.start_time
 
@@ -179,7 +179,7 @@ class ProgressService:
                     f"({failed} failed)"
                 )
 
-            # Display total duration
+            # 显示总耗时
             if duration < 60:
                 self._print(f"⏱️  Total time: {duration:.2f} seconds")
             else:
@@ -188,7 +188,7 @@ class ProgressService:
                 self._print(f"⏱️  Total time: {minutes}m {seconds:.2f}s")
 
     def report_error(self, error_message: str):
-        """Report error"""
+        """报告错误"""
         self._emit_event(PipelineEvents.ERROR, {"message": error_message})
 
         if self.style != ProgressStyle.NONE:
@@ -196,7 +196,7 @@ class ProgressService:
             self._print(f"❌ Error: {error_message}")
 
     def _emit_event(self, event_type: PipelineEvents, data: Dict[str, Any]):
-        """Send event to all callbacks"""
+        """发送事件到所有回调"""
         for callback in self._callbacks:
             try:
                 callback(event_type, data)
@@ -204,11 +204,11 @@ class ProgressService:
                 logger.error(f"Progress callback error: {e}")
 
     def _update_progress_line(self, message: str):
-        """Update progress line（overwrite display）"""
+        """更新进度行（覆盖式显示）"""
         if self.style not in [ProgressStyle.DETAILED]:
             return
 
-        # Calculate progress percentage
+        # 计算进度百分比
         if self.state.total_files > 0:
             progress = (self.state.processed_files / self.state.total_files) * 100
             progress_bar = self._create_progress_bar(progress)
@@ -216,40 +216,40 @@ class ProgressService:
         else:
             full_message = f"\r{message}"
 
-        # Clear previous line
+        # 清除之前的行
         if self._last_line_length > 0:
             sys.stdout.write("\r" + " " * self._last_line_length + "\r")
 
-        # Write new message
+        # 写入新消息
         sys.stdout.write(full_message)
         sys.stdout.flush()
         self._last_line_length = len(full_message)
 
     def _clear_progress_line(self):
-        """Clear progress line"""
+        """清除进度行"""
         if self._last_line_length > 0:
             sys.stdout.write("\r" + " " * self._last_line_length + "\r")
             sys.stdout.flush()
             self._last_line_length = 0
 
     def _create_progress_bar(self, progress: float, width: int = 20) -> str:
-        """Create progress bar"""
+        """创建进度条"""
         filled = int(width * progress / 100)
         bar = "█" * filled + "░" * (width - filled)
         return f"[{bar}] {progress:.1f}%"
 
     def _print(self, message: str):
-        """Print message"""
+        """打印消息"""
         self._clear_progress_line()
         print(message)
         sys.stdout.flush()
 
 
-# Convenience functions
+# 便捷函数
 def create_progress_service(
     style_str: str = "simple", update_interval: float = 0.1, show_eta: bool = True
 ) -> ProgressService:
-    """Create progress service instance"""
+    """创建进度服务实例"""
     try:
         style = ProgressStyle(style_str.lower())
     except ValueError:
@@ -261,11 +261,11 @@ def create_progress_service(
 def create_cli_progress_callback(
     verbose: bool = False, show_stages: bool = False
 ) -> Callable[[PipelineEvents, Dict], None]:
-    """Create CLI-specific progress callback function"""
+    """创建CLI专用的进度回调函数"""
     progress_service = create_progress_service("detailed" if verbose else "simple")
 
     def progress_callback(event_type: PipelineEvents, data: Dict[str, Any]):
-        """CLIProgress callback implementation"""
+        """CLI进度回调实现"""
         if event_type == PipelineEvents.PIPELINE_START:
             total_files = data.get("total_files", 1)
             progress_service.start_processing(total_files)

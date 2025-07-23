@@ -1,6 +1,6 @@
 """
-Report generation service
-Provides unified processing report generation and formatting services
+报告生成服务
+提供统一的处理报告生成和格式化服务
 """
 
 import json
@@ -16,7 +16,7 @@ logger = get_logger("ReportService")
 
 @dataclass
 class ProcessingReport:
-    """Processing report data structure"""
+    """处理报告数据结构"""
 
     success: bool
     start_time: datetime
@@ -51,7 +51,7 @@ class ProcessingReport:
 
 
 class ReportService:
-    """Unified report generation service"""
+    """统一报告生成服务"""
 
     def __init__(self):
         self._current_report: Optional[ProcessingReport] = None
@@ -60,7 +60,7 @@ class ReportService:
         self._warnings = []
 
     def start_report(self, input_path: str, output_path: str):
-        """Start new report"""
+        """开始新的报告"""
         self._current_report = None
         self._stage_stats = []
         self._errors = []
@@ -73,7 +73,7 @@ class ReportService:
         logger.debug(f"Started report for: {input_path}")
 
     def add_stage_stats(self, stage_name: str, stats: Dict[str, Any]):
-        """Add stage statistics"""
+        """添加阶段统计"""
         stage_report = {
             "stage_name": stage_name,
             "timestamp": datetime.now().isoformat(),
@@ -83,14 +83,14 @@ class ReportService:
         logger.debug(f"Added stage stats for: {stage_name}")
 
     def add_error(self, error_message: str):
-        """Add error information"""
+        """添加错误信息"""
         self._errors.append(
             {"timestamp": datetime.now().isoformat(), "message": error_message}
         )
         logger.error(f"Added error: {error_message}")
 
     def add_warning(self, warning_message: str):
-        """Add warning information"""
+        """添加警告信息"""
         self._warnings.append(
             {"timestamp": datetime.now().isoformat(), "message": warning_message}
         )
@@ -104,7 +104,7 @@ class ReportService:
         total_packets: int = 0,
         modified_packets: int = 0,
     ) -> ProcessingReport:
-        """Complete report generation"""
+        """完成报告生成"""
         end_time = datetime.now()
         duration = (end_time - self._start_time).total_seconds()
 
@@ -133,16 +133,16 @@ class ReportService:
     def generate_text_report(
         self, report: ProcessingReport, detailed: bool = False
     ) -> str:
-        """Generate text format report"""
+        """生成文本格式报告"""
         lines = []
 
-        # Title
+        # 标题
         lines.append("=" * 70)
         lines.append("PktMask Processing Report")
         lines.append("=" * 70)
         lines.append("")
 
-        # Basic information
+        # 基本信息
         lines.append("📋 Basic Information")
         lines.append("-" * 30)
         lines.append(f"Input Path:      {report.input_path}")
@@ -161,7 +161,7 @@ class ReportService:
         )
         lines.append("")
 
-        # File statistics
+        # 文件统计
         lines.append("📊 File Statistics")
         lines.append("-" * 30)
         lines.append(f"Total Files:     {report.total_files}")
@@ -170,7 +170,7 @@ class ReportService:
         lines.append(f"Success Rate:    {report.success_rate:.1f}%")
         lines.append("")
 
-        # Packet statistics
+        # 包统计
         if report.total_packets > 0:
             lines.append("📦 Packet Statistics")
             lines.append("-" * 30)
@@ -179,7 +179,7 @@ class ReportService:
             lines.append(f"Modification:    {report.modification_rate:.1f}%")
             lines.append("")
 
-        # Stage statistics
+        # 阶段统计
         if report.stage_reports and detailed:
             lines.append("⚙️  Stage Statistics")
             lines.append("-" * 30)
@@ -195,7 +195,7 @@ class ReportService:
                 lines.append(f"  Duration:          {duration_ms:.1f} ms")
                 lines.append("")
 
-        # Warning information
+        # 警告信息
         if report.warnings:
             lines.append("⚠️  Warnings")
             lines.append("-" * 30)
@@ -203,7 +203,7 @@ class ReportService:
                 lines.append(f"• {warning}")
             lines.append("")
 
-        # Error information
+        # 错误信息
         if report.errors:
             lines.append("❌ Errors")
             lines.append("-" * 30)
@@ -211,7 +211,7 @@ class ReportService:
                 lines.append(f"• {error}")
             lines.append("")
 
-        # End
+        # 结尾
         lines.append("=" * 70)
         lines.append(
             f"Report generated at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
@@ -221,7 +221,7 @@ class ReportService:
         return "\n".join(lines)
 
     def generate_json_report(self, report: ProcessingReport) -> str:
-        """Generate JSON format report"""
+        """生成JSON格式报告"""
         report_dict = {
             "report_version": "1.0",
             "generated_at": datetime.now().isoformat(),
@@ -259,7 +259,7 @@ class ReportService:
         format_type: str = "text",
         detailed: bool = False,
     ):
-        """Save report to file"""
+        """保存报告到文件"""
         try:
             if format_type.lower() == "json":
                 content = self.generate_json_report(report)
@@ -268,15 +268,15 @@ class ReportService:
                 content = self.generate_text_report(report, detailed)
                 file_ext = ".txt"
 
-            # Generate filename
+            # 生成文件名
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"pktmask_report_{timestamp}{file_ext}"
             full_path = Path(output_path) / filename
 
-            # Ensure directory exists
+            # 确保目录存在
             full_path.parent.mkdir(parents=True, exist_ok=True)
 
-            # Write file
+            # 写入文件
             with open(full_path, "w", encoding="utf-8") as f:
                 f.write(content)
 
@@ -288,7 +288,7 @@ class ReportService:
             raise
 
     def _format_duration(self, seconds: float) -> str:
-        """Format duration"""
+        """格式化持续时间"""
         if seconds < 60:
             return f"{seconds:.2f} seconds"
         elif seconds < 3600:
@@ -302,12 +302,12 @@ class ReportService:
             return f"{hours}h {remaining_minutes}m {remaining_seconds:.2f}s"
 
 
-# Global report service instance
+# 全局报告服务实例
 _report_service = None
 
 
 def get_report_service() -> ReportService:
-    """Get report service instance（singleton pattern）"""
+    """获取报告服务实例（单例模式）"""
     global _report_service
     if _report_service is None:
         _report_service = ReportService()

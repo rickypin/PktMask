@@ -1,6 +1,6 @@
 """
-Configuration service interface
-Provides unified configuration building and validation services
+配置服务接口
+提供统一的配置构建和验证服务
 """
 
 from dataclasses import dataclass
@@ -13,7 +13,7 @@ logger = get_logger("ConfigService")
 
 
 class MaskMode(Enum):
-    """Mask mode enumeration"""
+    """掩码模式枚举"""
 
     BASIC = "basic"
     ENHANCED = "enhanced"
@@ -21,7 +21,7 @@ class MaskMode(Enum):
 
 @dataclass
 class ProcessingOptions:
-    """Processing options configuration"""
+    """处理选项配置"""
 
     enable_dedup: bool = False
     enable_anon: bool = False
@@ -29,10 +29,10 @@ class ProcessingOptions:
     mask_mode: MaskMode = MaskMode.ENHANCED
     mask_protocol: str = "tls"
 
-    # TShark configuration
+    # TShark配置
     tshark_path: Optional[str] = None
 
-    # Advanced options
+    # 高级选项
     preserve_handshake: bool = True
     preserve_alert: bool = True
     preserve_change_cipher_spec: bool = True
@@ -41,14 +41,14 @@ class ProcessingOptions:
 
 
 class ConfigService:
-    """Unified configuration service"""
+    """统一配置服务"""
 
     def __init__(self):
         self._app_config = None
         self._load_app_config()
 
     def _load_app_config(self):
-        """Load application configuration"""
+        """加载应用配置"""
         try:
             from pktmask.config.settings import get_app_config
 
@@ -59,25 +59,25 @@ class ConfigService:
 
     def build_pipeline_config(self, options: ProcessingOptions) -> Dict[str, Any]:
         """
-        Build pipeline configuration (unified interface)
+        构建管道配置（统一接口）
 
         Args:
-            options: Processing options configuration
+            options: 处理选项配置
 
         Returns:
-            Pipeline configuration dictionary
+            管道配置字典
         """
         config: Dict[str, Any] = {}
 
-        # Deduplication configuration
+        # 去重配置
         if options.enable_dedup:
             config["remove_dupes"] = {"enabled": True}
 
-        # IP anonymization configuration
+        # IP匿名化配置
         if options.enable_anon:
             config["anonymize_ips"] = {"enabled": True}
 
-        # Payload masking configuration
+        # 载荷掩码配置
         if options.enable_mask:
             config["mask_payloads"] = self._build_mask_config(options)
 
@@ -115,18 +115,18 @@ class ConfigService:
 
     def validate_config(self, config: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
         """
-        Validate configuration validity
+        验证配置有效性
 
         Args:
-            config: Configuration dictionary
+            config: 配置字典
 
         Returns:
-            (is_valid, error_message)
+            (是否有效, 错误信息)
         """
         if not config:
             return False, "Configuration is empty"
 
-        # Check if at least one processing stage is enabled
+        # 检查是否至少启用了一个处理阶段
         enabled_stages = []
         for stage_name, stage_config in config.items():
             if isinstance(stage_config, dict) and stage_config.get("enabled", False):
@@ -135,7 +135,7 @@ class ConfigService:
         if not enabled_stages:
             return False, "No processing stages enabled"
 
-        # Validate mask configuration
+        # 验证掩码配置
         if "mask_payloads" in config:
             mask_config = config["mask_payloads"]
             if mask_config.get("enabled", False):
@@ -160,18 +160,18 @@ class ConfigService:
         tshark_path: Optional[str] = None,
     ) -> ProcessingOptions:
         """
-        Create processing options from CLI arguments
+        从CLI参数创建处理选项
 
         Args:
-            enable_dedup: Enable deduplication
-            enable_anon: Enable IP anonymization
-            enable_mask: Enable payload masking
-            mask_mode: Mask mode
-            mask_protocol: Mask protocol
-            tshark_path: TShark path
+            enable_dedup: 启用去重
+            enable_anon: 启用IP匿名化
+            enable_mask: 启用载荷掩码
+            mask_mode: 掩码模式
+            mask_protocol: 掩码协议
+            tshark_path: TShark路径
 
         Returns:
-            Processing options configuration
+            处理选项配置
         """
         try:
             mode_enum = MaskMode(mask_mode.lower())
@@ -192,67 +192,67 @@ class ConfigService:
         self, dedup_checked: bool, anon_checked: bool, mask_checked: bool
     ) -> ProcessingOptions:
         """
-        Create processing options from GUI state
+        从GUI状态创建处理选项
 
         Args:
-            dedup_checked: Deduplication checkbox state
-            anon_checked: IP anonymization checkbox state
-            mask_checked: Payload masking checkbox state
+            dedup_checked: 去重复选框状态
+            anon_checked: IP匿名化复选框状态
+            mask_checked: 载荷掩码复选框状态
 
         Returns:
-            Processing options configuration
+            处理选项配置
         """
         return ProcessingOptions(
             enable_dedup=dedup_checked,
             enable_anon=anon_checked,
             enable_mask=mask_checked,
-            mask_mode=MaskMode.ENHANCED,  # GUI defaults to enhanced mode
-            mask_protocol="tls",  # GUI defaults to TLS protocol
+            mask_mode=MaskMode.ENHANCED,  # GUI默认使用增强模式
+            mask_protocol="tls",  # GUI默认使用TLS协议
         )
 
     def get_available_modes(self) -> List[str]:
-        """Get available mask modes"""
+        """获取可用的掩码模式"""
         return [mode.value for mode in MaskMode]
 
     def get_available_protocols(self) -> List[str]:
-        """Get available protocol types"""
+        """获取可用的协议类型"""
         return ["tls", "http"]
 
     def get_default_tshark_path(self) -> Optional[str]:
-        """Get default TShark path"""
+        """获取默认TShark路径"""
         if self._app_config:
             return self._app_config.tools.tshark.custom_executable
         return None
 
 
-# Global configuration service instance
+# 全局配置服务实例
 _config_service = None
 
 
 def get_config_service() -> ConfigService:
-    """Get configuration service instance (singleton pattern)"""
+    """获取配置服务实例（单例模式）"""
     global _config_service
     if _config_service is None:
         _config_service = ConfigService()
     return _config_service
 
 
-# Convenience functions
+# 便捷函数
 def build_config_from_cli_args(**kwargs) -> Dict[str, Any]:
-    """Build configuration from CLI arguments"""
+    """从CLI参数构建配置"""
     service = get_config_service()
     options = service.create_options_from_cli_args(**kwargs)
     return service.build_pipeline_config(options)
 
 
 def build_config_from_gui(dedup: bool, anon: bool, mask: bool) -> Dict[str, Any]:
-    """Build configuration from GUI state"""
+    """从GUI状态构建配置"""
     service = get_config_service()
     options = service.create_options_from_gui(dedup, anon, mask)
     return service.build_pipeline_config(options)
 
 
 def validate_pipeline_config(config: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
-    """Validate pipeline configuration"""
+    """验证管道配置"""
     service = get_config_service()
     return service.validate_config(config)

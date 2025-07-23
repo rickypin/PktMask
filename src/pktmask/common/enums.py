@@ -2,29 +2,29 @@
 # -*- coding: utf-8 -*-
 
 """
-PktMask Enumeration Definitions
-Unified management of all enumeration types in the application
+PktMask 枚举定义
+统一管理应用程序中的所有枚举类型
 """
 
 from enum import Enum, IntEnum, auto
 
 
 class ProcessingStepType(Enum):
-    """Processing stage type enumeration (based on unified StageBase architecture)"""
+    """处理阶段类型枚举（基于统一StageBase架构）"""
 
     ANONYMIZE_IPS = "anonymize_ips"  # UnifiedIPAnonymizationStage
     REMOVE_DUPES = "remove_dupes"  # UnifiedDeduplicationStage
-    MASK_PAYLOADS = "mask_payloads"  # NewMaskPayloadStage (dual module)
-    WEB_FOCUSED = "web_focused"  # HTTP functionality removed, kept for backward compatibility
+    MASK_PAYLOADS = "mask_payloads"  # NewMaskPayloadStage (双模块)
+    WEB_FOCUSED = "web_focused"  # HTTP功能已移除，保留向后兼容
 
-    # Legacy enum values - maintain backward compatibility
-    MASK_IP = "mask_ip"  # Deprecated, use ANONYMIZE_IPS
-    DEDUP_PACKET = "dedup_packet"  # Deprecated, use REMOVE_DUPES
-    TRIM_PACKET = "trim_packet"  # Deprecated, use MASK_PAYLOADS
+    # 旧枚举值 - 保持向后兼容
+    MASK_IP = "mask_ip"  # 废弃，使用 ANONYMIZE_IPS
+    DEDUP_PACKET = "dedup_packet"  # 废弃，使用 REMOVE_DUPES
+    TRIM_PACKET = "trim_packet"  # 废弃，使用 MASK_PAYLOADS
 
 
 class PipelineStatus(Enum):
-    """Pipeline processing status enumeration"""
+    """管道处理状态枚举"""
 
     IDLE = "idle"
     RUNNING = "running"
@@ -34,7 +34,7 @@ class PipelineStatus(Enum):
 
 
 class LogLevel(IntEnum):
-    """Log level enumeration"""
+    """日志级别枚举"""
 
     DEBUG = 10
     INFO = 20
@@ -44,7 +44,7 @@ class LogLevel(IntEnum):
 
 
 class FileType(Enum):
-    """File type enumeration"""
+    """文件类型枚举"""
 
     PCAP = ".pcap"
     PCAPNG = ".pcapng"
@@ -52,14 +52,14 @@ class FileType(Enum):
 
 
 class IPVersion(IntEnum):
-    """IP version enumeration"""
+    """IP版本枚举"""
 
     IPV4 = 4
     IPV6 = 6
 
 
 class NetworkProtocol(IntEnum):
-    """Network protocol enumeration"""
+    """网络协议枚举"""
 
     TCP = 6
     UDP = 17
@@ -68,7 +68,7 @@ class NetworkProtocol(IntEnum):
 
 
 class ThemeType(Enum):
-    """Theme type enumeration"""
+    """主题类型枚举"""
 
     AUTO = "auto"
     LIGHT = "light"
@@ -76,14 +76,14 @@ class ThemeType(Enum):
 
 
 class LanguageType(Enum):
-    """Language type enumeration"""
+    """语言类型枚举"""
 
     CHINESE = "zh_CN"
     ENGLISH = "en_US"
 
 
 class ValidationResult(Enum):
-    """Validation result enumeration"""
+    """验证结果枚举"""
 
     VALID = "valid"
     INVALID_FORMAT = "invalid_format"
@@ -94,7 +94,7 @@ class ValidationResult(Enum):
 
 
 class ProcessingResult(Enum):
-    """Processing result enumeration"""
+    """处理结果枚举"""
 
     SUCCESS = "success"
     FAILED = "failed"
@@ -103,7 +103,7 @@ class ProcessingResult(Enum):
 
 
 class AnonymizationStrategy(Enum):
-    """Anonymization strategy enumeration"""
+    """匿名化策略枚举"""
 
     HIERARCHICAL = "hierarchical"
     RANDOM = "random"
@@ -111,7 +111,7 @@ class AnonymizationStrategy(Enum):
 
 
 class ReportFormat(Enum):
-    """Report format enumeration"""
+    """报告格式枚举"""
 
     JSON = "json"
     HTML = "html"
@@ -120,7 +120,7 @@ class ReportFormat(Enum):
 
 
 class ConfigFormat(Enum):
-    """Configuration file format enumeration"""
+    """配置文件格式枚举"""
 
     YAML = "yaml"
     JSON = "json"
@@ -128,7 +128,7 @@ class ConfigFormat(Enum):
 
 
 class ErrorSeverity(IntEnum):
-    """Error severity level enumeration"""
+    """错误严重级别枚举"""
 
     LOW = 1
     MEDIUM = 2
@@ -137,7 +137,7 @@ class ErrorSeverity(IntEnum):
 
 
 class UIEvent(Enum):
-    """UI event type enumeration"""
+    """UI事件类型枚举"""
 
     DIRECTORY_SELECTED = auto()
     PROCESSING_STARTED = auto()
@@ -149,7 +149,7 @@ class UIEvent(Enum):
 
 
 class ProcessingEvent(Enum):
-    """Processing event type enumeration"""
+    """处理事件类型枚举"""
 
     FILE_STARTED = auto()
     FILE_COMPLETED = auto()
@@ -159,19 +159,19 @@ class ProcessingEvent(Enum):
     ERROR_OCCURRED = auto()
 
 
-# Convenience functions
+# 便利函数
 def get_enum_values(enum_class):
-    """Get all values of enumeration class"""
+    """获取枚举类的所有值"""
     return [item.value for item in enum_class]
 
 
 def get_enum_names(enum_class):
-    """Get all names of enumeration class"""
+    """获取枚举类的所有名称"""
     return [item.name for item in enum_class]
 
 
 def find_enum_by_value(enum_class, value):
-    """Find enumeration item by value"""
+    """根据值查找枚举项"""
     for item in enum_class:
         if item.value == value:
             return item
@@ -179,30 +179,30 @@ def find_enum_by_value(enum_class, value):
 
 
 class UIStrings(Enum):
-    """UI interface string constants"""
+    """UI界面字符串常量"""
 
-    # Window title
+    # 窗口标题
     WINDOW_TITLE = "PktMask"
 
-    # Button text
+    # 按钮文本
     BUTTON_START = "Start"
     BUTTON_STOP = "Stop"
     BUTTON_CLOSE = "Close"
 
-    # Menu items
+    # 菜单项
     MENU_FILE = "File"
     MENU_HELP = "Help"
     MENU_EXIT = "Exit"
     MENU_ABOUT = "About"
 
-    # Label text
+    # 标签文本
     LABEL_INPUT = "Input:"
     LABEL_OUTPUT = "Output:"
     LABEL_FILES_PROCESSED = "Files Processed"
     LABEL_PACKETS_PROCESSED = "Packets Processed"
     LABEL_TIME_ELAPSED = "Time Elapsed"
 
-    # Group box titles
+    # 组框标题
     GROUP_DIRECTORIES = "Set Working Directories"
     GROUP_OPTIONS = "Set Actions"
     GROUP_PROCESSING = "Run Processing"
@@ -210,29 +210,29 @@ class UIStrings(Enum):
     GROUP_LOG = "Log"
     GROUP_SUMMARY = "Summary Report"
 
-    # Checkbox text (using standard GUI naming)
+    # 复选框文本（使用标准GUI命名）
     CHECKBOX_REMOVE_DUPES = "Remove Dupes"
     CHECKBOX_ANONYMIZE_IPS = "Anonymize IPs"
     CHECKBOX_MASK_PAYLOADS = "Mask Payloads"
-    CHECKBOX_WEB_FOCUSED = "Web-Focused Traffic Only (feature removed)"
+    CHECKBOX_WEB_FOCUSED = "Web-Focused Traffic Only (功能已移除)"
 
-    # Path label default text
+    # 路径标签默认文本
     PATH_INPUT_DEFAULT = "Click and pick your pcap directory"
     PATH_OUTPUT_DEFAULT = "Auto-create or click for custom"
 
-    # Time format
+    # 时间格式
     TIME_INITIAL = "00:00.00"
 
-    # Processing step names (unified using GUI standard naming)
+    # 处理步骤名称（统一使用GUI标准命名）
     STEP_REMOVE_DUPES = "Remove Dupes"
     STEP_ANONYMIZE_IPS = "Anonymize IPs"
     STEP_MASK_PAYLOADS = "Mask Payloads"
 
-    # Message box titles
+    # 消息框标题
     MSG_WARNING = "Warning"
     MSG_ERROR = "Error"
 
-    # Tooltip information (using standard GUI naming)
+    # 工具提示信息（使用标准GUI命名）
     TOOLTIP_REMOVE_DUPES = (
         "Remove duplicate packets based on content hash to reduce file size."
     )
@@ -241,5 +241,5 @@ class UIStrings(Enum):
         "Intelligently trims packet payloads while preserving TLS handshake data."
     )
     TOOLTIP_WEB_FOCUSED = (
-        "HTTP protocol processing functionality has been removed from this version. Only supports TLS, IP anonymization and deduplication features."
+        "HTTP协议处理功能已从本版本中移除。仅支持TLS、IP匿名化和去重功能。"
     )
