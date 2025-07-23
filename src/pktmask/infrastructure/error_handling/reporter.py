@@ -7,10 +7,10 @@
 """
 
 import json
-from typing import Dict, Any, Optional, List
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from dataclasses import dataclass, asdict
+from typing import Any, Dict, List, Optional
 
 from ...common.exceptions import PktMaskError
 from ...infrastructure.logging import get_logger

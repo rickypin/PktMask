@@ -6,8 +6,9 @@ Numerical calculation utility module
 Provides unified mathematical calculation and statistical functionality
 """
 
-from typing import Union, Optional, Dict, Any
-from ..common.constants import ProcessingConstants, FormatConstants
+from typing import Any, Dict, Optional, Union
+
+from ..common.constants import FormatConstants, ProcessingConstants
 
 
 def calculate_percentage(

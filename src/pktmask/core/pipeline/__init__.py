@@ -1,6 +1,6 @@
-from .models import PacketList, StageStats, ProcessResult  # noqa: F401
 from .base_stage import StageBase  # noqa: F401
 from .executor import PipelineExecutor  # noqa: F401
+from .models import PacketList, ProcessResult, StageStats  # noqa: F401
 
 __all__ = [
     "PacketList",

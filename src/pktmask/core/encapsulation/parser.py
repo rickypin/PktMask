@@ -6,11 +6,12 @@
 """
 
 import logging
-from typing import List, Optional, Dict, Any, Tuple
-from scapy.packet import Packet
+from typing import Any, Dict, List, Optional, Tuple
+
 from scapy.layers.inet import IP, TCP, UDP
 from scapy.layers.inet6 import IPv6
-from scapy.layers.l2 import Ether, Dot1Q
+from scapy.layers.l2 import Dot1Q, Ether
+from scapy.packet import Packet
 
 try:
     from scapy.layers.l2 import Dot1AD
@@ -25,17 +26,17 @@ except ImportError:
 from scapy.layers.inet import GRE
 from scapy.layers.tls.record import TLS
 
+from ...config.settings import get_app_config
+from .detector import EncapsulationDetector
 from .types import (
-    LayerInfo,
-    IPLayerInfo,
-    PayloadInfo,
-    VLANInfo,
     EncapsulationResult,
     EncapsulationType,
+    IPLayerInfo,
+    LayerInfo,
     ParsingError,
+    PayloadInfo,
+    VLANInfo,
 )
-from .detector import EncapsulationDetector
-from ...config.settings import get_app_config
 
 
 class ProtocolStackParser:

@@ -6,7 +6,8 @@ PktMask 异常定义
 统一管理应用程序中的所有异常类型
 """
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 from .enums import ErrorSeverity
 
 

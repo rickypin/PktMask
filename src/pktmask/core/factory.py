@@ -5,7 +5,7 @@
 现代处理器使用ProcessorRegistry系统。
 """
 
-from typing import Dict, Callable, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Dict, List
 
 if TYPE_CHECKING:
     from .pipeline.executor import PipelineExecutor

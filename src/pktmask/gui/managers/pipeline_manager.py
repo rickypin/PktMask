@@ -6,19 +6,21 @@ Pipeline Manager - Responsible for processing flow control
 """
 
 from typing import TYPE_CHECKING
+
 from PyQt6.QtCore import QTimer
 
 if TYPE_CHECKING:
     from ..main_window import MainWindow, PipelineThread
 
-from pktmask.services import (
-    PipelineServiceError,
-    ConfigurationError,
-    create_pipeline_executor,
-    build_pipeline_config,
-)
 from pktmask.core.events import PipelineEvents
 from pktmask.infrastructure.logging import get_logger
+from pktmask.services import (
+    ConfigurationError,
+    PipelineServiceError,
+    build_pipeline_config,
+    create_pipeline_executor,
+)
+
 from .statistics_manager import StatisticsManager
 
 
@@ -393,6 +395,7 @@ class PipelineManager:
         self.main_window.report_manager.generate_processing_finished_report()
 
         import os
+
         from pktmask.utils.file_ops import open_directory_in_system
 
         # Update output path display

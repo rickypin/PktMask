@@ -3,9 +3,10 @@
 提供统一的配置构建和验证服务
 """
 
-from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+
 from pktmask.infrastructure.logging import get_logger
 
 logger = get_logger("ConfigService")

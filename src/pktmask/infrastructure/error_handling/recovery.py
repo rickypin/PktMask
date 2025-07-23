@@ -7,13 +7,13 @@
 """
 
 import time
-from enum import Enum
-from typing import Dict, Any, Optional, Callable, List, Union
-from dataclasses import dataclass
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Union
 
-from ...common.exceptions import PktMaskError
 from ...common.enums import ErrorSeverity
+from ...common.exceptions import PktMaskError
 from ...infrastructure.logging import get_logger
 from .context import ErrorContext
 

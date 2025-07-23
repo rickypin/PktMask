@@ -18,6 +18,6 @@ Marker模块 - 协议分析和保留规则生成
 
 from .base import ProtocolMarker
 from .tls_marker import TLSProtocolMarker
-from .types import KeepRule, KeepRuleSet, FlowInfo
+from .types import FlowInfo, KeepRule, KeepRuleSet
 
 __all__ = ["ProtocolMarker", "TLSProtocolMarker", "KeepRule", "KeepRuleSet", "FlowInfo"]

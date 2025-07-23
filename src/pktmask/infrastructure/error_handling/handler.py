@@ -8,18 +8,18 @@
 
 import sys
 import traceback
-from typing import Dict, Any, Optional, Callable, List, Type, Union
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
-from ...common.exceptions import PktMaskError, create_error_from_exception
 from ...common.enums import ErrorSeverity
+from ...common.exceptions import PktMaskError, create_error_from_exception
 from ...infrastructure.logging import get_logger, log_exception
 from .context import ErrorContext, create_error_context, get_context_manager
 from .recovery import (
     ErrorRecoveryManager,
-    RecoveryResult,
     RecoveryAction,
+    RecoveryResult,
     get_recovery_manager,
 )
 from .reporter import ErrorReporter, get_error_reporter

@@ -13,7 +13,7 @@ from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple
 
 try:
-    from scapy.all import PcapReader, PcapWriter, IP, TCP, Raw
+    from scapy.all import IP, TCP, PcapReader, PcapWriter, Raw
 
     SCAPY_AVAILABLE = True
 except ImportError:
@@ -23,17 +23,17 @@ except ImportError:
 
 # 尝试导入隧道协议支持（可选）
 try:
-    from scapy.contrib import vxlan, geneve
+    from scapy.contrib import geneve, vxlan
 except ImportError:
     vxlan = geneve = None
 
-from ..marker.types import KeepRule, KeepRuleSet
-from .stats import MaskingStats
-from .memory_optimizer import MemoryOptimizer
-from .error_handler import ErrorRecoveryHandler, ErrorSeverity, ErrorCategory
-from .data_validator import DataValidator
-from .fallback_handler import FallbackHandler, FallbackMode
 from ....resource_manager import ResourceManager
+from ..marker.types import KeepRule, KeepRuleSet
+from .data_validator import DataValidator
+from .error_handler import ErrorCategory, ErrorRecoveryHandler, ErrorSeverity
+from .fallback_handler import FallbackHandler, FallbackMode
+from .memory_optimizer import MemoryOptimizer
+from .stats import MaskingStats
 
 
 class PayloadMasker:

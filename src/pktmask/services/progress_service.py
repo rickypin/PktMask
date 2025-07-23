@@ -3,11 +3,12 @@
 提供统一的进度显示和回调管理服务
 """
 
-from typing import Dict, Any, Callable, Optional, List
+import sys
+import time
 from dataclasses import dataclass
 from enum import Enum
-import time
-import sys
+from typing import Any, Callable, Dict, List, Optional
+
 from pktmask.core.events import PipelineEvents
 from pktmask.infrastructure.logging import get_logger
 

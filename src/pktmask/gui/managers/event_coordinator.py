@@ -11,10 +11,11 @@ Simplified event coordinator for desktop applications:
 - Exception isolation
 """
 
-from typing import TYPE_CHECKING, Dict, Any, Callable, Set
-from PyQt6.QtCore import QObject, pyqtSignal
-from collections import defaultdict
 import logging
+from collections import defaultdict
+from typing import TYPE_CHECKING, Any, Callable, Dict, Set
+
+from PyQt6.QtCore import QObject, pyqtSignal
 
 if TYPE_CHECKING:
     from ..main_window import MainWindow

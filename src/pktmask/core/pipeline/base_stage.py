@@ -5,11 +5,11 @@ import logging
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Callable
+from typing import Any, Callable, Dict, List, Optional
 
+from ...common.exceptions import FileError, PktMaskError, ProcessingError, ResourceError
 from .models import StageStats
 from .resource_manager import ResourceManager
-from ...common.exceptions import PktMaskError, FileError, ProcessingError, ResourceError
 
 
 class StageBase(metaclass=abc.ABCMeta):

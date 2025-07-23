@@ -9,33 +9,35 @@ UI构建器 - 专注于界面构建和管理
 """
 
 import os
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
+
+from PyQt6.QtCore import QEvent, Qt
+from PyQt6.QtGui import QAction, QFont
 from PyQt6.QtWidgets import (
-    QWidget,
-    QGridLayout,
-    QGroupBox,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
     QCheckBox,
-    QTextEdit,
-    QProgressBar,
-    QMenuBar,
-    QMenu,
-    QMessageBox,
-    QProgressDialog,
-    QFileDialog,
     QDialog,
     QDialogButtonBox,
+    QFileDialog,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QMenu,
+    QMenuBar,
+    QMessageBox,
+    QProgressBar,
+    QProgressDialog,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, QEvent
-from PyQt6.QtGui import QAction, QFont
 
-from pktmask.infrastructure.logging import get_logger
 from pktmask.config import get_app_config
-from ..styles.stylesheet import generate_stylesheet
+from pktmask.infrastructure.logging import get_logger
+
 from ..constants import UIConstants
+from ..styles.stylesheet import generate_stylesheet
 
 
 class UIBuilder:

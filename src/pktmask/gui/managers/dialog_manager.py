@@ -5,27 +5,28 @@
 对话框管理器 - 负责各种对话框的显示
 """
 
-import markdown
+import os
 from typing import TYPE_CHECKING
-from PyQt6.QtWidgets import (
-    QDialog,
-    QVBoxLayout,
-    QHBoxLayout,
-    QTextEdit,
-    QPushButton,
-    QMessageBox,
-    QProgressDialog,
-    QFileDialog,
-)
+
+import markdown
 from PyQt6.QtCore import Qt, QTime
 from PyQt6.QtGui import QFont
-import os
+from PyQt6.QtWidgets import (
+    QDialog,
+    QFileDialog,
+    QHBoxLayout,
+    QMessageBox,
+    QProgressDialog,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+)
 
 if TYPE_CHECKING:
     from ..main_window import MainWindow
 
-from pktmask.utils.path import resource_path
 from pktmask.infrastructure.logging import get_logger
+from pktmask.utils.path import resource_path
 
 
 class DialogManager:

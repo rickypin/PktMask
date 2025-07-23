@@ -6,10 +6,10 @@ Logging infrastructure for PktMask
 from .logger import (
     PktMaskLogger,
     get_logger,
-    log_performance,
     log_exception,
-    set_log_level,
+    log_performance,
     reconfigure_logging,
+    set_log_level,
 )
 
 __all__ = [

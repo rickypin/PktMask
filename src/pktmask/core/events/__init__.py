@@ -4,23 +4,23 @@ Desktop-optimized event system
 Lightweight event system for desktop applications.
 """
 
-from .desktop_events import (
-    DesktopEvent,
-    EventType,
-    EventSeverity,
-    create_pipeline_start_event,
-    create_pipeline_end_event,
-    create_file_start_event,
-    create_file_end_event,
-    create_step_start_event,
-    create_step_end_event,
-    create_progress_event,
-    create_error_event,
-    create_log_event,
-)
-
 # Backward compatibility - re-export PipelineEvents from the original location
 from enum import Enum, auto
+
+from .desktop_events import (
+    DesktopEvent,
+    EventSeverity,
+    EventType,
+    create_error_event,
+    create_file_end_event,
+    create_file_start_event,
+    create_log_event,
+    create_pipeline_end_event,
+    create_pipeline_start_event,
+    create_progress_event,
+    create_step_end_event,
+    create_step_start_event,
+)
 
 
 class PipelineEvents(Enum):

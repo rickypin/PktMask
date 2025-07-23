@@ -9,14 +9,14 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
+from pktmask.common.exceptions import ProcessingError, ResourceError
 from pktmask.core.pipeline.base_stage import StageBase
 from pktmask.core.pipeline.models import StageStats
 from pktmask.core.strategy import HierarchicalAnonymizationStrategy
-from pktmask.utils.reporting import FileReporter
 from pktmask.infrastructure.logging import get_logger
-from pktmask.common.exceptions import ProcessingError, ResourceError
+from pktmask.utils.reporting import FileReporter
 
 
 class UnifiedIPAnonymizationStage(StageBase):

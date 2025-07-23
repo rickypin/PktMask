@@ -10,16 +10,15 @@ PktMask 多层封装处理模块
 - 智能处理适配
 """
 
-from .types import (
-    EncapsulationType,
-    LayerInfo,
-    IPLayerInfo,
-    PayloadInfo,
-    EncapsulationResult,
-)
-
 from .detector import EncapsulationDetector
 from .parser import ProtocolStackParser
+from .types import (
+    EncapsulationResult,
+    EncapsulationType,
+    IPLayerInfo,
+    LayerInfo,
+    PayloadInfo,
+)
 
 # ProcessingAdapter 已移至 pktmask.adapters.encapsulation_adapter
 

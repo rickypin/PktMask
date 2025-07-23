@@ -1,14 +1,15 @@
 import json
 import os
-from datetime import datetime
-from typing import Dict, List, Any
-from jinja2 import Template
 from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import Any, Dict, List
 
+from jinja2 import Template
+
+from pktmask.common.exceptions import FileError, create_error_from_exception
+from pktmask.infrastructure.logging import get_logger
 from pktmask.utils.path import resource_path
 from pktmask.utils.time import current_time
-from pktmask.infrastructure.logging import get_logger
-from pktmask.common.exceptions import FileError, create_error_from_exception
 
 
 class Reporter(ABC):

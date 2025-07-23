@@ -19,10 +19,10 @@ import time
 import weakref
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Protocol, Union
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Protocol, Union
 
 
 class ResourceType(Enum):

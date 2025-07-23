@@ -4,9 +4,10 @@
 定义了多层封装处理所需的所有数据类型、枚举和数据类。
 """
 
-from enum import Enum
 from dataclasses import dataclass
-from typing import List, Optional, Dict, Any, Union
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
+
 from scapy.packet import Packet
 
 

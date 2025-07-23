@@ -11,12 +11,12 @@ import hashlib
 import os
 import time
 from pathlib import Path
-from typing import Dict, Any, Optional, Set
+from typing import Any, Dict, Optional, Set
 
+from pktmask.common.exceptions import ProcessingError, ResourceError
 from pktmask.core.pipeline.base_stage import StageBase
 from pktmask.core.pipeline.models import StageStats
 from pktmask.infrastructure.logging import get_logger
-from pktmask.common.exceptions import ProcessingError, ResourceError
 
 
 class UnifiedDeduplicationStage(StageBase):

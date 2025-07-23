@@ -3,12 +3,13 @@
 提供统一的处理报告生成和格式化服务
 """
 
-from typing import Dict, Any, List, Optional, TextIO
+import json
+import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-import json
-import sys
+from typing import Any, Dict, List, Optional, TextIO
+
 from pktmask.infrastructure.logging import get_logger
 
 logger = get_logger("ReportService")

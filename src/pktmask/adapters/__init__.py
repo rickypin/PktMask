@@ -7,20 +7,20 @@ PktMask 适配器模块
 # 适配器版本信息
 __version__ = "1.0.0"
 
-# 核心适配器
-from .encapsulation_adapter import ProcessingAdapter
-
 # 异常类
 from .adapter_exceptions import (
     AdapterError,
     ConfigurationError,
-    MissingConfigError,
-    InvalidConfigError,
     DataFormatError,
     InputFormatError,
+    InvalidConfigError,
+    MissingConfigError,
     OutputFormatError,
     ProcessingError,
 )
+
+# 核心适配器
+from .encapsulation_adapter import ProcessingAdapter
 
 __all__ = [
     # 版本

@@ -8,9 +8,9 @@ PktMask 日志系统
 
 import logging
 import sys
-from pathlib import Path
-from typing import Optional, Dict, Any
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 from ...common.constants import FileConstants
 from ...common.enums import LogLevel
@@ -190,8 +190,8 @@ def log_execution_time(logger_name: str = "performance"):
     """装饰器：自动记录函数执行时间"""
 
     def decorator(func):
-        import time
         import functools
+        import time
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):

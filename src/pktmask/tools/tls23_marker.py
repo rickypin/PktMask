@@ -13,10 +13,9 @@ import argparse
 import re
 import subprocess
 import sys
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Tuple
-from collections import Counter
-from collections import defaultdict
 
 MIN_TSHARK_VERSION: Tuple[int, int, int] = (4, 2, 0)
 

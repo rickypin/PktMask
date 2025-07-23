@@ -4,7 +4,7 @@
 提供适配器模块统一的异常处理机制。
 """
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 
 class AdapterError(Exception):

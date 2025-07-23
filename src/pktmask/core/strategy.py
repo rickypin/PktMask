@@ -1,13 +1,14 @@
-from abc import ABC, abstractmethod
-from typing import Dict, Set, List, Tuple
 import ipaddress
-import random
 import os
+import random
+from abc import ABC, abstractmethod
+from typing import Dict, List, Set, Tuple
 
-from scapy.all import PcapReader, PcapNgReader, IP, IPv6, TCP, UDP
-from ..infrastructure.logging import get_logger, log_performance
-from ..common.exceptions import ProcessingError, NetworkError
+from scapy.all import IP, TCP, UDP, IPv6, PcapNgReader, PcapReader
+
 from ..common.constants import ProcessingConstants
+from ..common.exceptions import NetworkError, ProcessingError
+from ..infrastructure.logging import get_logger, log_performance
 
 
 class AnonymizationStrategy(ABC):
@@ -374,6 +375,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         Corrected version: Correctly count frequency of all IP addresses (source and destination)
         """
         import time
+
         from pktmask.infrastructure.logging import log_performance
 
         start_time = time.time()
@@ -576,6 +578,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         Create IP mapping, ensuring no conflicts
         """
         import time
+
         from pktmask.infrastructure.logging import log_performance
 
         start_time = time.time()
