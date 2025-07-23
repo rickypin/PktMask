@@ -1,29 +1,29 @@
-# PktMask 统一功能部署检查清单
+# PktMask Unified Feature Deployment Checklist
 
-## 概述
+## Overview
 
-本检查清单确保 PktMask GUI 与 CLI 功能统一改进的正确部署和验证。
+This checklist ensures proper deployment and verification of PktMask GUI and CLI unified feature improvements.
 
-## 部署前检查
+## Pre-Deployment Checks
 
-### 1. 代码完整性检查
+### 1. Code Integrity Check
 
-- [ ] **服务层文件**
-  - [ ] `src/pktmask/services/config_service.py` - 配置服务
-  - [ ] `src/pktmask/services/output_service.py` - 输出服务
-  - [ ] `src/pktmask/services/progress_service.py` - 进度服务
-  - [ ] `src/pktmask/services/report_service.py` - 报告服务
-  - [ ] `src/pktmask/services/pipeline_service.py` - 管道服务（已更新）
+- [ ] **Service Layer Files**
+  - [ ] `src/pktmask/services/config_service.py` - Configuration service
+  - [ ] `src/pktmask/services/output_service.py` - Output service
+  - [ ] `src/pktmask/services/progress_service.py` - Progress service
+  - [ ] `src/pktmask/services/report_service.py` - Report service
+  - [ ] `src/pktmask/services/pipeline_service.py` - Pipeline service (updated)
 
-- [ ] **CLI 更新**
-  - [ ] `src/pktmask/cli.py` - CLI 命令更新
-  - [ ] 新增目录处理支持
-  - [ ] 新增报告生成功能
-  - [ ] 新增批量处理命令
+- [ ] **CLI Updates**
+  - [ ] `src/pktmask/cli.py` - CLI command updates
+  - [ ] Added directory processing support
+  - [ ] Added report generation functionality
+  - [ ] Added batch processing commands
 
-- [ ] **测试文件**
-  - [ ] `tests/integration/test_cli_unified.py` - 集成测试
-  - [ ] `tests/unit/services/test_unified_services.py` - 单元测试
+- [ ] **Test Files**
+  - [ ] `tests/integration/test_cli_unified.py` - Integration tests
+  - [ ] `tests/unit/services/test_unified_services.py` - Unit tests
 
 - [ ] **文档文件**
   - [ ] `docs/CLI_UNIFIED_GUIDE.md` - CLI 使用指南
@@ -59,11 +59,11 @@
   - [ ] 必要的环境变量设置
   - [ ] 路径变量正确
 
-## 功能验证
+## Functional Verification
 
-### 1. 基本功能测试
+### 1. Basic Functionality Testing
 
-- [ ] **CLI 命令可用性**
+- [ ] **CLI Command Availability**
   ```bash
   python -m pktmask --help
   python -m pktmask mask --help
@@ -71,46 +71,46 @@
   python -m pktmask info --help
   ```
 
-- [ ] **GUI 启动正常**
+- [ ] **GUI Startup Normal**
   ```bash
-  python -m pktmask  # 应启动 GUI
+  python -m pktmask  # Should launch GUI
   ```
 
-- [ ] **配置服务正常**
+- [ ] **Configuration Service Normal**
   ```python
   from pktmask.services.config_service import get_config_service
   service = get_config_service()
-  # 应无异常
+  # Should not raise exceptions
   ```
 
-### 2. 功能一致性测试
+### 2. Functional Consistency Testing
 
-- [ ] **配置一致性**
-  - [ ] GUI 和 CLI 生成相同的配置
-  - [ ] 所有处理选项都可用
-  - [ ] 参数验证正确
+- [ ] **Configuration Consistency**
+  - [ ] GUI and CLI generate identical configurations
+  - [ ] All processing options are available
+  - [ ] Parameter validation is correct
 
-- [ ] **处理结果一致性**
-  - [ ] 相同输入产生相同输出
-  - [ ] 错误处理一致
-  - [ ] 性能表现相似
+- [ ] **Processing Result Consistency**
+  - [ ] Same input produces same output
+  - [ ] Error handling is consistent
+  - [ ] Performance is similar
 
-- [ ] **输出格式一致性**
-  - [ ] 统计信息格式一致
-  - [ ] 错误消息格式一致
-  - [ ] 报告内容一致
+- [ ] **Output Format Consistency**
+  - [ ] Statistics format is consistent
+  - [ ] Error message format is consistent
+  - [ ] Report content is consistent
 
-### 3. 新功能验证
+### 3. New Feature Verification
 
-- [ ] **目录批量处理**
+- [ ] **Directory Batch Processing**
   ```bash
-  # 创建测试目录和文件
+  # Create test directory and files
   mkdir test_pcaps
-  # 添加测试文件
+  # Add test files
   python -m pktmask batch test_pcaps -o output_dir --verbose
   ```
 
-- [ ] **报告生成**
+- [ ] **Report Generation**
   ```bash
   python -m pktmask mask test.pcap -o output.pcap --save-report --report-detailed
   ```

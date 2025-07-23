@@ -1,286 +1,286 @@
-# PktMask CLI 统一功能指南
+# PktMask CLI Unified Feature Guide
 
-## 概述
+## Overview
 
-PktMask CLI 现已实现与 GUI 的完全功能统一，支持所有核心处理能力，包括：
+PktMask CLI now achieves complete functional unification with the GUI, supporting all core processing capabilities, including:
 
-- ✅ **单文件处理**：处理单个 PCAP/PCAPNG 文件
-- ✅ **目录批量处理**：批量处理目录中的多个文件
-- ✅ **统一配置系统**：与 GUI 使用相同的配置逻辑
-- ✅ **丰富输出选项**：详细进度显示、统计信息和报告生成
-- ✅ **完整错误处理**：统一的错误处理和恢复机制
+- ✅ **Single File Processing**: Process individual PCAP/PCAPNG files
+- ✅ **Directory Batch Processing**: Batch process multiple files in directories
+- ✅ **Unified Configuration System**: Uses the same configuration logic as GUI
+- ✅ **Rich Output Options**: Detailed progress display, statistics, and report generation
+- ✅ **Complete Error Handling**: Unified error handling and recovery mechanisms
 
-## 安装与基本使用
+## Installation and Basic Usage
 
-### 安装
+### Installation
 ```bash
-# 从项目根目录安装
+# Install from project root directory
 pip install -e .
 
-# 或直接运行
+# Or run directly
 python -m pktmask --help
 ```
 
-### 基本命令结构
+### Basic Command Structure
 ```bash
 pktmask <command> <input> -o <output> [options]
 ```
 
-## 核心命令
+## Core Commands
 
-### 1. mask - 载荷掩码处理
+### 1. mask - Payload Masking Processing
 
-**单文件处理**：
+**Single File Processing**:
 ```bash
-# 基本掩码处理
+# Basic masking processing
 pktmask mask input.pcap -o output.pcap
 
-# 启用所有处理选项
+# Enable all processing options
 pktmask mask input.pcap -o output.pcap --dedup --anon --verbose
 
-# 自定义掩码模式
+# Custom masking mode
 pktmask mask input.pcap -o output.pcap --mode basic --protocol tls
 ```
 
-**目录批量处理**：
+**Directory Batch Processing**:
 ```bash
-# 处理目录中的所有文件
+# Process all files in directory
 pktmask mask /path/to/pcaps -o /path/to/output --dedup --anon
 
-# 自定义文件匹配模式
+# Custom file matching pattern
 pktmask mask /path/to/pcaps -o /path/to/output --pattern "*.pcap,*.cap"
 
-# 详细输出和报告生成
+# Detailed output and report generation
 pktmask mask /path/to/pcaps -o /path/to/output --verbose --save-report --report-detailed
 ```
 
-**参数说明**：
-- `--dedup`: 启用去重处理
-- `--anon`: 启用 IP 匿名化
-- `--mode`: 掩码模式 (`enhanced`|`basic`)
-- `--protocol`: 协议类型 (`tls`|`http`)
-- `--verbose`: 详细输出
-- `--format`: 输出格式 (`text`|`json`)
-- `--no-progress`: 禁用进度显示
-- `--pattern`: 文件匹配模式
-- `--save-report`: 保存详细报告
-- `--report-format`: 报告格式 (`text`|`json`)
-- `--report-detailed`: 包含详细统计信息
+**Parameter Description**:
+- `--dedup`: Enable Remove Dupes processing
+- `--anon`: Enable Anonymize IPs processing
+- `--mode`: Masking mode (`enhanced`|`basic`)
+- `--protocol`: Protocol type (`tls`|`http`)
+- `--verbose`: Detailed output
+- `--format`: Output format (`text`|`json`)
+- `--no-progress`: Disable progress display
+- `--pattern`: File matching pattern
+- `--save-report`: Save detailed report
+- `--report-format`: Report format (`text`|`json`)
+- `--report-detailed`: Include detailed statistics
 
-### 2. dedup - 去重处理
+### 2. dedup - Remove Dupes Processing
 
 ```bash
-# 单文件去重
+# Single file deduplication
 pktmask dedup input.pcap -o output.pcap
 
-# 目录批量去重
+# Directory batch deduplication
 pktmask dedup /path/to/pcaps -o /path/to/output --verbose
 ```
 
-### 3. anon - IP 匿名化
+### 3. anon - Anonymize IPs
 
 ```bash
-# 单文件匿名化
+# Single file anonymization
 pktmask anon input.pcap -o output.pcap
 
-# 目录批量匿名化
+# Directory batch anonymization
 pktmask anon /path/to/pcaps -o /path/to/output --verbose
 ```
 
-### 4. batch - 批量处理（推荐）
+### 4. batch - Batch Processing (Recommended)
 
-专为大规模批量处理优化的命令：
+Command optimized for large-scale batch processing:
 
 ```bash
-# 使用默认设置处理目录
+# Process directory with default settings
 pktmask batch /path/to/pcaps -o /path/to/output
 
-# 自定义处理选项
+# Custom processing options
 pktmask batch /path/to/pcaps -o /path/to/output \
   --no-dedup --mode basic --verbose --format json
 
-# 生成详细报告
+# Generate detailed reports
 pktmask batch /path/to/pcaps -o /path/to/output \
   --verbose --save-report --report-detailed
 ```
 
-**batch 命令特点**：
-- 默认启用所有处理选项（dedup、anon、mask）
-- 优化的批量处理性能
-- 自动创建输出目录
-- 支持并行处理（实验性）
+**batch Command Features**:
+- Default enables all processing options (dedup, anon, mask)
+- Optimized batch processing performance
+- Automatic output directory creation
+- Parallel processing support (experimental)
 
-### 5. info - 文件信息分析
+### 5. info - File Information Analysis
 
 ```bash
-# 分析单个文件
+# Analyze single file
 pktmask info input.pcap
 
-# 分析目录
+# Analyze directory
 pktmask info /path/to/pcaps --verbose
 
-# JSON 格式输出
+# JSON format output
 pktmask info /path/to/pcaps --format json
 ```
 
-## 高级功能
+## Advanced Features
 
-### 报告生成
+### Report Generation
 
-CLI 现在支持与 GUI 相同的详细报告生成：
+CLI now supports the same detailed report generation as GUI:
 
 ```bash
-# 生成文本报告
+# Generate text report
 pktmask mask input.pcap -o output.pcap --save-report
 
-# 生成 JSON 报告
+# Generate JSON report
 pktmask mask input.pcap -o output.pcap --save-report --report-format json
 
-# 包含详细统计信息
+# Include detailed statistics
 pktmask mask input.pcap -o output.pcap --save-report --report-detailed
 ```
 
-报告包含：
-- 处理摘要和统计信息
-- 每个阶段的详细性能数据
-- 错误和警告信息
-- 文件处理状态
+Reports include:
+- Processing summary and statistics
+- Detailed performance data for each stage
+- Error and warning information
+- File processing status
 
-### 进度显示
+### Progress Display
 
-多种进度显示模式：
+Multiple progress display modes:
 
 ```bash
-# 简单进度显示（默认）
+# Simple progress display (default)
 pktmask mask /path/to/pcaps -o /path/to/output
 
-# 详细进度显示
+# Detailed progress display
 pktmask mask /path/to/pcaps -o /path/to/output --verbose
 
-# 禁用进度显示
+# Disable progress display
 pktmask mask /path/to/pcaps -o /path/to/output --no-progress
 ```
 
-### 输出格式
+### Output Format
 
-支持多种输出格式：
+Support for multiple output formats:
 
 ```bash
-# 文本格式（默认）
+# Text format (default)
 pktmask mask input.pcap -o output.pcap --format text
 
-# JSON 格式
+# JSON format
 pktmask mask input.pcap -o output.pcap --format json
 ```
 
-## 使用示例
+## Usage Examples
 
-### 示例 1：基本单文件处理
+### Example 1: Basic Single File Processing
 ```bash
 pktmask mask sample.pcap -o processed.pcap --dedup --anon
 ```
 
-### 示例 2：目录批量处理
+### Example 2: Directory Batch Processing
 ```bash
 pktmask batch /data/pcaps -o /data/processed \
   --verbose --save-report --report-detailed
 ```
 
-### 示例 3：自定义配置处理
+### Example 3: Custom Configuration Processing
 ```bash
 pktmask mask /data/pcaps -o /data/output \
   --mode basic --protocol http \
   --pattern "*.pcapng" --format json
 ```
 
-### 示例 4：仅分析不处理
+### Example 4: Analysis Only (No Processing)
 ```bash
 pktmask info /data/pcaps --verbose --format json > analysis.json
 ```
 
-## 与 GUI 的一致性
+## Consistency with GUI
 
-CLI 现在与 GUI 完全一致：
+CLI is now fully consistent with GUI:
 
-| 功能特性 | GUI | CLI | 状态 |
-|---------|-----|-----|------|
-| 单文件处理 | ✅ | ✅ | 完全一致 |
-| 目录批量处理 | ✅ | ✅ | 完全一致 |
-| 配置选项 | ✅ | ✅ | 完全一致 |
-| 进度显示 | ✅ | ✅ | 完全一致 |
-| 错误处理 | ✅ | ✅ | 完全一致 |
-| 报告生成 | ✅ | ✅ | 完全一致 |
-| 统计信息 | ✅ | ✅ | 完全一致 |
+| Feature | GUI | CLI | Status |
+|---------|-----|-----|--------|
+| Single File Processing | ✅ | ✅ | Fully Consistent |
+| Directory Batch Processing | ✅ | ✅ | Fully Consistent |
+| Configuration Options | ✅ | ✅ | Fully Consistent |
+| Progress Display | ✅ | ✅ | Fully Consistent |
+| Error Handling | ✅ | ✅ | Fully Consistent |
+| Report Generation | ✅ | ✅ | Fully Consistent |
+| Statistics Information | ✅ | ✅ | Fully Consistent |
 
-## 性能优化
+## Performance Optimization
 
-### 批量处理优化
-- 使用 `batch` 命令获得最佳批量处理性能
-- 大文件处理时使用 `--no-progress` 减少输出开销
-- JSON 格式输出适合自动化脚本处理
+### Batch Processing Optimization
+- Use `batch` command for optimal batch processing performance
+- Use `--no-progress` when processing large files to reduce output overhead
+- JSON format output is suitable for automated script processing
 
-### 内存管理
-- CLI 使用与 GUI 相同的内存优化策略
-- 大规模批量处理时自动进行内存管理
-- 支持处理大型 PCAP 文件
+### Memory Management
+- CLI uses the same memory optimization strategies as GUI
+- Automatic memory management during large-scale batch processing
+- Supports processing large PCAP files
 
-## 故障排除
+## Troubleshooting
 
-### 常见问题
+### Common Issues
 
-**1. 配置错误**
+**1. Configuration Error**
 ```bash
 ❌ Configuration error: No processing stages enabled
 ```
-解决：至少启用一个处理选项（--dedup、--anon 或默认的 mask）
+Solution: Enable at least one processing option (--dedup, --anon, or default mask)
 
-**2. 文件权限问题**
+**2. File Permission Issues**
 ```bash
 ❌ Error: Permission denied
 ```
-解决：检查输入文件读取权限和输出目录写入权限
+Solution: Check input file read permissions and output directory write permissions
 
-**3. 内存不足**
+**3. Insufficient Memory**
 ```bash
 ❌ Error: Memory allocation failed
 ```
-解决：处理较小的文件批次或增加系统内存
+Solution: Process smaller file batches or increase system memory
 
-### 调试选项
+### Debug Options
 
 ```bash
-# 启用详细输出
+# Enable verbose output
 pktmask mask input.pcap -o output.pcap --verbose
 
-# 生成详细报告用于问题分析
+# Generate detailed report for problem analysis
 pktmask mask input.pcap -o output.pcap --save-report --report-detailed
 
-# JSON 格式便于程序化分析
+# JSON format for programmatic analysis
 pktmask mask input.pcap -o output.pcap --format json
 ```
 
-## 迁移指南
+## Migration Guide
 
-### 从旧版 CLI 迁移
+### Migrating from Legacy CLI
 
-旧版命令仍然兼容，但建议使用新的统一命令：
+Legacy commands are still compatible, but new unified commands are recommended:
 
 ```bash
-# 旧版（仍然支持）
+# Legacy (still supported)
 pktmask mask input.pcap -o output.pcap --dedup --anon --mode enhanced
 
-# 新版（推荐）
+# New (recommended)
 pktmask mask input.pcap -o output.pcap --dedup --anon --verbose --save-report
 ```
 
-### 从 GUI 迁移
+### Migrating from GUI
 
-GUI 用户可以轻松切换到 CLI：
+GUI users can easily switch to CLI:
 
-1. **相同的配置选项**：GUI 中的所有选项在 CLI 中都有对应参数
-2. **相同的处理结果**：CLI 和 GUI 产生完全相同的处理结果
-3. **相同的报告格式**：CLI 可以生成与 GUI 相同的详细报告
+1. **Same Configuration Options**: All GUI options have corresponding CLI parameters
+2. **Same Processing Results**: CLI and GUI produce identical processing results
+3. **Same Report Format**: CLI can generate the same detailed reports as GUI
 
-## 总结
+## Summary
 
-PktMask CLI 现在提供了与 GUI 完全一致的功能体验，同时保持了命令行工具的简洁和高效。无论是单文件处理还是大规模批量操作，CLI 都能提供强大而灵活的解决方案。
+PktMask CLI now provides a fully consistent functional experience with the GUI, while maintaining the simplicity and efficiency of command-line tools. Whether for single file processing or large-scale batch operations, CLI provides powerful and flexible solutions.

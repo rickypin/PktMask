@@ -390,17 +390,17 @@ class UIManager:
             self.main_window.log_text.append("")
 
     def _display_dependency_status(self, messages):
-        """在Log模块中显示依赖状态"""
+        """Display dependency status in Log module"""
         if hasattr(self.main_window, "log_text"):
-            # 构建依赖状态消息
+            # Build dependency status message
             status_text = "⚠️  Dependency Status Check:\n"
             status_text += "-" * 40 + "\n"
 
-            # 添加具体状态信息
+            # Add specific status information
             for message in messages:
                 status_text += f"❌ {message}\n"
 
-            # 添加解决建议
+            # Add resolution suggestions
             status_text += "\n💡 Installation Guide:\n"
             status_text += "   • Install Wireshark (includes tshark)\n"
             status_text += "   • Ensure tshark is in system PATH\n"
@@ -408,7 +408,7 @@ class UIManager:
             status_text += "   • Download: https://www.wireshark.org/download.html\n"
             status_text += "-" * 40 + "\n\n"
 
-            # 使用append而不是setPlaceholderText来显示依赖状态
+            # Use append instead of setPlaceholderText to display dependency status
             self.main_window.log_text.append(status_text)
 
     def _show_initial_guides(self):
@@ -516,19 +516,19 @@ class UIManager:
 
         return "\n".join(formatted_lines)
 
-    # 样式管理方法
+    # Style management methods
     def get_current_theme(self) -> str:
-        """检测当前系统是浅色还是深色模式"""
+        """Detect whether current system is light or dark mode"""
         bg_color = self.main_window.palette().color(self.main_window.backgroundRole())
         return "dark" if bg_color.lightness() < 128 else "light"
 
     def apply_stylesheet(self):
-        """应用样式表"""
+        """Apply stylesheet"""
         theme = self.get_current_theme()
         self.main_window.setStyleSheet(generate_stylesheet(theme))
 
     def handle_theme_change(self, event: QEvent):
-        """处理主题变化"""
+        """Handle theme changes"""
         if event.type() == QEvent.Type.ApplicationPaletteChange:
             self.apply_stylesheet()
             self._update_path_link_styles()

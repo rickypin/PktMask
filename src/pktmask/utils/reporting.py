@@ -12,23 +12,23 @@ from pktmask.utils.time import current_time
 
 
 class Reporter(ABC):
-    """报告生成器的抽象基类。"""
+    """Abstract base class for report generators."""
 
     @abstractmethod
     def generate(self, report_name: str, report_data: Dict[str, Any]):
-        """生成报告的接口方法。"""
+        """Interface method for generating reports."""
 
     @abstractmethod
     def finalize_report_for_directory(
         self, subdir_name: str, stats: Dict[str, Any], final_mapping: Dict[str, str]
     ):
-        """在目录处理完成后生成最终报告。"""
+        """Generate final report after directory processing is complete."""
 
     def set_output_directory(self, path: str):
-        """设置报告输出目录的可选方法。"""
+        """Optional method to set report output directory."""
 
 
-# 自动加载HTML模板
+# Auto-load HTML template
 logger = get_logger("reporting")
 
 try:
@@ -98,14 +98,14 @@ class FileReporter(Reporter):
         # 保存JSON报告
         self.generate(report_name, report_data)
 
-        # 生成HTML报告
+        # Generate HTML report
         if HTML_TEMPLATE:
             render_data = {
                 "subdir": subdir_name,
                 "now": current_time(),
                 "stats": stats,
                 "total_mapping": final_mapping,
-                "file_mappings": {},  # 在总报告中不提供单文件映射
+                "file_mappings": {},  # No single file mappings in summary report
             }
             try:
                 html_path = os.path.join(self._output_dir, f"{report_name}.html")

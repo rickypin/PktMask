@@ -85,8 +85,8 @@ class ConfigService:
         return config
 
     def _build_mask_config(self, options: ProcessingOptions) -> Dict[str, Any]:
-        """构建掩码配置"""
-        # 获取TShark路径
+        """Build mask configuration"""
+        # Get TShark path
         tshark_path = options.tshark_path
         if not tshark_path and self._app_config:
             tshark_path = self._app_config.tools.tshark.custom_executable
@@ -107,7 +107,7 @@ class ConfigService:
             "masker_config": {"chunk_size": 1000, "verify_checksums": True},
         }
 
-        # 添加TShark路径（如果可用）
+        # Add TShark path (if available)
         if tshark_path:
             mask_config["marker_config"]["tshark_path"] = tshark_path
 
