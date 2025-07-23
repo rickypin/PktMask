@@ -8,25 +8,20 @@ UI构建器 - 专注于界面构建和管理
 提供简化的界面构建和对话框管理接口。
 """
 
-import os
-from typing import Any, Dict, List, Optional
+from typing import List
 
-from PyQt6.QtCore import QEvent, Qt
-from PyQt6.QtGui import QAction, QFont
+from PyQt6.QtCore import QEvent
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
     QDialogButtonBox,
-    QFileDialog,
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
-    QMenu,
-    QMenuBar,
     QMessageBox,
     QProgressBar,
-    QProgressDialog,
     QPushButton,
     QTextEdit,
     QVBoxLayout,

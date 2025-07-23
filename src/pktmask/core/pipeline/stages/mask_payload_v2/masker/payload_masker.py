@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 import time
-from bisect import bisect_left
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -28,10 +27,10 @@ except ImportError:
     vxlan = geneve = None
 
 from ....resource_manager import ResourceManager
-from ..marker.types import KeepRule, KeepRuleSet
+from ..marker.types import KeepRuleSet
 from .data_validator import DataValidator
 from .error_handler import ErrorCategory, ErrorRecoveryHandler, ErrorSeverity
-from .fallback_handler import FallbackHandler, FallbackMode
+from .fallback_handler import FallbackHandler
 from .memory_optimizer import MemoryOptimizer
 from .stats import MaskingStats
 
@@ -256,7 +255,7 @@ class PayloadMasker:
                 import psutil
 
                 process = psutil.Process()
-                initial_memory = process.memory_info().rss
+                process.memory_info().rss
 
             # 使用统一的缓冲区管理
             packet_buffer = self.resource_manager.create_buffer("packet_buffer")

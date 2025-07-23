@@ -4,9 +4,8 @@ Windows subprocess utilities to prevent cmd window popup
 
 import platform
 import subprocess
-import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 
 def get_subprocess_creation_flags() -> int:

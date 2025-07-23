@@ -201,7 +201,7 @@ def log_execution_time(logger_name: str = "performance"):
                 duration = time.time() - start_time
                 log_performance(func.__name__, duration, logger_name)
                 return result
-            except Exception as e:
+            except Exception:
                 duration = time.time() - start_time
                 log_performance(f"{func.__name__} (failed)", duration, logger_name)
                 raise

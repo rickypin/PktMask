@@ -8,7 +8,7 @@ replacing the old BaseProcessor wrapper approach with direct implementation.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from pktmask.core.pipeline.stages.deduplication_unified import UnifiedDeduplicationStage
 

@@ -7,22 +7,17 @@
 """
 
 import sys
-import traceback
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type
 
 from ...common.enums import ErrorSeverity
 from ...common.exceptions import PktMaskError, create_error_from_exception
 from ...infrastructure.logging import get_logger, log_exception
 from .context import ErrorContext, create_error_context, get_context_manager
 from .recovery import (
-    ErrorRecoveryManager,
-    RecoveryAction,
     RecoveryResult,
     get_recovery_manager,
 )
-from .reporter import ErrorReporter, get_error_reporter
+from .reporter import get_error_reporter
 
 logger = get_logger(__name__)
 

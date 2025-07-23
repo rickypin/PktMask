@@ -71,7 +71,10 @@ def format_step_summary(
     processed_display = f"{processed_count:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM}}"
     rate_display = f"{rate:5.{FormatConstants.RATE_DECIMAL_PLACES}f}%"
 
-    return f"  {emoji} {step_display} | Original: {original_display} | Processed: {processed_display} | Rate: {rate_display}"
+    return (
+        f"  {emoji} {step_display} | Original: {original_display} | "
+        f"Processed: {processed_display} | Rate: {rate_display}"
+    )
 
 
 def format_deduplication_summary(
@@ -94,7 +97,10 @@ def format_deduplication_summary(
     removed_display = f"{removed_count:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM}}"
     rate_display = f"{rate:5.{FormatConstants.RATE_DECIMAL_PLACES}f}%"
 
-    return f"  🔄 {step_display} | Unique Pkts: {unique_display} | Removed Pkts: {removed_display} | Rate: {rate_display}"
+    return (
+        f"  🔄 {step_display} | Unique Pkts: {unique_display} | "
+        f"Removed Pkts: {removed_display} | Rate: {rate_display}"
+    )
 
 
 def format_trimming_summary(
@@ -117,7 +123,10 @@ def format_trimming_summary(
     trimmed_display = f"{trimmed_packets:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM}}"
     rate_display = f"{rate:5.{FormatConstants.RATE_DECIMAL_PLACES}f}%"
 
-    return f"  ✂️  {step_display} | Full Pkts: {full_display} | Trimmed Pkts: {trimmed_display} | Rate: {rate_display}"
+    return (
+        f"  ✂️  {step_display} | Full Pkts: {full_display} | "
+        f"Trimmed Pkts: {trimmed_display} | Rate: {rate_display}"
+    )
 
 
 def format_ip_mapping_list(

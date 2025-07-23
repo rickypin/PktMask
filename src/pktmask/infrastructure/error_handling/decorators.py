@@ -7,9 +7,8 @@
 """
 
 import functools
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, List, Optional, Type, Union
 
-from ...common.exceptions import PktMaskError
 from ...infrastructure.logging import get_logger
 from .context import (
     add_recent_action,
@@ -18,7 +17,7 @@ from .context import (
     set_current_operation,
 )
 from .handler import get_error_handler
-from .recovery import RecoveryAction, RecoveryResult
+from .recovery import RecoveryAction
 
 logger = get_logger(__name__)
 
@@ -263,7 +262,7 @@ def handle_config_errors(
                 logger.error(f"Configuration error in {func.__name__}: {e}")
 
                 # 处理配置错误
-                recovery_result = error_handler.handle_config_error(e, config_key)
+                error_handler.handle_config_error(e, config_key)
 
                 if use_defaults:
                     logger.warning(

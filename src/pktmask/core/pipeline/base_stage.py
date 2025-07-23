@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from ...common.exceptions import FileError, PktMaskError, ProcessingError, ResourceError
+from ...common.exceptions import FileError, ProcessingError
 from .models import StageStats
 from .resource_manager import ResourceManager
 
@@ -66,7 +66,6 @@ class StageBase(metaclass=abc.ABCMeta):
         Returns:
             bool: True if initialization successful, False otherwise
         """
-        pass
 
     # ---------------------------------------------------------------------
     # Directory-level lifecycle methods
@@ -81,7 +80,6 @@ class StageBase(metaclass=abc.ABCMeta):
             directory: Directory being processed
             all_files: List of all files to be processed
         """
-        pass
 
     def finalize_directory_processing(self) -> Optional[Dict]:
         """Called after all files in directory are processed.
@@ -112,7 +110,6 @@ class StageBase(metaclass=abc.ABCMeta):
             ValueError: If input path is not a file
             RuntimeError: If stage is not initialized
         """
-        pass
 
     # ---------------------------------------------------------------------
     # Optional lifecycle hooks
@@ -123,7 +120,6 @@ class StageBase(metaclass=abc.ABCMeta):
         Called when pipeline is stopped or user cancels processing.
         Used for terminating external processes or cleanup.
         """
-        pass
 
     def cleanup(self) -> None:
         """Clean up stage resources.
@@ -155,7 +151,6 @@ class StageBase(metaclass=abc.ABCMeta):
         Subclasses should override this method to implement custom cleanup logic.
         This method is called before the unified resource cleanup.
         """
-        pass
 
     # ---------------------------------------------------------------------
     # Exception handling utilities

@@ -7,9 +7,8 @@
 """
 
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
-from ...common.exceptions import PktMaskError
 from ...infrastructure.logging import get_logger
 
 logger = get_logger(__name__)

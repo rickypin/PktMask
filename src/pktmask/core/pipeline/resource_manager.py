@@ -16,8 +16,6 @@ from __future__ import annotations
 import gc
 import logging
 import time
-import weakref
-from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum

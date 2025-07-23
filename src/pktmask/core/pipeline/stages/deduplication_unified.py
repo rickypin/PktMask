@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 import hashlib
-import os
 import time
 from pathlib import Path
 from typing import Any, Dict, Optional, Set
@@ -73,7 +72,7 @@ class UnifiedDeduplicationStage(StageBase):
 
         try:
             # Check Scapy availability
-            from scapy.all import rdpcap, wrpcap
+            pass
 
             # Clear hash set
             self._packet_hashes.clear()

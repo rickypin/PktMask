@@ -1889,7 +1889,7 @@ class TLSProtocolMarker(ProtocolMarker):
             rule_length = rule.seq_end - rule.seq_start
             content_type = record.get("content_type", 0)
             is_cross_segment = record.get("is_cross_segment", False)
-            declared_length = record.get("declared_length", 0)
+            record.get("declared_length", 0)
             actual_length = record.get("actual_length", 0)
 
             # 1. 对于跨段消息，进行额外的大小检查

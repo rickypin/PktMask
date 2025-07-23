@@ -8,7 +8,6 @@ from datetime import datetime
 from typing import Any, Dict, Optional, Set
 
 from pydantic import BaseModel, Field, field_validator
-from PyQt6.QtCore import QTime
 
 
 class PacketStatistics(BaseModel):

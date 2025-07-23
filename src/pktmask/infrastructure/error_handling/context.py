@@ -14,7 +14,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from ...common.enums import ErrorSeverity
 from ...infrastructure.logging import get_logger
 
 logger = get_logger(__name__)

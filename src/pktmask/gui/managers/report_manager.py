@@ -7,7 +7,7 @@ Report Manager - Responsible for report generation and display
 
 import os
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 if TYPE_CHECKING:
     from ..main_window import MainWindow
@@ -247,7 +247,7 @@ class ReportManager:
                     )
 
                 elif step_name == "Deduplication":
-                    unique = data.get("unique_packets", 0)
+                    data.get("unique_packets", 0)
                     removed = data.get("removed_count", 0)
                     rate = (
                         (removed / original_packets * 100)
@@ -674,7 +674,7 @@ class ReportManager:
 
     def _update_file_summary(self, data: Dict[str, Any]):
         """Update single file processing summary"""
-        filename = data.get("filename", "Unknown file")
+        data.get("filename", "Unknown file")
 
         # Get current summary text
         current_text = self.main_window.summary_text.toPlainText()
@@ -1066,7 +1066,7 @@ class ReportManager:
 
     def _is_enhanced_masking(self, data: Dict[str, Any]) -> bool:
         """检查是否是增强掩码处理结果 - 基于双模块架构"""
-        step_name = data.get("step_name", "")
+        data.get("step_name", "")
 
         # 检查Enhanced Masking特有的字段组合 - 必须是真正的Enhanced Intelligent Mode
         enhanced_indicators = [
@@ -1090,8 +1090,8 @@ class ReportManager:
 
         # 获取协议统计（移除HTTP）
         protocol_stats = data.get("protocol_stats", {})
-        tls_packets = protocol_stats.get("tls_packets", 0)
-        other_packets = protocol_stats.get("other_packets", 0)
+        protocol_stats.get("tls_packets", 0)
+        protocol_stats.get("other_packets", 0)
 
         # 基础报告行（增强模式标识）
         rate = (masked / total * 100) if total > 0 else 0

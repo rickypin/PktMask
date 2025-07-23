@@ -6,7 +6,7 @@
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional
 
 from scapy.layers.inet import IP, TCP, UDP
 from scapy.layers.inet6 import IPv6
@@ -33,7 +33,6 @@ from .types import (
     EncapsulationType,
     IPLayerInfo,
     LayerInfo,
-    ParsingError,
     PayloadInfo,
     VLANInfo,
 )

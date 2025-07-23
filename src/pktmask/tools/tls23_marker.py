@@ -459,7 +459,7 @@ def main(argv: list[str] | None = None) -> None:
             if content_type == 0x17:
                 # 计算该 TLS Application Data 记录中值为 0x00 的字节数量，并按 frame 归档
                 payload_start = cursor + 5  # 跳过 TLS 记录头 (type+version+length)
-                payload_end = cursor + total_rec_len
+                cursor + total_rec_len
 
                 # Phase 3 的零字节统计逻辑存在缺陷且与Phase 2重复，予以禁用，统一依赖Phase 2的结果
                 # for pos in range(payload_start, payload_end):

@@ -11,7 +11,7 @@ Lightweight event system designed for desktop applications:
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 
 class EventType(str, Enum):

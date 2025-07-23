@@ -3,8 +3,7 @@ Pipeline 服务接口
 提供 GUI 与核心管道的解耦接口
 """
 
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from pktmask.core.events import PipelineEvents
 from pktmask.infrastructure.logging import get_logger
@@ -14,13 +13,9 @@ from pktmask.infrastructure.logging import get_logger
 class PipelineServiceError(Exception):
     """服务层基础异常"""
 
-    pass
-
 
 class ConfigurationError(PipelineServiceError):
     """配置错误"""
-
-    pass
 
 
 logger = get_logger("PipelineService")

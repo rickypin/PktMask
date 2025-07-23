@@ -4,11 +4,10 @@ import random
 from abc import ABC, abstractmethod
 from typing import Dict, List, Set, Tuple
 
-from scapy.all import IP, TCP, UDP, IPv6, PcapNgReader, PcapReader
+from scapy.all import IP, IPv6, PcapNgReader, PcapReader
 
 from ..common.constants import ProcessingConstants
-from ..common.exceptions import NetworkError, ProcessingError
-from ..infrastructure.logging import get_logger, log_performance
+from ..infrastructure.logging import get_logger
 
 
 class AnonymizationStrategy(ABC):
@@ -29,27 +28,22 @@ class AnonymizationStrategy(ABC):
         Returns:
             A dictionary mapping each original IP to its new anonymous IP.
         """
-        pass
 
     @abstractmethod
     def reset(self):
         """Reset the strategy's internal state for processing new directories."""
-        pass
 
     @abstractmethod
     def build_mapping_from_directory(self, all_pcap_files: List[str]):
         """Build IP mapping based on all files in the directory."""
-        pass
 
     @abstractmethod
     def anonymize_packet(self, pkt) -> Tuple[object, bool]:
         """Anonymize a single packet."""
-        pass
 
     @abstractmethod
     def get_ip_map(self) -> Dict[str, str]:
         """Get the currently built IP mapping."""
-        pass
 
 
 def ip_sort_key(ip_str: str) -> tuple:
