@@ -90,40 +90,40 @@ validate_file_size("file.pcap")  # True/False
 is_supported_file("file.pcap")  # True
 ```
 
-#### 文件查找
+#### File Search
 ```python
-# 查找PCAP文件
+# Find PCAP files
 pcap_files = find_pcap_files("/path/to/dir")
 
-# 查找指定扩展名文件
+# Find files by extension
 files = find_files_by_extension("/path", [".txt", ".log"])
 ```
 
-#### 文件操作
+#### File Operations
 ```python
-# 安全复制文件
+# Safe file copy
 copy_file_safely("src.txt", "dst.txt", overwrite=True)
 
-# 安全删除文件
+# Safe file deletion
 delete_file_safely("temp.txt")
 
-# 生成输出文件名
+# Generate output filename
 output_file = generate_output_filename("input.pcap", "-processed")
 # "input-processed.pcap"
 
-# 清理临时文件
+# Clean temporary files
 cleaned_count = cleanup_temp_files("/path/to/dir", "*.tmp")
 ```
 
-### 3. 数值计算 (math_ops.py)
+### 3. Numerical Calculations (math_ops.py)
 
-#### 百分比和比率
+#### Percentages and Ratios
 ```python
-# 计算百分比
+# Calculate percentage
 percentage = calculate_percentage(75, 100)  # 75.0
 rate = calculate_rate(processed=80, total=100)  # 80.0
 
-# 计算处理速度
+# Calculate processing speed
 speed = calculate_speed(1000, 10.5)  # 95.2 items/second
 ```
 

@@ -48,7 +48,7 @@ from pktmask.utils import (
 
 
 class GuideDialog(QDialog):
-    """处理指南对话框"""
+    """Processing guide dialog"""
 
     def __init__(self, title: str, content: str, parent=None):
         super().__init__(parent)
@@ -293,7 +293,7 @@ class MainWindow(QMainWindow):
                 self.time_elapsed_label.setText(stats.get("elapsed_time", "00:00.00"))
 
     def _handle_ui_update_request(self, action: str, data: dict = None):
-        """处理UI更新请求"""
+        """Handle UI update requests"""
         if data is None:
             data = {}
 
@@ -425,68 +425,68 @@ class MainWindow(QMainWindow):
         self.config.save()
 
     def closeEvent(self, event):
-        """窗口关闭事件"""
-        # 保存窗口状态和用户偏好
+        """Window close event"""
+        # Save window state and user preferences
         self.save_window_state()
         self.save_user_preferences()
 
-        # 停止处理线程
+        # Stop processing thread
         processing_thread = getattr(self.pipeline_manager, "processing_thread", None)
         if processing_thread and processing_thread.isRunning():
             self.stop_pipeline_processing()
-            processing_thread.wait(3000)  # 等待最多3秒
+            processing_thread.wait(3000)  # Wait up to 3 seconds
 
-        # 关闭事件协调器
+        # Close event coordinator
         if hasattr(self, "event_coordinator"):
             self.event_coordinator.shutdown()
 
-        # 取消注册配置回调 (简化版本暂时移除)
+        # Unregister configuration callbacks (simplified version temporarily removed)
 
         event.accept()
 
     def init_ui(self):
-        """初始化界面（委托给UIManager处理）"""
+        """Initialize interface (delegated to UIManager)"""
         self.ui_manager.init_ui()
 
     def _get_current_theme(self) -> str:
-        """检测当前系统是浅色还是深色模式。"""
+        """Detect whether current system is light or dark mode."""
         return self.ui_manager.get_current_theme()
 
     def _apply_stylesheet(self):
-        """应用当前主题的样式表。"""
+        """Apply current theme's stylesheet."""
         self.ui_manager.apply_stylesheet()
 
     def changeEvent(self, event: QEvent):
-        """重写changeEvent来监听系统主题变化。"""
+        """Override changeEvent to monitor system theme changes."""
         self.ui_manager.handle_theme_change(event)
         super().changeEvent(event)
 
     def create_menu_bar(self):
-        """创建菜单栏（由UIManager处理）"""
-        pass  # 已由UIManager在init_ui中处理
+        """Create menu bar (handled by UIManager)"""
+        pass  # Already handled by UIManager in init_ui
 
     def show_user_guide_dialog(self):
-        """显示用户指南对话框"""
+        """Show user guide dialog"""
         self.dialog_manager.show_user_guide_dialog()
 
     def show_initial_guides(self):
-        """启动时在log和report区域显示指引（由UIManager处理）"""
-        pass  # 已由UIManager在init_ui中处理
+        """Show initial guides in log and report areas at startup (handled by UIManager)"""
+        pass  # Already handled by UIManager in init_ui
 
     def choose_folder(self):
-        """选择目录"""
+        """Choose directory"""
         self.file_manager.choose_folder()
 
     def handle_output_click(self):
-        """处理输出路径按钮点击"""
+        """Handle output path button click"""
         self.file_manager.handle_output_click()
 
     def choose_output_folder(self):
-        """选择自定义输出目录"""
+        """Choose custom output directory"""
         self.file_manager.choose_output_folder()
 
     def generate_default_output_path(self):
-        """生成默认输出路径预览"""
+        """Generate default output path preview"""
         self.file_manager.generate_default_output_path()
 
     def generate_actual_output_path(self) -> str:
@@ -498,51 +498,51 @@ class MainWindow(QMainWindow):
         self.file_manager.open_output_directory()
 
     def reset_state(self):
-        """重置所有状态和UI"""
+        """Reset all state and UI"""
         self.base_dir = None
-        self.output_dir = None  # 重置输出目录
-        self.current_output_dir = None  # 重置当前输出目录
+        self.output_dir = None  # Reset output directory
+        self.current_output_dir = None  # Reset current output directory
         self.dir_path_label.setText("Click and pick your pcap directory")
         self.output_path_label.setText(
             "Auto-create or click for custom"
-        )  # 重置输出路径显示
+        )  # Reset output path display
         self.log_text.clear()
         self.summary_text.clear()
 
-        # 使用事件协调器统一重置所有数据
+        # Use event coordinator to uniformly reset all data
         self.event_coordinator.reset_all_data()
 
-        # 使用StatisticsManager统一重置所有统计数据
+        # Use StatisticsManager to uniformly reset all statistics
         self.pipeline_manager.statistics.reset_all_statistics()
 
-        # 重置Live Dashboard显示
+        # Reset Live Dashboard display
         self.files_processed_label.setText("0")
         self.packets_processed_label.setText("0")
         self.time_elapsed_label.setText("00:00.00")
         self.progress_bar.setValue(0)
 
-        # 重置其他状态
-        self.user_stopped = False  # 重置停止标志
+        # Reset other states
+        self.user_stopped = False  # Reset stop flag
         if hasattr(self, "_current_file_ips"):
-            self._current_file_ips.clear()  # 清空文件IP映射
+            self._current_file_ips.clear()  # Clear file IP mappings
         if hasattr(self, "_counted_files"):
-            self._counted_files.clear()  # 清空包计数缓存
+            self._counted_files.clear()  # Clear packet count cache
 
-        # 停止计时器
+        # Stop timer
         if self.timer and self.timer.isActive():
             self.timer.stop()
 
-        # 重置按钮和显示状态
-        self.start_proc_btn.setEnabled(False)  # 保持禁用状态，直到选择目录
+        # Reset button and display state
+        self.start_proc_btn.setEnabled(False)  # Keep disabled until directory is selected
         self.start_proc_btn.setText("Start")
         self.show_initial_guides()
 
     def toggle_pipeline_processing(self):
-        """根据当前状态切换处理开始/停止"""
+        """Toggle processing start/stop based on current state"""
         self.pipeline_manager.toggle_pipeline_processing()
 
     def generate_partial_summary_on_stop(self):
-        """生成用户停止时的部分汇总统计（委托给ReportManager）"""
+        """Generate partial summary statistics when user stops (delegated to ReportManager)"""
         self.report_manager.generate_partial_summary_on_stop()
 
     def stop_pipeline_processing(self):
@@ -705,7 +705,7 @@ class MainWindow(QMainWindow):
         return elided_text
 
     def resizeEvent(self, event):
-        """处理窗口大小调整事件以更新省略的文本"""
+        """Handle window resize events to update elided text"""
         super().resizeEvent(event)
         if self.base_dir:
             self.dir_path_label.setText(
@@ -713,7 +713,7 @@ class MainWindow(QMainWindow):
             )
 
     def show_about_dialog(self):
-        """显示关于对话框"""
+        """Show about dialog"""
         self.dialog_manager.show_about_dialog()
 
     def update_time_elapsed(self):
@@ -725,9 +725,9 @@ class MainWindow(QMainWindow):
         self.time_elapsed_label.setText(time_str)
 
     def generate_summary_report_filename(self) -> str:
-        """生成带有处理选项标识的summary report文件名"""
+        """Generate summary report filename with processing options identifier"""
 
-        # 生成处理选项标识
+        # Generate processing options identifier
         enabled_steps = []
         if self.anonymize_ips_cb.isChecked():
             enabled_steps.append("AnonymizeIPs")
@@ -979,33 +979,33 @@ class MainWindow(QMainWindow):
 
 
 def main():
-    """主函数"""
+    """Main function"""
     import os
 
-    # 检查是否在测试模式或无头模式
+    # Check if in test mode or headless mode
     test_mode = os.getenv("PKTMASK_TEST_MODE", "").lower() in ("true", "1", "yes")
     headless_mode = os.getenv("PKTMASK_HEADLESS", "").lower() in ("true", "1", "yes")
 
     if test_mode or headless_mode:
-        # 测试模式：创建应用但不显示窗口和进入事件循环
+        # Test mode: create application but don't show window or enter event loop
         try:
             app = QApplication.instance()
             if app is None:
                 app = QApplication(sys.argv)
 
-            # 在测试模式下创建窗口但不显示
+            # Create window in test mode but don't show
             window = MainWindow()
             if hasattr(window, "set_test_mode"):
                 window.set_test_mode(True)
 
-            # 测试模式下立即返回，不进入事件循环
+            # Return immediately in test mode, don't enter event loop
             return window if test_mode else 0
 
         except Exception as e:
             print(f"GUI initialization failed in test mode: {e}")
             return None
     else:
-        # 正常模式：完整的GUI启动
+        # Normal mode: full GUI startup
         app = QApplication(sys.argv)
         window = MainWindow()
         window.show()

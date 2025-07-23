@@ -58,55 +58,55 @@ def ensure_directory(path: Union[str, Path], create_if_missing: bool = True) -> 
 
 def safe_join(*paths) -> str:
     """
-    安全地拼接路径，处理各种边界情况
+    Safely join paths, handling various edge cases
 
     Args:
-        *paths: 要拼接的路径组件
+        *paths: Path components to join
 
     Returns:
-        拼接后的路径字符串
+        Joined path string
     """
     return str(Path(*[str(p) for p in paths if p]))
 
 
 def get_file_extension(filepath: Union[str, Path]) -> str:
     """
-    获取文件扩展名（小写）
+    Get file extension (lowercase)
 
     Args:
-        filepath: 文件路径
+        filepath: File path
 
     Returns:
-        小写的文件扩展名（包含点号）
+        Lowercase file extension (including dot)
     """
     return Path(filepath).suffix.lower()
 
 
 def get_file_base_name(filepath: Union[str, Path]) -> str:
     """
-    获取文件基础名称（不含扩展名）
+    Get file base name (without extension)
 
     Args:
-        filepath: 文件路径
+        filepath: File path
 
     Returns:
-        文件基础名称
+        File base name
     """
     return Path(filepath).stem
 
 
 def get_file_size(filepath: Union[str, Path]) -> int:
     """
-    获取文件大小
+    Get file size
 
     Args:
-        filepath: 文件路径
+        filepath: File path
 
     Returns:
-        文件大小（字节）
+        File size in bytes
 
     Raises:
-        FileError: 文件不存在或无法访问时
+        FileError: When file does not exist or cannot be accessed
     """
     try:
         return Path(filepath).stat().st_size

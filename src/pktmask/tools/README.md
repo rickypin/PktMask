@@ -1,41 +1,41 @@
-# PktMask Tools - 生产工具集
+# PktMask Tools - Production Tool Suite
 
-本目录包含 PktMask 项目的生产级命令行工具，这些工具经过充分测试，可供最终用户使用。
+This directory contains production-grade command-line tools for the PktMask project, which have been thoroughly tested and are ready for end-user use.
 
-## 工具列表
+## Tool List
 
 ### tls23_marker.py
-TLS Application Data (content-type=23) 标记工具
+TLS Application Data (content-type=23) Marking Tool
 
-**功能**：
-- 扫描 PCAP/PCAPNG 文件中的 TLS 23 类型数据包
-- 标记和分析 TLS 应用数据
-- 支持多种输出格式（JSON、TSV）
-- 可选的数据包注释功能
+**Features**:
+- Scan TLS type 23 packets in PCAP/PCAPNG files
+- Mark and analyze TLS application data
+- Support multiple output formats (JSON, TSV)
+- Optional packet annotation functionality
 
-**使用示例**：
+**Usage Examples**:
 ```bash
-# 基本使用
+# Basic usage
 python -m pktmask.tools.tls23_marker --pcap input.pcapng
 
-# 指定输出格式和目录
+# Specify output format and directory
 python -m pktmask.tools.tls23_marker --pcap input.pcapng --formats json,tsv --output-dir ./results
 
-# 使用自定义端口解码
+# Use custom port decoding
 python -m pktmask.tools.tls23_marker --pcap input.pcapng --decode-as 8443,tls --decode-as 9443,tls
 ```
 
 ### enhanced_tls_marker.py
-增强版 TLS 标记工具
+Enhanced TLS Marking Tool
 
-**功能**：
-- 提供更详细的 TLS 分析功能
-- 支持跨数据包的 TLS 记录重组
-- 高级过滤和统计功能
+**Features**:
+- Provide more detailed TLS analysis functionality
+- Support cross-packet TLS record reassembly
+- Advanced filtering and statistics functionality
 
-**使用示例**：
+**Usage Examples**:
 ```bash
-# 增强分析
+# Enhanced analysis
 python -m pktmask.tools.enhanced_tls_marker --pcap input.pcapng --deep-analysis
 ```
 

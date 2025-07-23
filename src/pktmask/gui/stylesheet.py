@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-本模块定义了应用的动态样式表系统。
-它能够根据浅色/深色模式生成统一的视觉样式。
+This module defines the application's dynamic stylesheet system.
+It can generate unified visual styles based on light/dark mode.
 """
 
-# --- 设计规范 ---
+# --- Design Specifications ---
 
 LIGHT_PALETTE = {
     "WINDOW_BG": "#F0F0F0",
@@ -61,7 +61,7 @@ def generate_stylesheet(mode: str) -> str:
             background-color: {palette['PANEL_BG']};
             border: 1px solid {palette['BORDER_COLOR']};
             border-radius: 8px;
-            margin-top: 1ex; /* 为标题留出空间 */
+            margin-top: 1ex; /* Leave space for title */
             font-family: {FONTS['FONT_FAMILY']};
             font-size: {FONTS['H2']};
             font-weight: 600;
@@ -82,7 +82,7 @@ def generate_stylesheet(mode: str) -> str:
             font-size: {FONTS['BODY']};
         }}
 
-        /* --- 特殊的 QLabel 样式 --- */
+        /* --- Special QLabel Styles --- */
         #DirPathLabel {{
             color: {palette['PRIMARY_BUTTON_BG']};
             font-size: 13pt;

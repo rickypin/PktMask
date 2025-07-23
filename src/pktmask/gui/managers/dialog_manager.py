@@ -105,19 +105,19 @@ class DialogManager:
 
             layout = QVBoxLayout(dialog)
 
-            # 主文本
+            # Main text
             text_widget = QTextEdit()
             text_widget.setReadOnly(True)
             text_widget.setHtml(about_text)
 
-            # 设置字体
+            # Set font
             font = QFont()
             font.setPointSize(11)
             text_widget.setFont(font)
 
             layout.addWidget(text_widget)
 
-            # 按钮
+            # Buttons
             button_layout = QHBoxLayout()
             button_layout.addStretch()
 

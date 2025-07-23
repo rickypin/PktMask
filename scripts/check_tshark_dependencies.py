@@ -58,26 +58,26 @@ def parse_tshark_version(output: str) -> Optional[Tuple[int, int, int]]:
 
 
 def find_tshark_executable(custom_path: Optional[str] = None) -> Optional[str]:
-    """查找tshark可执行文件"""
-    # 1. 检查自定义路径
+    """Find tshark executable"""
+    # 1. Check custom path
     if custom_path:
         if Path(custom_path).exists():
             return custom_path
         else:
-            print(f"❌ 自定义路径不存在: {custom_path}")
+            print(f"❌ Custom path does not exist: {custom_path}")
             return None
 
-    # 2. 检查默认路径
+    # 2. Check default paths
     for path in DEFAULT_TSHARK_PATHS:
         if Path(path).exists():
             return path
 
-    # 3. 在系统PATH中搜索
+    # 3. Search in system PATH
     return shutil.which("tshark")
 
 
 def check_tshark_version(tshark_path: str) -> Dict[str, any]:
-    """检查tshark版本"""
+    """Check tshark version"""
     result = {
         "success": False,
         "version": None,
@@ -92,7 +92,7 @@ def check_tshark_version(tshark_path: str) -> Dict[str, any]:
         )
 
         if proc.returncode != 0:
-            result["error"] = f"tshark -v 返回非零退出码: {proc.returncode}"
+            result["error"] = f"tshark -v returned non-zero exit code: {proc.returncode}"
             return result
 
         output = proc.stdout + proc.stderr
@@ -104,7 +104,7 @@ def check_tshark_version(tshark_path: str) -> Dict[str, any]:
             result["meets_requirement"] = version >= MIN_TSHARK_VERSION
             result["success"] = True
         else:
-            result["error"] = "无法解析版本号"
+            result["error"] = "Unable to parse version number"
 
     except subprocess.TimeoutExpired:
         result["error"] = "tshark -v 执行超时"
@@ -151,7 +151,7 @@ def check_protocol_support(tshark_path: str) -> Dict[str, any]:
 
 
 def check_field_support(tshark_path: str) -> Dict[str, any]:
-    """检查字段支持"""
+    """Check field support"""
     result = {
         "success": False,
         "supported_fields": [],
@@ -165,7 +165,7 @@ def check_field_support(tshark_path: str) -> Dict[str, any]:
         )
 
         if proc.returncode != 0:
-            result["error"] = f"tshark -G fields 返回非零退出码: {proc.returncode}"
+            result["error"] = f"tshark -G fields returned non-zero exit code: {proc.returncode}"
             return result
 
         fields = proc.stdout
@@ -179,19 +179,19 @@ def check_field_support(tshark_path: str) -> Dict[str, any]:
         result["success"] = len(result["missing_fields"]) == 0
 
     except subprocess.TimeoutExpired:
-        result["error"] = "tshark -G fields 执行超时"
+        result["error"] = "tshark -G fields execution timeout"
     except Exception as e:
-        result["error"] = f"检查字段支持失败: {e}"
+        result["error"] = f"Field support check failed: {e}"
 
     return result
 
 
 def check_json_output(tshark_path: str) -> Dict[str, any]:
-    """检查JSON输出功能"""
+    """Check JSON output functionality"""
     result = {"success": False, "error": None}
 
     try:
-        # 创建一个最小的测试命令
+        # Create a minimal test command
         proc = subprocess.run(
             [tshark_path, "-T", "json", "-c", "0"],
             capture_output=True,
@@ -199,47 +199,47 @@ def check_json_output(tshark_path: str) -> Dict[str, any]:
             timeout=10,
         )
 
-        # 即使没有输入文件，tshark也应该能够识别JSON格式选项
-        # 返回码可能不是0，但不应该有格式错误
+        # Even without input file, tshark should recognize JSON format option
+        # Return code may not be 0, but there should be no format errors
         if "json" in proc.stderr.lower() and "invalid" in proc.stderr.lower():
-            result["error"] = "JSON输出格式不被支持"
+            result["error"] = "JSON output format not supported"
         else:
             result["success"] = True
 
     except subprocess.TimeoutExpired:
-        result["error"] = "JSON输出测试超时"
+        result["error"] = "JSON output test timeout"
     except Exception as e:
-        result["error"] = f"JSON输出测试失败: {e}"
+        result["error"] = f"JSON output test failed: {e}"
 
     return result
 
 
 def print_results(results: Dict[str, any], verbose: bool = False):
-    """打印检查结果"""
+    """Print check results"""
     print("=" * 60)
-    print("PktMask TShark 依赖检查结果")
+    print("PktMask TShark Dependency Check Results")
     print("=" * 60)
 
-    # 可执行文件检查
+    # Executable check
     if results["executable"]["found"]:
-        print(f"✅ TShark可执行文件: {results['executable']['path']}")
+        print(f"✅ TShark executable: {results['executable']['path']}")
     else:
-        print("❌ TShark可执行文件: 未找到")
-        print("   请安装Wireshark或配置正确的路径")
+        print("❌ TShark executable: Not found")
+        print("   Please install Wireshark or configure correct path")
         return
 
-    # 版本检查
+    # Version check
     version_result = results["version"]
     if version_result["success"]:
         version_str = ".".join(map(str, version_result["version"]))
         min_version_str = ".".join(map(str, MIN_TSHARK_VERSION))
 
         if version_result["meets_requirement"]:
-            print(f"✅ TShark版本: {version_str} (>= {min_version_str})")
+            print(f"✅ TShark version: {version_str} (>= {min_version_str})")
         else:
-            print(f"❌ TShark版本: {version_str} (需要 >= {min_version_str})")
+            print(f"❌ TShark version: {version_str} (requires >= {min_version_str})")
     else:
-        print(f"❌ 版本检查失败: {version_result['error']}")
+        print(f"❌ Version check failed: {version_result['error']}")
 
     # 协议支持检查
     protocol_result = results["protocols"]
@@ -296,16 +296,16 @@ def print_results(results: Dict[str, any], verbose: bool = False):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="检查TShark依赖是否满足PktMask要求",
+        description="Check if TShark dependencies meet PktMask requirements",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--tshark-path", help="自定义tshark可执行文件路径")
-    parser.add_argument("--verbose", "-v", action="store_true", help="显示详细信息")
-    parser.add_argument("--json-output", action="store_true", help="以JSON格式输出结果")
+    parser.add_argument("--tshark-path", help="Custom tshark executable path")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed information")
+    parser.add_argument("--json-output", action="store_true", help="Output results in JSON format")
 
     args = parser.parse_args()
 
-    # 查找tshark可执行文件
+    # Find tshark executable
     tshark_path = find_tshark_executable(args.tshark_path)
 
     results = {"executable": {"found": tshark_path is not None, "path": tshark_path}}

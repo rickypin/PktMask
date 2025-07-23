@@ -192,7 +192,7 @@ class ProcessorRegistry:
 
     @classmethod
     def unregister_processor(cls, name: str) -> bool:
-        """注销处理器 (主要用于测试)"""
+        """Unregister processor (mainly for testing)"""
         if name in cls._processors:
             del cls._processors[name]
             if name in cls._default_configs:
@@ -202,14 +202,14 @@ class ProcessorRegistry:
 
     @classmethod
     def clear_registry(cls):
-        """清空注册表 (主要用于测试)"""
+        """Clear registry (mainly for testing)"""
         cls._processors.clear()
         cls._default_configs.clear()
         cls._loaded = False
 
     @classmethod
     def _get_standard_name(cls, name: str) -> str:
-        """获取标准化处理器名称（处理别名映射）"""
+        """Get standardized processor name (handle alias mapping)"""
         alias_mapping = {
             "anon_ip": "anonymize_ips",
             "dedup_packet": "remove_dupes",
@@ -219,15 +219,15 @@ class ProcessorRegistry:
 
     @classmethod
     def _get_mask_payload_config(cls) -> Dict[str, Any]:
-        """获取载荷掩码处理器的默认配置"""
-        # 获取应用配置中的 TShark 路径
+        """Get default configuration for payload masking processor"""
+        # Get TShark path from application configuration
         try:
             from pktmask.config.settings import get_app_config
 
             app_config = get_app_config()
             tshark_path = app_config.tools.tshark.custom_executable
         except Exception:
-            # 如果获取配置失败，使用默认值
+            # Use default value if configuration retrieval fails
             tshark_path = "tshark"
 
         return {
@@ -236,7 +236,7 @@ class ProcessorRegistry:
             "marker_config": {
                 "tshark_path": tshark_path,
                 "preserve": {
-                    "application_data": False,  # 确保 TLS-23 ApplicationData 被掩码
+                    "application_data": False,  # Ensure TLS-23 ApplicationData is masked
                     "handshake": True,
                     "alert": True,
                     "change_cipher_spec": True,
@@ -248,11 +248,11 @@ class ProcessorRegistry:
 
     @classmethod
     def _get_ip_anonymization_config(cls) -> Dict[str, Any]:
-        """获取IP匿名化处理器的默认配置"""
+        """Get default configuration for IP anonymization processor"""
         return {
-            "method": "prefix_preserving",  # 默认匿名化方法
-            "ipv4_prefix": 24,  # IPv4 前缀长度
-            "ipv6_prefix": 64,  # IPv6 前缀长度
+            "method": "prefix_preserving",  # Default anonymization method
+            "ipv4_prefix": 24,  # IPv4 prefix length
+            "ipv6_prefix": 64,  # IPv6 prefix length
             "enabled": True,
             "name": "ip_anonymization",
             "priority": 0,
@@ -260,9 +260,9 @@ class ProcessorRegistry:
 
     @classmethod
     def _get_deduplication_config(cls) -> Dict[str, Any]:
-        """获取去重处理器的默认配置"""
+        """Get default configuration for deduplication processor"""
         return {
-            "algorithm": "md5",  # 默认哈希算法（与原实现保持一致）
+            "algorithm": "md5",  # Default hash algorithm (consistent with original implementation)
             "enabled": True,
             "name": "deduplication",
             "priority": 0,
@@ -270,6 +270,6 @@ class ProcessorRegistry:
 
     @classmethod
     def is_enhanced_mode_enabled(cls) -> bool:
-        """检查是否启用了增强模式 - 基于双模块架构"""
-        # 双模块架构(NewMaskPayloadStage)始终为增强模式
+        """Check if enhanced mode is enabled - based on dual-module architecture"""
+        # Dual-module architecture (NewMaskPayloadStage) is always enhanced mode
         return True
