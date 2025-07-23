@@ -24,7 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "scapy>=2.5.0,<3.0.0",  # 统一版本约束，兼容子包要求
+    "scapy>=2.5.0,<3.0.0",  # 统一版本约束，兼容子packets要求
     "PyQt6>=6.4.0",
     "PyQt6-Qt6>=6.4.0",
     "PyQt6_sip>=13.0.0",
@@ -43,7 +43,7 @@ dependencies = [
     "typer>=0.9.0",
     "fastapi>=0.110.0",
     "uvicorn>=0.27.0",
-    "typing-extensions>=4.0.0;python_version<'3.10'"  # 从子包合并
+    "typing-extensions>=4.0.0;python_version<'3.10'"  # 从子packets合并
 ]
 
 [project.optional-dependencies]
@@ -62,7 +62,7 @@ dev = [
     "mypy>=0.950",
     "pytest-mock>=3.0.0",
     "pytest-env",
-    "isort>=5.0.0"  # 从子包合并
+    "isort>=5.0.0"  # 从子packets合并
 ]
 build = [
     "pyinstaller",
@@ -70,7 +70,7 @@ build = [
     "altgraph",
     "macholib"
 ]
-performance = [  # 新增性能监控组，从子包合并
+performance = [  # 新增性能监控组，从子packets合并
     "psutil>=5.9.0",
     "memory-profiler>=0.60.0"
 ]

@@ -309,7 +309,7 @@ class ErrorRecoveryHandler:
         self.register_recovery_handler(ErrorCategory.OUTPUT_ERROR, file_error_recovery)
 
     def _write_error_log_file(self, error_info: ErrorInfo):
-        """写入错误日志文件"""
+        """Write error log file"""
         try:
             log_file = Path(self.error_log_file)
             log_file.parent.mkdir(parents=True, exist_ok=True)

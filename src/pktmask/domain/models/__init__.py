@@ -1,7 +1,7 @@
 """
-数据模型模块
+Data model module
 
-包含所有核心数据传输对象和业务模型。
+Contains all core data transfer objects and business models。
 """
 
 from .file_processing_data import (
@@ -55,21 +55,21 @@ from .step_result_data import (
 )
 
 __all__ = [
-    # 文件处理数据
+    # File processing data
     "FileProcessingData",
     "FileInfo",
     "ProcessingProgress",
     "ProcessingContext",
     "OutputInfo",
     "ProcessingError",
-    # 统计数据
+    # Statistics data
     "StatisticsData",
     "ProcessingMetrics",
     "TimingData",
     "FileProcessingResults",
     "IPMappingData",
     "ProcessingState",
-    # 管道事件数据
+    # Pipeline event data
     "PipelineEventData",
     "BaseEventData",
     "PipelineStartData",
@@ -84,7 +84,7 @@ __all__ = [
     "PacketsScannedData",
     "LogEventData",
     "ErrorEventData",
-    # 步骤结果数据
+    # Step result data
     "StepResultData",
     "BaseStepResult",
     "IPAnonymizationResult",
@@ -92,7 +92,7 @@ __all__ = [
     "TrimmingResult",
     "CustomStepResult",
     "FileStepResults",
-    # 报告数据
+    # Report data
     "ReportData",
     "ReportSection",
     "ProcessingSummary",

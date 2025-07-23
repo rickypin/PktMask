@@ -1,7 +1,7 @@
 """
-管道事件数据模型
+Pipeline event data models
 
-定义管道处理过程中各种事件的数据结构。
+Defines data structures for various events during pipeline processing.
 """
 
 from datetime import datetime
@@ -14,7 +14,7 @@ from ...core.events import PipelineEvents
 
 
 class EventSeverity(str, Enum):
-    """事件严重程度"""
+    """Event severity levels"""
 
     DEBUG = "debug"
     INFO = "info"
@@ -24,70 +24,70 @@ class EventSeverity(str, Enum):
 
 
 class BaseEventData(BaseModel):
-    """基础事件数据"""
+    """Base event data"""
 
-    event_type: PipelineEvents = Field(..., description="事件类型")
-    timestamp: datetime = Field(default_factory=datetime.now, description="事件时间戳")
+    event_type: PipelineEvents = Field(..., description="Event type")
+    timestamp: datetime = Field(default_factory=datetime.now, description="Event timestamp")
     severity: EventSeverity = Field(
-        default=EventSeverity.INFO, description="事件严重程度"
+        default=EventSeverity.INFO, description="Event severity level"
     )
-    message: Optional[str] = Field(default=None, description="事件消息")
+    message: Optional[str] = Field(default=None, description="Event message")
 
     model_config = {"use_enum_values": True}
 
 
 class PipelineStartData(BaseEventData):
-    """管道开始事件数据"""
+    """Pipeline start event data"""
 
-    total_subdirs: int = Field(default=0, ge=0, description="总子目录数")
-    total_files: int = Field(default=0, ge=0, description="总文件数")
-    root_path: str = Field(..., description="根路径")
-    output_dir: str = Field(..., description="输出目录")
+    total_subdirs: int = Field(default=0, ge=0, description="Total number of subdirectories")
+    total_files: int = Field(default=0, ge=0, description="Total number of files")
+    root_path: str = Field(..., description="Root path")
+    output_dir: str = Field(..., description="Output directory")
 
     def __init__(self, **data):
         super().__init__(event_type=PipelineEvents.PIPELINE_START, **data)
 
 
 class PipelineEndData(BaseEventData):
-    """管道结束事件数据"""
+    """Pipeline end event data"""
 
-    success: bool = Field(default=True, description="是否成功完成")
-    files_processed: int = Field(default=0, ge=0, description="已处理文件数")
-    errors_count: int = Field(default=0, ge=0, description="错误数量")
-    duration_ms: int = Field(default=0, ge=0, description="处理耗时(毫秒)")
+    success: bool = Field(default=True, description="Whether completed successfully")
+    files_processed: int = Field(default=0, ge=0, description="Number of files processed")
+    errors_count: int = Field(default=0, ge=0, description="Number of errors")
+    duration_ms: int = Field(default=0, ge=0, description="Processing duration (milliseconds)")
 
     def __init__(self, **data):
         super().__init__(event_type=PipelineEvents.PIPELINE_END, **data)
 
 
 class SubdirStartData(BaseEventData):
-    """子目录开始事件数据"""
+    """Subdirectory start event data"""
 
-    name: str = Field(..., description="子目录名称")
-    path: str = Field(..., description="子目录路径")
-    file_count: int = Field(default=0, ge=0, description="文件数量")
+    name: str = Field(..., description="Subdirectory name")
+    path: str = Field(..., description="Subdirectory path")
+    file_count: int = Field(default=0, ge=0, description="Number of files")
 
     def __init__(self, **data):
         super().__init__(event_type=PipelineEvents.SUBDIR_START, **data)
 
 
 class SubdirEndData(BaseEventData):
-    """子目录结束事件数据"""
+    """Subdirectory end event data"""
 
-    name: str = Field(..., description="子目录名称")
-    files_processed: int = Field(default=0, ge=0, description="已处理文件数")
-    success: bool = Field(default=True, description="是否成功完成")
+    name: str = Field(..., description="Subdirectory name")
+    files_processed: int = Field(default=0, ge=0, description="Number of files processed")
+    success: bool = Field(default=True, description="Whether completed successfully")
 
     def __init__(self, **data):
         super().__init__(event_type=PipelineEvents.SUBDIR_END, **data)
 
 
 class FileStartData(BaseEventData):
-    """文件开始事件数据"""
+    """File start event data"""
 
-    path: str = Field(..., description="文件路径")
-    filename: str = Field(..., description="文件名")
-    size_bytes: Optional[int] = Field(default=None, ge=0, description="文件大小(字节)")
+    path: str = Field(..., description="File path")
+    filename: str = Field(..., description="Filename")
+    size_bytes: Optional[int] = Field(default=None, ge=0, description="File size (bytes)")
 
     def __init__(self, **data):
         super().__init__(event_type=PipelineEvents.FILE_START, **data)
@@ -96,13 +96,13 @@ class FileStartData(BaseEventData):
 
 
 class FileEndData(BaseEventData):
-    """文件结束事件数据"""
+    """File end event data"""
 
-    path: str = Field(..., description="文件路径")
-    filename: str = Field(..., description="文件名")
-    success: bool = Field(default=True, description="是否成功处理")
-    output_filename: Optional[str] = Field(default=None, description="输出文件名")
-    packets_processed: int = Field(default=0, ge=0, description="处理的包数")
+    path: str = Field(..., description="File path")
+    filename: str = Field(..., description="Filename")
+    success: bool = Field(default=True, description="Whether processed successfully")
+    output_filename: Optional[str] = Field(default=None, description="Output filename")
+    packets_processed: int = Field(default=0, ge=0, description="Number of packets processed")
 
     def __init__(self, **data):
         super().__init__(event_type=PipelineEvents.FILE_END, **data)
@@ -111,57 +111,57 @@ class FileEndData(BaseEventData):
 
 
 class StepStartData(BaseEventData):
-    """步骤开始事件数据"""
+    """Step start event data"""
 
-    step_name: str = Field(..., description="步骤名称")
-    step_type: str = Field(..., description="步骤类型")
-    filename: str = Field(..., description="正在处理的文件名")
+    step_name: str = Field(..., description="Step name")
+    step_type: str = Field(..., description="Step type")
+    filename: str = Field(..., description="Filename being processed")
 
     def __init__(self, **data):
         super().__init__(event_type=PipelineEvents.STEP_START, **data)
 
 
 class StepEndData(BaseEventData):
-    """步骤结束事件数据"""
+    """Step end event data"""
 
-    step_name: str = Field(..., description="步骤名称")
-    step_type: str = Field(..., description="步骤类型")
-    filename: str = Field(..., description="已处理的文件名")
-    success: bool = Field(default=True, description="是否成功完成")
-    duration_ms: int = Field(default=0, ge=0, description="步骤耗时(毫秒)")
+    step_name: str = Field(..., description="Step name")
+    step_type: str = Field(..., description="Step type")
+    filename: str = Field(..., description="Processed filename")
+    success: bool = Field(default=True, description="Whether completed successfully")
+    duration_ms: int = Field(default=0, ge=0, description="Step duration (milliseconds)")
 
     def __init__(self, **data):
         super().__init__(event_type=PipelineEvents.STEP_END, **data)
 
 
 class StepSummaryData(BaseEventData):
-    """步骤摘要事件数据"""
+    """Step summary event data"""
 
-    step_name: str = Field(..., description="步骤名称")
-    step_type: str = Field(..., description="步骤类型")
-    filename: str = Field(..., description="文件名")
-    result: Dict[str, Any] = Field(default_factory=dict, description="步骤结果数据")
+    step_name: str = Field(..., description="Step name")
+    step_type: str = Field(..., description="Step type")
+    filename: str = Field(..., description="Filename")
+    result: Dict[str, Any] = Field(default_factory=dict, description="Step result data")
 
     def __init__(self, **data):
         super().__init__(event_type=PipelineEvents.STEP_SUMMARY, **data)
 
 
 class PacketsScannedData(BaseEventData):
-    """包扫描事件数据"""
+    """Packets scanned event data"""
 
-    count: int = Field(..., ge=0, description="扫描的包数量")
-    filename: Optional[str] = Field(default=None, description="文件名")
+    count: int = Field(..., ge=0, description="Number of packets scanned")
+    filename: Optional[str] = Field(default=None, description="Filename")
 
     def __init__(self, **data):
         super().__init__(event_type=PipelineEvents.PACKETS_SCANNED, **data)
 
 
 class LogEventData(BaseEventData):
-    """日志事件数据"""
+    """Log event data"""
 
-    log_message: str = Field(..., description="日志消息")
-    log_level: str = Field(default="INFO", description="日志级别")
-    source: Optional[str] = Field(default=None, description="日志来源")
+    log_message: str = Field(..., description="Log message")
+    log_level: str = Field(default="INFO", description="Log level")
+    source: Optional[str] = Field(default=None, description="Log source")
 
     def __init__(self, **data):
         super().__init__(event_type=PipelineEvents.LOG, **data)
@@ -170,12 +170,12 @@ class LogEventData(BaseEventData):
 
 
 class ErrorEventData(BaseEventData):
-    """错误事件数据"""
+    """Error event data"""
 
-    error_message: str = Field(..., description="错误消息")
-    error_code: Optional[str] = Field(default=None, description="错误代码")
-    traceback: Optional[str] = Field(default=None, description="错误堆栈")
-    context: Dict[str, Any] = Field(default_factory=dict, description="错误上下文")
+    error_message: str = Field(..., description="Error message")
+    error_code: Optional[str] = Field(default=None, description="Error code")
+    traceback: Optional[str] = Field(default=None, description="Error traceback")
+    context: Dict[str, Any] = Field(default_factory=dict, description="Error context")
 
     def __init__(self, **data):
         super().__init__(
@@ -185,7 +185,7 @@ class ErrorEventData(BaseEventData):
             self.message = data["error_message"]
 
 
-# 事件数据类型映射
+# Event data type mapping
 EVENT_DATA_MAPPING = {
     PipelineEvents.PIPELINE_START: PipelineStartData,
     PipelineEvents.PIPELINE_STARTED: PipelineStartData,
@@ -209,9 +209,9 @@ EVENT_DATA_MAPPING = {
 
 
 class PipelineEventData(BaseModel):
-    """管道事件数据的通用包装器"""
+    """Universal wrapper for pipeline event data"""
 
-    event_type: PipelineEvents = Field(..., description="事件类型")
+    event_type: PipelineEvents = Field(..., description="Event type")
     data: Union[
         PipelineStartData,
         PipelineEndData,
@@ -226,16 +226,16 @@ class PipelineEventData(BaseModel):
         LogEventData,
         ErrorEventData,
         BaseEventData,
-    ] = Field(..., description="事件数据")
+    ] = Field(..., description="Event data")
 
     @field_validator("data", mode="before")
     @classmethod
     def validate_event_data(cls, v, info):
-        """验证事件数据类型"""
+        """Validate event data type"""
         event_type = info.data.get("event_type") if info.data else None
 
         if isinstance(v, dict):
-            # 如果是字典，尝试转换为相应的数据类型
+            # If it's a dictionary, try to convert to appropriate data type
             data_class = EVENT_DATA_MAPPING.get(event_type, BaseEventData)
             return data_class(**v)
 
@@ -244,7 +244,7 @@ class PipelineEventData(BaseModel):
     model_config = {"use_enum_values": True}
 
     def to_legacy_dict(self) -> dict:
-        """转换为遗留的字典格式，用于向后兼容"""
+        """Convert to legacy dictionary format for backward compatibility"""
         result = self.data.model_dump()
         result["type"] = (
             self.event_type.name
@@ -257,7 +257,7 @@ class PipelineEventData(BaseModel):
     def from_legacy_dict(
         cls, event_type: PipelineEvents, data: dict
     ) -> "PipelineEventData":
-        """从遗留的字典格式创建事件数据"""
+        """Create event data from legacy dictionary format"""
         data_class = EVENT_DATA_MAPPING.get(event_type, BaseEventData)
         event_data = data_class(event_type=event_type, **data)
         return cls(event_type=event_type, data=event_data)

@@ -48,11 +48,11 @@ class TestRunner:
         """
         cmd = self.base_cmd.copy()
 
-        # 添加测试类型过滤
+        # Add test type filtering
         if test_type != "all":
             cmd.extend(["-m", test_type])
 
-        # 添加覆盖率选项
+        # Add coverage options
         if coverage:
             cmd.extend(
                 [
@@ -62,7 +62,7 @@ class TestRunner:
                 ]
             )
 
-        # 添加HTML报告
+        # 添加HTMLReport
         if html_report:
             cmd.extend(
                 ["--html=output/reports/test_report.html", "--self-contained-html"]

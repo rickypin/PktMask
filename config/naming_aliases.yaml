@@ -32,7 +32,7 @@ step_name_mapping:
     canonical: "Payload Masking"
     description: "Payload masking processing"
 
-# 处理器类型映射
+# 处理器类型mapping
 processor_type_mapping:
   # 去重处理器
   dedup:
@@ -49,7 +49,7 @@ processor_type_mapping:
     class_name: "MaskingProcessor"
     legacy_aliases: ["MaskProcessor"]
 
-# Stage类型映射
+# Stage类型mapping
 stage_type_mapping:
   # 去重Stage
   dedup:
@@ -66,7 +66,7 @@ stage_type_mapping:
     class_name: "MaskStage"
     legacy_aliases: ["MaskPayloadStage"]
 
-# 配置键映射（使用标准GUI命名）
+# 配置键mapping（使用标准GUI命名）
 config_key_mapping:
   # Pipeline配置键
   remove_dupes:
@@ -83,7 +83,7 @@ config_key_mapping:
     enabled_key: "enabled"
     mode_key: "mode"
 
-# 文件后缀映射（使用标准命名）
+# 文件后缀mapping（使用标准命名）
 file_suffix_mapping:
   remove_dupes: "-RemoveDupes"
   anonymize_ips: "-AnonymizeIPs"

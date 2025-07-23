@@ -270,23 +270,23 @@ class AppConfig:
             return cls.default()
 
     def save(self, config_path: Optional[Union[str, Path]] = None) -> bool:
-        """保存配置文件"""
+        """Save configuration file"""
         if config_path is None:
             config_path = self.get_default_config_path()
 
         config_path = Path(config_path)
 
         try:
-            # 确保目录存在
+            # Ensure directory exists
             config_path.parent.mkdir(parents=True, exist_ok=True)
 
-            # 更新时间戳
+            # Update timestamp
             self.updated_at = datetime.now().isoformat()
 
-            # 转换为字典
+            # Convert to dictionary
             data = asdict(self)
 
-            # 保存文件
+            # Save file
             with open(config_path, "w", encoding="utf-8") as f:
                 if config_path.suffix.lower() == ".json":
                     json.dump(data, f, indent=2, ensure_ascii=False)
@@ -303,19 +303,19 @@ class AppConfig:
 
     @classmethod
     def default(cls) -> "AppConfig":
-        """获取默认配置"""
+        """Get default configuration"""
         return cls()
 
     @staticmethod
     def get_default_config_path() -> Path:
-        """获取默认配置文件路径"""
+        """Get default configuration file path"""
         home_dir = Path.home()
         config_dir = home_dir / ".pktmask"
         return config_dir / "config.yaml"
 
     @staticmethod
     def get_legacy_config_paths() -> list:
-        """获取旧版配置文件路径列表"""
+        """Get list of legacy configuration file paths"""
         home_dir = Path.home()
         config_dir = home_dir / ".pktmask"
 
@@ -445,34 +445,34 @@ class AppConfig:
             self.ui.last_output_dir = str(Path(output_dir).resolve())
 
     def migrate_from_legacy(self) -> bool:
-        """从旧版配置文件迁移"""
+        """Migrate from legacy configuration files"""
         for legacy_path in self.get_legacy_config_paths():
             if legacy_path.exists():
                 try:
                     legacy_config = self.load(legacy_path)
 
-                    # 合并配置（保留新配置的结构）
+                    # Merge configuration (preserve new configuration structure)
                     self.ui.last_input_dir = legacy_config.ui.last_input_dir
                     self.ui.last_output_dir = legacy_config.ui.last_output_dir
 
-                    # 保存迁移后的配置
+                    # Save migrated configuration
                     if self.save():
-                        print(f"成功从 {legacy_path} 迁移配置")
+                        print(f"Successfully migrated configuration from {legacy_path}")
                         return True
 
                 except Exception as e:
-                    print(f"从 {legacy_path} 迁移配置失败: {e}")
+                    print(f"Failed to migrate configuration from {legacy_path}: {e}")
                     continue
 
         return False
 
 
-# 全局配置实例
+# Global configuration instance
 _app_config: Optional[AppConfig] = None
 
 
 def get_app_config() -> AppConfig:
-    """获取全局应用配置实例"""
+    """Get global application configuration instance"""
     global _app_config
     if _app_config is None:
         _app_config = AppConfig.load()
@@ -480,7 +480,7 @@ def get_app_config() -> AppConfig:
 
 
 def reload_app_config():
-    """重新加载配置"""
+    """Reload configuration"""
     global _app_config
     _app_config = AppConfig.load()
 

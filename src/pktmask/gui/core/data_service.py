@@ -240,16 +240,16 @@ class DataService:
         return info
 
     def add_log_message(self, message: str):
-        """添加日志消息"""
+        """Add log message"""
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_message = f"[{timestamp}] {message}"
         self.log_messages.append(formatted_message)
 
-        # 更新UI显示
+        # Update UI display
         if hasattr(self.main_window, "log_text"):
             self.main_window.log_text.append(formatted_message)
 
-            # 自动滚动到底部
+            # Auto-scroll to bottom
             cursor = self.main_window.log_text.textCursor()
             cursor.movePosition(cursor.MoveOperation.End)
             self.main_window.log_text.setTextCursor(cursor)

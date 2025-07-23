@@ -1,7 +1,7 @@
 """
-统计数据模型
+Statistics data模型
 
-定义处理过程中的各种统计数据结构。
+定义处理过程中的各种Statistics data结构。
 """
 
 from datetime import datetime
@@ -11,59 +11,59 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class PacketStatistics(BaseModel):
-    """数据包统计信息"""
+    """数据Packet statistics信息"""
 
-    total_packets: int = Field(default=0, ge=0, description="总包数")
-    processed_packets: int = Field(default=0, ge=0, description="已处理包数")
-    filtered_packets: int = Field(default=0, ge=0, description="过滤的包数")
-    dropped_packets: int = Field(default=0, ge=0, description="丢弃的包数")
-    error_packets: int = Field(default=0, ge=0, description="错误包数")
+    total_packets: int = Field(default=0, ge=0, description="Total packets")
+    processed_packets: int = Field(default=0, ge=0, description="Processed packets")
+    filtered_packets: int = Field(default=0, ge=0, description="Filtered packets")
+    dropped_packets: int = Field(default=0, ge=0, description="Dropped packets")
+    error_packets: int = Field(default=0, ge=0, description="Error packets")
 
     def get_success_rate(self) -> float:
-        """获取成功处理率"""
+        """Get success processing rate"""
         if self.total_packets == 0:
             return 0.0
         return (self.processed_packets / self.total_packets) * 100.0
 
     def get_filter_rate(self) -> float:
-        """获取过滤率"""
+        """Get filter rate"""
         if self.total_packets == 0:
             return 0.0
         return (self.filtered_packets / self.total_packets) * 100.0
 
 
 class ProcessingMetrics(BaseModel):
-    """处理指标数据"""
+    """Processing metrics data"""
 
-    files_processed: int = Field(default=0, ge=0, description="已处理文件数")
-    total_files_to_process: int = Field(default=0, ge=0, description="总文件数")
-    packets_processed: int = Field(default=0, ge=0, description="已处理包数")
+    files_processed: int = Field(default=0, ge=0, description="Processed files")
+    total_files_to_process: int = Field(default=0, ge=0, description="Total files")
+    packets_processed: int = Field(default=0, ge=0, description="Processed packets")
 
     @field_validator("files_processed")
     @classmethod
     def validate_files_processed(cls, v, info):
         total = info.data.get("total_files_to_process", 0) if info.data else 0
         if total > 0 and v > total:
-            raise ValueError(f"已处理文件数({v})不能超过总文件数({total})")
+            raise ValueError(f"Processed files({v})不能超过Total files({total})")
         return v
 
     def get_completion_rate(self) -> float:
-        """获取完成率"""
+        """Get completion rate"""
         if self.total_files_to_process == 0:
             return 0.0
         return (self.files_processed / self.total_files_to_process) * 100.0
 
 
 class TimingData(BaseModel):
-    """时间统计数据"""
+    """时间Statistics data"""
 
-    start_time: Optional[datetime] = Field(default=None, description="开始时间")
-    processing_time_ms: int = Field(default=0, ge=0, description="处理耗时(毫秒)")
+    start_time: Optional[datetime] = Field(default=None, description="Start time")
+    processing_time_ms: int = Field(default=0, ge=0, description="Processing duration(milliseconds)")
 
     model_config = {"arbitrary_types_allowed": True}
 
     def get_elapsed_time_string(self) -> str:
-        """获取格式化的耗时字符串"""
+        """Get formatted duration string"""
         if self.processing_time_ms == 0:
             return "00:00.00"
 
@@ -73,7 +73,7 @@ class TimingData(BaseModel):
         return f"{minutes:02d}:{seconds:05.2f}"
 
     def get_processing_speed(self, packets_count: int) -> float:
-        """获取处理速度（包/秒）"""
+        """Get processing speed（packets/seconds）"""
         if self.processing_time_ms == 0 or packets_count == 0:
             return 0.0
 
@@ -82,86 +82,86 @@ class TimingData(BaseModel):
 
 
 class FileProcessingResults(BaseModel):
-    """文件处理结果数据"""
+    """File processing result data"""
 
-    filename: str = Field(..., description="文件名")
-    steps: Dict[str, Any] = Field(default_factory=dict, description="步骤处理结果")
-    timestamp: Optional[str] = Field(default=None, description="处理时间戳")
-    status: str = Field(default="pending", description="处理状态")
+    filename: str = Field(..., description="Filename")
+    steps: Dict[str, Any] = Field(default_factory=dict, description="Step processing results")
+    timestamp: Optional[str] = Field(default=None, description="Processing timestamp")
+    status: str = Field(default="pending", description="Processing status")
 
     @field_validator("status")
     @classmethod
     def validate_status(cls, v):
         valid_statuses = ["pending", "processing", "completed", "failed", "skipped"]
         if v not in valid_statuses:
-            raise ValueError(f"无效的状态值: {v}. 有效值: {valid_statuses}")
+            raise ValueError(f"Invalid status value: {v}. Valid values: {valid_statuses}")
         return v
 
 
 class IPMappingData(BaseModel):
-    """IP映射数据"""
+    """IPMapping data"""
 
     global_mappings: Dict[str, str] = Field(
-        default_factory=dict, description="全局IP映射"
+        default_factory=dict, description="GlobalIPmapping"
     )
     reports_by_subdir: Dict[str, Any] = Field(
-        default_factory=dict, description="按子目录的报告"
+        default_factory=dict, description="Reports by subdirectory"
     )
 
     def get_mapping_count(self) -> int:
-        """获取映射数量"""
+        """获取mapping数量"""
         return len(self.global_mappings)
 
     def add_mappings(self, new_mappings: Dict[str, str]):
-        """添加新的映射"""
+        """添加新的mapping"""
         self.global_mappings.update(new_mappings)
 
     def get_report_for_subdir(self, subdir: str) -> Optional[Any]:
-        """获取指定子目录的报告"""
+        """Get report for specified subdirectory"""
         return self.reports_by_subdir.get(subdir)
 
 
 class ProcessingState(BaseModel):
-    """处理状态数据"""
+    """Processing status数据"""
 
     current_processing_file: Optional[str] = Field(
-        default=None, description="当前处理文件"
+        default=None, description="Current processing file"
     )
     subdirs_files_counted: Set[str] = Field(
-        default_factory=set, description="已计数文件的子目录"
+        default_factory=set, description="Subdirectories with counted files"
     )
     subdirs_packets_counted: Set[str] = Field(
-        default_factory=set, description="已计数包的子目录"
+        default_factory=set, description="已计数packets的子目录"
     )
     printed_summary_headers: Set[str] = Field(
-        default_factory=set, description="已打印摘要头的集合"
+        default_factory=set, description="Set of printed summary headers"
     )
 
     model_config = {"arbitrary_types_allowed": True}
 
 
 class StatisticsData(BaseModel):
-    """完整的统计数据模型"""
+    """完整的Statistics data模型"""
 
     metrics: ProcessingMetrics = Field(
-        default_factory=ProcessingMetrics, description="处理指标"
+        default_factory=ProcessingMetrics, description="Processing metrics"
     )
-    timing: TimingData = Field(default_factory=TimingData, description="时间统计")
+    timing: TimingData = Field(default_factory=TimingData, description="Time statistics")
     file_results: Dict[str, FileProcessingResults] = Field(
-        default_factory=dict, description="文件结果"
+        default_factory=dict, description="File results"
     )
     step_results: Dict[str, Dict[str, Any]] = Field(
-        default_factory=dict, description="步骤结果"
+        default_factory=dict, description="Step results"
     )
     ip_mapping: IPMappingData = Field(
-        default_factory=IPMappingData, description="IP映射数据"
+        default_factory=IPMappingData, description="IPMapping data"
     )
     state: ProcessingState = Field(
-        default_factory=ProcessingState, description="处理状态"
+        default_factory=ProcessingState, description="Processing status"
     )
 
     def get_dashboard_summary(self) -> Dict[str, Any]:
-        """获取仪表盘摘要数据"""
+        """Get dashboard summary data"""
         return {
             "files_processed": self.metrics.files_processed,
             "total_files": self.metrics.total_files_to_process,
@@ -175,7 +175,7 @@ class StatisticsData(BaseModel):
         }
 
     def get_processing_summary(self) -> Dict[str, Any]:
-        """获取完整的处理摘要"""
+        """Get complete processing summary"""
         return {
             "files_processed": self.metrics.files_processed,
             "total_files": self.metrics.total_files_to_process,
@@ -191,7 +191,7 @@ class StatisticsData(BaseModel):
         }
 
     def reset_all(self):
-        """重置所有统计数据"""
+        """重置所有Statistics data"""
         self.metrics = ProcessingMetrics()
         self.timing = TimingData()
         self.file_results.clear()
@@ -200,7 +200,7 @@ class StatisticsData(BaseModel):
         self.state = ProcessingState()
 
     def is_processing_complete(self) -> bool:
-        """检查处理是否完成"""
+        """Check if processing is complete"""
         return (
             self.metrics.total_files_to_process > 0
             and self.metrics.files_processed >= self.metrics.total_files_to_process

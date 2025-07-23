@@ -1,7 +1,7 @@
 """
 Domain模块
 
-包含业务数据模型和适配器。
+packets含业务数据模型和适配器。
 """
 
 from .models import (

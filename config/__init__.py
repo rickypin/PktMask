@@ -1,7 +1,7 @@
 """
 PktMask 统一配置管理模块
 
-整合了应用配置、模板文件和项目配置，提供统一的配置访问接口。
+整合了应用配置、模板文件和Item配置，提供统一的配置访问接口。
 """
 
 # 为了保持向后兼容，重新导出原有的配置接口
@@ -40,7 +40,7 @@ __all__ = [
     "UISettings",
     "ProcessingSettings",
     "LoggingSettings",
-    # 全局配置管理
+    # Global配置管理
     "get_app_config",
     "reload_app_config",
     "save_app_config",

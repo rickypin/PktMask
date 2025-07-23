@@ -1,5 +1,5 @@
 """
-文件处理数据模型
+File processing data模型
 
 定义文件处理过程中的数据结构。
 """
@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class FileStatus(str, Enum):
-    """文件处理状态"""
+    """文件Processing status"""
 
     PENDING = "pending"
     PROCESSING = "processing"
@@ -31,9 +31,9 @@ class FileType(str, Enum):
 
 
 class FileInfo(BaseModel):
-    """文件基本信息"""
+    """文件Basic information"""
 
-    filename: str = Field(..., description="文件名")
+    filename: str = Field(..., description="Filename")
     file_path: str = Field(..., description="文件完整路径")
     file_type: FileType = Field(..., description="文件类型")
     size_bytes: int = Field(default=0, ge=0, description="文件大小(字节)")
@@ -45,7 +45,7 @@ class FileInfo(BaseModel):
     @field_validator("file_type", mode="before")
     @classmethod
     def determine_file_type(cls, v, info):
-        """根据文件名确定文件类型"""
+        """根据Filename确定文件类型"""
         if v != FileType.UNKNOWN:
             return v
 
@@ -102,8 +102,8 @@ class ProcessingProgress(BaseModel):
     current_step: Optional[str] = Field(default=None, description="当前处理步骤")
     steps_completed: int = Field(default=0, ge=0, description="已完成步骤数")
     total_steps: int = Field(default=0, ge=0, description="总步骤数")
-    packets_processed: int = Field(default=0, ge=0, description="已处理包数")
-    estimated_total_packets: int = Field(default=0, ge=0, description="估计总包数")
+    packets_processed: int = Field(default=0, ge=0, description="Processed packets")
+    estimated_total_packets: int = Field(default=0, ge=0, description="估计Total packets")
 
     def get_step_progress_percentage(self) -> float:
         """获取步骤进度百分比"""
@@ -112,7 +112,7 @@ class ProcessingProgress(BaseModel):
         return (self.steps_completed / self.total_steps) * 100.0
 
     def get_packet_progress_percentage(self) -> float:
-        """获取包处理进度百分比"""
+        """获取packets处理进度百分比"""
         if self.estimated_total_packets == 0:
             return 0.0
         return min(
@@ -128,11 +128,11 @@ class ProcessingContext(BaseModel):
     selected_steps: List[str] = Field(
         default_factory=list, description="选择的处理步骤"
     )
-    configuration: Dict[str, Any] = Field(default_factory=dict, description="处理配置")
+    configuration: Dict[str, Any] = Field(default_factory=dict, description="Processing configuration")
     worker_id: Optional[str] = Field(default=None, description="工作线程ID")
 
     def has_step(self, step_name: str) -> bool:
-        """检查是否包含指定步骤"""
+        """检查是否packets含指定步骤"""
         return step_name in self.selected_steps
 
     def get_config_value(self, key: str, default: Any = None) -> Any:
@@ -141,9 +141,9 @@ class ProcessingContext(BaseModel):
 
 
 class OutputInfo(BaseModel):
-    """输出文件信息"""
+    """Output file information"""
 
-    output_filename: Optional[str] = Field(default=None, description="输出文件名")
+    output_filename: Optional[str] = Field(default=None, description="输出Filename")
     output_path: Optional[str] = Field(default=None, description="输出文件路径")
     output_size_bytes: int = Field(default=0, ge=0, description="输出文件大小")
     intermediate_files: List[str] = Field(
@@ -163,7 +163,7 @@ class OutputInfo(BaseModel):
 
 
 class ProcessingError(BaseModel):
-    """处理错误信息"""
+    """处理Error information"""
 
     error_message: str = Field(..., description="错误消息")
     error_code: Optional[str] = Field(default=None, description="错误代码")
@@ -176,22 +176,22 @@ class ProcessingError(BaseModel):
 
 
 class FileProcessingData(BaseModel):
-    """完整的文件处理数据"""
+    """完整的File processing data"""
 
     file_info: FileInfo = Field(..., description="文件信息")
-    status: FileStatus = Field(default=FileStatus.PENDING, description="处理状态")
+    status: FileStatus = Field(default=FileStatus.PENDING, description="Processing status")
     context: ProcessingContext = Field(..., description="处理上下文")
     progress: ProcessingProgress = Field(
         default_factory=ProcessingProgress, description="处理进度"
     )
     output_info: OutputInfo = Field(default_factory=OutputInfo, description="输出信息")
 
-    # 时间信息
-    start_time: Optional[datetime] = Field(default=None, description="开始处理时间")
+    # Time information
+    start_time: Optional[datetime] = Field(default=None, description="Start processing时间")
     end_time: Optional[datetime] = Field(default=None, description="结束处理时间")
-    duration_ms: int = Field(default=0, ge=0, description="处理耗时(毫秒)")
+    duration_ms: int = Field(default=0, ge=0, description="Processing duration(milliseconds)")
 
-    # 错误信息
+    # Error information
     errors: List[ProcessingError] = Field(
         default_factory=list, description="处理错误列表"
     )
@@ -200,7 +200,7 @@ class FileProcessingData(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict, description="附加元数据")
 
     def start_processing(self):
-        """开始处理"""
+        """Start processing"""
         self.status = FileStatus.PROCESSING
         self.start_time = datetime.now()
 
@@ -228,7 +228,7 @@ class FileProcessingData(BaseModel):
         self.metadata["skip_reason"] = reason
 
     def add_error(self, error: ProcessingError):
-        """添加错误信息"""
+        """Add error information"""
         self.errors.append(error)
 
     def has_errors(self) -> bool:
@@ -236,15 +236,15 @@ class FileProcessingData(BaseModel):
         return len(self.errors) > 0
 
     def get_last_error(self) -> Optional[ProcessingError]:
-        """获取最后一个错误"""
+        """获取最后一errors"""
         return self.errors[-1] if self.errors else None
 
     def is_completed_successfully(self) -> bool:
-        """检查是否成功完成"""
+        """Check if completed successfully"""
         return self.status == FileStatus.COMPLETED and not self.has_errors()
 
     def get_duration_string(self) -> str:
-        """获取格式化的耗时字符串"""
+        """Get formatted duration string"""
         if self.duration_ms == 0:
             return "0ms"
 
@@ -260,7 +260,7 @@ class FileProcessingData(BaseModel):
         return f"{minutes}m{remaining_seconds:.2f}s"
 
     def get_summary(self) -> Dict[str, Any]:
-        """获取处理摘要"""
+        """Get processing summary"""
         return {
             "filename": self.file_info.filename,
             "status": self.status.value,

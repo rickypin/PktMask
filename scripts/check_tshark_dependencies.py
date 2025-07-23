@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-PktMask TShark 依赖检查脚本
+PktMask TShark Dependency Check Script
 
-此脚本用于验证系统中的tshark安装是否满足PktMask的要求。
-可以在部署前或故障排除时使用。
+This script is used to verify that the tshark installation in the system meets PktMask requirements.
+Can be used before deployment or during troubleshooting.
 
-使用方法:
+Usage:
     python scripts/check_tshark_dependencies.py
     python scripts/check_tshark_dependencies.py --tshark-path /custom/path/to/tshark
     python scripts/check_tshark_dependencies.py --verbose
@@ -20,10 +20,10 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-# PktMask要求的最低tshark版本
+# Minimum tshark version required by PktMask
 MIN_TSHARK_VERSION = (4, 2, 0)
 
-# 默认搜索路径
+# Default search paths
 DEFAULT_TSHARK_PATHS = [
     "/usr/bin/tshark",
     "/usr/local/bin/tshark",
@@ -33,10 +33,10 @@ DEFAULT_TSHARK_PATHS = [
     "/Applications/Wireshark.app/Contents/MacOS/tshark",
 ]
 
-# 必需的协议支持
+# Required protocol support
 REQUIRED_PROTOCOLS = ["tcp", "tls", "ssl", "ip", "ipv6"]
 
-# 必需的字段支持
+# Required field support
 REQUIRED_FIELDS = [
     "frame.number",
     "frame.protocols",
@@ -241,38 +241,38 @@ def print_results(results: Dict[str, any], verbose: bool = False):
     else:
         print(f"❌ Version check failed: {version_result['error']}")
 
-    # 协议支持检查
+    # Protocol support check
     protocol_result = results["protocols"]
     if protocol_result["success"]:
-        print(f"✅ 协议支持: 所有必需协议都支持")
+        print(f"✅ Protocol support: All required protocols supported")
         if verbose:
-            print(f"   支持的协议: {', '.join(protocol_result['supported_protocols'])}")
+            print(f"   Supported protocols: {', '.join(protocol_result['supported_protocols'])}")
     else:
-        print(f"❌ 协议支持: 缺少必需协议")
+        print(f"❌ Protocol support: Missing required protocols")
         if protocol_result["missing_protocols"]:
-            print(f"   缺少的协议: {', '.join(protocol_result['missing_protocols'])}")
+            print(f"   Missing protocols: {', '.join(protocol_result['missing_protocols'])}")
 
-    # 字段支持检查
+    # Field support check
     field_result = results["fields"]
     if field_result["success"]:
-        print(f"✅ 字段支持: 所有必需字段都支持")
+        print(f"✅ Field support: All required fields supported")
         if verbose:
-            print(f"   支持的字段数: {len(field_result['supported_fields'])}")
+            print(f"   Number of supported fields: {len(field_result['supported_fields'])}")
     else:
-        print(f"❌ 字段支持: 缺少必需字段")
+        print(f"❌ Field support: Missing required fields")
         if field_result["missing_fields"]:
-            print(f"   缺少的字段: {', '.join(field_result['missing_fields'][:5])}")
+            print(f"   Missing fields: {', '.join(field_result['missing_fields'][:5])}")
             if len(field_result["missing_fields"]) > 5:
-                print(f"   ... 还有 {len(field_result['missing_fields']) - 5} 个字段")
+                print(f"   ... and {len(field_result['missing_fields']) - 5} more fields")
 
-    # JSON输出检查
+    # JSON output check
     json_result = results["json"]
     if json_result["success"]:
-        print("✅ JSON输出: 支持")
+        print("✅ JSON output: Supported")
     else:
-        print(f"❌ JSON输出: {json_result['error']}")
+        print(f"❌ JSON output: {json_result['error']}")
 
-    # 总体结果
+    # Overall results
     print("-" * 60)
     all_passed = all(
         [
@@ -285,13 +285,13 @@ def print_results(results: Dict[str, any], verbose: bool = False):
     )
 
     if all_passed:
-        print("🎉 所有检查通过！TShark满足PktMask的要求。")
+        print("🎉 All checks passed! TShark meets PktMask requirements.")
     else:
-        print("⚠️  存在问题，请解决上述问题后重新检查。")
-        print("\n建议解决方案:")
-        print("1. 安装或升级Wireshark到最新版本")
-        print("2. 确保tshark在系统PATH中或使用--tshark-path指定路径")
-        print("3. 参考PktMask文档中的安装指南")
+        print("⚠️  Issues found, please resolve the above problems and check again.")
+        print("\nSuggested solutions:")
+        print("1. Install or upgrade Wireshark to the latest version")
+        print("2. Ensure tshark is in system PATH or use --tshark-path to specify path")
+        print("3. Refer to installation guide in PktMask documentation")
 
 
 def main():
@@ -317,19 +317,19 @@ def main():
             print_results(results, args.verbose)
         sys.exit(1)
 
-    # 执行各项检查
+    # Execute various checks
     results["version"] = check_tshark_version(tshark_path)
     results["protocols"] = check_protocol_support(tshark_path)
     results["fields"] = check_field_support(tshark_path)
     results["json"] = check_json_output(tshark_path)
 
-    # 输出结果
+    # Output results
     if args.json_output:
         print(json.dumps(results, indent=2))
     else:
         print_results(results, args.verbose)
 
-    # 设置退出码
+    # Set exit code
     all_passed = all(
         [
             results["executable"]["found"],

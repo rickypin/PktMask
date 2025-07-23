@@ -1,10 +1,10 @@
 """
-配置默认值和常量
+Configuration Default Values and Constants
 
-集中管理所有配置的默认值，便于维护和更新。
+Centralized management of all configuration default values for easy maintenance and updates.
 """
 
-# 用户界面默认值（使用标准GUI命名）
+# User interface default values (using standard GUI naming)
 DEFAULT_UI_CONFIG = {
     "window_width": 1200,
     "window_height": 800,
@@ -22,7 +22,7 @@ DEFAULT_UI_CONFIG = {
     "auto_scroll_logs": True,
 }
 
-# 处理参数默认值
+# Processing parameter default values
 DEFAULT_PROCESSING_CONFIG = {
     "chunk_size": 10,
     "max_retry_attempts": 3,
@@ -40,17 +40,17 @@ DEFAULT_PROCESSING_CONFIG = {
     "temp_dir_cleanup": True,
 }
 
-# 日志默认值
+# Logging default values
 DEFAULT_LOGGING_CONFIG = {
     "log_level": "INFO",
     "log_to_file": True,
     "log_file_max_size": 10 * 1024 * 1024,  # 10MB
     "log_backup_count": 5,
     "performance_logging": False,
-    "enable_protocol_parsing_logs": False,  # 默认关闭协议栈解析详细日志
+    "enable_protocol_parsing_logs": False,  # Default disable detailed protocol stack parsing logs
 }
 
-# 文件和路径常量
+# File and path constants
 CONFIG_CONSTANTS = {
     "config_dir_name": ".pktmask",
     "default_config_file": "config.yaml",
@@ -61,7 +61,7 @@ CONFIG_CONSTANTS = {
     "output_dir_name": "PktMask_Output",
 }
 
-# 验证约束
+# Validation constraints
 VALIDATION_CONSTRAINTS = {
     "min_window_width": 800,
     "min_window_height": 600,
@@ -81,7 +81,7 @@ VALIDATION_CONSTRAINTS = {
     "valid_output_formats": ["pcap", "pcapng"],
 }
 
-# 处理器默认配置（使用标准命名）
+# Processor default configuration (using standard naming)
 PROCESSOR_DEFAULTS = {
     "anonymize_ips": {
         "enabled": True,
@@ -103,7 +103,7 @@ PROCESSOR_DEFAULTS = {
     },
 }
 
-# 性能默认配置
+# Performance default configuration
 PERFORMANCE_DEFAULTS = {
     "chunk_processing": True,
     "parallel_processing": True,
@@ -112,7 +112,7 @@ PERFORMANCE_DEFAULTS = {
     "statistics_collection": True,
 }
 
-# GUI默认配置
+# GUI default configuration
 GUI_DEFAULTS = {
     "main_window": {
         "title": "PktMask - Packet Processing Tool",
@@ -133,7 +133,7 @@ GUI_DEFAULTS = {
     },
 }
 
-# 错误处理默认配置
+# Error handling default configuration
 ERROR_HANDLING_DEFAULTS = {
     "max_retry_attempts": 3,
     "retry_delay_seconds": 1,
@@ -142,7 +142,7 @@ ERROR_HANDLING_DEFAULTS = {
     "continue_on_error": False,
 }
 
-# 外部工具配置
+# External tools configuration
 EXTERNAL_TOOLS_DEFAULTS = {
     "tshark": {
         "executable_paths": [
@@ -164,7 +164,7 @@ EXTERNAL_TOOLS_DEFAULTS = {
 
 
 def get_default_config_dict():
-    """获取完整的默认配置字典"""
+    """Get complete default configuration dictionary"""
     return {
         "ui": DEFAULT_UI_CONFIG,
         "processing": DEFAULT_PROCESSING_CONFIG,
@@ -177,45 +177,45 @@ def get_default_config_dict():
 
 
 def get_processor_config(processor_name: str) -> dict:
-    """获取特定处理器的默认配置"""
+    """Get default configuration for specific processor"""
     return PROCESSOR_DEFAULTS.get(processor_name, {})
 
 
 def get_validation_constraint(key: str):
-    """获取验证约束值"""
+    """Get validation constraint value"""
     return VALIDATION_CONSTRAINTS.get(key)
 
 
 def is_valid_theme(theme: str) -> bool:
-    """验证主题名称是否有效"""
+    """Validate if theme name is valid"""
     return theme in VALIDATION_CONSTRAINTS["valid_themes"]
 
 
 def is_valid_log_level(level: str) -> bool:
-    """验证日志级别是否有效"""
+    """Validate if log level is valid"""
     return level in VALIDATION_CONSTRAINTS["valid_log_levels"]
 
 
 def is_valid_dedup_algorithm(algorithm: str) -> bool:
-    """验证去重算法是否有效"""
+    """Validate if deduplication algorithm is valid"""
     return algorithm in VALIDATION_CONSTRAINTS["valid_dedup_algorithms"]
 
 
 def get_supported_file_extensions() -> list:
-    """获取支持的文件扩展名列表"""
+    """Get list of supported file extensions"""
     return CONFIG_CONSTANTS["supported_extensions"].copy()
 
 
 def get_legacy_config_files() -> list:
-    """获取旧版配置文件名列表"""
+    """Get list of legacy configuration file names"""
     return CONFIG_CONSTANTS["legacy_config_files"].copy()
 
 
 def get_tool_config(tool_name: str) -> dict:
-    """获取特定工具的默认配置"""
+    """Get default configuration for specific tool"""
     return EXTERNAL_TOOLS_DEFAULTS.get(tool_name, {})
 
 
 def get_tshark_paths() -> list:
-    """获取TShark可执行文件的默认搜索路径"""
+    """Get default search paths for TShark executable"""
     return EXTERNAL_TOOLS_DEFAULTS.get("tshark", {}).get("executable_paths", [])
