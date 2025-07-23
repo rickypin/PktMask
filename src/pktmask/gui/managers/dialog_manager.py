@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
     QDialog,
     QFileDialog,
     QHBoxLayout,
+    QInputDialog,
     QMessageBox,
     QProgressDialog,
     QPushButton,
