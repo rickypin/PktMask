@@ -35,6 +35,7 @@ from ..utils.path import resource_path
 # HTML模板支持
 try:
     from jinja2 import Template
+
     JINJA2_AVAILABLE = True
 except ImportError:
     JINJA2_AVAILABLE = False
@@ -45,71 +46,79 @@ MIN_TSHARK_VERSION: Tuple[int, int, int] = (4, 2, 0)
 # TLS协议类型映射
 TLS_CONTENT_TYPES = {
     20: "ChangeCipherSpec",
-    21: "Alert", 
+    21: "Alert",
     22: "Handshake",
     23: "ApplicationData",
-    24: "Heartbeat"
+    24: "Heartbeat",
 }
 
 # TLS处理策略映射
 TLS_PROCESSING_STRATEGIES = {
-    20: "keep_all",      # ChangeCipherSpec - 完全保留
-    21: "keep_all",      # Alert - 完全保留
-    22: "keep_all",      # Handshake - 完全保留
+    20: "keep_all",  # ChangeCipherSpec - 完全保留
+    21: "keep_all",  # Alert - 完全保留
+    22: "keep_all",  # Handshake - 完全保留
     23: "mask_payload",  # ApplicationData - 智能掩码(保留5字节头部)
-    24: "keep_all"       # Heartbeat - 完全保留
+    24: "keep_all",  # Heartbeat - 完全保留
 }
 
 
 class TLSFlowAnalyzer:
     """TLS 流量分析器主类"""
-    
+
     def __init__(self, verbose: bool = False):
         """初始化分析器
-        
+
         Args:
             verbose: 是否启用详细输出
         """
         self.verbose = verbose
-        self.logger = get_logger('tls_flow_analyzer')
-        
+        self.logger = get_logger("tls_flow_analyzer")
+
         # 分析结果存储
         self.tcp_flows: Dict[str, Dict[str, Any]] = {}
         self.tls_messages: List[Dict[str, Any]] = []
         self.protocol_layers: Dict[int, List[str]] = {}
         self.message_statistics: Dict[str, Any] = {}
-        
-    def analyze_pcap(self, pcap_path: str, tshark_path: Optional[str] = None,
-                    decode_as: Optional[List[str]] = None) -> Dict[str, Any]:
+
+    def analyze_pcap(
+        self,
+        pcap_path: str,
+        tshark_path: Optional[str] = None,
+        decode_as: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         """分析 PCAP 文件中的 TLS 流量
-        
+
         Args:
             pcap_path: PCAP 文件路径
             tshark_path: 自定义 tshark 可执行文件路径
             decode_as: 额外的端口解码规则
-            
+
         Returns:
             分析结果字典
         """
         self.logger.info(f"开始分析 PCAP 文件: {pcap_path}")
         start_time = time.time()
-        
+
         try:
             # 验证 tshark 版本
             tshark_exec = self._check_tshark_version(tshark_path)
-            
+
             # 第一阶段：基础 TLS 消息扫描
             tls_packets = self._scan_tls_messages(pcap_path, tshark_exec, decode_as)
-            
+
             # 第二阶段：TCP 流分析
-            tcp_flows = self._analyze_tcp_flows(pcap_path, tshark_exec, tls_packets, decode_as)
-            
+            tcp_flows = self._analyze_tcp_flows(
+                pcap_path, tshark_exec, tls_packets, decode_as
+            )
+
             # 第三阶段：跨段消息重组和单包消息解析
             reassembled_messages = self._reassemble_cross_segment_messages(tcp_flows)
 
             # 如果没有重组消息，则提取单包消息
             if not reassembled_messages:
-                single_packet_messages = self._extract_single_packet_tls_messages(tls_packets)
+                single_packet_messages = self._extract_single_packet_tls_messages(
+                    tls_packets
+                )
                 all_tls_messages = single_packet_messages
             else:
                 # 有重组消息时，使用重组结果（已包含所有TLS消息）
@@ -119,52 +128,61 @@ class TLSFlowAnalyzer:
             analysis_result = self._generate_analysis_result(
                 tls_packets, tcp_flows, all_tls_messages
             )
-            
+
             analysis_time = time.time() - start_time
             self.logger.info(f"TLS 流量分析完成，耗时 {analysis_time:.2f} 秒")
-            
+
             return analysis_result
-            
+
         except Exception as e:
             self.logger.error(f"TLS 流量分析失败: {e}")
             raise RuntimeError(f"TLS 流量分析失败: {e}") from e
-    
+
     def _check_tshark_version(self, tshark_path: Optional[str]) -> str:
         """验证 tshark 版本并返回可执行路径"""
         executable = tshark_path or "tshark"
-        
+
         try:
             # Use hidden subprocess to prevent cmd window popup on Windows
             from ..utils.subprocess_utils import run_hidden_subprocess
+
             completed = run_hidden_subprocess(
-                [executable, "-v"], check=True, text=True, capture_output=True, encoding='utf-8', errors='replace'
+                [executable, "-v"],
+                check=True,
+                text=True,
+                capture_output=True,
+                encoding="utf-8",
+                errors="replace",
             )
         except (subprocess.CalledProcessError, FileNotFoundError) as exc:
             raise RuntimeError(f"无法执行 tshark '{executable}': {exc}") from exc
-        
+
         version = self._parse_tshark_version(completed.stdout + completed.stderr)
         if version is None:
             raise RuntimeError("无法解析 tshark 版本号")
-        
+
         if version < MIN_TSHARK_VERSION:
             ver_str = ".".join(map(str, version))
             min_str = ".".join(map(str, MIN_TSHARK_VERSION))
             raise RuntimeError(f"tshark 版本过低 ({ver_str})，需要 ≥ {min_str}")
-        
+
         if self.verbose:
-            self.logger.info(f"检测到 tshark {'.'.join(map(str, version))} 于 {executable}")
-        
+            self.logger.info(
+                f"检测到 tshark {'.'.join(map(str, version))} 于 {executable}"
+            )
+
         return executable
-    
+
     def _parse_tshark_version(self, output: str) -> Optional[Tuple[int, int, int]]:
         """从 tshark -v 输出解析版本号"""
         m = re.search(r"(\d+)\.(\d+)\.(\d+)", output)
         if not m:
             return None
         return tuple(map(int, m.groups()))  # type: ignore [return-value]
-    
-    def _scan_tls_messages(self, pcap_path: str, tshark_exec: str,
-                          decode_as: Optional[List[str]]) -> List[Dict[str, Any]]:
+
+    def _scan_tls_messages(
+        self, pcap_path: str, tshark_exec: str, decode_as: Optional[List[str]]
+    ) -> List[Dict[str, Any]]:
         """扫描 PCAP 文件中的 TLS 消息"""
         self.logger.info("第一阶段：扫描 TLS 消息")
 
@@ -173,53 +191,94 @@ class TLSFlowAnalyzer:
         cmd_reassembled = [
             tshark_exec,
             "-2",  # 两遍分析，启用重组
-            "-r", pcap_path,
-            "-T", "json",
-            "-e", "frame.number",
-            "-e", "frame.protocols",
-            "-e", "frame.time_relative",
-            "-e", "ip.src",
-            "-e", "ip.dst",
-            "-e", "ipv6.src",
-            "-e", "ipv6.dst",
-            "-e", "tcp.srcport",
-            "-e", "tcp.dstport",
-            "-e", "tcp.stream",
-            "-e", "tcp.seq",
-            "-e", "tcp.seq_raw",  # 绝对序列号
-            "-e", "tcp.len",
-            "-e", "tcp.payload",
-            "-e", "tls.record.content_type",
-            "-e", "tls.record.opaque_type",
-            "-e", "tls.record.length",
-            "-e", "tls.record.version",
-            "-e", "tls.app_data",
-            "-E", "occurrence=a",
-            "-o", "tcp.desegment_tcp_streams:TRUE",
+            "-r",
+            pcap_path,
+            "-T",
+            "json",
+            "-e",
+            "frame.number",
+            "-e",
+            "frame.protocols",
+            "-e",
+            "frame.time_relative",
+            "-e",
+            "ip.src",
+            "-e",
+            "ip.dst",
+            "-e",
+            "ipv6.src",
+            "-e",
+            "ipv6.dst",
+            "-e",
+            "tcp.srcport",
+            "-e",
+            "tcp.dstport",
+            "-e",
+            "tcp.stream",
+            "-e",
+            "tcp.seq",
+            "-e",
+            "tcp.seq_raw",  # 绝对序列号
+            "-e",
+            "tcp.len",
+            "-e",
+            "tcp.payload",
+            "-e",
+            "tls.record.content_type",
+            "-e",
+            "tls.record.opaque_type",
+            "-e",
+            "tls.record.length",
+            "-e",
+            "tls.record.version",
+            "-e",
+            "tls.app_data",
+            "-E",
+            "occurrence=a",
+            "-o",
+            "tcp.desegment_tcp_streams:TRUE",
         ]
 
         # 第二次扫描：不使用TCP重组获取TLS段数据
         self.logger.info("第一阶段-2：扫描TLS段数据")
         cmd_segments = [
             tshark_exec,
-            "-r", pcap_path,
-            "-T", "json",
-            "-e", "frame.number",
-            "-e", "frame.protocols",
-            "-e", "frame.time_relative",
-            "-e", "ip.src",
-            "-e", "ip.dst",
-            "-e", "ipv6.src",
-            "-e", "ipv6.dst",
-            "-e", "tcp.srcport",
-            "-e", "tcp.dstport",
-            "-e", "tcp.stream",
-            "-e", "tcp.seq",
-            "-e", "tcp.seq_raw",  # 绝对序列号
-            "-e", "tcp.len",
-            "-e", "tcp.payload",
-            "-e", "tls.segment.data",  # TLS段数据字段
-            "-E", "occurrence=a",
+            "-r",
+            pcap_path,
+            "-T",
+            "json",
+            "-e",
+            "frame.number",
+            "-e",
+            "frame.protocols",
+            "-e",
+            "frame.time_relative",
+            "-e",
+            "ip.src",
+            "-e",
+            "ip.dst",
+            "-e",
+            "ipv6.src",
+            "-e",
+            "ipv6.dst",
+            "-e",
+            "tcp.srcport",
+            "-e",
+            "tcp.dstport",
+            "-e",
+            "tcp.stream",
+            "-e",
+            "tcp.seq",
+            "-e",
+            "tcp.seq_raw",  # 绝对序列号
+            "-e",
+            "tcp.len",
+            "-e",
+            "tcp.payload",
+            "-e",
+            "tls.segment.data",  # TLS段数据字段
+            "-E",
+            "occurrence=a",
         ]
 
         # 添加解码规则
@@ -234,26 +293,45 @@ class TLSFlowAnalyzer:
 
         # 执行第一次扫描（重组）
         try:
-            completed_reassembled = subprocess.run(cmd_reassembled, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace')
+            completed_reassembled = subprocess.run(
+                cmd_reassembled,
+                check=True,
+                text=True,
+                capture_output=True,
+                encoding="utf-8",
+                errors="replace",
+            )
             packets_reassembled = json.loads(completed_reassembled.stdout)
         except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
             raise RuntimeError(f"重组TLS消息扫描失败: {exc}") from exc
 
         # 执行第二次扫描（段数据）
         try:
-            completed_segments = subprocess.run(cmd_segments, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace')
+            completed_segments = subprocess.run(
+                cmd_segments,
+                check=True,
+                text=True,
+                capture_output=True,
+                encoding="utf-8",
+                errors="replace",
+            )
             packets_segments = json.loads(completed_segments.stdout)
         except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
             raise RuntimeError(f"TLS段数据扫描失败: {exc}") from exc
 
         # 合并两次扫描的结果
-        tls_packets = self._merge_tls_scan_results(packets_reassembled, packets_segments)
+        tls_packets = self._merge_tls_scan_results(
+            packets_reassembled, packets_segments
+        )
 
         self.logger.info(f"发现 {len(tls_packets)} 个包含 TLS 消息的数据包")
         return tls_packets
 
-    def _merge_tls_scan_results(self, packets_reassembled: List[Dict[str, Any]],
-                               packets_segments: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _merge_tls_scan_results(
+        self,
+        packets_reassembled: List[Dict[str, Any]],
+        packets_segments: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
         """合并两次TLS扫描的结果"""
         # 创建帧号到数据包的映射
         frame_to_packet = {}
@@ -278,7 +356,9 @@ class TLSFlowAnalyzer:
                     frame_to_packet[frame_num] = packet
                 else:
                     # 合并TLS段数据到已存在的包中
-                    existing_layers = frame_to_packet[frame_num].get("_source", {}).get("layers", {})
+                    existing_layers = (
+                        frame_to_packet[frame_num].get("_source", {}).get("layers", {})
+                    )
                     existing_layers["tls.segment.data"] = tls_segment_data
 
         # 按帧号排序并返回
@@ -304,7 +384,10 @@ class TLSFlowAnalyzer:
         for type_val in all_types:
             if type_val is not None:
                 try:
-                    type_int = int(str(type_val).replace("0x", ""), 16 if str(type_val).startswith("0x") else 10)
+                    type_int = int(
+                        str(type_val).replace("0x", ""),
+                        16 if str(type_val).startswith("0x") else 10,
+                    )
                     if type_int in TLS_CONTENT_TYPES:
                         return True
                 except (ValueError, TypeError):
@@ -329,7 +412,10 @@ class TLSFlowAnalyzer:
         for type_val in all_types:
             if type_val is not None:
                 try:
-                    type_int = int(str(type_val).replace("0x", ""), 16 if str(type_val).startswith("0x") else 10)
+                    type_int = int(
+                        str(type_val).replace("0x", ""),
+                        16 if str(type_val).startswith("0x") else 10,
+                    )
                     if type_int in TLS_CONTENT_TYPES:
                         return True
                 except (ValueError, TypeError):
@@ -349,9 +435,13 @@ class TLSFlowAnalyzer:
 
         return False
 
-    def _analyze_tcp_flows(self, pcap_path: str, tshark_exec: str,
-                          tls_packets: List[Dict[str, Any]],
-                          decode_as: Optional[List[str]]) -> Dict[str, Dict[str, Any]]:
+    def _analyze_tcp_flows(
+        self,
+        pcap_path: str,
+        tshark_exec: str,
+        tls_packets: List[Dict[str, Any]],
+        decode_as: Optional[List[str]],
+    ) -> Dict[str, Dict[str, Any]]:
         """分析 TCP 流信息"""
         self.logger.info("第二阶段：分析 TCP 流")
 
@@ -379,31 +469,55 @@ class TLSFlowAnalyzer:
 
         return tcp_flows
 
-    def _analyze_single_tcp_flow(self, pcap_path: str, tshark_exec: str,
-                                stream_id: str, decode_as: Optional[List[str]]) -> Optional[Dict[str, Any]]:
+    def _analyze_single_tcp_flow(
+        self,
+        pcap_path: str,
+        tshark_exec: str,
+        stream_id: str,
+        decode_as: Optional[List[str]],
+    ) -> Optional[Dict[str, Any]]:
         """分析单个 TCP 流"""
         cmd = [
             tshark_exec,
             "-2",
-            "-r", pcap_path,
-            "-Y", f"tcp.stream == {stream_id}",
-            "-T", "json",
-            "-e", "frame.number",
-            "-e", "frame.time_relative",
-            "-e", "ip.src",
-            "-e", "ip.dst",
-            "-e", "ipv6.src",
-            "-e", "ipv6.dst",
-            "-e", "tcp.srcport",
-            "-e", "tcp.dstport",
-            "-e", "tcp.seq",
-            "-e", "tcp.seq_raw",  # 绝对序列号
-            "-e", "tcp.ack",
-            "-e", "tcp.len",
-            "-e", "tcp.flags",
-            "-e", "tcp.payload",
-            "-E", "occurrence=a",
-            "-o", "tcp.desegment_tcp_streams:TRUE",
+            "-r",
+            pcap_path,
+            "-Y",
+            f"tcp.stream == {stream_id}",
+            "-T",
+            "json",
+            "-e",
+            "frame.number",
+            "-e",
+            "frame.time_relative",
+            "-e",
+            "ip.src",
+            "-e",
+            "ip.dst",
+            "-e",
+            "ipv6.src",
+            "-e",
+            "ipv6.dst",
+            "-e",
+            "tcp.srcport",
+            "-e",
+            "tcp.dstport",
+            "-e",
+            "tcp.seq",
+            "-e",
+            "tcp.seq_raw",  # 绝对序列号
+            "-e",
+            "tcp.ack",
+            "-e",
+            "tcp.len",
+            "-e",
+            "tcp.flags",
+            "-e",
+            "tcp.payload",
+            "-E",
+            "occurrence=a",
+            "-o",
+            "tcp.desegment_tcp_streams:TRUE",
         ]
 
         if decode_as:
@@ -411,7 +525,14 @@ class TLSFlowAnalyzer:
                 cmd.extend(["-d", spec])
 
         try:
-            completed = subprocess.run(cmd, check=True, text=True, capture_output=True, encoding='utf-8', errors='replace')
+            completed = subprocess.run(
+                cmd,
+                check=True,
+                text=True,
+                capture_output=True,
+                encoding="utf-8",
+                errors="replace",
+            )
             packets = json.loads(completed.stdout)
         except subprocess.CalledProcessError as e:
             self.logger.warning(f"TCP流分析失败 (stream {stream_id}): {e.stderr}")
@@ -434,14 +555,28 @@ class TLSFlowAnalyzer:
             "packets": packets,
             "directions": flow_directions,
             "reassembled_payloads": reassembled_payloads,
-            "packet_count": len(packets)
+            "packet_count": len(packets),
         }
 
-    def _identify_flow_directions(self, packets: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _identify_flow_directions(
+        self, packets: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """识别 TCP 流的两个方向"""
         directions = {
-            "forward": {"src_ip": None, "dst_ip": None, "src_port": None, "dst_port": None, "packets": []},
-            "reverse": {"src_ip": None, "dst_ip": None, "src_port": None, "dst_port": None, "packets": []}
+            "forward": {
+                "src_ip": None,
+                "dst_ip": None,
+                "src_port": None,
+                "dst_port": None,
+                "packets": [],
+            },
+            "reverse": {
+                "src_ip": None,
+                "dst_ip": None,
+                "src_port": None,
+                "dst_port": None,
+                "packets": [],
+            },
         }
 
         # 分析第一个数据包确定正向
@@ -450,28 +585,44 @@ class TLSFlowAnalyzer:
             layers = first_packet.get("_source", {}).get("layers", {})
 
             # 获取 IP 地址（优先 IPv4，然后 IPv6）
-            src_ip = self._get_first_value(layers.get("ip.src")) or self._get_first_value(layers.get("ipv6.src"))
-            dst_ip = self._get_first_value(layers.get("ip.dst")) or self._get_first_value(layers.get("ipv6.dst"))
+            src_ip = self._get_first_value(
+                layers.get("ip.src")
+            ) or self._get_first_value(layers.get("ipv6.src"))
+            dst_ip = self._get_first_value(
+                layers.get("ip.dst")
+            ) or self._get_first_value(layers.get("ipv6.dst"))
             src_port = self._get_first_value(layers.get("tcp.srcport"))
             dst_port = self._get_first_value(layers.get("tcp.dstport"))
 
-            directions["forward"].update({
-                "src_ip": src_ip, "dst_ip": dst_ip,
-                "src_port": src_port, "dst_port": dst_port
-            })
-            directions["reverse"].update({
-                "src_ip": dst_ip, "dst_ip": src_ip,
-                "src_port": dst_port, "dst_port": src_port
-            })
+            directions["forward"].update(
+                {
+                    "src_ip": src_ip,
+                    "dst_ip": dst_ip,
+                    "src_port": src_port,
+                    "dst_port": dst_port,
+                }
+            )
+            directions["reverse"].update(
+                {
+                    "src_ip": dst_ip,
+                    "dst_ip": src_ip,
+                    "src_port": dst_port,
+                    "dst_port": src_port,
+                }
+            )
 
         # 分类所有数据包
         for packet in packets:
             layers = packet.get("_source", {}).get("layers", {})
-            src_ip = self._get_first_value(layers.get("ip.src")) or self._get_first_value(layers.get("ipv6.src"))
+            src_ip = self._get_first_value(
+                layers.get("ip.src")
+            ) or self._get_first_value(layers.get("ipv6.src"))
             src_port = self._get_first_value(layers.get("tcp.srcport"))
 
-            if (src_ip == directions["forward"]["src_ip"] and
-                src_port == directions["forward"]["src_port"]):
+            if (
+                src_ip == directions["forward"]["src_ip"]
+                and src_port == directions["forward"]["src_port"]
+            ):
                 directions["forward"]["packets"].append(packet)
             else:
                 directions["reverse"]["packets"].append(packet)
@@ -502,24 +653,29 @@ class TLSFlowAnalyzer:
 
         # 定义需要去重的协议（保留第一次出现）
         dedup_protocols = {
-            'x509sat',      # X.509证书ASN.1结构
-            'x509af',       # X.509证书属性框架
-            'x509ce',       # X.509证书扩展
-            'x509if',       # X.509信息框架
-            'pkcs1',        # PKCS#1 RSA加密
-            'pkix1explicit', # PKIX证书扩展
-            'pkix1implicit', # PKIX隐式证书扩展
-            'cms',          # 加密消息语法
-            'pkcs7',        # PKCS#7加密消息
+            "x509sat",  # X.509证书ASN.1结构
+            "x509af",  # X.509证书属性框架
+            "x509ce",  # X.509证书扩展
+            "x509if",  # X.509信息框架
+            "pkcs1",  # PKCS#1 RSA加密
+            "pkix1explicit",  # PKIX证书扩展
+            "pkix1implicit",  # PKIX隐式证书扩展
+            "cms",  # 加密消息语法
+            "pkcs7",  # PKCS#7加密消息
         }
 
         # 定义核心网络协议层级（按优先级排序）
         core_protocols = [
-            'eth', 'ethertype',           # 以太网层
-            'ip', 'ipv6',                 # 网络层
-            'tcp', 'udp',                 # 传输层
-            'tls', 'ssl',                 # 安全层
-            'http', 'http2',              # 应用层
+            "eth",
+            "ethertype",  # 以太网层
+            "ip",
+            "ipv6",  # 网络层
+            "tcp",
+            "udp",  # 传输层
+            "tls",
+            "ssl",  # 安全层
+            "http",
+            "http2",  # 应用层
         ]
 
         for protocol in protocol_layers:
@@ -555,19 +711,24 @@ class TLSFlowAnalyzer:
 
         return cleaned
 
-    def _reassemble_tcp_payloads(self, packets: List[Dict[str, Any]],
-                                directions: Dict[str, Any]) -> Dict[str, Any]:
+    def _reassemble_tcp_payloads(
+        self, packets: List[Dict[str, Any]], directions: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """重组 TCP 载荷并记录序列号映射"""
-        reassembled = {"forward": {"payload": b"", "seq_mapping": []},
-                      "reverse": {"payload": b"", "seq_mapping": []}}
+        reassembled = {
+            "forward": {"payload": b"", "seq_mapping": []},
+            "reverse": {"payload": b"", "seq_mapping": []},
+        }
 
         for direction_name, direction_info in directions.items():
             # 按序列号排序数据包
             direction_packets = sorted(
                 direction_info["packets"],
-                key=lambda p: int(self._get_first_value(
-                    p.get("_source", {}).get("layers", {}).get("tcp.seq", 0)
-                ))
+                key=lambda p: int(
+                    self._get_first_value(
+                        p.get("_source", {}).get("layers", {}).get("tcp.seq", 0)
+                    )
+                ),
             )
 
             # 重组载荷并记录序列号映射
@@ -590,12 +751,16 @@ class TLSFlowAnalyzer:
 
                             # 记录这段载荷在重组数据中的位置和对应的序列号
                             if len(payload_bytes) > 0:
-                                seq_mapping.append({
-                                    "offset_start": current_offset,
-                                    "offset_end": current_offset + len(payload_bytes) - 1,
-                                    "tcp_seq_raw": int(tcp_seq_raw),
-                                    "payload_length": len(payload_bytes)
-                                })
+                                seq_mapping.append(
+                                    {
+                                        "offset_start": current_offset,
+                                        "offset_end": current_offset
+                                        + len(payload_bytes)
+                                        - 1,
+                                        "tcp_seq_raw": int(tcp_seq_raw),
+                                        "payload_length": len(payload_bytes),
+                                    }
+                                )
 
                                 payload_data += payload_bytes
                                 current_offset += len(payload_bytes)
@@ -607,7 +772,9 @@ class TLSFlowAnalyzer:
 
         return reassembled
 
-    def _find_actual_seq_for_offset(self, tls_offset: int, seq_mapping: List[Dict[str, Any]]) -> int:
+    def _find_actual_seq_for_offset(
+        self, tls_offset: int, seq_mapping: List[Dict[str, Any]]
+    ) -> int:
         """根据TLS记录在重组载荷中的偏移位置，查找对应的实际TCP序列号"""
         for mapping in seq_mapping:
             offset_start = mapping["offset_start"]
@@ -623,7 +790,9 @@ class TLSFlowAnalyzer:
         # 如果没有找到匹配的映射，返回0（这种情况不应该发生）
         return 0
 
-    def _reassemble_cross_segment_messages(self, tcp_flows: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _reassemble_cross_segment_messages(
+        self, tcp_flows: Dict[str, Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """重组跨 TCP 段的 TLS 消息并解析单包中的完整 TLS 消息"""
         self.logger.info("第三阶段：重组跨段 TLS 消息并解析完整消息")
 
@@ -631,7 +800,9 @@ class TLSFlowAnalyzer:
 
         # 处理跨TCP段的重组消息
         for stream_id, flow_info in tcp_flows.items():
-            for direction_name, reassembled_info in flow_info["reassembled_payloads"].items():
+            for direction_name, reassembled_info in flow_info[
+                "reassembled_payloads"
+            ].items():
                 payload_data = reassembled_info["payload"]
                 seq_mapping = reassembled_info["seq_mapping"]
 
@@ -647,7 +818,9 @@ class TLSFlowAnalyzer:
         self.logger.info(f"重组得到 {len(reassembled_messages)} 个 TLS 消息")
         return reassembled_messages
 
-    def _extract_single_packet_tls_messages(self, tls_packets: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _extract_single_packet_tls_messages(
+        self, tls_packets: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """从单个数据包中提取完整的 TLS 消息"""
         self.logger.info("提取单包中的完整 TLS 消息")
 
@@ -687,13 +860,24 @@ class TLSFlowAnalyzer:
                 if type_val is not None:
                     try:
                         # 解析内容类型
-                        content_type = int(str(type_val).replace("0x", ""), 16 if str(type_val).startswith("0x") else 10)
+                        content_type = int(
+                            str(type_val).replace("0x", ""),
+                            16 if str(type_val).startswith("0x") else 10,
+                        )
                         if content_type not in TLS_CONTENT_TYPES:
                             continue
 
                         # 获取对应的长度和版本
-                        length = int(record_lengths[i]) if i < len(record_lengths) and record_lengths[i] else 0
-                        version_str = record_versions[i] if i < len(record_versions) and record_versions[i] else "0x0303"
+                        length = (
+                            int(record_lengths[i])
+                            if i < len(record_lengths) and record_lengths[i]
+                            else 0
+                        )
+                        version_str = (
+                            record_versions[i]
+                            if i < len(record_versions) and record_versions[i]
+                            else "0x0303"
+                        )
 
                         # 解析版本
                         try:
@@ -705,7 +889,11 @@ class TLSFlowAnalyzer:
 
                         # 计算TLS消息在TCP流中的绝对序列号位置
                         # 使用绝对序列号作为基础，加上TLS记录在TCP payload中的偏移
-                        base_seq = int(tcp_seq_raw) if tcp_seq_raw else (int(tcp_seq) if tcp_seq else 0)
+                        base_seq = (
+                            int(tcp_seq_raw)
+                            if tcp_seq_raw
+                            else (int(tcp_seq) if tcp_seq else 0)
+                        )
                         tls_header_seq_start = base_seq + tls_offset
                         tls_header_seq_end = tls_header_seq_start + 5  # TLS头部5字节
                         tls_payload_seq_start = tls_header_seq_end
@@ -722,19 +910,21 @@ class TLSFlowAnalyzer:
                             "frame_number": int(frame_number) if frame_number else 0,
                             "tcp_seq_base": base_seq,  # TCP段的起始序列号
                             "tls_seq_start": tls_header_seq_start,  # TLS消息起始序列号
-                            "tls_seq_end": tls_payload_seq_end,     # TLS消息结束序列号
+                            "tls_seq_end": tls_payload_seq_end,  # TLS消息结束序列号
                             # 新增：分离的头部和载荷序列号范围
                             "tls_header_seq_start": tls_header_seq_start,  # TLS头部起始序列号
-                            "tls_header_seq_end": tls_header_seq_end,      # TLS头部结束序列号
+                            "tls_header_seq_end": tls_header_seq_end,  # TLS头部结束序列号
                             "tls_payload_seq_start": tls_payload_seq_start,  # TLS载荷起始序列号
-                            "tls_payload_seq_end": tls_payload_seq_end,      # TLS载荷结束序列号
+                            "tls_payload_seq_end": tls_payload_seq_end,  # TLS载荷结束序列号
                             "header_start": tls_offset,  # TLS头在TCP payload中的偏移
                             "header_end": tls_offset + 5,
                             "payload_start": tls_offset + 5,
                             "payload_end": tls_offset + 5 + length,
                             "is_complete": True,
                             "is_cross_segment": False,
-                            "processing_strategy": TLS_PROCESSING_STRATEGIES[content_type]
+                            "processing_strategy": TLS_PROCESSING_STRATEGIES[
+                                content_type
+                            ],
                         }
 
                         # 更新下一个TLS记录的偏移
@@ -748,9 +938,14 @@ class TLSFlowAnalyzer:
         self.logger.info(f"提取到 {len(single_packet_messages)} 个单包 TLS 消息")
         return single_packet_messages
 
-    def _parse_tls_records_from_payload(self, payload: bytes, stream_id: str,
-                                       direction: str, base_seq: int = 0,
-                                       seq_mapping: List[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def _parse_tls_records_from_payload(
+        self,
+        payload: bytes,
+        stream_id: str,
+        direction: str,
+        base_seq: int = 0,
+        seq_mapping: List[Dict[str, Any]] = None,
+    ) -> List[Dict[str, Any]]:
         """从 TCP 载荷中解析 TLS 记录"""
         records = []
         offset = 0
@@ -760,7 +955,7 @@ class TLSFlowAnalyzer:
             content_type = payload[offset]
             version_major = payload[offset + 1]
             version_minor = payload[offset + 2]
-            length = int.from_bytes(payload[offset + 3:offset + 5], byteorder='big')
+            length = int.from_bytes(payload[offset + 3 : offset + 5], byteorder="big")
 
             # 验证内容类型
             if content_type not in TLS_CONTENT_TYPES:
@@ -773,7 +968,9 @@ class TLSFlowAnalyzer:
             # 计算TLS消息的绝对序列号位置
             if seq_mapping:
                 # 使用序列号映射查找实际的TCP序列号
-                tls_header_seq_start = self._find_actual_seq_for_offset(offset, seq_mapping)
+                tls_header_seq_start = self._find_actual_seq_for_offset(
+                    offset, seq_mapping
+                )
             else:
                 # 兼容旧的计算方式（用于单包解析）
                 tls_header_seq_start = base_seq + offset
@@ -785,73 +982,91 @@ class TLSFlowAnalyzer:
                 # 记录不完整，可能跨段
                 if seq_mapping:
                     # 使用序列号映射查找实际的结束序列号
-                    tls_payload_seq_end = self._find_actual_seq_for_offset(len(payload) - 1, seq_mapping) + 1
+                    tls_payload_seq_end = (
+                        self._find_actual_seq_for_offset(len(payload) - 1, seq_mapping)
+                        + 1
+                    )
                 else:
                     # 兼容旧的计算方式
                     tls_payload_seq_end = base_seq + len(payload)
-                records.append({
-                    "stream_id": stream_id,
-                    "direction": direction,
-                    "content_type": content_type,
-                    "content_type_name": TLS_CONTENT_TYPES[content_type],
-                    "version": (version_major, version_minor),
-                    "length": length,
-                    "declared_length": length,  # 声明的长度
-                    "actual_length": len(payload) - offset - 5,  # 实际可用长度
-                    "tcp_seq_base": tls_header_seq_start if seq_mapping else base_seq,
-                    "tls_seq_start": tls_header_seq_start,
-                    "tls_seq_end": tls_header_seq_start + 5 + length,  # 完整消息的预期结束位置
-                    "tls_seq_actual_end": tls_payload_seq_end,  # 实际结束位置
-                    # 新增：分离的头部和载荷序列号范围
-                    "tls_header_seq_start": tls_header_seq_start,
-                    "tls_header_seq_end": tls_header_seq_end,
-                    "tls_payload_seq_start": tls_payload_seq_start,
-                    "tls_payload_seq_end": tls_header_seq_start + 5 + length,  # 预期的载荷结束位置
-                    "tls_payload_seq_actual_end": tls_payload_seq_end,  # 实际载荷结束位置
-                    "header_start": offset,
-                    "header_end": offset + 5,
-                    "payload_start": offset + 5,
-                    "payload_end": len(payload),  # 实际载荷结束位置
-                    "is_complete": False,
-                    "is_cross_segment": True,
-                    "processing_strategy": TLS_PROCESSING_STRATEGIES[content_type]
-                })
+                records.append(
+                    {
+                        "stream_id": stream_id,
+                        "direction": direction,
+                        "content_type": content_type,
+                        "content_type_name": TLS_CONTENT_TYPES[content_type],
+                        "version": (version_major, version_minor),
+                        "length": length,
+                        "declared_length": length,  # 声明的长度
+                        "actual_length": len(payload) - offset - 5,  # 实际可用长度
+                        "tcp_seq_base": (
+                            tls_header_seq_start if seq_mapping else base_seq
+                        ),
+                        "tls_seq_start": tls_header_seq_start,
+                        "tls_seq_end": tls_header_seq_start
+                        + 5
+                        + length,  # 完整消息的预期结束位置
+                        "tls_seq_actual_end": tls_payload_seq_end,  # 实际结束位置
+                        # 新增：分离的头部和载荷序列号范围
+                        "tls_header_seq_start": tls_header_seq_start,
+                        "tls_header_seq_end": tls_header_seq_end,
+                        "tls_payload_seq_start": tls_payload_seq_start,
+                        "tls_payload_seq_end": tls_header_seq_start
+                        + 5
+                        + length,  # 预期的载荷结束位置
+                        "tls_payload_seq_actual_end": tls_payload_seq_end,  # 实际载荷结束位置
+                        "header_start": offset,
+                        "header_end": offset + 5,
+                        "payload_start": offset + 5,
+                        "payload_end": len(payload),  # 实际载荷结束位置
+                        "is_complete": False,
+                        "is_cross_segment": True,
+                        "processing_strategy": TLS_PROCESSING_STRATEGIES[content_type],
+                    }
+                )
                 break
             else:
                 # 完整记录
                 tls_payload_seq_end = tls_payload_seq_start + length
-                records.append({
-                    "stream_id": stream_id,
-                    "direction": direction,
-                    "content_type": content_type,
-                    "content_type_name": TLS_CONTENT_TYPES[content_type],
-                    "version": (version_major, version_minor),
-                    "length": length,
-                    "declared_length": length,
-                    "actual_length": length,
-                    "tcp_seq_base": tls_header_seq_start if seq_mapping else base_seq,
-                    "tls_seq_start": tls_header_seq_start,
-                    "tls_seq_end": tls_payload_seq_end,
-                    # 新增：分离的头部和载荷序列号范围
-                    "tls_header_seq_start": tls_header_seq_start,
-                    "tls_header_seq_end": tls_header_seq_end,
-                    "tls_payload_seq_start": tls_payload_seq_start,
-                    "tls_payload_seq_end": tls_payload_seq_end,
-                    "header_start": offset,
-                    "header_end": offset + 5,
-                    "payload_start": offset + 5,
-                    "payload_end": record_end,
-                    "is_complete": True,
-                    "is_cross_segment": False,
-                    "processing_strategy": TLS_PROCESSING_STRATEGIES[content_type]
-                })
+                records.append(
+                    {
+                        "stream_id": stream_id,
+                        "direction": direction,
+                        "content_type": content_type,
+                        "content_type_name": TLS_CONTENT_TYPES[content_type],
+                        "version": (version_major, version_minor),
+                        "length": length,
+                        "declared_length": length,
+                        "actual_length": length,
+                        "tcp_seq_base": (
+                            tls_header_seq_start if seq_mapping else base_seq
+                        ),
+                        "tls_seq_start": tls_header_seq_start,
+                        "tls_seq_end": tls_payload_seq_end,
+                        # 新增：分离的头部和载荷序列号范围
+                        "tls_header_seq_start": tls_header_seq_start,
+                        "tls_header_seq_end": tls_header_seq_end,
+                        "tls_payload_seq_start": tls_payload_seq_start,
+                        "tls_payload_seq_end": tls_payload_seq_end,
+                        "header_start": offset,
+                        "header_end": offset + 5,
+                        "payload_start": offset + 5,
+                        "payload_end": record_end,
+                        "is_complete": True,
+                        "is_cross_segment": False,
+                        "processing_strategy": TLS_PROCESSING_STRATEGIES[content_type],
+                    }
+                )
                 offset = record_end
 
         return records
 
-    def _generate_analysis_result(self, tls_packets: List[Dict[str, Any]],
-                                 tcp_flows: Dict[str, Dict[str, Any]],
-                                 reassembled_messages: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _generate_analysis_result(
+        self,
+        tls_packets: List[Dict[str, Any]],
+        tcp_flows: Dict[str, Dict[str, Any]],
+        reassembled_messages: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
         """生成详细的分析结果"""
         self.logger.info("第四阶段：生成分析结果")
 
@@ -883,7 +1098,10 @@ class TLSFlowAnalyzer:
             for type_val in all_types:
                 if type_val is not None:
                     try:
-                        type_int = int(str(type_val).replace("0x", ""), 16 if str(type_val).startswith("0x") else 10)
+                        type_int = int(
+                            str(type_val).replace("0x", ""),
+                            16 if str(type_val).startswith("0x") else 10,
+                        )
                         if type_int in TLS_CONTENT_TYPES:
                             frame_types.append(type_int)
                     except (ValueError, TypeError):
@@ -933,7 +1151,11 @@ class TLSFlowAnalyzer:
                 if not protocol_types and tls_segment_data is not None:
                     # 通过分析TLS段数据的头部来确定消息类型
                     try:
-                        segment_data_hex = tls_segment_data[0] if isinstance(tls_segment_data, list) else tls_segment_data
+                        segment_data_hex = (
+                            tls_segment_data[0]
+                            if isinstance(tls_segment_data, list)
+                            else tls_segment_data
+                        )
                         if segment_data_hex and len(segment_data_hex) >= 2:
                             # TLS记录的第一个字节是内容类型
                             content_type_byte = int(segment_data_hex[:2], 16)
@@ -948,22 +1170,36 @@ class TLSFlowAnalyzer:
                     "protocol_layers": protocol_layers.get(frame_num_int, []),
                     "protocol_types": protocol_types,
                     "tcp_stream": self._get_first_value(layers.get("tcp.stream")),
-                    "src_ip": (self._get_first_value(layers.get("ip.src")) or
-                              self._get_first_value(layers.get("ipv6.src"))),
-                    "dst_ip": (self._get_first_value(layers.get("ip.dst")) or
-                              self._get_first_value(layers.get("ipv6.dst"))),
+                    "src_ip": (
+                        self._get_first_value(layers.get("ip.src"))
+                        or self._get_first_value(layers.get("ipv6.src"))
+                    ),
+                    "dst_ip": (
+                        self._get_first_value(layers.get("ip.dst"))
+                        or self._get_first_value(layers.get("ipv6.dst"))
+                    ),
                     "src_port": self._get_first_value(layers.get("tcp.srcport")),
                     "dst_port": self._get_first_value(layers.get("tcp.dstport")),
-                    "tcp_seq": self._get_first_value(layers.get("tcp.seq")),  # 相对序列号
-                    "tcp_seq_raw": self._get_first_value(layers.get("tcp.seq_raw")),  # 绝对序列号
+                    "tcp_seq": self._get_first_value(
+                        layers.get("tcp.seq")
+                    ),  # 相对序列号
+                    "tcp_seq_raw": self._get_first_value(
+                        layers.get("tcp.seq_raw")
+                    ),  # 绝对序列号
                     "tcp_len": self._get_first_value(layers.get("tcp.len")),
-                    "time_relative": self._get_first_value(layers.get("frame.time_relative"))
+                    "time_relative": self._get_first_value(
+                        layers.get("frame.time_relative")
+                    ),
                 }
 
                 # 如果是TLS段数据包，添加特殊标记
                 if tls_segment_data is not None:
                     frame_info["is_tls_segment"] = True
-                    frame_info["tls_segment_data_length"] = len(tls_segment_data[0]) // 2 if isinstance(tls_segment_data, list) and tls_segment_data else 0
+                    frame_info["tls_segment_data_length"] = (
+                        len(tls_segment_data[0]) // 2
+                        if isinstance(tls_segment_data, list) and tls_segment_data
+                        else 0
+                    )
 
                 detailed_frames.append(frame_info)
 
@@ -975,12 +1211,12 @@ class TLSFlowAnalyzer:
                 "total_tls_records": total_records,
                 "total_tcp_streams": total_tcp_streams,
                 "tls_content_types": TLS_CONTENT_TYPES,
-                "processing_strategies": TLS_PROCESSING_STRATEGIES
+                "processing_strategies": TLS_PROCESSING_STRATEGIES,
             },
             "global_statistics": {
                 "frames_containing_tls": total_frames,
                 "tls_records_total": total_records,
-                "tcp_streams_analyzed": total_tcp_streams
+                "tcp_streams_analyzed": total_tcp_streams,
             },
             "protocol_type_statistics": dict(protocol_type_stats),
             "detailed_frames": detailed_frames,
@@ -995,13 +1231,15 @@ class TLSFlowAnalyzer:
                             "src_port": dir_info["src_port"],
                             "dst_port": dir_info["dst_port"],
                             "packet_count": len(dir_info["packets"]),
-                            "payload_size": len(flow_info["reassembled_payloads"][direction])
+                            "payload_size": len(
+                                flow_info["reassembled_payloads"][direction]
+                            ),
                         }
                         for direction, dir_info in flow_info["directions"].items()
-                    }
+                    },
                 }
                 for stream_id, flow_info in tcp_flows.items()
-            }
+            },
         }
 
         return result
@@ -1018,7 +1256,11 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     # 输入选项：支持单个文件或目录
     input_group = parser.add_mutually_exclusive_group(required=True)
     input_group.add_argument("--pcap", help="待分析的 pcap/pcapng 文件路径")
-    input_group.add_argument("--input-dir", type=Path, help="待分析的目录路径，将处理目录下所有 pcap/pcapng 文件")
+    input_group.add_argument(
+        "--input-dir",
+        type=Path,
+        help="待分析的目录路径，将处理目录下所有 pcap/pcapng 文件",
+    )
 
     parser.add_argument(
         "--decode-as",
@@ -1043,40 +1285,34 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         help="结果文件输出目录 (默认与输入文件同目录)",
     )
     parser.add_argument(
-        "--detailed",
-        action="store_true",
-        help="启用详细模式，输出更多分析信息"
+        "--detailed", action="store_true", help="启用详细模式，输出更多分析信息"
     )
     parser.add_argument(
         "--filter-types",
         default="20,21,22,23,24",
-        help="过滤特定的 TLS 协议类型，逗号分隔 (默认: 20,21,22,23,24)"
+        help="过滤特定的 TLS 协议类型，逗号分隔 (默认: 20,21,22,23,24)",
     )
     parser.add_argument(
-        "--summary-only",
-        action="store_true",
-        help="仅输出统计摘要，不生成详细文件"
+        "--summary-only", action="store_true", help="仅输出统计摘要，不生成详细文件"
     )
     parser.add_argument(
         "--no-tcp-reassembly",
         action="store_true",
-        help="禁用 TCP 重组分析，仅分析单个数据包"
+        help="禁用 TCP 重组分析，仅分析单个数据包",
     )
     parser.add_argument(
         "--generate-summary-html",
         action="store_true",
-        help="批量处理时生成汇总 HTML 报告（包含所有文件的分析结果）"
+        help="批量处理时生成汇总 HTML 报告（包含所有文件的分析结果）",
     )
-    parser.add_argument(
-        "--verbose", action="store_true", help="输出调试信息"
-    )
+    parser.add_argument("--verbose", action="store_true", help="输出调试信息")
 
     return parser
 
 
 def _find_pcap_files(input_dir: Path) -> List[Path]:
     """Find all pcap/pcapng files in directory"""
-    pcap_extensions = {'.pcap', '.pcapng', '.cap'}
+    pcap_extensions = {".pcap", ".pcapng", ".cap"}
     pcap_files = []
 
     for ext in pcap_extensions:
@@ -1087,11 +1323,18 @@ def _find_pcap_files(input_dir: Path) -> List[Path]:
     return sorted(pcap_files)
 
 
-def _process_batch_files(pcap_files: List[Path], analyzer: 'TLSFlowAnalyzer',
-                        tshark_path: Optional[str], decode_as: Optional[List[str]],
-                        filter_types: Optional[Set[int]], output_dir: Optional[Path],
-                        formats: str, verbose: bool, detailed: bool,
-                        summary_only: bool) -> Dict[str, Dict[str, Any]]:
+def _process_batch_files(
+    pcap_files: List[Path],
+    analyzer: "TLSFlowAnalyzer",
+    tshark_path: Optional[str],
+    decode_as: Optional[List[str]],
+    filter_types: Optional[Set[int]],
+    output_dir: Optional[Path],
+    formats: str,
+    verbose: bool,
+    detailed: bool,
+    summary_only: bool,
+) -> Dict[str, Dict[str, Any]]:
     """Batch process multiple pcap files"""
     batch_results = {}
     total_files = len(pcap_files)
@@ -1099,14 +1342,14 @@ def _process_batch_files(pcap_files: List[Path], analyzer: 'TLSFlowAnalyzer',
     print(f"[tls-flow-analyzer] Starting batch processing of {total_files} files...")
 
     for i, pcap_file in enumerate(pcap_files, 1):
-        print(f"[tls-flow-analyzer] Processing file {i}/{total_files}: {pcap_file.name}")
+        print(
+            f"[tls-flow-analyzer] Processing file {i}/{total_files}: {pcap_file.name}"
+        )
 
         try:
             # 分析单个文件
             analysis_result = analyzer.analyze_pcap(
-                pcap_path=str(pcap_file),
-                tshark_path=tshark_path,
-                decode_as=decode_as
+                pcap_path=str(pcap_file), tshark_path=tshark_path, decode_as=decode_as
             )
 
             # 应用类型过滤
@@ -1124,36 +1367,46 @@ def _process_batch_files(pcap_files: List[Path], analyzer: 'TLSFlowAnalyzer',
                     output_dir=output_dir,
                     formats=formats,
                     verbose=verbose,
-                    detailed=detailed
+                    detailed=detailed,
                 )
 
             # 打印单个文件的简要摘要
             if verbose:
                 global_stats = analysis_result["global_statistics"]
-                print(f"  ✅ {pcap_file.name}: {global_stats['frames_containing_tls']} frames, "
-                     f"{global_stats['tls_records_total']} records, "
-                     f"{global_stats['tcp_streams_analyzed']} streams")
+                print(
+                    f"  ✅ {pcap_file.name}: {global_stats['frames_containing_tls']} frames, "
+                    f"{global_stats['tls_records_total']} records, "
+                    f"{global_stats['tcp_streams_analyzed']} streams"
+                )
 
         except Exception as e:
             print(f"  ❌ {pcap_file.name}: Analysis failed - {e}")
             if verbose:
                 import traceback
+
                 traceback.print_exc()
             continue
 
-    print(f"[tls-flow-analyzer] Batch processing completed, successfully processed {len(batch_results)}/{total_files} files")
+    print(
+        f"[tls-flow-analyzer] Batch processing completed, successfully processed {len(batch_results)}/{total_files} files"
+    )
     return batch_results
 
 
-def _generate_summary_html_report(batch_results: Dict[str, Dict[str, Any]],
-                                 output_dir: Path, verbose: bool) -> None:
+def _generate_summary_html_report(
+    batch_results: Dict[str, Dict[str, Any]], output_dir: Path, verbose: bool
+) -> None:
     """Generate summary HTML report"""
     if not JINJA2_AVAILABLE:
-        print(f"[tls-flow-analyzer] ⚠️  Jinja2 not installed, skipping summary HTML output")
+        print(
+            f"[tls-flow-analyzer] ⚠️  Jinja2 not installed, skipping summary HTML output"
+        )
         return
 
     if not batch_results:
-        print(f"[tls-flow-analyzer] ⚠️  No successfully analyzed files, skipping summary HTML output")
+        print(
+            f"[tls-flow-analyzer] ⚠️  No successfully analyzed files, skipping summary HTML output"
+        )
         return
 
     try:
@@ -1179,6 +1432,7 @@ def _generate_summary_html_report(batch_results: Dict[str, Dict[str, Any]],
         print(f"[tls-flow-analyzer] ⚠️  Failed to generate summary HTML: {e}")
         if verbose:
             import traceback
+
             traceback.print_exc()
 
 
@@ -1227,7 +1481,7 @@ def _prepare_summary_data(batch_results: Dict[str, Dict[str, Any]]) -> Dict[str,
             "protocol_type_statistics": protocol_stats,
             "detailed_frames": result["detailed_frames"],
             "reassembled_messages": result.get("reassembled_messages", []),
-            "tcp_flow_analysis": result.get("tcp_flow_analysis", {})
+            "tcp_flow_analysis": result.get("tcp_flow_analysis", {}),
         }
 
         file_summaries.append(file_summary)
@@ -1241,18 +1495,18 @@ def _prepare_summary_data(batch_results: Dict[str, Dict[str, Any]]) -> Dict[str,
         "global_summary": {
             "total_frames_containing_tls": total_frames,
             "total_tls_records": total_records,
-            "total_tcp_streams": total_streams
+            "total_tcp_streams": total_streams,
         },
         "global_protocol_type_statistics": dict(global_protocol_stats),
         "file_summaries": file_summaries,
         "tls_content_types": TLS_CONTENT_TYPES,
-        "processing_strategies": TLS_PROCESSING_STRATEGIES
+        "processing_strategies": TLS_PROCESSING_STRATEGIES,
     }
 
 
 def _create_summary_template_content() -> str:
     """创建汇总HTML模板内容"""
-    return '''<!DOCTYPE html>
+    return """<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -1453,15 +1707,17 @@ def _create_summary_template_content() -> str:
         }
     </script>
 </body>
-</html>'''
+</html>"""
 
 
-def _generate_detailed_message_analysis(analysis_result: Dict[str, Any]) -> Dict[str, Any]:
+def _generate_detailed_message_analysis(
+    analysis_result: Dict[str, Any],
+) -> Dict[str, Any]:
     """生成详细的 TLS 消息结构分析"""
     detailed_analysis = {
         "message_structure_analysis": [],
         "cross_segment_analysis": [],
-        "sequence_analysis": {}
+        "sequence_analysis": {},
     }
 
     # 分析重组的消息
@@ -1478,8 +1734,12 @@ def _generate_detailed_message_analysis(analysis_result: Dict[str, Any]) -> Dict
                 "end_position": message["header_end"],
                 "length": message["header_end"] - message["header_start"],
                 # 新增：头部序列号范围
-                "seq_start": message.get("tls_header_seq_start", message["tls_seq_start"]),
-                "seq_end": message.get("tls_header_seq_end", message["tls_seq_start"] + 5)
+                "seq_start": message.get(
+                    "tls_header_seq_start", message["tls_seq_start"]
+                ),
+                "seq_end": message.get(
+                    "tls_header_seq_end", message["tls_seq_start"] + 5
+                ),
             },
             "payload_info": {
                 "start_position": message["payload_start"],
@@ -1487,12 +1747,14 @@ def _generate_detailed_message_analysis(analysis_result: Dict[str, Any]) -> Dict
                 "length": message["payload_end"] - message["payload_start"],
                 "declared_length": message["length"],
                 # 新增：载荷序列号范围
-                "seq_start": message.get("tls_payload_seq_start", message["tls_seq_start"] + 5),
-                "seq_end": message.get("tls_payload_seq_end", message["tls_seq_end"])
+                "seq_start": message.get(
+                    "tls_payload_seq_start", message["tls_seq_start"] + 5
+                ),
+                "seq_end": message.get("tls_payload_seq_end", message["tls_seq_end"]),
             },
             "is_complete": message["is_complete"],
             "is_cross_segment": message["is_cross_segment"],
-            "processing_strategy": message["processing_strategy"]
+            "processing_strategy": message["processing_strategy"],
         }
 
         detailed_analysis["message_structure_analysis"].append(message_analysis)
@@ -1506,14 +1768,16 @@ def _generate_detailed_message_analysis(analysis_result: Dict[str, Any]) -> Dict
     for stream_id, flow_info in tcp_flows.items():
         detailed_analysis["sequence_analysis"][stream_id] = {
             "total_packets": flow_info["packet_count"],
-            "directions": {}
+            "directions": {},
         }
 
         for direction, dir_info in flow_info["directions"].items():
-            detailed_analysis["sequence_analysis"][stream_id]["directions"][direction] = {
+            detailed_analysis["sequence_analysis"][stream_id]["directions"][
+                direction
+            ] = {
                 "endpoint": f"{dir_info['src_ip']}:{dir_info['src_port']} -> {dir_info['dst_ip']}:{dir_info['dst_port']}",
                 "packet_count": dir_info["packet_count"],
-                "payload_size": dir_info["payload_size"]
+                "payload_size": dir_info["payload_size"],
             }
 
     return detailed_analysis
@@ -1536,8 +1800,14 @@ def _get_tls_version_string(version: Tuple[int, int]) -> str:
     return f"TLS {major}.{minor}"
 
 
-def _output_results(analysis_result: Dict[str, Any], pcap_path: str,
-                   output_dir: Optional[Path], formats: str, verbose: bool, detailed: bool = False) -> None:
+def _output_results(
+    analysis_result: Dict[str, Any],
+    pcap_path: str,
+    output_dir: Optional[Path],
+    formats: str,
+    verbose: bool,
+    detailed: bool = False,
+) -> None:
     """输出分析结果到文件"""
     # 设置输出目录
     if output_dir is None:
@@ -1566,46 +1836,60 @@ def _output_results(analysis_result: Dict[str, Any], pcap_path: str,
         if detailed:
             detailed_json_path = output_dir / f"{pcap_stem}_tls_detailed_analysis.json"
             with detailed_json_path.open("w", encoding="utf-8") as f:
-                json.dump(detailed_analysis, f, ensure_ascii=False, indent=2, default=str)
+                json.dump(
+                    detailed_analysis, f, ensure_ascii=False, indent=2, default=str
+                )
 
             if verbose:
-                print(f"[tls-flow-analyzer] Detailed analysis JSON output: {detailed_json_path}")
+                print(
+                    f"[tls-flow-analyzer] Detailed analysis JSON output: {detailed_json_path}"
+                )
 
     # TSV 输出
     if "tsv" in formats_list:
         tsv_path = output_dir / f"{pcap_stem}_tls_flow_analysis.tsv"
         with tsv_path.open("w", encoding="utf-8") as f:
             # 写入表头
-            f.write("frame\tprotocol_layers\tprotocol_types\tprotocol_type_names\ttcp_stream\tsrc_ip\tdst_ip\tsrc_port\tdst_port\ttcp_seq\ttcp_len\ttime_relative\tprocessing_strategies\n")
+            f.write(
+                "frame\tprotocol_layers\tprotocol_types\tprotocol_type_names\ttcp_stream\tsrc_ip\tdst_ip\tsrc_port\tdst_port\ttcp_seq\ttcp_len\ttime_relative\tprocessing_strategies\n"
+            )
 
             # 写入详细帧信息
             for frame_info in analysis_result["detailed_frames"]:
                 protocol_layers_str = ":".join(frame_info.get("protocol_layers", []))
-                protocol_types_str = ",".join(map(str, frame_info.get("protocol_types", [])))
+                protocol_types_str = ",".join(
+                    map(str, frame_info.get("protocol_types", []))
+                )
 
                 # 生成协议类型名称和处理策略
                 protocol_type_names = []
                 processing_strategies = []
                 for ptype in frame_info.get("protocol_types", []):
-                    protocol_type_names.append(TLS_CONTENT_TYPES.get(ptype, f"Unknown-{ptype}"))
-                    processing_strategies.append(TLS_PROCESSING_STRATEGIES.get(ptype, "unknown"))
+                    protocol_type_names.append(
+                        TLS_CONTENT_TYPES.get(ptype, f"Unknown-{ptype}")
+                    )
+                    processing_strategies.append(
+                        TLS_PROCESSING_STRATEGIES.get(ptype, "unknown")
+                    )
 
                 protocol_type_names_str = ",".join(protocol_type_names)
                 processing_strategies_str = ",".join(processing_strategies)
 
-                f.write(f"{frame_info.get('frame', '')}\t"
-                       f"{protocol_layers_str}\t"
-                       f"{protocol_types_str}\t"
-                       f"{protocol_type_names_str}\t"
-                       f"{frame_info.get('tcp_stream', '')}\t"
-                       f"{frame_info.get('src_ip', '')}\t"
-                       f"{frame_info.get('dst_ip', '')}\t"
-                       f"{frame_info.get('src_port', '')}\t"
-                       f"{frame_info.get('dst_port', '')}\t"
-                       f"{frame_info.get('tcp_seq', '')}\t"
-                       f"{frame_info.get('tcp_len', '')}\t"
-                       f"{frame_info.get('time_relative', '')}\t"
-                       f"{processing_strategies_str}\n")
+                f.write(
+                    f"{frame_info.get('frame', '')}\t"
+                    f"{protocol_layers_str}\t"
+                    f"{protocol_types_str}\t"
+                    f"{protocol_type_names_str}\t"
+                    f"{frame_info.get('tcp_stream', '')}\t"
+                    f"{frame_info.get('src_ip', '')}\t"
+                    f"{frame_info.get('dst_ip', '')}\t"
+                    f"{frame_info.get('src_port', '')}\t"
+                    f"{frame_info.get('dst_port', '')}\t"
+                    f"{frame_info.get('tcp_seq', '')}\t"
+                    f"{frame_info.get('tcp_len', '')}\t"
+                    f"{frame_info.get('time_relative', '')}\t"
+                    f"{processing_strategies_str}\n"
+                )
 
         if verbose:
             print(f"[tls-flow-analyzer] TSV output: {tsv_path}")
@@ -1614,42 +1898,55 @@ def _output_results(analysis_result: Dict[str, Any], pcap_path: str,
         if detailed and "detailed_analysis" in analysis_result:
             detailed_tsv_path = output_dir / f"{pcap_stem}_tls_message_structure.tsv"
             with detailed_tsv_path.open("w", encoding="utf-8") as f:
-                f.write("stream_id\tdirection\tcontent_type\tcontent_type_name\tversion_string\t"
-                       f"header_start\theader_end\theader_length\theader_seq_start\theader_seq_end\t"
-                       f"payload_start\tpayload_end\tpayload_length\tpayload_seq_start\tpayload_seq_end\t"
-                       f"declared_length\tis_complete\tis_cross_segment\tprocessing_strategy\n")
+                f.write(
+                    "stream_id\tdirection\tcontent_type\tcontent_type_name\tversion_string\t"
+                    f"header_start\theader_end\theader_length\theader_seq_start\theader_seq_end\t"
+                    f"payload_start\tpayload_end\tpayload_length\tpayload_seq_start\tpayload_seq_end\t"
+                    f"declared_length\tis_complete\tis_cross_segment\tprocessing_strategy\n"
+                )
 
-                for msg in analysis_result["detailed_analysis"]["message_structure_analysis"]:
-                    f.write(f"{msg['stream_id']}\t"
-                           f"{msg['direction']}\t"
-                           f"{msg['content_type']}\t"
-                           f"{msg['content_type_name']}\t"
-                           f"{msg['version_string']}\t"
-                           f"{msg['header_info']['start_position']}\t"
-                           f"{msg['header_info']['end_position']}\t"
-                           f"{msg['header_info']['length']}\t"
-                           f"{msg['header_info']['seq_start']}\t"
-                           f"{msg['header_info']['seq_end']}\t"
-                           f"{msg['payload_info']['start_position']}\t"
-                           f"{msg['payload_info']['end_position']}\t"
-                           f"{msg['payload_info']['length']}\t"
-                           f"{msg['payload_info']['seq_start']}\t"
-                           f"{msg['payload_info']['seq_end']}\t"
-                           f"{msg['payload_info']['declared_length']}\t"
-                           f"{msg['is_complete']}\t"
-                           f"{msg['is_cross_segment']}\t"
-                           f"{msg['processing_strategy']}\n")
+                for msg in analysis_result["detailed_analysis"][
+                    "message_structure_analysis"
+                ]:
+                    f.write(
+                        f"{msg['stream_id']}\t"
+                        f"{msg['direction']}\t"
+                        f"{msg['content_type']}\t"
+                        f"{msg['content_type_name']}\t"
+                        f"{msg['version_string']}\t"
+                        f"{msg['header_info']['start_position']}\t"
+                        f"{msg['header_info']['end_position']}\t"
+                        f"{msg['header_info']['length']}\t"
+                        f"{msg['header_info']['seq_start']}\t"
+                        f"{msg['header_info']['seq_end']}\t"
+                        f"{msg['payload_info']['start_position']}\t"
+                        f"{msg['payload_info']['end_position']}\t"
+                        f"{msg['payload_info']['length']}\t"
+                        f"{msg['payload_info']['seq_start']}\t"
+                        f"{msg['payload_info']['seq_end']}\t"
+                        f"{msg['payload_info']['declared_length']}\t"
+                        f"{msg['is_complete']}\t"
+                        f"{msg['is_cross_segment']}\t"
+                        f"{msg['processing_strategy']}\n"
+                    )
 
             if verbose:
-                print(f"[tls-flow-analyzer] Message structure TSV output: {detailed_tsv_path}")
+                print(
+                    f"[tls-flow-analyzer] Message structure TSV output: {detailed_tsv_path}"
+                )
 
     # HTML 输出
     if "html" in formats_list:
         _output_html_report(analysis_result, pcap_path, output_dir, pcap_stem, verbose)
 
 
-def _output_html_report(analysis_result: Dict[str, Any], pcap_path: str,
-                       output_dir: Path, pcap_stem: str, verbose: bool) -> None:
+def _output_html_report(
+    analysis_result: Dict[str, Any],
+    pcap_path: str,
+    output_dir: Path,
+    pcap_stem: str,
+    verbose: bool,
+) -> None:
     """Generate HTML format analysis report"""
     if not JINJA2_AVAILABLE:
         print(f"[tls-flow-analyzer] ⚠️  Jinja2 not installed, skipping HTML output")
@@ -1657,8 +1954,8 @@ def _output_html_report(analysis_result: Dict[str, Any], pcap_path: str,
 
     try:
         # 加载HTML模板
-        template_path = resource_path('tls_flow_analysis_template.html')
-        with open(template_path, 'r', encoding='utf-8') as f:
+        template_path = resource_path("tls_flow_analysis_template.html")
+        with open(template_path, "r", encoding="utf-8") as f:
             template_content = f.read()
 
         template = Template(template_content)
@@ -1675,7 +1972,9 @@ def _output_html_report(analysis_result: Dict[str, Any], pcap_path: str,
             "detailed_frames": analysis_result["detailed_frames"],
             "reassembled_messages": analysis_result["reassembled_messages"],
             "tls_content_types": analysis_result["metadata"]["tls_content_types"],
-            "processing_strategies": analysis_result["metadata"]["processing_strategies"]
+            "processing_strategies": analysis_result["metadata"][
+                "processing_strategies"
+            ],
         }
 
         # 渲染HTML
@@ -1693,7 +1992,9 @@ def _output_html_report(analysis_result: Dict[str, Any], pcap_path: str,
         print(f"[tls-flow-analyzer] ⚠️  HTML report generation failed: {e}")
 
 
-def _apply_type_filter(analysis_result: Dict[str, Any], filter_types: Set[int]) -> Dict[str, Any]:
+def _apply_type_filter(
+    analysis_result: Dict[str, Any], filter_types: Set[int]
+) -> Dict[str, Any]:
     """Apply TLS protocol type filtering"""
     # 过滤详细帧信息
     filtered_frames = []
@@ -1701,7 +2002,9 @@ def _apply_type_filter(analysis_result: Dict[str, Any], filter_types: Set[int]) 
         frame_types = frame.get("protocol_types", [])
         if any(ptype in filter_types for ptype in frame_types):
             # 只保留匹配的协议类型
-            filtered_protocol_types = [ptype for ptype in frame_types if ptype in filter_types]
+            filtered_protocol_types = [
+                ptype for ptype in frame_types if ptype in filter_types
+            ]
             filtered_frame = frame.copy()
             filtered_frame["protocol_types"] = filtered_protocol_types
             filtered_frames.append(filtered_frame)
@@ -1740,7 +2043,9 @@ def _print_summary(analysis_result: Dict[str, Any], detailed: bool) -> None:
     protocol_stats = analysis_result["protocol_type_statistics"]
 
     print(f"[tls-flow-analyzer] ✅ TLS traffic analysis completed")
-    print(f"  Total frames containing TLS messages: {global_stats['frames_containing_tls']}")
+    print(
+        f"  Total frames containing TLS messages: {global_stats['frames_containing_tls']}"
+    )
     print(f"  Total TLS records: {global_stats['tls_records_total']}")
     print(f"  Total TCP streams analyzed: {global_stats['tcp_streams_analyzed']}")
 
@@ -1750,7 +2055,9 @@ def _print_summary(analysis_result: Dict[str, Any], detailed: bool) -> None:
         strategy = TLS_PROCESSING_STRATEGIES[content_type]
         frames = protocol_stats[content_type]["frames"]
         records = protocol_stats[content_type]["records"]
-        print(f"    TLS-{content_type} ({type_name}, {strategy}): {frames} frames, {records} records")
+        print(
+            f"    TLS-{content_type} ({type_name}, {strategy}): {frames} frames, {records} records"
+        )
 
     if detailed:
         print(f"\n  TCP flow analysis details:")
@@ -1758,40 +2065,62 @@ def _print_summary(analysis_result: Dict[str, Any], detailed: bool) -> None:
         for stream_id, flow_info in tcp_flow_analysis.items():
             print(f"    TCP stream {stream_id}: {flow_info['packet_count']} packets")
             for direction, dir_info in flow_info["directions"].items():
-                print(f"      {direction}: {dir_info['src_ip']}:{dir_info['src_port']} -> "
-                     f"{dir_info['dst_ip']}:{dir_info['dst_port']} "
-                     f"({dir_info['packet_count']} packets, {dir_info['payload_size']} bytes payload)")
+                print(
+                    f"      {direction}: {dir_info['src_ip']}:{dir_info['src_port']} -> "
+                    f"{dir_info['dst_ip']}:{dir_info['dst_port']} "
+                    f"({dir_info['packet_count']} packets, {dir_info['payload_size']} bytes payload)"
+                )
 
         # Display reassembled message details
         reassembled_messages = analysis_result.get("reassembled_messages", [])
         if reassembled_messages:
-            print(f"\n  Reassembled TLS message details ({len(reassembled_messages)} messages):")
-            for i, message in enumerate(reassembled_messages[:10]):  # Limit display to first 10 messages
+            print(
+                f"\n  Reassembled TLS message details ({len(reassembled_messages)} messages):"
+            )
+            for i, message in enumerate(
+                reassembled_messages[:10]
+            ):  # Limit display to first 10 messages
                 content_type_name = message.get("content_type_name", "Unknown")
                 stream_id = message.get("stream_id", "unknown")
                 direction = message.get("direction", "unknown")
                 length = message.get("length", 0)
 
                 # 获取头部和载荷序列号范围
-                header_seq_start = message.get("tls_header_seq_start", message.get("tls_seq_start", 0))
+                header_seq_start = message.get(
+                    "tls_header_seq_start", message.get("tls_seq_start", 0)
+                )
                 header_seq_end = message.get("tls_header_seq_end", header_seq_start + 5)
                 payload_seq_start = message.get("tls_payload_seq_start", header_seq_end)
-                payload_seq_end = message.get("tls_payload_seq_end", message.get("tls_seq_end", payload_seq_start))
+                payload_seq_end = message.get(
+                    "tls_payload_seq_end", message.get("tls_seq_end", payload_seq_start)
+                )
 
                 is_complete = "✓" if message.get("is_complete", False) else "⚠"
-                is_cross_segment = "cross-segment" if message.get("is_cross_segment", False) else "single-segment"
+                is_cross_segment = (
+                    "cross-segment"
+                    if message.get("is_cross_segment", False)
+                    else "single-segment"
+                )
 
-                print(f"    [{i+1:2d}] stream{stream_id}-{direction} {content_type_name} ({length}bytes) {is_complete} {is_cross_segment}")
+                print(
+                    f"    [{i+1:2d}] stream{stream_id}-{direction} {content_type_name} ({length}bytes) {is_complete} {is_cross_segment}"
+                )
                 print(f"         Header sequence: {header_seq_start}-{header_seq_end}")
-                print(f"         Payload sequence: {payload_seq_start}-{payload_seq_end}")
+                print(
+                    f"         Payload sequence: {payload_seq_start}-{payload_seq_end}"
+                )
 
             if len(reassembled_messages) > 10:
-                print(f"    ... {len(reassembled_messages) - 10} more messages (see output files for details)")
+                print(
+                    f"    ... {len(reassembled_messages) - 10} more messages (see output files for details)"
+                )
         else:
             print(f"\n  No reassembled TLS messages")
 
 
-def _print_batch_summary(batch_results: Dict[str, Dict[str, Any]], detailed: bool) -> None:
+def _print_batch_summary(
+    batch_results: Dict[str, Dict[str, Any]], detailed: bool
+) -> None:
     """Print batch processing summary"""
     total_files = len(batch_results)
     if total_files == 0:
@@ -1828,16 +2157,20 @@ def _print_batch_summary(batch_results: Dict[str, Dict[str, Any]], detailed: boo
         strategy = TLS_PROCESSING_STRATEGIES[content_type]
         frames = global_protocol_stats[content_type]["frames"]
         records = global_protocol_stats[content_type]["records"]
-        print(f"    TLS-{content_type} ({type_name}, {strategy}): {frames} frames, {records} records")
+        print(
+            f"    TLS-{content_type} ({type_name}, {strategy}): {frames} frames, {records} records"
+        )
 
     if detailed:
         print(f"\n  Detailed statistics by file:")
         for pcap_path, result in batch_results.items():
             pcap_name = Path(pcap_path).name
             global_stats = result["global_statistics"]
-            print(f"    📄 {pcap_name}: {global_stats['frames_containing_tls']} frames, "
-                 f"{global_stats['tls_records_total']} records, "
-                 f"{global_stats['tcp_streams_analyzed']} streams")
+            print(
+                f"    📄 {pcap_name}: {global_stats['frames_containing_tls']} frames, "
+                f"{global_stats['tls_records_total']} records, "
+                f"{global_stats['tcp_streams_analyzed']} streams"
+            )
 
 
 def main(argv: Optional[List[str]] = None) -> None:
@@ -1851,14 +2184,22 @@ def main(argv: Optional[List[str]] = None) -> None:
         filter_types = None
         if args.filter_types:
             try:
-                filter_types = set(int(t.strip()) for t in args.filter_types.split(",") if t.strip())
+                filter_types = set(
+                    int(t.strip()) for t in args.filter_types.split(",") if t.strip()
+                )
                 # Validate protocol type range
                 invalid_types = filter_types - set(TLS_CONTENT_TYPES.keys())
                 if invalid_types:
-                    print(f"[tls-flow-analyzer] Error: Invalid TLS protocol types: {invalid_types}", file=sys.stderr)
+                    print(
+                        f"[tls-flow-analyzer] Error: Invalid TLS protocol types: {invalid_types}",
+                        file=sys.stderr,
+                    )
                     sys.exit(1)
             except ValueError as e:
-                print(f"[tls-flow-analyzer] Error: Unable to parse protocol types '{args.filter_types}': {e}", file=sys.stderr)
+                print(
+                    f"[tls-flow-analyzer] Error: Unable to parse protocol types '{args.filter_types}': {e}",
+                    file=sys.stderr,
+                )
                 sys.exit(1)
 
         # Create analyzer
@@ -1879,7 +2220,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             analysis_result = analyzer.analyze_pcap(
                 pcap_path=args.pcap,
                 tshark_path=args.tshark_path,
-                decode_as=args.decode_as
+                decode_as=args.decode_as,
             )
 
             # 应用类型过滤
@@ -1894,7 +2235,7 @@ def main(argv: Optional[List[str]] = None) -> None:
                     output_dir=args.output_dir,
                     formats=args.formats,
                     verbose=args.verbose,
-                    detailed=args.detailed
+                    detailed=args.detailed,
                 )
 
             # 打印摘要
@@ -1903,17 +2244,26 @@ def main(argv: Optional[List[str]] = None) -> None:
         elif args.input_dir:
             # Batch processing
             if not args.input_dir.exists():
-                print(f"[tls-flow-analyzer] Error: Input directory does not exist: {args.input_dir}", file=sys.stderr)
+                print(
+                    f"[tls-flow-analyzer] Error: Input directory does not exist: {args.input_dir}",
+                    file=sys.stderr,
+                )
                 sys.exit(1)
 
             if not args.input_dir.is_dir():
-                print(f"[tls-flow-analyzer] Error: Input path is not a directory: {args.input_dir}", file=sys.stderr)
+                print(
+                    f"[tls-flow-analyzer] Error: Input path is not a directory: {args.input_dir}",
+                    file=sys.stderr,
+                )
                 sys.exit(1)
 
             # Find pcap files
             pcap_files = _find_pcap_files(args.input_dir)
             if not pcap_files:
-                print(f"[tls-flow-analyzer] Error: No pcap/pcapng files found in directory {args.input_dir}", file=sys.stderr)
+                print(
+                    f"[tls-flow-analyzer] Error: No pcap/pcapng files found in directory {args.input_dir}",
+                    file=sys.stderr,
+                )
                 sys.exit(1)
 
             # Batch process files
@@ -1927,12 +2277,14 @@ def main(argv: Optional[List[str]] = None) -> None:
                 formats=args.formats,
                 verbose=args.verbose,
                 detailed=args.detailed,
-                summary_only=args.summary_only
+                summary_only=args.summary_only,
             )
 
             # 生成汇总HTML报告
             if args.generate_summary_html:
-                _generate_summary_html_report(batch_results, args.output_dir, args.verbose)
+                _generate_summary_html_report(
+                    batch_results, args.output_dir, args.verbose
+                )
 
             # Print batch processing summary
             _print_batch_summary(batch_results, args.detailed)

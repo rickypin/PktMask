@@ -25,7 +25,7 @@ class NewMaskPayloadStage(StageBase):
     """
 
     name: str = "NewMaskPayloadStage"
-    
+
     def __init__(self, config: Dict[str, Any]):
         """Initialize new generation mask payload stage.
 
@@ -37,13 +37,15 @@ class NewMaskPayloadStage(StageBase):
                 - mode: Processing mode ("enhanced", "basic")
         """
         super().__init__(config)
-        self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
+        self.logger = logging.getLogger(
+            f"{self.__class__.__module__}.{self.__class__.__name__}"
+        )
 
         # Parse configuration
-        self.protocol = config.get('protocol', 'tls')
-        self.mode = config.get('mode', 'enhanced')
-        self.marker_config = config.get('marker_config', {})
-        self.masker_config = config.get('masker_config', {})
+        self.protocol = config.get("protocol", "tls")
+        self.mode = config.get("mode", "enhanced")
+        self.marker_config = config.get("marker_config", {})
+        self.masker_config = config.get("masker_config", {})
 
         # Module instances (lazy initialization)
         self.marker = None
@@ -52,13 +54,9 @@ class NewMaskPayloadStage(StageBase):
         # Optional configuration validator
         self.config_validator = None
 
-        self.logger.info(f"NewMaskPayloadStage created: protocol={self.protocol}, mode={self.mode}")
-
-
-
-
-
-
+        self.logger.info(
+            f"NewMaskPayloadStage created: protocol={self.protocol}, mode={self.mode}"
+        )
 
     def initialize(self, config: Optional[Dict] = None) -> bool:
         """Initialize the stage.
@@ -95,7 +93,7 @@ class NewMaskPayloadStage(StageBase):
         except Exception as e:
             self.logger.error(f"NewMaskPayloadStage initialization failed: {e}")
             return False
-    
+
     def process_file(self, input_path: Path, output_path: Path) -> StageStats:
         """Process a single file.
 
@@ -127,17 +125,23 @@ class NewMaskPayloadStage(StageBase):
 
         try:
             # Check for basic mode (fallback processing)
-            if self.mode == 'basic':
-                return self._process_with_basic_mode(input_path, output_path, start_time)
+            if self.mode == "basic":
+                return self._process_with_basic_mode(
+                    input_path, output_path, start_time
+                )
 
             # Dual-module processing mode
-            return self._process_with_dual_module_mode(input_path, output_path, start_time)
+            return self._process_with_dual_module_mode(
+                input_path, output_path, start_time
+            )
 
         except Exception as e:
             self.logger.error(f"File processing failed: {e}")
             raise
 
-    def _process_with_dual_module_mode(self, input_path: Path, output_path: Path, start_time: float) -> StageStats:
+    def _process_with_dual_module_mode(
+        self, input_path: Path, output_path: Path, start_time: float
+    ) -> StageStats:
         """使用双模块架构处理文件"""
         self.logger.debug("Using dual-module architecture processing mode")
 
@@ -151,7 +155,9 @@ class NewMaskPayloadStage(StageBase):
 
             # Phase 2: Call Masker module to apply rules
             self.logger.debug("Phase 2: Apply masking rules")
-            masking_stats = self.masker.apply_masking(str(working_input_path), str(output_path), keep_rules)
+            masking_stats = self.masker.apply_masking(
+                str(working_input_path), str(output_path), keep_rules
+            )
 
             # 阶段3: 转换统计信息
             stage_stats = self._convert_to_stage_stats(masking_stats)
@@ -159,8 +165,10 @@ class NewMaskPayloadStage(StageBase):
             # 清理临时文件（如果创建了的话）
             self._cleanup_input_file(working_input_path, input_path)
 
-        self.logger.info(f"Dual-module processing completed: processed_packets={stage_stats.packets_processed}, "
-                        f"modified_packets={stage_stats.packets_modified}")
+        self.logger.info(
+            f"Dual-module processing completed: processed_packets={stage_stats.packets_processed}, "
+            f"modified_packets={stage_stats.packets_modified}"
+        )
 
         return stage_stats
 
@@ -184,12 +192,16 @@ class NewMaskPayloadStage(StageBase):
 
             # 小文件：直接使用，性能影响可忽略
             if file_size_mb < 50:
-                self.logger.debug(f"Small file ({file_size_mb:.1f}MB), using direct access")
+                self.logger.debug(
+                    f"Small file ({file_size_mb:.1f}MB), using direct access"
+                )
                 return input_path
 
             # 中等文件：记录提示但不优化
             elif file_size_mb < 200:
-                self.logger.info(f"Medium file ({file_size_mb:.1f}MB), dual-module processing may cause some I/O overhead")
+                self.logger.info(
+                    f"Medium file ({file_size_mb:.1f}MB), dual-module processing may cause some I/O overhead"
+                )
                 return input_path
 
             # 大文件：创建临时硬链接优化
@@ -225,13 +237,17 @@ class NewMaskPayloadStage(StageBase):
                 os.link(str(input_path), str(temp_file))
             except OSError as e:
                 # Handle cross-device link errors or permission issues
-                self.logger.warning(f"Cannot create hardlink (cross-device or permission issue): {e}. "
-                                  f"Falling back to direct access.")
+                self.logger.warning(
+                    f"Cannot create hardlink (cross-device or permission issue): {e}. "
+                    f"Falling back to direct access."
+                )
                 # Clean up temp directory immediately since hardlink failed
                 try:
                     temp_dir.rmdir()
                 except OSError as cleanup_error:
-                    self.logger.debug(f"Failed to cleanup temp directory after hardlink failure: {cleanup_error}")
+                    self.logger.debug(
+                        f"Failed to cleanup temp directory after hardlink failure: {cleanup_error}"
+                    )
                 return input_path
 
             # Register temp file and directory for cleanup tracking
@@ -241,11 +257,15 @@ class NewMaskPayloadStage(StageBase):
                 lambda: self._cleanup_temp_directory(temp_dir)
             )
 
-            self.logger.info(f"Created temporary hardlink for large file ({file_size_mb:.1f}MB): {temp_file}")
+            self.logger.info(
+                f"Created temporary hardlink for large file ({file_size_mb:.1f}MB): {temp_file}"
+            )
             return temp_file
 
         except Exception as e:
-            self.logger.warning(f"Failed to create hardlink for optimization: {e}, using direct access")
+            self.logger.warning(
+                f"Failed to create hardlink for optimization: {e}, using direct access"
+            )
             return input_path
 
     def _cleanup_temp_directory(self, temp_dir: Path) -> None:
@@ -254,15 +274,21 @@ class NewMaskPayloadStage(StageBase):
         Args:
             temp_dir: Temporary directory to clean up
         """
-        if temp_dir and temp_dir.exists() and temp_dir.name.startswith("pktmask_stage_"):
+        if (
+            temp_dir
+            and temp_dir.exists()
+            and temp_dir.name.startswith("pktmask_stage_")
+        ):
             try:
                 # Try to remove directory (will only succeed if empty)
                 temp_dir.rmdir()
                 self.logger.debug(f"Cleaned up temporary directory: {temp_dir}")
             except OSError as e:
                 # Directory not empty or other error - this is expected if files remain
-                self.logger.debug(f"Could not remove temporary directory {temp_dir}: {e} "
-                                f"(directory may not be empty or already cleaned)")
+                self.logger.debug(
+                    f"Could not remove temporary directory {temp_dir}: {e} "
+                    f"(directory may not be empty or already cleaned)"
+                )
 
     def _cleanup_input_file(self, working_path: Path, original_path: Path) -> None:
         """清理工作文件和临时目录
@@ -280,7 +306,9 @@ class NewMaskPayloadStage(StageBase):
                         working_path.unlink()
                         self.logger.debug(f"Cleaned up temporary file: {working_path}")
                     except OSError as e:
-                        self.logger.warning(f"Failed to delete temporary file {working_path}: {e}")
+                        self.logger.warning(
+                            f"Failed to delete temporary file {working_path}: {e}"
+                        )
                         # Continue with directory cleanup even if file deletion fails
 
                     # 删除临时目录（如果为空）
@@ -288,15 +316,23 @@ class NewMaskPayloadStage(StageBase):
                     if temp_dir.name.startswith("pktmask_stage_"):
                         try:
                             temp_dir.rmdir()  # 只删除空目录
-                            self.logger.debug(f"Cleaned up temporary directory: {temp_dir}")
+                            self.logger.debug(
+                                f"Cleaned up temporary directory: {temp_dir}"
+                            )
                         except OSError as e:
                             # 目录不为空或其他错误，记录但不抛出异常
-                            self.logger.debug(f"Could not remove temporary directory {temp_dir}: {e} "
-                                            f"(directory may not be empty)")
+                            self.logger.debug(
+                                f"Could not remove temporary directory {temp_dir}: {e} "
+                                f"(directory may not be empty)"
+                            )
                 else:
-                    self.logger.debug(f"Temporary file already cleaned up: {working_path}")
+                    self.logger.debug(
+                        f"Temporary file already cleaned up: {working_path}"
+                    )
 
-    def _process_with_basic_mode(self, input_path: Path, output_path: Path, start_time: float) -> StageStats:
+    def _process_with_basic_mode(
+        self, input_path: Path, output_path: Path, start_time: float
+    ) -> StageStats:
         """基础模式处理（透传复制）"""
         self.logger.debug("Using basic mode (passthrough copy)")
 
@@ -320,14 +356,16 @@ class NewMaskPayloadStage(StageBase):
             packets_modified=0,
             duration_ms=duration_ms,
             extra_metrics={
-                'mode': 'basic',
-                'operation': 'passthrough_copy',
-                'success': True,
-                'file_size': input_path.stat().st_size
-            }
+                "mode": "basic",
+                "operation": "passthrough_copy",
+                "success": True,
+                "file_size": input_path.stat().st_size,
+            },
         )
 
-        self.logger.info(f"Basic mode processing completed: file_size={stage_stats.extra_metrics['file_size']} bytes")
+        self.logger.info(
+            f"Basic mode processing completed: file_size={stage_stats.extra_metrics['file_size']} bytes"
+        )
 
         return stage_stats
 
@@ -337,8 +375,9 @@ class NewMaskPayloadStage(StageBase):
         Returns:
             ProtocolMarker 实例
         """
-        if self.protocol == 'tls':
+        if self.protocol == "tls":
             from .marker.tls_marker import TLSProtocolMarker
+
             return TLSProtocolMarker(self.marker_config)
         else:
             raise ValueError(f"不支持的协议: {self.protocol}")
@@ -350,14 +389,15 @@ class NewMaskPayloadStage(StageBase):
             PayloadMasker 实例
         """
         from .masker.payload_masker import PayloadMasker
+
         return PayloadMasker(self.masker_config)
-    
+
     def _convert_to_stage_stats(self, masking_stats) -> StageStats:
         """转换掩码统计信息为阶段统计信息
-        
+
         Args:
             masking_stats: MaskingStats 实例
-            
+
         Returns:
             StageStats 实例
         """
@@ -367,37 +407,37 @@ class NewMaskPayloadStage(StageBase):
             packets_modified=masking_stats.modified_packets,
             duration_ms=masking_stats.execution_time * 1000,
             extra_metrics={
-                'masked_bytes': masking_stats.masked_bytes,
-                'preserved_bytes': masking_stats.preserved_bytes,
-                'masking_ratio': masking_stats.masking_ratio,
-                'preservation_ratio': masking_stats.preservation_ratio,
-                'processing_speed_mbps': masking_stats.processing_speed_mbps,
-                'protocol': self.protocol,
-                'mode': self.mode,
-                'success': masking_stats.success,
-                'errors': masking_stats.errors,
-                'warnings': masking_stats.warnings
-            }
+                "masked_bytes": masking_stats.masked_bytes,
+                "preserved_bytes": masking_stats.preserved_bytes,
+                "masking_ratio": masking_stats.masking_ratio,
+                "preservation_ratio": masking_stats.preservation_ratio,
+                "processing_speed_mbps": masking_stats.processing_speed_mbps,
+                "protocol": self.protocol,
+                "mode": self.mode,
+                "success": masking_stats.success,
+                "errors": masking_stats.errors,
+                "warnings": masking_stats.warnings,
+            },
         )
-    
+
     def get_display_name(self) -> str:
         """获取显示名称"""
         return "Payload Masking Stage"
-    
+
     def get_description(self) -> str:
         """获取描述信息"""
         return (
             f"新一代载荷掩码处理器 (协议: {self.protocol}, 模式: {self.mode})。"
             "基于双模块架构，支持协议分析与掩码应用分离。"
         )
-    
+
     def get_required_tools(self) -> list[str]:
         """获取所需工具列表"""
-        tools = ['scapy']
-        if self.protocol == 'tls':
-            tools.append('tshark')
+        tools = ["scapy"]
+        if self.protocol == "tls":
+            tools.append("tshark")
         return tools
-    
+
     def _cleanup_stage_specific(self) -> None:
         """Stage特定的资源清理"""
         if self.marker:
@@ -406,5 +446,3 @@ class NewMaskPayloadStage(StageBase):
             # 使用新的cleanup方法
             self.masker.cleanup()
         self.logger.debug("NewMaskPayloadStage specific cleanup completed")
-
-

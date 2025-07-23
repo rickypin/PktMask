@@ -15,25 +15,25 @@ from .types import (
     LayerInfo,
     IPLayerInfo,
     PayloadInfo,
-    EncapsulationResult
+    EncapsulationResult,
 )
 
 from .detector import EncapsulationDetector
 from .parser import ProtocolStackParser
+
 # ProcessingAdapter 已移至 pktmask.adapters.encapsulation_adapter
 
 __all__ = [
     # 数据类型
-    'EncapsulationType',
-    'LayerInfo', 
-    'IPLayerInfo',
-    'PayloadInfo',
-    'EncapsulationResult',
-    
+    "EncapsulationType",
+    "LayerInfo",
+    "IPLayerInfo",
+    "PayloadInfo",
+    "EncapsulationResult",
     # 核心组件
-    'EncapsulationDetector',
-    'ProtocolStackParser', 
-    'ProcessingAdapter',
+    "EncapsulationDetector",
+    "ProtocolStackParser",
+    "ProcessingAdapter",
 ]
 
-__version__ = "1.0.0" 
+__version__ = "1.0.0"

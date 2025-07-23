@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="1" tests="3" time="3.956" timestamp="2025-07-23T11:03:46.705717+08:00" hostname="Rickys-MacBook-Air.local"><testcase classname="" name="tests.unit.test_encapsulation_basic" time="0.000"><skipped message="collection skipped">('/Users/ricky/Downloads/PktMask/tests/unit/test_encapsulation_basic.py', 26, 'Skipped: 封装模块未找到，跳过测试')</skipped></testcase><testcase classname="tests.integration.test_cli_unified.TestCLIUnified" name="test_config_service_consistency" time="0.004" /><testcase classname="tests.integration.test_cli_unified.TestCLIUnified" name="test_single_file_processing" time="3.419"><failure message="ValueError: I/O operation on closed file.">tests/integration/test_cli_unified.py:86: in test_single_file_processing
+    result = self.runner.invoke(app, [
+.venv/lib/python3.13/site-packages/typer/testing.py:21: in invoke
+    return super().invoke(
+.venv/lib/python3.13/site-packages/click/testing.py:521: in invoke
+    stdout = outstreams[0].getvalue()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E   ValueError: I/O operation on closed file.</failure></testcase></testsuite></testsuites>

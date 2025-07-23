@@ -13,17 +13,18 @@ from typing import Any, Dict, List, Optional
 @dataclass
 class FlowInfo:
     """TCP流信息"""
-    stream_id: str              # TCP流标识
-    src_ip: str                 # 源IP地址
-    dst_ip: str                 # 目标IP地址
-    src_port: int               # 源端口
-    dst_port: int               # 目标端口
-    protocol: str               # 协议类型 (tcp)
-    direction: str              # 流方向 (forward/reverse)
-    packet_count: int = 0       # 数据包数量
-    byte_count: int = 0         # 字节数量
-    first_seen: float = 0.0     # 首次出现时间
-    last_seen: float = 0.0      # 最后出现时间
+
+    stream_id: str  # TCP流标识
+    src_ip: str  # 源IP地址
+    dst_ip: str  # 目标IP地址
+    src_port: int  # 源端口
+    dst_port: int  # 目标端口
+    protocol: str  # 协议类型 (tcp)
+    direction: str  # 流方向 (forward/reverse)
+    packet_count: int = 0  # 数据包数量
+    byte_count: int = 0  # 字节数量
+    first_seen: float = 0.0  # 首次出现时间
+    last_seen: float = 0.0  # 最后出现时间
     metadata: Dict[str, Any] = field(default_factory=dict)  # 附加信息
 
 
@@ -40,11 +41,12 @@ class KeepRule:
     - 实际保留范围: [seq_start, seq_end)
     - 保留字节数: seq_end - seq_start
     """
-    stream_id: str              # TCP流标识
-    direction: str              # 流方向 (forward/reverse)
-    seq_start: int              # 起始序列号 (包含，左闭)
-    seq_end: int                # 结束序列号 (不包含，右开)
-    rule_type: str              # 规则类型 (tls_header/tls_payload/etc)
+
+    stream_id: str  # TCP流标识
+    direction: str  # 流方向 (forward/reverse)
+    seq_start: int  # 起始序列号 (包含，左闭)
+    seq_end: int  # 结束序列号 (不包含，右开)
+    rule_type: str  # 规则类型 (tls_header/tls_payload/etc)
     metadata: Dict[str, Any] = field(default_factory=dict)  # 附加信息
 
     def __post_init__(self):
@@ -55,9 +57,9 @@ class KeepRule:
             raise ValueError("起始序列号必须小于结束序列号")
         if not self.stream_id:
             raise ValueError("流标识不能为空")
-        if self.direction not in ('forward', 'reverse'):
+        if self.direction not in ("forward", "reverse"):
             raise ValueError("流方向必须是 'forward' 或 'reverse'")
-    
+
     @property
     def length(self) -> int:
         """获取规则覆盖的字节长度（左闭右开区间）"""
@@ -71,7 +73,7 @@ class KeepRule:
         # 重叠条件: max(start1, start2) < min(end1, end2)
         # 相邻条件: end1 == start2 or end2 == start1
         return not (self.seq_end <= other.seq_start or other.seq_end <= self.seq_start)
-    
+
     def merge_with(self, other: KeepRule) -> Optional[KeepRule]:
         """尝试与另一个规则合并
 
@@ -82,16 +84,19 @@ class KeepRule:
             return None
 
         # 检查保留策略是否兼容
-        self_strategy = self.metadata.get('preserve_strategy')
-        other_strategy = other.metadata.get('preserve_strategy')
+        self_strategy = self.metadata.get("preserve_strategy")
+        other_strategy = other.metadata.get("preserve_strategy")
 
         # 如果任一规则是TLS-23头部保留规则，不进行合并
-        if (self_strategy == 'header_only' or other_strategy == 'header_only'):
+        if self_strategy == "header_only" or other_strategy == "header_only":
             return None
 
         # 如果保留策略不同，不进行合并
-        if (self_strategy is not None and other_strategy is not None and
-            self_strategy != other_strategy):
+        if (
+            self_strategy is not None
+            and other_strategy is not None
+            and self_strategy != other_strategy
+        ):
             return None
 
         # 合并重叠或相邻的规则
@@ -100,9 +105,9 @@ class KeepRule:
 
         # 合并元数据
         merged_metadata = {**self.metadata, **other.metadata}
-        merged_metadata['merged_from'] = [
-            self.metadata.get('rule_id', 'unknown'),
-            other.metadata.get('rule_id', 'unknown')
+        merged_metadata["merged_from"] = [
+            self.metadata.get("rule_id", "unknown"),
+            other.metadata.get("rule_id", "unknown"),
         ]
 
         return KeepRule(
@@ -111,37 +116,39 @@ class KeepRule:
             seq_start=new_start,
             seq_end=new_end,
             rule_type=f"{self.rule_type}+{other.rule_type}",
-            metadata=merged_metadata
+            metadata=merged_metadata,
         )
 
 
 @dataclass
 class KeepRuleSet:
     """保留规则集合
-    
+
     包含了对整个PCAP文件进行掩码处理所需的所有保留规则和相关信息。
     """
+
     rules: List[KeepRule] = field(default_factory=list)
     tcp_flows: Dict[str, FlowInfo] = field(default_factory=dict)
     statistics: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def add_rule(self, rule: KeepRule) -> None:
         """添加保留规则"""
         self.rules.append(rule)
-    
+
     def get_rules_for_stream(self, stream_id: str, direction: str) -> List[KeepRule]:
         """获取指定流和方向的所有规则"""
         return [
-            rule for rule in self.rules 
+            rule
+            for rule in self.rules
             if rule.stream_id == stream_id and rule.direction == direction
         ]
-    
+
     def optimize_rules(self) -> None:
         """优化规则集合，合并重叠和相邻的规则"""
         if not self.rules:
             return
-        
+
         # 按流和方向分组
         grouped_rules: Dict[Tuple[str, str], List[KeepRule]] = {}
         for rule in self.rules:
@@ -149,35 +156,37 @@ class KeepRuleSet:
             if key not in grouped_rules:
                 grouped_rules[key] = []
             grouped_rules[key].append(rule)
-        
+
         # 对每组规则进行优化
         optimized_rules = []
         for rules_group in grouped_rules.values():
             optimized_rules.extend(self._optimize_rule_group(rules_group))
-        
+
         self.rules = optimized_rules
-        
+
         # 更新统计信息
-        self.statistics['rules_before_optimization'] = len(self.rules)
-        self.statistics['rules_after_optimization'] = len(optimized_rules)
-    
+        self.statistics["rules_before_optimization"] = len(self.rules)
+        self.statistics["rules_after_optimization"] = len(optimized_rules)
+
     def _optimize_rule_group(self, rules: List[KeepRule]) -> List[KeepRule]:
         """优化单个规则组"""
         if not rules:
             return []
-        
+
         # 按序列号排序
         sorted_rules = sorted(rules, key=lambda r: r.seq_start)
-        
+
         # 合并重叠和相邻的规则
         merged_rules = [sorted_rules[0]]
-        
+
         for current_rule in sorted_rules[1:]:
             last_rule = merged_rules[-1]
-            
+
             # 检查是否可以合并
-            if (current_rule.seq_start <= last_rule.seq_end or 
-                current_rule.seq_start == last_rule.seq_end):
+            if (
+                current_rule.seq_start <= last_rule.seq_end
+                or current_rule.seq_start == last_rule.seq_end
+            ):
                 # 合并规则
                 merged_rule = last_rule.merge_with(current_rule)
                 if merged_rule:
@@ -186,21 +195,21 @@ class KeepRuleSet:
                     merged_rules.append(current_rule)
             else:
                 merged_rules.append(current_rule)
-        
+
         return merged_rules
-    
+
     def get_total_preserved_bytes(self) -> int:
         """获取总的保留字节数"""
         return sum(rule.length for rule in self.rules)
-    
+
     def get_stream_count(self) -> int:
         """获取TCP流数量"""
         return len(self.tcp_flows)
-    
+
     def validate(self) -> List[str]:
         """验证规则集合的有效性，返回错误列表"""
         errors = []
-        
+
         # 验证每个规则
         for i, rule in enumerate(self.rules):
             try:
@@ -208,13 +217,13 @@ class KeepRuleSet:
                 rule.__post_init__()
             except ValueError as e:
                 errors.append(f"规则 {i}: {e}")
-        
+
         # 验证流信息一致性
         rule_streams = {rule.stream_id for rule in self.rules}
         flow_streams = set(self.tcp_flows.keys())
-        
+
         missing_flows = rule_streams - flow_streams
         if missing_flows:
             errors.append(f"缺少流信息: {missing_flows}")
-        
+
         return errors

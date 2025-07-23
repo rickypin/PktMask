@@ -20,4 +20,4 @@ MaskPayload 阶段 - 双模块架构实现
 
 from .stage import NewMaskPayloadStage
 
-__all__ = ['NewMaskPayloadStage']
+__all__ = ["NewMaskPayloadStage"]

@@ -18,26 +18,26 @@ from ...common.enums import LogLevel
 
 class PktMaskLogger:
     """PktMask应用程序日志管理器"""
-    
-    _instance: Optional['PktMaskLogger'] = None
+
+    _instance: Optional["PktMaskLogger"] = None
     _initialized: bool = False
-    
-    def __new__(cls) -> 'PktMaskLogger':
+
+    def __new__(cls) -> "PktMaskLogger":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-    
+
     def __init__(self):
         if PktMaskLogger._initialized:
             return
-        
+
         self._loggers: Dict[str, logging.Logger] = {}
         self._setup_root_logger()
         PktMaskLogger._initialized = True
-    
+
     def _setup_root_logger(self):
         """设置根日志记录器"""
-        root_logger = logging.getLogger('pktmask')
+        root_logger = logging.getLogger("pktmask")
         root_logger.setLevel(logging.DEBUG)
 
         # 避免重复添加handler
@@ -48,6 +48,7 @@ class PktMaskLogger:
         console_level = logging.INFO  # 默认级别
         try:
             from ...config import get_app_config
+
             config = get_app_config()
             level_str = config.logging.log_level.upper()
             console_level = getattr(logging, level_str, logging.INFO)
@@ -59,44 +60,44 @@ class PktMaskLogger:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(console_level)
         console_formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
         console_handler.setFormatter(console_formatter)
         root_logger.addHandler(console_handler)
-        
+
         # 文件处理器
         try:
             log_dir = Path.home() / FileConstants.CONFIG_DIR_NAME
             log_dir.mkdir(exist_ok=True)
             log_file = log_dir / FileConstants.LOG_FILE_NAME
-            
+
             file_handler = RotatingFileHandler(
                 log_file,
                 maxBytes=FileConstants.LOG_MAX_SIZE,
                 backupCount=FileConstants.LOG_BACKUP_COUNT,
-                encoding='utf-8'
+                encoding="utf-8",
             )
             file_handler.setLevel(logging.DEBUG)
             file_formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S'
+                "%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
             )
             file_handler.setFormatter(file_formatter)
             root_logger.addHandler(file_handler)
         except Exception as e:
             # 如果文件日志设置失败，至少保证控制台日志可用
             root_logger.warning(f"Failed to setup file logging: {e}")
-        
-        self._loggers['root'] = root_logger
-    
+
+        self._loggers["root"] = root_logger
+
     def get_logger(self, name: str) -> logging.Logger:
         """获取指定名称的日志记录器"""
         if name not in self._loggers:
-            logger = logging.getLogger(f'pktmask.{name}')
+            logger = logging.getLogger(f"pktmask.{name}")
             self._loggers[name] = logger
         return self._loggers[name]
-    
+
     def set_level(self, level: LogLevel):
         """设置日志级别"""
         for logger in self._loggers.values():
@@ -106,6 +107,7 @@ class PktMaskLogger:
         """根据配置重新配置日志系统"""
         try:
             from ...config import get_app_config
+
             config = get_app_config()
 
             # 获取配置的日志级别
@@ -113,25 +115,37 @@ class PktMaskLogger:
             console_level = getattr(logging, level_str, logging.INFO)
 
             # 更新所有现有处理器的级别
-            pktmask_logger = logging.getLogger('pktmask')
+            pktmask_logger = logging.getLogger("pktmask")
             for handler in pktmask_logger.handlers:
-                if isinstance(handler, logging.StreamHandler) and handler.stream == sys.stdout:
+                if (
+                    isinstance(handler, logging.StreamHandler)
+                    and handler.stream == sys.stdout
+                ):
                     # 这是控制台处理器
                     handler.setLevel(console_level)
 
         except Exception as e:
             # 如果重新配置失败，记录警告但不中断程序
-            logging.getLogger('pktmask').warning(f"Failed to reconfigure logging system: {e}")
-    
-    def log_exception(self, logger_name: str, exc: Exception, context: Optional[Dict[str, Any]] = None):
+            logging.getLogger("pktmask").warning(
+                f"Failed to reconfigure logging system: {e}"
+            )
+
+    def log_exception(
+        self, logger_name: str, exc: Exception, context: Optional[Dict[str, Any]] = None
+    ):
         """记录异常信息"""
         logger = self.get_logger(logger_name)
         context_str = ""
         if context:
             context_str = f" Context: {context}"
-        logger.error(f"Exception occurred: {type(exc).__name__}: {exc}{context_str}", exc_info=True)
-    
-    def log_performance(self, logger_name: str, operation: str, duration: float, **kwargs):
+        logger.error(
+            f"Exception occurred: {type(exc).__name__}: {exc}{context_str}",
+            exc_info=True,
+        )
+
+    def log_performance(
+        self, logger_name: str, operation: str, duration: float, **kwargs
+    ):
         """记录性能信息"""
         logger = self.get_logger(logger_name)
         extra_info = " ".join(f"{k}={v}" for k, v in kwargs.items())
@@ -142,7 +156,7 @@ class PktMaskLogger:
 _logger_manager = PktMaskLogger()
 
 
-def get_logger(name: str = 'root') -> logging.Logger:
+def get_logger(name: str = "root") -> logging.Logger:
     """获取日志记录器的便利函数"""
     return _logger_manager.get_logger(name)
 
@@ -157,23 +171,28 @@ def reconfigure_logging():
     _logger_manager.reconfigure_from_config()
 
 
-def log_exception(exc: Exception, logger_name: str = 'root', context: Optional[Dict[str, Any]] = None):
+def log_exception(
+    exc: Exception, logger_name: str = "root", context: Optional[Dict[str, Any]] = None
+):
     """记录异常的便利函数"""
     _logger_manager.log_exception(logger_name, exc, context)
 
 
-def log_performance(operation: str, duration: float, logger_name: str = 'performance', **kwargs):
+def log_performance(
+    operation: str, duration: float, logger_name: str = "performance", **kwargs
+):
     """记录性能的便利函数"""
     _logger_manager.log_performance(logger_name, operation, duration, **kwargs)
 
 
 # 装饰器：自动记录函数执行时间
-def log_execution_time(logger_name: str = 'performance'):
+def log_execution_time(logger_name: str = "performance"):
     """装饰器：自动记录函数执行时间"""
+
     def decorator(func):
         import time
         import functools
-        
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             start_time = time.time()
@@ -186,5 +205,7 @@ def log_execution_time(logger_name: str = 'performance'):
                 duration = time.time() - start_time
                 log_performance(f"{func.__name__} (failed)", duration, logger_name)
                 raise
+
         return wrapper
-    return decorator 
+
+    return decorator

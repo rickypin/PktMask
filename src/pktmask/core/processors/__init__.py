@@ -8,5 +8,5 @@
 from .registry import ProcessorRegistry
 
 __all__ = [
-    'ProcessorRegistry',
+    "ProcessorRegistry",
 ]

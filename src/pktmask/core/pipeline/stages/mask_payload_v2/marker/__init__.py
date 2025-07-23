@@ -20,10 +20,4 @@ from .base import ProtocolMarker
 from .tls_marker import TLSProtocolMarker
 from .types import KeepRule, KeepRuleSet, FlowInfo
 
-__all__ = [
-    'ProtocolMarker',
-    'TLSProtocolMarker', 
-    'KeepRule',
-    'KeepRuleSet',
-    'FlowInfo'
-]
+__all__ = ["ProtocolMarker", "TLSProtocolMarker", "KeepRule", "KeepRuleSet", "FlowInfo"]

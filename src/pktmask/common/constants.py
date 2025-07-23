@@ -11,30 +11,31 @@ from pathlib import Path
 
 class UIConstants:
     """界面相关常量"""
+
     # 窗口尺寸
     WINDOW_MIN_WIDTH = 1200
     WINDOW_MIN_HEIGHT = 800
     DEFAULT_WINDOW_WIDTH = 1200
     DEFAULT_WINDOW_HEIGHT = 800
-    
+
     # 对话框尺寸
     GUIDE_DIALOG_MIN_WIDTH = 700
     GUIDE_DIALOG_MIN_HEIGHT = 500
     ABOUT_DIALOG_WIDTH = 700
     ABOUT_DIALOG_HEIGHT = 500
-    
+
     # 字体设置
     DEFAULT_FONT_SIZE = 12
     LOG_FONT_SIZE = 12
     SUMMARY_FONT_SIZE = 12
-    
+
     # 布局间距
     LAYOUT_SPACING = 18
     LAYOUT_MARGINS = 15
     GROUP_BOX_MARGINS = 15
     GROUP_BOX_SPACING = 12
     GROUP_BOX_INNER_SPACING = 10
-    
+
     # 组件高度
     GROUP_BOX_MAX_HEIGHT = 100
     DIRS_GROUP_HEIGHT = 100
@@ -42,12 +43,12 @@ class UIConstants:
     PIPELINE_GROUP_HEIGHT = 85
     EXECUTE_GROUP_HEIGHT = 85
     DASHBOARD_GROUP_HEIGHT = 140
-    
+
     BUTTON_MAX_HEIGHT = 30
     BUTTON_MIN_HEIGHT = 35
     LABEL_MAX_HEIGHT = 20
     INPUT_LABEL_HEIGHT = 20
-    
+
     # Padding settings
     DIRS_LAYOUT_PADDING = (15, 12, 15, 12)
     PIPELINE_LAYOUT_PADDING = (15, 12, 15, 12)
@@ -85,6 +86,7 @@ class UIConstants:
 
 class ProcessingConstants:
     """Processing-related constants"""
+
     # TLS related
     TLS_SIGNALING_TYPES = {20, 21, 22}
 
@@ -95,9 +97,9 @@ class ProcessingConstants:
     DEFAULT_MAX_WORKERS = 4
 
     # File processing
-    SUPPORTED_EXTENSIONS = ('.pcap', '.pcapng')
-    TEMP_FILE_SUFFIX = '.tmp'
-    
+    SUPPORTED_EXTENSIONS = (".pcap", ".pcapng")
+    TEMP_FILE_SUFFIX = ".tmp"
+
     # IP anonymization related
     IPV4_MIN_SEGMENT = 1
     IPV4_MAX_SEGMENT = 255
@@ -120,14 +122,7 @@ class ProcessingConstants:
     UNKNOWN_IP_SORT_WEIGHT = 99
 
     # Anonymization algorithm parameters
-    SEGMENT_DELTA_VALUES = {
-        1: 3,
-        2: 5,
-        3: 20,
-        4: 32,
-        5: 128,
-        'default': 256
-    }
+    SEGMENT_DELTA_VALUES = {1: 3, 2: 5, 3: 20, 4: 32, 5: 128, "default": 256}
 
     # Directory processing parameters
     IP_MAPPING_SAMPLE_COUNT = 3
@@ -141,6 +136,7 @@ class ProcessingConstants:
 
 class FileConstants:
     """File and path related constants"""
+
     # Configuration files
     CONFIG_DIR_NAME = ".pktmask"
     DEFAULT_CONFIG_FILE = "config.yaml"
@@ -150,7 +146,7 @@ class FileConstants:
     LOG_FILE_NAME = "pktmask.log"
     LOG_MAX_SIZE = 10 * 1024 * 1024  # 10MB
     LOG_BACKUP_COUNT = 5
-    
+
     # Report files
     REPORT_FILE_PREFIX = "summary_report"
     REPORT_FILE_EXTENSION = ".json"
@@ -165,6 +161,7 @@ class FileConstants:
 
 class NetworkConstants:
     """Network-related constants"""
+
     # IP versions
     IPV4_VERSION = 4
     IPV6_VERSION = 6
@@ -180,6 +177,7 @@ class NetworkConstants:
 
 class ValidationConstants:
     """Validation-related constants"""
+
     # File size limits (bytes)
     MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024  # 2GB
     MIN_FILE_SIZE = 24  # Minimum pcap file header size
@@ -189,17 +187,18 @@ class ValidationConstants:
     MAX_FILENAME_LENGTH = 255
 
     # Regular expressions
-    IPV4_PATTERN = r'^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$'
-    IPV6_PATTERN = r'^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$'
+    IPV4_PATTERN = r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"
+    IPV6_PATTERN = r"^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$"
 
 
 class FormatConstants:
     """Formatting-related constants"""
+
     # Number formats
     PERCENTAGE_DECIMAL_PLACES = 1
     TIME_DECIMAL_PLACES = 2
     RATE_DECIMAL_PLACES = 1
-    
+
     # String formats
     IP_DISPLAY_WIDTH = 16
     STEP_NAME_WIDTH = 18
@@ -221,6 +220,7 @@ class FormatConstants:
 
 class SystemConstants:
     """System-related constants"""
+
     # Operating system detection
     MACOS_SYSTEM_NAME = "Darwin"
     WINDOWS_SYSTEM_NAME = "Windows"
@@ -244,7 +244,6 @@ PROCESS_DISPLAY_NAMES = {
     "anonymize_ips": "Anonymize IPs",
     "remove_dupes": "Remove Dupes",
     "mask_payloads": "Mask Payloads",
-
     # Legacy naming - maintain backward compatibility (non-standard naming removed)
 }
 
@@ -256,5 +255,5 @@ ERROR_MESSAGES = {
     "config_load_failed": "配置加载失败: {reason}",
     "permission_denied": "权限不足: {path}",
     "disk_space_insufficient": "磁盘空间不足",
-    "invalid_input": "输入无效: {input}"
-} 
+    "invalid_input": "输入无效: {input}",
+}

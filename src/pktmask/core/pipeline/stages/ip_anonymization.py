@@ -10,7 +10,9 @@ from __future__ import annotations
 import logging
 from typing import Dict, Any, Optional
 
-from pktmask.core.pipeline.stages.ip_anonymization_unified import UnifiedIPAnonymizationStage
+from pktmask.core.pipeline.stages.ip_anonymization_unified import (
+    UnifiedIPAnonymizationStage,
+)
 
 
 class IPAnonymizationStage(UnifiedIPAnonymizationStage):
@@ -42,10 +44,13 @@ class IPAnonymizationStage(UnifiedIPAnonymizationStage):
         """
         # Call parent constructor with unified configuration
         super().__init__(config)
-        self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
-        self.logger.info(f"IPAnonymizationStage created: method={self.method}, "
-                        f"ipv4_prefix={self.ipv4_prefix}, ipv6_prefix={self.ipv6_prefix}")
-
+        self.logger = logging.getLogger(
+            f"{self.__class__.__module__}.{self.__class__.__name__}"
+        )
+        self.logger.info(
+            f"IPAnonymizationStage created: method={self.method}, "
+            f"ipv4_prefix={self.ipv4_prefix}, ipv6_prefix={self.ipv6_prefix}"
+        )
 
     def get_required_tools(self) -> list[str]:
         """Get list of required external tools
@@ -62,20 +67,22 @@ class IPAnonymizationStage(UnifiedIPAnonymizationStage):
         """
         self.logger.info("IPAnonymizationStage stop requested")
         # No special cleanup needed for IP anonymization
-    
+
     def get_display_name(self) -> str:
         """Get user-friendly display name
-        
+
         Returns:
             str: Display name for GUI/CLI
         """
         return "Anonymize IPs"
-    
+
     def get_description(self) -> str:
         """Get stage description
-        
+
         Returns:
             str: Detailed description of the stage functionality
         """
-        return ("Anonymize IP addresses in packets while maintaining subnet structure consistency. "
-                f"Uses {self.method} method with IPv4/{self.ipv4_prefix} and IPv6/{self.ipv6_prefix} prefixes.")
+        return (
+            "Anonymize IP addresses in packets while maintaining subnet structure consistency. "
+            f"Uses {self.method} method with IPv4/{self.ipv4_prefix} and IPv6/{self.ipv6_prefix} prefixes."
+        )
