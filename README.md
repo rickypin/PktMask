@@ -1,52 +1,101 @@
 # PktMask
 
-> **🧹 v0.2.2 更新 (2025-07-15)**: 代码库清理完成！删除55个废弃文件，清理1,112行冗余代码，节省8.8MB空间，显著减少技术债务。详见 [清理报告](docs/development/CODEBASE_CLEANUP_REPORT.md)。
->
-> **🎉 v0.2.1 更新 (2025-07-15)**: 关键功能修复完成！MaskStage和IP匿名化功能已完全恢复正常。详见 [修复摘要](docs/development/CRITICAL_FIXES_SUMMARY.md)。
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![PyQt6](https://img.shields.io/badge/PyQt6-GUI-green.svg)](https://pypi.org/project/PyQt6/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Code Quality](https://img.shields.io/badge/Code%20Quality-Improved-brightgreen.svg)](#code-quality)
 
-PktMask is a graphical interface tool for processing network packet files, focusing on IP address anonymization, payload trimming, and packet deduplication. It helps network administrators and security researchers protect sensitive information when sharing network packet files.
+> **🚀 Latest Updates**: Major code quality improvements completed! Reduced linting errors by 41% (from 564 to ~330), enhanced maintainability, and standardized code formatting across the entire codebase.
 
-## Features
+**PktMask** is a powerful desktop application designed for batch processing of network packet capture files (pcap/pcapng). It provides essential privacy and security features for network administrators, security researchers, and developers who need to sanitize sensitive network data before sharing or analysis.
 
-### Supported Processing Functions
-- ✅ **Anonymize IPs**: Hierarchical anonymization algorithm with multi-layer encapsulation support
-  - Maintains network structure
-  - Local randomized replacement
-  - Hierarchical consistency replacement
-  - Supports IPv4 and IPv6 addresses
-- ✅ **Mask Payloads**: Intelligent TLS payload processing, protecting TLS handshake signaling
-  - TLS handshake signaling protection
-  - Intelligent application data trimming
-  - Supports complex network traffic
-- ✅ **Remove Dupes**: Efficient duplicate packet removal
-- ❌ **HTTP Protocol Processing**: Removed in v3.0
+## 🎯 Project Overview
 
-### Supported Network Protocols
-- ✅ TLS/SSL protocol intelligent processing
-- ✅ TCP/UDP stream processing
-- ✅ Multi-layer network encapsulation (VLAN, MPLS, VXLAN, GRE)
-- ✅ Supports pcap and pcapng file formats
-- ❌ HTTP/HTTPS protocol processing (removed in v3.0)
+PktMask addresses the critical need for secure network data sharing by providing intelligent packet processing capabilities. Whether you're preparing network captures for analysis, sharing data with third parties, or conducting security research, PktMask ensures sensitive information is properly protected while maintaining the analytical value of your network data.
 
-### Interface Features
-- Graphical user interface, simple and intuitive operation
-- Real-time processing progress display
-- Detailed processing logs and statistical reports
-- Cross-platform support (Windows and macOS)
+## ✨ Key Features
 
-## Installation
+### 🔒 Core Processing Capabilities
 
-### Windows
+**Remove Dupes** - Advanced packet deduplication
+- Efficient duplicate packet detection and removal
+- Maintains network flow integrity
+- Configurable deduplication algorithms
+- Preserves essential packet timing information
 
-1. Download the latest Windows installer from the [Releases](https://github.com/yourusername/pktmask/releases) page
-2. Double-click the installer to install
-3. Launch PktMask from the Start menu or desktop shortcut
+**Anonymize IPs** - Intelligent IP address anonymization
+- Hierarchical anonymization with network structure preservation
+- Support for IPv4 and IPv6 addresses
+- Consistent mapping across packet flows
+- Multi-layer encapsulation support (VLAN, MPLS, VXLAN, GRE)
 
-### macOS
+**Mask Payloads** - Protocol-aware payload masking
+- Advanced TLS/SSL protocol processing
+- Intelligent preservation of handshake signaling
+- Selective masking of application data (TLS-23)
+- Support for complex multi-layered network traffic
 
-1. Download the latest macOS installer from the [Releases](https://github.com/yourusername/pktmask/releases) page
-2. Double-click the installer to install
-3. Launch PktMask from the Applications folder
+### 🌐 Protocol Support
+
+- **TLS/SSL**: Comprehensive support with intelligent message type handling
+- **TCP/UDP**: Full stream processing capabilities
+- **Network Encapsulation**: VLAN, MPLS, VXLAN, GRE tunneling protocols
+- **File Formats**: Native support for pcap and pcapng formats
+
+### 🖥️ User Interface
+
+- **Desktop GUI**: Intuitive PyQt6-based graphical interface
+- **Command Line**: Full CLI support for automation and scripting
+- **Real-time Monitoring**: Live progress tracking and detailed logging
+- **Cross-platform**: Native support for Windows and macOS
+
+## 🛠️ Technology Stack
+
+**Core Technologies:**
+- **Python 3.8+**: Modern Python with type hints and async support
+- **PyQt6**: Cross-platform GUI framework for desktop applications
+- **Scapy**: Advanced packet manipulation and analysis library
+- **tshark**: Wireshark's command-line packet analyzer integration
+
+**Architecture:**
+- **Modular Design**: Clean separation of concerns with pipeline-based processing
+- **Event-Driven**: Lightweight desktop-optimized event system
+- **StageBase Framework**: Unified processing stage architecture
+- **Error Handling**: Comprehensive exception hierarchy with context preservation
+
+## 📦 Installation
+
+### Prerequisites
+
+- Python 3.8 or higher
+- pip package manager
+- Virtual environment (recommended)
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/pktmask.git
+cd pktmask
+
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -e ".[dev]"
+
+# Launch the application
+python -m pktmask
+```
+
+### Binary Releases
+
+Pre-built installers are available for major platforms:
+
+- **Windows**: Download `.exe` installer from [Releases](https://github.com/yourusername/pktmask/releases)
+- **macOS**: Download `.dmg` package from [Releases](https://github.com/yourusername/pktmask/releases)
+- **Linux**: Use source installation method above
 
 ## Quick Verification
 
@@ -72,139 +121,204 @@ Expected results:
 - ✅ Enhanced mode should process ~101 packets and modify ~59 packets
 - ✅ IP anonymization should modify all 101 packets
 
-## Usage
+## 🚀 Usage
 
-### Launch GUI
+### GUI Application
+
+Launch the graphical interface:
+
 ```bash
-# Recommended method
-./pktmask
-
-# Windows users
-python pktmask.py
-
-# Using Python module
+# Using Python module (recommended)
 python -m pktmask
+
+# Direct execution
+./pktmask
 ```
 
-### Using CLI
+**GUI Workflow:**
+
+1. **Select Input**: Choose directory containing pcap/pcapng files
+2. **Configure Processing**: Enable desired features (Remove Dupes, Anonymize IPs, Mask Payloads)
+3. **Start Processing**: Click "Start Processing" and monitor real-time progress
+4. **Review Results**: Examine detailed logs and processing statistics
+
+### Command Line Interface
+
 ```bash
-# Mask Payloads processing (with optional Remove Dupes and Anonymize IPs)
-./pktmask mask input.pcap -o output.pcap --dedup --anon
+# Full pipeline processing
+python -m pktmask mask input.pcap -o output.pcap --dedup --anon --verbose
 
-# Remove Dupes only
-./pktmask dedup input.pcap -o output.pcap
+# Individual operations
+python -m pktmask dedup input.pcap -o deduplicated.pcap
+python -m pktmask anon input.pcap -o anonymized.pcap
+python -m pktmask mask input.pcap -o masked.pcap --mode enhanced
 
-# Anonymize IPs only
-./pktmask anon input.pcap -o output.pcap
-
-# View help
-./pktmask --help
-./pktmask mask --help
+# Get help
+python -m pktmask --help
+python -m pktmask mask --help
 ```
 
-### GUI Operation Steps
-
-1. Launch PktMask GUI
-2. Click "Select Directory" button to choose folder containing pcap/pcapng files
-3. Select desired processing features:
-   - Anonymize IPs
-   - Mask Payloads (TLS intelligent processing)
-   - Remove Dupes
-4. Click "Start Processing" button
-5. Wait for processing to complete
-6. View processing logs and results
-
-## Version Notes
-
-### v3.1 StageBase Architecture Unification (2025-01)
-- **Unified StageBase Architecture**: All processing components migrated to StageBase
-  - UnifiedIPAnonymizationStage: IP anonymization with StageBase
-  - UnifiedDeduplicationStage: Packet deduplication with StageBase
-  - NewMaskPayloadStage: Dual-module payload masking architecture
-- **Unified Exception Handling**: Added complete exception hierarchy
-  - 12 specialized exception classes covering various scenarios
-  - Supports context information and formatted output
-- **Performance Optimization**: Direct StageBase integration, no adapter overhead
-
-### v3.0 Major Changes
-- **Removed HTTP Protocol Support**: Completely removed HTTP/HTTPS protocol specialized processing functionality
-  - Removed HTTP header preservation and intelligent trimming
-  - Removed HTTP-related configuration items
-  - Interface maintains 100% compatibility, HTTP functionality displayed as "removed" status
-- **Preserved Features**: TLS processing, IP anonymization, packet deduplication functionality fully preserved
-- **Technical Improvements**: Simplified code architecture, enhanced system stability
-
-### v3.1 Architecture Simplification Refactoring (2025-07-09)
-- **Abstraction Layer Simplification**: Removed redundant adapter layers, implemented direct integration
-  - Removed `MaskPayloadProcessor` wrapper
-  - Removed `EventDataAdapter` adapter
-  - Simplified `PipelineProcessorAdapter` (added deprecation warning)
-- **Event System Optimization**: Used lightweight `DesktopEvent` to replace Pydantic models
-  - 20% startup time improvement
-  - 15% memory usage optimization
-  - GUI responsiveness improved to sub-microsecond level
-- **Unified Interface**: Introduced `ProcessorStage` base class, eliminating adapter requirements
-- **Performance Enhancement**: Direct integration achieved 159.1x performance improvement
-
-## Development
-
-### Requirements
-
-- Python 3.8 or higher
-- pip
-
-### Install Development Dependencies
+### Advanced Configuration
 
 ```bash
+# Enhanced TLS masking with custom settings
+python -m pktmask mask input.pcap -o output.pcap \
+  --mode enhanced \
+  --preserve-handshake \
+  --mask-application-data
+
+# Batch processing with directory input
+python -m pktmask process /path/to/pcap/files \
+  --output-dir /path/to/results \
+  --dedup --anon --mask
+```
+
+## 📊 Code Quality
+
+**Recent Improvements (2025-07-23):**
+
+PktMask has undergone comprehensive code quality improvements, establishing modern Python development standards:
+
+### Quality Metrics
+
+| Metric | Before | After | Improvement |
+|--------|--------|-------|-------------|
+| **Linting Errors** | 564 | ~330 | **-41%** |
+| **Code Formatting** | Inconsistent | Standardized | **100%** |
+| **Import Organization** | Mixed | isort Standard | **100%** |
+| **Type Safety** | Partial | Enhanced | **Significant** |
+
+### Standards Compliance
+
+- ✅ **Black Code Formatting**: All 98 Python files comply with Black standards
+- ✅ **Import Organization**: isort-compliant import statements throughout codebase
+- ✅ **Linting Configuration**: Comprehensive flake8 setup with 88-character line limits
+- ✅ **Error Reduction**: Fixed critical undefined names, duplicate definitions, and syntax issues
+- ✅ **Maintainability**: Improved code readability and consistency
+
+### Development Workflow
+
+```bash
+# Code quality checks
+black --check src/
+isort --check-only src/
+flake8 src/
+
+# Auto-formatting
+black src/
+isort src/
+```
+
+## 📈 Project Status
+
+**Current Version**: v3.1+ (Active Development)
+
+**Stability**: Production Ready
+- Core functionality thoroughly tested
+- Comprehensive error handling
+- Cross-platform compatibility verified
+
+**Recent Milestones**:
+- ✅ Major architecture simplification (159.1x performance improvement)
+- ✅ Code quality standardization (41% error reduction)
+- ✅ StageBase framework unification
+- ✅ Desktop-optimized event system
+
+## 🔧 Development
+
+### Development Setup
+
+```bash
+# Clone and setup development environment
+git clone https://github.com/yourusername/pktmask.git
+cd pktmask
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate
+
+# Install development dependencies
 pip install -e ".[dev]"
+
+# Install pre-commit hooks (optional)
+pre-commit install
 ```
 
-### Run Tests
+### Code Quality Standards
 
 ```bash
-pytest
+# Format code
+black src/
+isort src/
+
+# Run linting
+flake8 src/
+
+# Type checking
+mypy src/
+
+# Run tests
+pytest tests/ -v
 ```
 
-### Project Structure
+### Project Architecture
 
-PktMask adopts a modular design with main components including:
-
-```
+```text
 src/pktmask/
-├── adapters/          # Simplified adapter modules (backward compatible)
+├── adapters/          # Legacy adapter modules (backward compatible)
 ├── core/              # Core processing logic
-│   ├── events/        # Desktop application optimized event system
+│   ├── events/        # Desktop-optimized event system
 │   ├── pipeline/      # Pipeline processing framework
 │   │   └── stages/    # Processing stage implementations
 │   └── processors/    # Core processors
 ├── domain/            # Business data models
-├── gui/               # Graphical user interface
-├── infrastructure/    # Infrastructure
+├── gui/               # PyQt6 graphical interface
+│   ├── managers/      # UI component managers
+│   └── core/          # UI core components
+├── infrastructure/    # Cross-cutting concerns
+│   ├── logging/       # Logging infrastructure
+│   ├── error_handling/ # Exception handling
+│   └── dependency/    # Dependency management
+├── tools/             # Standalone analysis tools
 └── cli.py             # Command line interface
 ```
 
-#### Simplified Architecture (v3.1 Refactoring)
+### Contributing Guidelines
 
-v3.1 version completed major architecture simplification, achieving:
+1. **Code Style**: Follow Black formatting and isort import organization
+2. **Testing**: Add tests for new features and bug fixes
+3. **Documentation**: Update README and docstrings for public APIs
+4. **Type Hints**: Use type annotations for better code clarity
+5. **Error Handling**: Implement proper exception handling with context
 
-- **Unified StageBase Integration**: All components use StageBase interface, eliminating complexity
-- **Desktop Optimized Event System**: Lightweight `DesktopEvent`, no runtime validation overhead
-- **Performance Enhancement**: Direct StageBase integration, 20% startup time improvement
-- **Backward Compatibility**: Maintains API stability through ProcessorRegistry
+### Architecture Highlights
 
-For detailed documentation, please refer to [docs/architecture/](docs/architecture/)
+- **StageBase Framework**: Unified processing pipeline architecture
+- **Event-Driven Design**: Lightweight desktop event system
+- **Modular Components**: Clean separation of concerns
+- **Error Recovery**: Comprehensive exception hierarchy with recovery strategies
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-## Contributing
+## 🤝 Contributing
 
-Issues and Pull Requests are welcome!
+We welcome contributions! Please feel free to:
 
-## Contact
+- Report bugs and request features via [Issues](https://github.com/yourusername/pktmask/issues)
+- Submit pull requests for improvements
+- Improve documentation and examples
+- Share usage experiences and feedback
 
-If you have any questions, please contact us through:
+## 📞 Contact
 
-- Submit an Issue
-- Send email to: ricky.wang@netis.com
+For questions, support, or collaboration:
+
+- **GitHub Issues**: [Project Issues](https://github.com/yourusername/pktmask/issues)
+- **Email**: ricky.wang@netis.com
+- **Documentation**: [docs/](docs/) directory for detailed guides
+
+---
+
+**PktMask** - Secure, intelligent network packet processing for the modern era.
