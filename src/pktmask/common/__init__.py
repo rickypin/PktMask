@@ -1,6 +1,6 @@
 """
 Common module for PktMask
-Contains constants, enums, exception definitions and other common components
+包含常量、枚举和异常定义等公共组件
 """
 
 from .constants import (

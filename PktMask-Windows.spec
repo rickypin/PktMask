@@ -8,7 +8,7 @@ import sys
 import os
 from pathlib import Path
 
-# 获取Item根目录
+# 获取项目根目录
 project_root = Path(__file__).parent
 src_path = project_root / 'src'
 
@@ -142,7 +142,7 @@ exe = EXE(
     exclude_binaries=True,
     name='PktMask',
     icon='assets/PktMask.ico' if os.path.exists('assets/PktMask.ico') else None,
-    debug=False,  # 禁用调试mode以减少控制台输出
+    debug=False,  # 禁用调试模式以减少控制台输出
     bootloader_ignore_signals=False,
     strip=False,
     upx=False,  # 禁用UPX压缩，避免Windows兼容性问题

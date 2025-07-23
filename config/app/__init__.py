@@ -1,7 +1,7 @@
 """
 应用配置模块
 
-packets含PktMask应用的所有配置相关功能。
+包含PktMask应用的所有配置相关功能。
 """
 
 from .settings import (
@@ -30,7 +30,7 @@ __all__ = [
     "UISettings",
     "ProcessingSettings",
     "LoggingSettings",
-    # Global配置管理
+    # 全局配置管理
     "get_app_config",
     "reload_app_config",
     "save_app_config",
