@@ -1,8 +1,8 @@
-# PktMask 文档管理快速指南
+# PktMask Documentation Management Quick Guide
 
-> **版本**: v1.0.0  
-> **创建日期**: 2025-07-22  
-> **适用范围**: PktMask ≥ 4.0.0  
+> **Version**: v1.0.0
+> **Created**: 2025-07-22
+> **Scope**: PktMask ≥ 4.0.0
 
 ---
 

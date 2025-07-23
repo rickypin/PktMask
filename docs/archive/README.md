@@ -1,44 +1,44 @@
-# 历史文档存档
+# Historical Documentation Archive
 
-本目录包含 PktMask 项目的历史文档、已完成项目的记录和废弃功能的相关资料。这些文档主要用于参考和了解项目的发展历程。
+This directory contains historical documentation, completed project records, and deprecated feature materials for the PktMask project. These documents are primarily used for reference and understanding the project's development history.
 
-## 📦 存档分类
+## 📦 Archive Categories
 
-### 🎯 [已完成项目](completed-projects/)
-已经完成的重大项目和重构工作的文档记录
-- 架构审查报告
-- 重构方案和实施记录
-- 性能优化项目
-- 功能开发项目
+### 🎯 [Completed Projects](completed-projects/)
+Documentation records of completed major projects and refactoring work
+- Architecture review reports
+- Refactoring plans and implementation records
+- Performance optimization projects
+- Feature development projects
 
-### 🚫 [废弃功能](deprecated-features/)
-不再支持或已被替代的功能相关文档
-- 废弃功能的使用指南
-- 迁移指南和替代方案
-- 功能废弃的原因说明
+### 🚫 [Deprecated Features](deprecated-features/)
+Documentation related to features that are no longer supported or have been replaced
+- Usage guides for deprecated features
+- Migration guides and alternative solutions
+- Explanations for feature deprecation reasons
 
-### 📚 [遗留文档](legacy-docs/)
-历史版本的文档和过时的设计资料
-- 旧版本的用户手册
-- 历史架构设计
-- 过时的API文档
+### 📚 [Legacy Documentation](legacy-docs/)
+Documentation from historical versions and outdated design materials
+- User manuals from old versions
+- Historical architecture designs
+- Outdated API documentation
 
-## 🎯 存档目的
+## 🎯 Archive Purpose
 
-### 历史追溯
-- **项目演进** - 了解项目的发展历程
-- **设计决策** - 查看历史设计决策的背景
-- **经验总结** - 学习过往项目的经验教训
+### Historical Tracking
+- **Project Evolution** - Understanding the project's development history
+- **Design Decisions** - Viewing the background of historical design decisions
+- **Experience Summary** - Learning from past project experiences and lessons
 
-### 参考价值
-- **架构参考** - 历史架构设计的参考
-- **问题解决** - 类似问题的解决方案
-- **知识传承** - 项目知识的传承和保存
+### Reference Value
+- **Architecture Reference** - Reference for historical architecture designs
+- **Problem Solving** - Solutions for similar problems
+- **Knowledge Transfer** - Inheritance and preservation of project knowledge
 
-### 合规要求
-- **文档保存** - 满足项目文档保存要求
-- **审计追踪** - 提供完整的项目审计轨迹
-- **版本管理** - 维护文档版本的完整性
+### Compliance Requirements
+- **Document Preservation** - Meeting project documentation preservation requirements
+- **Audit Trail** - Providing complete project audit trails
+- **Version Management** - Maintaining document version integrity
 
 ## 📋 存档内容
 

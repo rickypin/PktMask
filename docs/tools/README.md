@@ -1,46 +1,46 @@
-# 工具文档
+# Tools Documentation
 
-PktMask 提供了一系列专用工具用于网络数据包分析和处理。本目录包含所有工具的详细使用指南。
+PktMask provides a series of specialized tools for network packet analysis and processing. This directory contains detailed usage guides for all tools.
 
-## 🔧 工具列表
+## 🔧 Tool List
 
-### 🔍 TLS 分析工具
-- **[TLS 流量分析工具](tls-flow-analyzer.md)** - 分析 TLS 协议流量，生成详细报告
-- **[TLS23 标记工具](tls23-marker.md)** - 标记 TLS 1.3 ApplicationData 帧
-- **[TLS23 验证工具](tls23-validator.md)** - 端到端验证 TLS 1.3 处理结果
+### 🔍 TLS Analysis Tools
+- **[TLS Flow Analyzer](tls-flow-analyzer.md)** - Analyze TLS protocol traffic and generate detailed reports
+- **[TLS23 Marker](tls23-marker.md)** - Mark TLS 1.3 ApplicationData frames
+- **[TLS23 Validator](tls23-validator.md)** - End-to-end validation of TLS 1.3 processing results
 
-### 🛡️ 掩码验证工具
-- **[MaskStage 验证工具](maskstage-validator.md)** - 验证掩码处理功能的正确性
+### 🛡️ Mask Validation Tools
+- **[MaskStage Validator](maskstage-validator.md)** - Validate the correctness of Mask Payloads functionality
 
-## 🎯 工具分类
+## 🎯 Tool Categories
 
-### 按功能分类
+### By Functionality
 
-#### 分析工具
-- **TLS 流量分析工具** - 深入分析 TLS 协议细节
-- **网络流量统计** - 生成流量统计报告
+#### Analysis Tools
+- **TLS Flow Analyzer** - In-depth analysis of TLS protocol details
+- **Network Traffic Statistics** - Generate traffic statistics reports
 
-#### 标记工具
-- **TLS23 标记工具** - 精确标记 TLS 1.3 消息边界
-- **协议识别工具** - 自动识别网络协议类型
+#### Marking Tools
+- **TLS23 Marker** - Precisely mark TLS 1.3 message boundaries
+- **Protocol Identification Tool** - Automatically identify network protocol types
 
-#### 验证工具
-- **TLS23 验证工具** - 验证 TLS 处理的准确性
-- **MaskStage 验证工具** - 确保掩码功能正常工作
+#### Validation Tools
+- **TLS23 Validator** - Validate TLS processing accuracy
+- **MaskStage Validator** - Ensure Mask Payloads functionality works correctly
 
-### 按使用场景分类
+### By Usage Scenario
 
-#### 开发调试
-- TLS23 标记工具
-- MaskStage 验证工具
+#### Development Debugging
+- TLS23 Marker
+- MaskStage Validator
 
-#### 数据分析
-- TLS 流量分析工具
-- TLS23 验证工具
+#### Data Analysis
+- TLS Flow Analyzer
+- TLS23 Validator
 
-#### 质量保证
-- 所有验证工具
-- 端到端测试工具
+#### Quality Assurance
+- All validation tools
+- End-to-end testing tools
 
 ## 🚀 快速开始
 

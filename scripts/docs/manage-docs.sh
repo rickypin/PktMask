@@ -1,22 +1,22 @@
 #!/bin/bash
-# PktMask 文档管理工具
-# 用途：提供文档创建、检查、更新等功能的统一入口
+# PktMask Documentation Management Tool
+# Purpose: Provides unified entry point for document creation, checking, updating, and other functions
 
 set -e
 
-# 颜色定义
+# Color definitions
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# 项目根目录
+# Project root directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DOCS_DIR="$PROJECT_ROOT/docs"
 SCRIPTS_DIR="$PROJECT_ROOT/scripts/docs"
 
-# 显示帮助信息
+# Show help information
 show_help() {
     cat << EOF
 PktMask 文档管理工具
