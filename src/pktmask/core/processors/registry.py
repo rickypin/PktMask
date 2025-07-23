@@ -4,6 +4,7 @@
 简化的StageBase处理器注册表，提供统一的处理器访问接口。
 所有处理器都基于StageBase架构，使用标准化配置。
 """
+
 import logging
 from typing import Dict, Type, List, Optional, Any
 from ..pipeline.base_stage import StageBase
@@ -19,7 +20,7 @@ class ProcessorRegistry:
     _processors: Dict[str, Type[StageBase]] = {}
     _default_configs: Dict[str, Dict[str, Any]] = {}
     _loaded = False
-    
+
     @classmethod
     def _load_builtin_processors(cls):
         """Lazy load built-in processors and their default configurations"""
@@ -28,28 +29,35 @@ class ProcessorRegistry:
 
         try:
             # Import all StageBase implementations
-            from ..pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage as MaskingProcessor
-            from ..pipeline.stages.ip_anonymization_unified import UnifiedIPAnonymizationStage
-            from ..pipeline.stages.deduplication_unified import UnifiedDeduplicationStage
+            from ..pipeline.stages.mask_payload_v2.stage import (
+                NewMaskPayloadStage as MaskingProcessor,
+            )
+            from ..pipeline.stages.ip_anonymization_unified import (
+                UnifiedIPAnonymizationStage,
+            )
+            from ..pipeline.stages.deduplication_unified import (
+                UnifiedDeduplicationStage,
+            )
 
             # Register processors with standard naming
-            cls._processors.update({
-                # Standard naming keys (consistent with GUI interface)
-                'anonymize_ips': UnifiedIPAnonymizationStage,
-                'remove_dupes': UnifiedDeduplicationStage,
-                'mask_payloads': MaskingProcessor,
-
-                # Legacy aliases for backward compatibility
-                'anon_ip': UnifiedIPAnonymizationStage,
-                'dedup_packet': UnifiedDeduplicationStage,
-                'mask_payload': MaskingProcessor,
-            })
+            cls._processors.update(
+                {
+                    # Standard naming keys (consistent with GUI interface)
+                    "anonymize_ips": UnifiedIPAnonymizationStage,
+                    "remove_dupes": UnifiedDeduplicationStage,
+                    "mask_payloads": MaskingProcessor,
+                    # Legacy aliases for backward compatibility
+                    "anon_ip": UnifiedIPAnonymizationStage,
+                    "dedup_packet": UnifiedDeduplicationStage,
+                    "mask_payload": MaskingProcessor,
+                }
+            )
 
             # Define default configurations for each processor type
             cls._default_configs = {
-                'anonymize_ips': cls._get_ip_anonymization_config(),
-                'remove_dupes': cls._get_deduplication_config(),
-                'mask_payloads': cls._get_mask_payload_config(),
+                "anonymize_ips": cls._get_ip_anonymization_config(),
+                "remove_dupes": cls._get_deduplication_config(),
+                "mask_payloads": cls._get_mask_payload_config(),
             }
 
             cls._loaded = True
@@ -57,9 +65,11 @@ class ProcessorRegistry:
         except ImportError as e:
             logging.error(f"Error loading built-in processors: {e}")
             raise RuntimeError(f"Failed to load required processors: {e}")
-    
+
     @classmethod
-    def get_processor(cls, name: str, config: Optional[Dict[str, Any]] = None) -> StageBase:
+    def get_processor(
+        cls, name: str, config: Optional[Dict[str, Any]] = None
+    ) -> StageBase:
         """获取处理器实例
 
         Args:
@@ -73,7 +83,9 @@ class ProcessorRegistry:
 
         if name not in cls._processors:
             available = list(cls._processors.keys())
-            raise ValueError(f"Unknown processor: {name}. Available processors: {available}")
+            raise ValueError(
+                f"Unknown processor: {name}. Available processors: {available}"
+            )
 
         processor_class = cls._processors[name]
 
@@ -92,10 +104,14 @@ class ProcessorRegistry:
         logger.info(f"Creating {standard_name} processor with config: {stage_config}")
 
         return processor_class(stage_config)
-    
+
     @classmethod
-    def register_processor(cls, name: str, processor_class: Type[StageBase],
-                          default_config: Optional[Dict[str, Any]] = None):
+    def register_processor(
+        cls,
+        name: str,
+        processor_class: Type[StageBase],
+        default_config: Optional[Dict[str, Any]] = None,
+    ):
         """注册新的处理器
 
         Args:
@@ -104,7 +120,9 @@ class ProcessorRegistry:
             default_config: 默认配置字典
         """
         if not issubclass(processor_class, StageBase):
-            raise TypeError(f"Processor class must inherit from StageBase: {processor_class}")
+            raise TypeError(
+                f"Processor class must inherit from StageBase: {processor_class}"
+            )
 
         cls._processors[name] = processor_class
         if default_config:
@@ -135,15 +153,18 @@ class ProcessorRegistry:
         temp_instance = processor_class(temp_config)
 
         return {
-            'name': name,
-            'display_name': temp_instance.get_display_name(),
-            'description': temp_instance.get_description(),
-            'class': processor_class.__name__
+            "name": name,
+            "display_name": temp_instance.get_display_name(),
+            "description": temp_instance.get_description(),
+            "class": processor_class.__name__,
         }
-    
+
     @classmethod
-    def create_processor_set(cls, processor_names: List[str],
-                           configs: Optional[Dict[str, Dict[str, Any]]] = None) -> List[StageBase]:
+    def create_processor_set(
+        cls,
+        processor_names: List[str],
+        configs: Optional[Dict[str, Dict[str, Any]]] = None,
+    ) -> List[StageBase]:
         """创建一组处理器实例
 
         Args:
@@ -189,9 +210,9 @@ class ProcessorRegistry:
     def _get_standard_name(cls, name: str) -> str:
         """获取标准化处理器名称（处理别名映射）"""
         alias_mapping = {
-            'anon_ip': 'anonymize_ips',
-            'dedup_packet': 'remove_dupes',
-            'mask_payload': 'mask_payloads',
+            "anon_ip": "anonymize_ips",
+            "dedup_packet": "remove_dupes",
+            "mask_payload": "mask_payloads",
         }
         return alias_mapping.get(name, name)
 
@@ -201,6 +222,7 @@ class ProcessorRegistry:
         # 获取应用配置中的 TShark 路径
         try:
             from pktmask.config.settings import get_app_config
+
             app_config = get_app_config()
             tshark_path = app_config.tools.tshark.custom_executable
         except Exception:
@@ -217,13 +239,10 @@ class ProcessorRegistry:
                     "handshake": True,
                     "alert": True,
                     "change_cipher_spec": True,
-                    "heartbeat": True
-                }
+                    "heartbeat": True,
+                },
             },
-            "masker_config": {
-                "chunk_size": 1000,
-                "verify_checksums": True
-            }
+            "masker_config": {"chunk_size": 1000, "verify_checksums": True},
         }
 
     @classmethod
@@ -235,7 +254,7 @@ class ProcessorRegistry:
             "ipv6_prefix": 64,  # IPv6 前缀长度
             "enabled": True,
             "name": "ip_anonymization",
-            "priority": 0
+            "priority": 0,
         }
 
     @classmethod
@@ -245,7 +264,7 @@ class ProcessorRegistry:
             "algorithm": "md5",  # 默认哈希算法（与原实现保持一致）
             "enabled": True,
             "name": "deduplication",
-            "priority": 0
+            "priority": 0,
         }
 
     @classmethod

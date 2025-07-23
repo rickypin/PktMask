@@ -17,8 +17,4 @@ PktMask 依赖管理模块
 
 from .checker import DependencyChecker, DependencyResult, DependencyStatus
 
-__all__ = [
-    'DependencyChecker',
-    'DependencyResult', 
-    'DependencyStatus'
-]
+__all__ = ["DependencyChecker", "DependencyResult", "DependencyStatus"]

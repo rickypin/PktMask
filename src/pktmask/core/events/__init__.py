@@ -16,14 +16,16 @@ from .desktop_events import (
     create_step_end_event,
     create_progress_event,
     create_error_event,
-    create_log_event
+    create_log_event,
 )
 
 # Backward compatibility - re-export PipelineEvents from the original location
 from enum import Enum, auto
 
+
 class PipelineEvents(Enum):
     """Legacy pipeline events for backward compatibility"""
+
     # 管道级别事件
     PIPELINE_START = auto()
     PIPELINE_STARTED = auto()  # 别名，为了向后兼容
@@ -53,6 +55,7 @@ class PipelineEvents(Enum):
     LOG = auto()
     ERROR = auto()
 
+
 # Event type mapping for backward compatibility
 EVENT_TYPE_MAPPING = {
     PipelineEvents.PIPELINE_START: EventType.PIPELINE_START,
@@ -76,18 +79,18 @@ EVENT_TYPE_MAPPING = {
 }
 
 __all__ = [
-    'DesktopEvent',
-    'EventType',
-    'EventSeverity',
-    'create_pipeline_start_event',
-    'create_pipeline_end_event',
-    'create_file_start_event',
-    'create_file_end_event',
-    'create_step_start_event',
-    'create_step_end_event',
-    'create_progress_event',
-    'create_error_event',
-    'create_log_event',
-    'PipelineEvents',
-    'EVENT_TYPE_MAPPING'
+    "DesktopEvent",
+    "EventType",
+    "EventSeverity",
+    "create_pipeline_start_event",
+    "create_pipeline_end_event",
+    "create_file_start_event",
+    "create_file_end_event",
+    "create_step_start_event",
+    "create_step_end_event",
+    "create_progress_event",
+    "create_error_event",
+    "create_log_event",
+    "PipelineEvents",
+    "EVENT_TYPE_MAPPING",
 ]

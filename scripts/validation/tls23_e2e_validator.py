@@ -31,16 +31,20 @@ def run_cmd(cmd: List[str], verbose: bool = False) -> None:
     """执行外部命令并实时输出。出现非零退出码时抛出 RuntimeError"""
     if verbose:
         logger.info("运行命令: %s", " ".join(cmd))
-    
+
     # Set up environment with PYTHONPATH
     env = os.environ.copy()
-    env['PYTHONPATH'] = str(src_path)
-    
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
+    env["PYTHONPATH"] = str(src_path)
+
+    result = subprocess.run(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env
+    )
     if verbose and result.stdout:
         print(result.stdout)
     if result.returncode != 0:
-        raise RuntimeError(f"Command failed ({result.returncode}): {' '.join(cmd)}\n{result.stdout}")
+        raise RuntimeError(
+            f"Command failed ({result.returncode}): {' '.join(cmd)}\n{result.stdout}"
+        )
 
 
 def discover_files(input_dir: Path, pattern: str) -> List[Path]:
@@ -87,7 +91,11 @@ def is_zero_payload(frame: Dict[str, Any]) -> bool:
     # --- 新版 numeric 判断 ---
     if "zero_bytes" in frame:
         zb = frame.get("zero_bytes", 0)
-        if "lengths" in frame and isinstance(frame["lengths"], list) and frame["lengths"]:
+        if (
+            "lengths" in frame
+            and isinstance(frame["lengths"], list)
+            and frame["lengths"]
+        ):
             total_len = sum(frame["lengths"])
             return zb >= total_len  # 若置零字节数>=总长度，则认为已全部置零
         # 没有 lengths 字段时，若 zero_bytes>0 则视为已置零（保守假设）
@@ -109,6 +117,7 @@ def is_zero_payload(frame: Dict[str, Any]) -> bool:
 
 
 # ---------------------- 主验证逻辑 ----------------------------
+
 
 def validate_file(original_json: Path, masked_json: Path) -> Dict[str, Any]:
     """比较原始与掩码后的 tls23_marker JSON 结果。
@@ -134,7 +143,7 @@ def validate_file(original_json: Path, masked_json: Path) -> Dict[str, Any]:
         return -1
 
     # 构建帧号到 frame 对象的映射，便于后续比较
-    masked_by_no = { _get_frame_no(f): f for f in masked_frames }
+    masked_by_no = {_get_frame_no(f): f for f in masked_frames}
 
     failed_frames: List[int] = []
     masked_ok_frames: List[int] = []
@@ -148,15 +157,19 @@ def validate_file(original_json: Path, masked_json: Path) -> Dict[str, Any]:
         else:
             failed_frames.append(no)
             # 收集关键信息，方便调试
-            failed_frame_details.append({
-                "frame": no,
-                "path": m_frame.get("path"),
-                "lengths": m_frame.get("lengths"),
-                "zero_bytes": m_frame.get("zero_bytes"),
-                "num_records": m_frame.get("num_records"),
-                # 尝试提供十六进制预览（若有）
-                "payload_preview": m_frame.get("payload_preview") or m_frame.get("data") or m_frame.get("payload_hex"),
-            })
+            failed_frame_details.append(
+                {
+                    "frame": no,
+                    "path": m_frame.get("path"),
+                    "lengths": m_frame.get("lengths"),
+                    "zero_bytes": m_frame.get("zero_bytes"),
+                    "num_records": m_frame.get("num_records"),
+                    # 尝试提供十六进制预览（若有）
+                    "payload_preview": m_frame.get("payload_preview")
+                    or m_frame.get("data")
+                    or m_frame.get("payload_hex"),
+                }
+            )
 
     total_records = len(masked_frames)
     masked_records = len(masked_ok_frames)
@@ -179,7 +192,10 @@ def validate_file(original_json: Path, masked_json: Path) -> Dict[str, Any]:
 
 # ---------------------- 后端处理函数 --------------------------
 
-def run_pktmask_trim_internal(input_path: Path, output_path: Path, verbose: bool = False) -> None:
+
+def run_pktmask_trim_internal(
+    input_path: Path, output_path: Path, verbose: bool = False
+) -> None:
     """使用双模块架构处理文件，避免启动 GUI。"""
     if verbose:
         logger.info("使用双模块架构处理: %s -> %s", input_path, output_path)
@@ -201,8 +217,12 @@ def run_pktmask_trim_internal(input_path: Path, output_path: Path, verbose: bool
         # 优先尝试从处理详情中提取批量掩码统计
         stats = result.stats or {}
         try:
-            details = result.data.get("details", {}) if isinstance(result.data, dict) else {}
-            perf = details.get("stage_performance", {}).get("TcpPayloadMaskerAdapter", {})
+            details = (
+                result.data.get("details", {}) if isinstance(result.data, dict) else {}
+            )
+            perf = details.get("stage_performance", {}).get(
+                "TcpPayloadMaskerAdapter", {}
+            )
             stage_stats = perf.get("stats", {}) if isinstance(perf, dict) else {}
             if stage_stats:
                 stats.update(stage_stats)
@@ -213,15 +233,24 @@ def run_pktmask_trim_internal(input_path: Path, output_path: Path, verbose: bool
 
 # -------------------------- CLI -------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="TLS23 端到端掩码验证脚本 (基于 tls23_marker + PktMask)",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--input-dir", type=Path, required=True, help="递归扫描 PCAP/PCAPNG 的目录")
-    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="结果输出目录")
-    parser.add_argument("--pktmask-mode", default="trim", help="调用 PktMask 主程序的模式")
-    parser.add_argument("--glob", dest="glob_pattern", default=DEFAULT_GLOB, help="文件匹配 glob 表达式")
+    parser.add_argument(
+        "--input-dir", type=Path, required=True, help="递归扫描 PCAP/PCAPNG 的目录"
+    )
+    parser.add_argument(
+        "--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="结果输出目录"
+    )
+    parser.add_argument(
+        "--pktmask-mode", default="trim", help="调用 PktMask 主程序的模式"
+    )
+    parser.add_argument(
+        "--glob", dest="glob_pattern", default=DEFAULT_GLOB, help="文件匹配 glob 表达式"
+    )
     parser.add_argument("--verbose", action="store_true", help="输出详细调试信息")
 
     args = parser.parse_args()
@@ -312,11 +341,13 @@ def main() -> None:
 
         except Exception as e:
             logger.error("处理文件 %s 时出错: %s", pcap_path, e)
-            results.append({
-                "file": pcap_path.name,
-                "status": "error",
-                "error": str(e),
-            })
+            results.append(
+                {
+                    "file": pcap_path.name,
+                    "status": "error",
+                    "error": str(e),
+                }
+            )
 
     overall_pass_rate = (passed_files / len(files)) * 100
     summary = {
@@ -375,8 +406,14 @@ def write_html_report(summary: Dict[str, Any], output_path: Path) -> None:
                 detail_lines.append(
                     f"<li>帧 <code>{frame}</code> | path=<code>{path}</code> | lengths={lens} | zero_bytes={zero} | payload_preview=<code>{preview}</code></li>"
                 )
-            details_html = "<details><summary>失败帧详情</summary><ul>" + "\n".join(detail_lines) + "</ul></details>"
-            rows_html.append(f"<tr class='{cls}'><td colspan='5'>" + details_html + "</td></tr>")
+            details_html = (
+                "<details><summary>失败帧详情</summary><ul>"
+                + "\n".join(detail_lines)
+                + "</ul></details>"
+            )
+            rows_html.append(
+                f"<tr class='{cls}'><td colspan='5'>" + details_html + "</td></tr>"
+            )
 
     html = (
         "<!DOCTYPE html><html><head><meta charset='utf-8'>"
@@ -384,7 +421,9 @@ def write_html_report(summary: Dict[str, Any], output_path: Path) -> None:
         f"<h1>TLS23 Validation Report</h1>"
         f"<p>Overall Pass Rate: <strong>{summary.get('overall_pass_rate')}%</strong></p>"
         "<table><thead><tr><th>File</th><th>Status</th><th>Total Records</th><th>Masked</th><th>Unmasked</th></tr></thead><tbody>"
-        + "\n".join(rows_html) + "</tbody></table>" "</body></html>"
+        + "\n".join(rows_html)
+        + "</tbody></table>"
+        "</body></html>"
     )
 
     output_path.write_text(html, encoding="utf-8")
@@ -395,4 +434,4 @@ if __name__ == "__main__":
         main()
     except Exception as exc:
         logger.exception("运行时异常: %s", exc)
-        sys.exit(3) 
+        sys.exit(3)

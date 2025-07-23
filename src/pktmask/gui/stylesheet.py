@@ -42,7 +42,7 @@ FONTS = {
     "KPI_LABEL": "10pt",
     "LOG": "10pt",
     "FONT_FAMILY": "Inter, -apple-system, Segoe UI, sans-serif",
-    "LOG_FONT_FAMILY": "Menlo, Consolas, Monaco, monospace"
+    "LOG_FONT_FAMILY": "Menlo, Consolas, Monaco, monospace",
 }
 
 
@@ -50,7 +50,7 @@ def generate_stylesheet(mode: str) -> str:
     """
     Generate complete QSS stylesheet based on given mode ('light' or 'dark').
     """
-    palette = DARK_PALETTE if mode == 'dark' else LIGHT_PALETTE
+    palette = DARK_PALETTE if mode == "dark" else LIGHT_PALETTE
 
     qss = f"""
         QMainWindow {{
@@ -197,4 +197,4 @@ def generate_stylesheet(mode: str) -> str:
             height: 2px;
         }}
     """
-    return qss 
+    return qss

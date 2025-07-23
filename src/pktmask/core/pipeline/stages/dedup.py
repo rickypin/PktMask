@@ -41,8 +41,12 @@ class DeduplicationStage(UnifiedDeduplicationStage):
         """
         # Call parent constructor with unified configuration
         super().__init__(config)
-        self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
-        self.logger.info(f"DeduplicationStage created: enabled={self.enabled}, name={self.stage_name}")
+        self.logger = logging.getLogger(
+            f"{self.__class__.__module__}.{self.__class__.__name__}"
+        )
+        self.logger.info(
+            f"DeduplicationStage created: enabled={self.enabled}, name={self.stage_name}"
+        )
 
     def get_required_tools(self) -> list[str]:
         """Get list of required external tools
@@ -75,5 +79,3 @@ class DeduplicationStage(UnifiedDeduplicationStage):
             str: Detailed description of the stage functionality
         """
         return "Remove completely duplicate packets to reduce file size and improve processing efficiency."
-
-

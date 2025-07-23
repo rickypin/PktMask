@@ -19,25 +19,21 @@ from .adapter_exceptions import (
     DataFormatError,
     InputFormatError,
     OutputFormatError,
-    ProcessingError
+    ProcessingError,
 )
 
 __all__ = [
     # 版本
-    '__version__',
-    
+    "__version__",
     # 核心适配器
-    'ProcessingAdapter',
-    
-
-    
+    "ProcessingAdapter",
     # 异常类
-    'AdapterError',
-    'ConfigurationError',
-    'MissingConfigError',
-    'InvalidConfigError',
-    'DataFormatError',
-    'InputFormatError',
-    'OutputFormatError',
-    'ProcessingError',
+    "AdapterError",
+    "ConfigurationError",
+    "MissingConfigError",
+    "InvalidConfigError",
+    "DataFormatError",
+    "InputFormatError",
+    "OutputFormatError",
+    "ProcessingError",
 ]

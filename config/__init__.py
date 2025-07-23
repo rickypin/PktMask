@@ -9,42 +9,49 @@ import sys
 from pathlib import Path
 
 # 添加app子目录到Python路径
-config_app_path = Path(__file__).parent / 'app'
+config_app_path = Path(__file__).parent / "app"
 if str(config_app_path) not in sys.path:
     sys.path.insert(0, str(config_app_path))
 
 # 导入配置类和函数
 from .app.settings import (
-    AppConfig, UISettings, ProcessingSettings, LoggingSettings,
-    get_app_config, reload_app_config, save_app_config
+    AppConfig,
+    UISettings,
+    ProcessingSettings,
+    LoggingSettings,
+    get_app_config,
+    reload_app_config,
+    save_app_config,
 )
 from .app.defaults import (
-    DEFAULT_UI_CONFIG, DEFAULT_PROCESSING_CONFIG, DEFAULT_LOGGING_CONFIG,
-    get_default_config_dict, get_processor_config,
-    is_valid_theme, is_valid_log_level, is_valid_dedup_algorithm
+    DEFAULT_UI_CONFIG,
+    DEFAULT_PROCESSING_CONFIG,
+    DEFAULT_LOGGING_CONFIG,
+    get_default_config_dict,
+    get_processor_config,
+    is_valid_theme,
+    is_valid_log_level,
+    is_valid_dedup_algorithm,
 )
 
 __all__ = [
     # 主要配置类
-    'AppConfig',
-    'UISettings', 
-    'ProcessingSettings',
-    'LoggingSettings',
-    
+    "AppConfig",
+    "UISettings",
+    "ProcessingSettings",
+    "LoggingSettings",
     # 全局配置管理
-    'get_app_config',
-    'reload_app_config', 
-    'save_app_config',
-    
+    "get_app_config",
+    "reload_app_config",
+    "save_app_config",
     # 默认值和常量
-    'DEFAULT_UI_CONFIG',
-    'DEFAULT_PROCESSING_CONFIG',
-    'DEFAULT_LOGGING_CONFIG',
-    'get_default_config_dict',
-    'get_processor_config',
-    
+    "DEFAULT_UI_CONFIG",
+    "DEFAULT_PROCESSING_CONFIG",
+    "DEFAULT_LOGGING_CONFIG",
+    "get_default_config_dict",
+    "get_processor_config",
     # 验证函数
-    'is_valid_theme',
-    'is_valid_log_level',
-    'is_valid_dedup_algorithm'
+    "is_valid_theme",
+    "is_valid_log_level",
+    "is_valid_dedup_algorithm",
 ]

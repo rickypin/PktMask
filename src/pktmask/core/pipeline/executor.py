@@ -45,7 +45,9 @@ class PipelineExecutor:
     # ---------------------------------------------------------------------
     def __init__(self, config: Optional[Dict] | None = None):
         self._config: Dict = config or {}
-        self._logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
+        self._logger = logging.getLogger(
+            f"{self.__class__.__module__}.{self.__class__.__name__}"
+        )
         self.stages: List[StageBase] = self._build_pipeline(self._config)
 
     # ------------------------------------------------------------------
@@ -82,8 +84,8 @@ class PipelineExecutor:
                     "input_file": str(input_path),
                     "output_file": str(output_path),
                     "pipeline_config": self._config,
-                    "failure_level": "input_validation"
-                }
+                    "failure_level": "input_validation",
+                },
             )
 
             return ProcessResult(
@@ -108,7 +110,11 @@ class PipelineExecutor:
                 for idx, stage in enumerate(self.stages):
                     try:
                         is_last = idx == len(self.stages) - 1
-                        stage_output = output_path if is_last else temp_dir / f"stage_{idx}_{output_path.name}"
+                        stage_output = (
+                            output_path
+                            if is_last
+                            else temp_dir / f"stage_{idx}_{output_path.name}"
+                        )
 
                         stats = stage.process_file(current_input, stage_output)  # type: ignore[arg-type]
                         if stats is None:
@@ -134,7 +140,7 @@ class PipelineExecutor:
                             f"Error: {type(e).__name__}: {str(e)}. "
                             f"Input file: {current_input}. "
                             f"Stage index: {idx}/{len(self.stages)-1}",
-                            exc_info=True
+                            exc_info=True,
                         )
 
                         # Log exception with full context for backend logging
@@ -146,9 +152,13 @@ class PipelineExecutor:
                                 "stage_index": idx,
                                 "total_stages": len(self.stages),
                                 "input_file": str(current_input),
-                                "output_file": str(stage_output) if 'stage_output' in locals() else None,
-                                "pipeline_config": self._config
-                            }
+                                "output_file": (
+                                    str(stage_output)
+                                    if "stage_output" in locals()
+                                    else None
+                                ),
+                                "pipeline_config": self._config,
+                            },
                         )
 
                         # Create user-friendly error message for GUI display
@@ -166,13 +176,15 @@ class PipelineExecutor:
                                 "error": str(e),
                                 "error_type": type(e).__name__,
                                 "user_message": user_friendly_msg,
-                                "stage_index": idx
+                                "stage_index": idx,
                             },
                         )
                         stage_stats_list.append(failed_stats)
 
                         # Fail-fast: if any Stage fails, the entire process fails
-                        self._logger.info(f"Pipeline execution terminated due to stage failure. Processed {idx} out of {len(self.stages)} stages successfully.")
+                        self._logger.info(
+                            f"Pipeline execution terminated due to stage failure. Processed {idx} out of {len(self.stages)} stages successfully."
+                        )
                         break
 
                 # 计算总执行时间
@@ -197,7 +209,7 @@ class PipelineExecutor:
                     f"Error: {type(e).__name__}: {str(e)}. "
                     f"Input file: {input_path}. "
                     f"Output file: {output_path}",
-                    exc_info=True
+                    exc_info=True,
                 )
 
                 # Log exception with full context for backend logging
@@ -209,8 +221,8 @@ class PipelineExecutor:
                         "output_file": str(output_path),
                         "pipeline_config": self._config,
                         "total_stages": len(self.stages),
-                        "failure_level": "pipeline_critical"
-                    }
+                        "failure_level": "pipeline_critical",
+                    },
                 )
 
                 # Create user-friendly error message
@@ -263,14 +275,18 @@ class PipelineExecutor:
             # For unknown errors, provide generic but helpful message
             return f"Unexpected error occurred ({error_type})"
 
-    def _get_config_with_fallback(self, config: Dict, standard_key: str, legacy_key: str) -> Dict:
+    def _get_config_with_fallback(
+        self, config: Dict, standard_key: str, legacy_key: str
+    ) -> Dict:
         """获取配置，支持标准键名和旧键名的向后兼容性"""
         # 优先使用标准键名
         if standard_key in config:
             return config[standard_key]
         # 回退到旧键名
         elif legacy_key in config:
-            self._logger.warning(f"Using deprecated config key '{legacy_key}', recommend updating to '{standard_key}'")
+            self._logger.warning(
+                f"Using deprecated config key '{legacy_key}', recommend updating to '{standard_key}'"
+            )
             return config[legacy_key]
         # 返回空配置
         return {}
@@ -296,7 +312,9 @@ class PipelineExecutor:
         # ------------------------------------------------------------------
         anon_cfg = self._get_config_with_fallback(config, "anonymize_ips", "anon")
         if anon_cfg.get("enabled", False):
-            from pktmask.core.pipeline.stages.ip_anonymization import IPAnonymizationStage
+            from pktmask.core.pipeline.stages.ip_anonymization import (
+                IPAnonymizationStage,
+            )
 
             stage = IPAnonymizationStage(anon_cfg)
             stage.initialize()
@@ -308,11 +326,13 @@ class PipelineExecutor:
         mask_cfg = self._get_config_with_fallback(config, "mask_payloads", "mask")
         if mask_cfg.get("enabled", False):
             # 直接使用新一代双模块架构
-            from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage
+            from pktmask.core.pipeline.stages.mask_payload_v2.stage import (
+                NewMaskPayloadStage,
+            )
 
             # 创建 MaskStage 实例
             stage = NewMaskPayloadStage(mask_cfg)
             stage.initialize()
             stages.append(stage)
 
-        return stages 
+        return stages

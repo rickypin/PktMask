@@ -14,9 +14,11 @@ __all__ = [
 # 向后兼容别名
 # ---------------------------------------------------------------------------
 
+
 class Pipeline(PipelineExecutor):
     """已废弃别名，兼容旧测试/代码。"""
 
     pass
 
-__all__.append("Pipeline") 
+
+__all__.append("Pipeline")

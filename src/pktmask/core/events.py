@@ -1,7 +1,9 @@
 from enum import Enum, auto
 
+
 class PipelineEvents(Enum):
     """Defines the types of events emitted during the pipeline execution."""
+
     # Pipeline level events
     PIPELINE_START = auto()
     PIPELINE_STARTED = auto()  # Alias for backward compatibility
@@ -29,4 +31,4 @@ class PipelineEvents(Enum):
     PACKETS_SCANNED = auto()
     FILE_RESULT = auto()
     LOG = auto()
-    ERROR = auto() 
+    ERROR = auto()

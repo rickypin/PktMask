@@ -19,14 +19,15 @@ from pktmask.common.constants import UIConstants
 from ..stylesheet import generate_stylesheet
 from pktmask.infrastructure.logging import get_logger
 
+
 class UIManager:
     """UI管理器 - 负责界面初始化和样式管理"""
-    
-    def __init__(self, main_window: 'MainWindow'):
+
+    def __init__(self, main_window: "MainWindow"):
         self.main_window = main_window
         self.config = main_window.config
         self._logger = get_logger(__name__)
-    
+
     def init_ui(self):
         """初始化界面"""
         self._setup_window_properties()
@@ -36,46 +37,45 @@ class UIManager:
         self._apply_initial_styles()
         self._check_and_display_dependencies()
         self._show_initial_guides()
-    
+
     def _setup_window_properties(self):
         """设置窗口属性"""
         self.main_window.setWindowTitle("PktMask")
-        
+
         # 使用配置中的窗口尺寸
         window_width = self.config.ui.window_width
         window_height = self.config.ui.window_height
         self.main_window.setGeometry(100, 100, window_width, window_height)
-        
+
         # 设置最小尺寸
         self.main_window.setMinimumSize(
-            self.config.ui.window_min_width, 
-            self.config.ui.window_min_height
+            self.config.ui.window_min_width, self.config.ui.window_min_height
         )
-        
-        self.main_window.setWindowIcon(QIcon(resource_path('icon.png')))
-    
+
+        self.main_window.setWindowIcon(QIcon(resource_path("icon.png")))
+
     def _create_menu_bar(self):
         """创建菜单栏"""
         menu_bar = self.main_window.menuBar()
-        
+
         # File menu
         file_menu = menu_bar.addMenu("File")
-        
+
         reset_action = QAction("Reset All", self.main_window)
         reset_action.triggered.connect(self.main_window.reset_state)
         reset_action.setShortcut("Ctrl+R")
         file_menu.addAction(reset_action)
-        
+
         file_menu.addSeparator()
-        
+
         exit_action = QAction("Exit", self.main_window)
         exit_action.triggered.connect(self.main_window.close)
         exit_action.setShortcut("Ctrl+Q")
         file_menu.addAction(exit_action)
-        
+
         # Help menu
         help_menu = menu_bar.addMenu("Help")
-        
+
         user_guide_action = QAction("User Guide", self.main_window)
         user_guide_action.triggered.connect(self.main_window.show_user_guide_dialog)
         help_menu.addAction(user_guide_action)
@@ -83,17 +83,19 @@ class UIManager:
         about_action = QAction("About", self.main_window)
         about_action.triggered.connect(self.main_window.show_about_dialog)
         help_menu.addAction(about_action)
-    
+
     def _setup_main_layout(self):
         """设置主布局"""
         main_widget = QWidget()
         self.main_window.setCentralWidget(main_widget)
-        
+
         main_layout = QGridLayout(main_widget)
         main_layout.setSpacing(UIConstants.LAYOUT_SPACING)
         main_layout.setContentsMargins(
-            UIConstants.LAYOUT_MARGINS, UIConstants.LAYOUT_MARGINS, 
-            UIConstants.LAYOUT_MARGINS, UIConstants.LAYOUT_MARGINS
+            UIConstants.LAYOUT_MARGINS,
+            UIConstants.LAYOUT_MARGINS,
+            UIConstants.LAYOUT_MARGINS,
+            UIConstants.LAYOUT_MARGINS,
         )
 
         # --- Create all GroupBox widgets ---
@@ -102,10 +104,10 @@ class UIManager:
         self._create_dashboard_group()
         self._create_log_group()
         self._create_summary_group()
-        
+
         # --- Define layout structure ---
         self._setup_grid_layout(main_layout)
-    
+
     def _create_dirs_group(self):
         """创建目录选择组"""
         # Step 1: Input and Output (左右分布) - 简化版
@@ -113,7 +115,7 @@ class UIManager:
         dirs_group.setMaximumHeight(UIConstants.DIRS_GROUP_HEIGHT)
         dirs_layout = QHBoxLayout(dirs_group)
         dirs_layout.setContentsMargins(*UIConstants.DIRS_LAYOUT_PADDING)
-        
+
         # 左侧：Input Directory - 单行布局
         input_layout = QVBoxLayout()
         input_layout.setSpacing(5)
@@ -121,14 +123,16 @@ class UIManager:
         input_label.setMaximumHeight(UIConstants.INPUT_LABEL_HEIGHT)
         input_path_layout = QHBoxLayout()
         input_path_layout.setSpacing(8)
-        self.main_window.dir_path_label = QPushButton("Click and pick your pcap directory")
+        self.main_window.dir_path_label = QPushButton(
+            "Click and pick your pcap directory"
+        )
         self.main_window.dir_path_label.setObjectName("DirPathLabel")
         self.main_window.dir_path_label.setMaximumHeight(UIConstants.BUTTON_MAX_HEIGHT)
         self.main_window.dir_path_label.setCursor(Qt.CursorShape.PointingHandCursor)
         input_path_layout.addWidget(input_label)
         input_path_layout.addWidget(self.main_window.dir_path_label, 1)
         input_layout.addLayout(input_path_layout)
-        
+
         # 右侧：Output Directory - 单行布局
         output_layout = QVBoxLayout()
         output_layout.setSpacing(5)
@@ -136,20 +140,22 @@ class UIManager:
         output_label.setMaximumHeight(20)
         output_path_layout = QHBoxLayout()
         output_path_layout.setSpacing(8)
-        self.main_window.output_path_label = QPushButton("Auto-create or click for custom")
+        self.main_window.output_path_label = QPushButton(
+            "Auto-create or click for custom"
+        )
         self.main_window.output_path_label.setObjectName("DirPathLabel")
         self.main_window.output_path_label.setMaximumHeight(30)
         self.main_window.output_path_label.setCursor(Qt.CursorShape.PointingHandCursor)
         output_path_layout.addWidget(output_label)
         output_path_layout.addWidget(self.main_window.output_path_label, 1)
         output_layout.addLayout(output_path_layout)
-        
+
         dirs_layout.addLayout(input_layout, 1)
         dirs_layout.addLayout(output_layout, 1)
-        
+
         # 保存引用
         self.main_window.dirs_group = dirs_group
-    
+
     def _create_row2_widget(self):
         """创建第二行组件（选项和执行）"""
         # Step 2 & 3: 第二行并排布局
@@ -158,29 +164,40 @@ class UIManager:
         row2_layout = QHBoxLayout(row2_widget)
         row2_layout.setContentsMargins(0, 0, 0, 0)
         row2_layout.setSpacing(12)
-        
+
         # Step 2: Configure Pipeline
         pipeline_group = QGroupBox("Set Actions")
         pipeline_group.setMaximumHeight(85)
         pipeline_layout = QHBoxLayout(pipeline_group)
         pipeline_layout.setContentsMargins(15, 12, 15, 12)
         pipeline_layout.setSpacing(20)
-        
+
         self.main_window.remove_dupes_cb = QCheckBox("Remove Dupes")
         self.main_window.anonymize_ips_cb = QCheckBox("Anonymize IPs")
-        self.main_window.mask_payloads_cb = QCheckBox("Mask Payloads ( Keep TLS Handshakes )")
+        self.main_window.mask_payloads_cb = QCheckBox(
+            "Mask Payloads ( Keep TLS Handshakes )"
+        )
 
-        self.main_window.mask_payloads_cb.setToolTip("Intelligently masks packet payloads while preserving TLS handshake data.")
+        self.main_window.mask_payloads_cb.setToolTip(
+            "Intelligently masks packet payloads while preserving TLS handshake data."
+        )
 
         # 设置手型光标
-        for cb in [self.main_window.remove_dupes_cb, self.main_window.anonymize_ips_cb,
-                  self.main_window.mask_payloads_cb]:
+        for cb in [
+            self.main_window.remove_dupes_cb,
+            self.main_window.anonymize_ips_cb,
+            self.main_window.mask_payloads_cb,
+        ]:
             cb.setCursor(Qt.CursorShape.PointingHandCursor)
-        
+
         # 使用配置中的默认状态
         self.main_window.remove_dupes_cb.setChecked(self.config.ui.default_remove_dupes)
-        self.main_window.anonymize_ips_cb.setChecked(self.config.ui.default_anonymize_ips)
-        self.main_window.mask_payloads_cb.setChecked(self.config.ui.default_mask_payloads)
+        self.main_window.anonymize_ips_cb.setChecked(
+            self.config.ui.default_anonymize_ips
+        )
+        self.main_window.mask_payloads_cb.setChecked(
+            self.config.ui.default_mask_payloads
+        )
 
         pipeline_layout.addWidget(self.main_window.remove_dupes_cb)
         pipeline_layout.addWidget(self.main_window.anonymize_ips_cb)
@@ -199,13 +216,13 @@ class UIManager:
         self.main_window.start_proc_btn.setEnabled(False)
         self.main_window.start_proc_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         execute_layout.addWidget(self.main_window.start_proc_btn)
-        
+
         row2_layout.addWidget(pipeline_group, 3)
         row2_layout.addWidget(execute_group, 1)
-        
+
         # 保存引用
         self.main_window.row2_widget = row2_widget
-    
+
     def _create_dashboard_group(self):
         """创建仪表板组"""
         dashboard_group = QGroupBox("Live Dashboard")
@@ -213,21 +230,21 @@ class UIManager:
         dashboard_layout = QVBoxLayout(dashboard_group)
         dashboard_layout.setContentsMargins(15, 20, 15, 12)
         dashboard_layout.setSpacing(10)
-        
+
         # 进度条
         self.main_window.progress_bar = QProgressBar()
         self.main_window.progress_bar.setTextVisible(False)
         self.main_window.progress_bar.setFixedHeight(18)
-        
+
         # 初始化进度条动画
         self.main_window.progress_animation = QPropertyAnimation(
             self.main_window.progress_bar, b"value"
         )
         self.main_window.progress_animation.setDuration(300)
         self.main_window.progress_animation.setEasingCurve(QEasingCurve.Type.OutCubic)
-        
+
         dashboard_layout.addWidget(self.main_window.progress_bar)
-        
+
         # KPI布局
         kpi_layout = QGridLayout()
         kpi_layout.setSpacing(10)
@@ -238,18 +255,28 @@ class UIManager:
         self.main_window.time_elapsed_label = QLabel("00:00.00")
         self.main_window.time_elapsed_label.setObjectName("DupesRemovedLabel")
 
-        kpi_layout.addWidget(self.main_window.files_processed_label, 0, 0, Qt.AlignmentFlag.AlignCenter)
-        kpi_layout.addWidget(QLabel("Files Processed"), 1, 0, Qt.AlignmentFlag.AlignCenter)
-        kpi_layout.addWidget(self.main_window.packets_processed_label, 0, 1, Qt.AlignmentFlag.AlignCenter)
-        kpi_layout.addWidget(QLabel("Packets Processed"), 1, 1, Qt.AlignmentFlag.AlignCenter)
-        kpi_layout.addWidget(self.main_window.time_elapsed_label, 0, 2, Qt.AlignmentFlag.AlignCenter)
+        kpi_layout.addWidget(
+            self.main_window.files_processed_label, 0, 0, Qt.AlignmentFlag.AlignCenter
+        )
+        kpi_layout.addWidget(
+            QLabel("Files Processed"), 1, 0, Qt.AlignmentFlag.AlignCenter
+        )
+        kpi_layout.addWidget(
+            self.main_window.packets_processed_label, 0, 1, Qt.AlignmentFlag.AlignCenter
+        )
+        kpi_layout.addWidget(
+            QLabel("Packets Processed"), 1, 1, Qt.AlignmentFlag.AlignCenter
+        )
+        kpi_layout.addWidget(
+            self.main_window.time_elapsed_label, 0, 2, Qt.AlignmentFlag.AlignCenter
+        )
         kpi_layout.addWidget(QLabel("Time Elapsed"), 1, 2, Qt.AlignmentFlag.AlignCenter)
-        
+
         dashboard_layout.addLayout(kpi_layout)
-        
+
         # 保存引用
         self.main_window.dashboard_group = dashboard_group
-    
+
     def _create_log_group(self):
         """创建日志组"""
         log_group = QGroupBox("Log")
@@ -257,16 +284,16 @@ class UIManager:
         log_layout.setContentsMargins(12, 20, 12, 12)
         self.main_window.log_text = QTextEdit()
         self.main_window.log_text.setReadOnly(True)
-        
+
         # 设置Log区域的字体大小
         log_font = QFont()
         log_font.setPointSize(12)
         self.main_window.log_text.setFont(log_font)
         log_layout.addWidget(self.main_window.log_text)
-        
+
         # 保存引用
         self.main_window.log_group = log_group
-    
+
     def _create_summary_group(self):
         """创建摘要组"""
         summary_group = QGroupBox("Summary Report")
@@ -274,16 +301,16 @@ class UIManager:
         summary_layout.setContentsMargins(12, 20, 12, 12)
         self.main_window.summary_text = QTextEdit()
         self.main_window.summary_text.setReadOnly(True)
-        
+
         # 设置Summary Report区域的字体大小
         summary_font = QFont()
         summary_font.setPointSize(12)
         self.main_window.summary_text.setFont(summary_font)
         summary_layout.addWidget(self.main_window.summary_text)
-        
+
         # 保存引用
         self.main_window.summary_group = summary_group
-    
+
     def _setup_grid_layout(self, main_layout):
         """设置网格布局"""
         # 添加组件到网格布局
@@ -297,31 +324,44 @@ class UIManager:
         main_layout.setColumnStretch(0, 2)  # 左列
         main_layout.setColumnStretch(1, 3)  # 右列
         main_layout.setRowStretch(0, 0)  # Step 1 row
-        main_layout.setRowStretch(1, 0)  # Step 2&3 row  
+        main_layout.setRowStretch(1, 0)  # Step 2&3 row
         main_layout.setRowStretch(2, 0)  # Dashboard row
         main_layout.setRowStretch(3, 2)  # Log row
-    
+
     def _connect_signals(self):
         """连接信号"""
         try:
             # 目录选择信号
-            self.main_window.dir_path_label.clicked.connect(self.main_window.file_manager.choose_folder)
-            self.main_window.output_path_label.clicked.connect(self.main_window.file_manager.handle_output_click)
+            self.main_window.dir_path_label.clicked.connect(
+                self.main_window.file_manager.choose_folder
+            )
+            self.main_window.output_path_label.clicked.connect(
+                self.main_window.file_manager.handle_output_click
+            )
 
             # 处理按钮信号
-            self.main_window.start_proc_btn.clicked.connect(self.main_window.pipeline_manager.toggle_pipeline_processing)
+            self.main_window.start_proc_btn.clicked.connect(
+                self.main_window.pipeline_manager.toggle_pipeline_processing
+            )
             self._logger.debug("Start button signal connected successfully")
 
         except Exception as e:
             self._logger.error(f"Failed to connect start button signal: {e}")
             import traceback
+
             traceback.print_exc()
-        
+
         # checkbox状态变化信号 - 正确调用UIManager的方法
-        self.main_window.anonymize_ips_cb.stateChanged.connect(self._update_start_button_state)
-        self.main_window.remove_dupes_cb.stateChanged.connect(self._update_start_button_state)
-        self.main_window.mask_payloads_cb.stateChanged.connect(self._update_start_button_state)
-    
+        self.main_window.anonymize_ips_cb.stateChanged.connect(
+            self._update_start_button_state
+        )
+        self.main_window.remove_dupes_cb.stateChanged.connect(
+            self._update_start_button_state
+        )
+        self.main_window.mask_payloads_cb.stateChanged.connect(
+            self._update_start_button_state
+        )
+
     def _apply_initial_styles(self):
         """应用初始样式"""
         self.apply_stylesheet()
@@ -350,7 +390,7 @@ class UIManager:
 
     def _display_dependency_status(self, messages):
         """在Log模块中显示依赖状态"""
-        if hasattr(self.main_window, 'log_text'):
+        if hasattr(self.main_window, "log_text"):
             # 构建依赖状态消息
             status_text = "⚠️  Dependency Status Check:\n"
             status_text += "-" * 40 + "\n"
@@ -382,16 +422,19 @@ class UIManager:
             "💡 Remove Dupes & Anonymize IPs enabled by default\n\n"
             "Processing logs will appear here..."
         )
-        
+
         # Read summary.md file content
         try:
             from pktmask.utils.path import resource_path
-            with open(resource_path('summary.md'), 'r', encoding='utf-8') as f:
+
+            with open(resource_path("summary.md"), "r", encoding="utf-8") as f:
                 summary_md_content = f.read()
-            
+
             # Convert markdown content to display-friendly format, maintaining existing styles
-            formatted_content = "\n" + self._format_summary_md_content(summary_md_content)
-            
+            formatted_content = "\n" + self._format_summary_md_content(
+                summary_md_content
+            )
+
         except Exception as e:
             # If reading fails, use fallback content
             formatted_content = (
@@ -417,66 +460,66 @@ class UIManager:
                 "🎯 Use Cases: Security research, network troubleshooting,\n"
                 "   compliance reporting, and safe data sharing."
             )
-        
+
         self.main_window.summary_text.setPlaceholderText(formatted_content)
-    
+
     def _format_summary_md_content(self, md_content: str) -> str:
         """Format markdown content to plain text format suitable for display"""
-        lines = md_content.split('\n')
+        lines = md_content.split("\n")
         formatted_lines = []
-        
+
         # Start directly, don't add top horizontal line
-        
+
         for line in lines:
             line = line.strip()
             if not line:
                 formatted_lines.append("")
-            elif line.startswith('# '):
+            elif line.startswith("# "):
                 # Main title - add horizontal lines above and below the title
                 title = line[2:].strip()
                 formatted_lines.append("─" * 80)
                 formatted_lines.append(f"📦 {title}")
                 formatted_lines.append("─" * 80)
                 formatted_lines.append("")
-            elif line.startswith('## '):
+            elif line.startswith("## "):
                 # Subtitle
                 subtitle = line[3:].strip()
                 emoji_map = {
-                    'Anonymize IPs': '🛡️',
-                    'Remove Dupes': '🔄',
-                    'Mask Payloads': '✂️',
-                    'Processing Flow': '⚡',
-                    'Key Benefits': '🎯'
+                    "Anonymize IPs": "🛡️",
+                    "Remove Dupes": "🔄",
+                    "Mask Payloads": "✂️",
+                    "Processing Flow": "⚡",
+                    "Key Benefits": "🎯",
                 }
-                emoji = emoji_map.get(subtitle, '🔧')
+                emoji = emoji_map.get(subtitle, "🔧")
                 formatted_lines.append(f"{emoji} {subtitle}")
-            elif line.startswith('   - '):
+            elif line.startswith("   - "):
                 # 列表项
                 item = line[5:].strip()
                 formatted_lines.append(f"   • {item}")
-            elif line.startswith('   '):
+            elif line.startswith("   "):
                 # 缩进内容
                 content = line[3:].strip()
-                if content.startswith('- '):
+                if content.startswith("- "):
                     content = content[2:].strip()
                 formatted_lines.append(f"   - {content}")
-            elif line and not line.startswith('#'):
+            elif line and not line.startswith("#"):
                 # 普通段落
                 formatted_lines.append(f"   {line}")
-            
+
             # 在某些部分后添加空行
-            if line.startswith('## ') and line != lines[-1]:
+            if line.startswith("## ") and line != lines[-1]:
                 formatted_lines.append("")
-        
+
         # 不再添加底部的Web-focused和Use Cases部分
-        
-        return '\n'.join(formatted_lines)
-    
+
+        return "\n".join(formatted_lines)
+
     # 样式管理方法
     def get_current_theme(self) -> str:
         """检测当前系统是浅色还是深色模式"""
         bg_color = self.main_window.palette().color(self.main_window.backgroundRole())
-        return 'dark' if bg_color.lightness() < 128 else 'light'
+        return "dark" if bg_color.lightness() < 128 else "light"
 
     def apply_stylesheet(self):
         """应用样式表"""
@@ -493,7 +536,7 @@ class UIManager:
     def _get_path_link_style(self) -> str:
         """获取路径链接样式"""
         theme = self.get_current_theme()
-        if theme == 'dark':
+        if theme == "dark":
             return """
                 QPushButton#DirPathLabel {
                     border: 1px solid #555;
@@ -539,7 +582,7 @@ class UIManager:
         """获取开始按钮样式"""
         theme = self.get_current_theme()
         if self.main_window.start_proc_btn.isEnabled():
-            if theme == 'dark':
+            if theme == "dark":
                 return """
                     QPushButton {
                         background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
@@ -580,7 +623,7 @@ class UIManager:
                     }
                 """
         else:
-            if theme == 'dark':
+            if theme == "dark":
                 return """
                     QPushButton {
                         background-color: #555;
@@ -609,27 +652,25 @@ class UIManager:
         # 移除旧的按钮样式并添加新的
         self.main_window.start_proc_btn.setStyleSheet(style)
 
-
-
-
-
     def _update_start_button_state(self):
         """根据输入目录和选项状态更新Start按钮"""
         has_input_dir = self.main_window.base_dir is not None
-        has_any_action = (self.main_window.anonymize_ips_cb.isChecked() or
-                         self.main_window.remove_dupes_cb.isChecked() or
-                         self.main_window.mask_payloads_cb.isChecked())
+        has_any_action = (
+            self.main_window.anonymize_ips_cb.isChecked()
+            or self.main_window.remove_dupes_cb.isChecked()
+            or self.main_window.mask_payloads_cb.isChecked()
+        )
 
         # 检查是否正在处理中 - Store thread reference to avoid race condition
-        processing_thread = getattr(self.main_window.pipeline_manager, 'processing_thread', None)
-        is_processing = (processing_thread is not None and processing_thread.isRunning())
+        processing_thread = getattr(
+            self.main_window.pipeline_manager, "processing_thread", None
+        )
+        is_processing = processing_thread is not None and processing_thread.isRunning()
 
         # 只有当有输入目录且至少选择一个操作时才启用按钮，或者正在处理中时保持启用
         should_enable = (has_input_dir and has_any_action) or is_processing
 
-
-
         self.main_window.start_proc_btn.setEnabled(should_enable)
-        
+
         # 同时更新按钮样式
-        self._update_start_button_style() 
+        self._update_start_button_style()

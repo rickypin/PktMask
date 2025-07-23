@@ -39,18 +39,22 @@ class StageBase(metaclass=abc.ABCMeta):
         """
         self.config = config or {}
         self._initialized = False
-        self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
+        self.logger = logging.getLogger(
+            f"{self.__class__.__module__}.{self.__class__.__name__}"
+        )
 
         # Initialize unified resource manager
-        resource_config = self.config.get('resource_manager', {})
+        resource_config = self.config.get("resource_manager", {})
         self.resource_manager = ResourceManager(resource_config)
 
         # Exception handling configuration
-        self.enable_error_recovery = self.config.get('enable_error_recovery', True)
-        self.max_retry_attempts = self.config.get('max_retry_attempts', 3)
-        self.retry_delay_seconds = self.config.get('retry_delay_seconds', 1.0)
+        self.enable_error_recovery = self.config.get("enable_error_recovery", True)
+        self.max_retry_attempts = self.config.get("max_retry_attempts", 3)
+        self.retry_delay_seconds = self.config.get("retry_delay_seconds", 1.0)
 
-        self.logger.debug(f"Initialized {self.__class__.__name__} with unified resource management and error handling")
+        self.logger.debug(
+            f"Initialized {self.__class__.__name__} with unified resource management and error handling"
+        )
 
     @abc.abstractmethod
     def initialize(self, config: Optional[Dict] = None) -> bool:
@@ -157,7 +161,9 @@ class StageBase(metaclass=abc.ABCMeta):
     # Exception handling utilities
     # ---------------------------------------------------------------------
     @contextmanager
-    def safe_operation(self, operation_name: str, cleanup_func: Optional[Callable] = None):
+    def safe_operation(
+        self, operation_name: str, cleanup_func: Optional[Callable] = None
+    ):
         """Context manager for safe operations with automatic cleanup.
 
         Args:
@@ -173,13 +179,21 @@ class StageBase(metaclass=abc.ABCMeta):
             if cleanup_func:
                 try:
                     cleanup_func()
-                    self.logger.debug(f"Cleanup completed for failed operation: {operation_name}")
+                    self.logger.debug(
+                        f"Cleanup completed for failed operation: {operation_name}"
+                    )
                 except Exception as cleanup_error:
-                    self.logger.warning(f"Cleanup failed for operation {operation_name}: {cleanup_error}")
+                    self.logger.warning(
+                        f"Cleanup failed for operation {operation_name}: {cleanup_error}"
+                    )
             raise
 
-    def retry_operation(self, operation: Callable, operation_name: str = "operation",
-                       max_attempts: Optional[int] = None) -> Any:
+    def retry_operation(
+        self,
+        operation: Callable,
+        operation_name: str = "operation",
+        max_attempts: Optional[int] = None,
+    ) -> Any:
         """Retry an operation with exponential backoff.
 
         Args:
@@ -200,21 +214,31 @@ class StageBase(metaclass=abc.ABCMeta):
             try:
                 result = operation()
                 if attempt > 1:
-                    self.logger.info(f"Operation '{operation_name}' succeeded on attempt {attempt}")
+                    self.logger.info(
+                        f"Operation '{operation_name}' succeeded on attempt {attempt}"
+                    )
                 return result
             except Exception as e:
                 last_exception = e
                 if attempt < attempts:
-                    delay = self.retry_delay_seconds * (2 ** (attempt - 1))  # Exponential backoff
-                    self.logger.warning(f"Operation '{operation_name}' failed on attempt {attempt}/{attempts}: {e}. "
-                                      f"Retrying in {delay:.1f} seconds...")
+                    delay = self.retry_delay_seconds * (
+                        2 ** (attempt - 1)
+                    )  # Exponential backoff
+                    self.logger.warning(
+                        f"Operation '{operation_name}' failed on attempt {attempt}/{attempts}: {e}. "
+                        f"Retrying in {delay:.1f} seconds..."
+                    )
                     time.sleep(delay)
                 else:
-                    self.logger.error(f"Operation '{operation_name}' failed after {attempts} attempts: {e}")
+                    self.logger.error(
+                        f"Operation '{operation_name}' failed after {attempts} attempts: {e}"
+                    )
 
         raise last_exception
 
-    def handle_file_operation_error(self, error: Exception, file_path: Path, operation: str) -> None:
+    def handle_file_operation_error(
+        self, error: Exception, file_path: Path, operation: str
+    ) -> None:
         """Handle file operation errors with context.
 
         Args:
@@ -223,13 +247,24 @@ class StageBase(metaclass=abc.ABCMeta):
             operation: Description of the operation
         """
         if isinstance(error, FileNotFoundError):
-            raise FileError(f"File not found during {operation}: {file_path}", file_path=str(file_path)) from error
+            raise FileError(
+                f"File not found during {operation}: {file_path}",
+                file_path=str(file_path),
+            ) from error
         elif isinstance(error, PermissionError):
-            raise FileError(f"Permission denied during {operation}: {file_path}", file_path=str(file_path)) from error
+            raise FileError(
+                f"Permission denied during {operation}: {file_path}",
+                file_path=str(file_path),
+            ) from error
         elif isinstance(error, OSError):
-            raise FileError(f"OS error during {operation}: {file_path} - {error}", file_path=str(file_path)) from error
+            raise FileError(
+                f"OS error during {operation}: {file_path} - {error}",
+                file_path=str(file_path),
+            ) from error
         else:
-            raise ProcessingError(f"Unexpected error during {operation}: {file_path} - {error}") from error
+            raise ProcessingError(
+                f"Unexpected error during {operation}: {file_path} - {error}"
+            ) from error
 
     def validate_file_access(self, file_path: Path, operation: str = "access") -> None:
         """Validate file access with proper error handling.
@@ -243,13 +278,22 @@ class StageBase(metaclass=abc.ABCMeta):
         """
         try:
             if not file_path.exists():
-                raise FileError(f"File does not exist for {operation}: {file_path}", file_path=str(file_path))
+                raise FileError(
+                    f"File does not exist for {operation}: {file_path}",
+                    file_path=str(file_path),
+                )
             if not file_path.is_file():
-                raise FileError(f"Path is not a file for {operation}: {file_path}", file_path=str(file_path))
+                raise FileError(
+                    f"Path is not a file for {operation}: {file_path}",
+                    file_path=str(file_path),
+                )
             if not file_path.stat().st_size > 0:
                 self.logger.warning(f"File is empty for {operation}: {file_path}")
         except OSError as e:
-            raise FileError(f"Cannot access file for {operation}: {file_path} - {e}", file_path=str(file_path)) from e
+            raise FileError(
+                f"Cannot access file for {operation}: {file_path} - {e}",
+                file_path=str(file_path),
+            ) from e
 
     # ---------------------------------------------------------------------
     # Tool dependency detection

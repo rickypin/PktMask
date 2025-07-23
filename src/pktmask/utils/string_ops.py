@@ -10,8 +10,10 @@ from typing import List, Dict, Any, Optional
 from ..common.constants import FormatConstants
 
 
-def create_separator(length: int = FormatConstants.SEPARATOR_LENGTH,
-                    char: str = FormatConstants.STEP_SEPARATOR) -> str:
+def create_separator(
+    length: int = FormatConstants.SEPARATOR_LENGTH,
+    char: str = FormatConstants.STEP_SEPARATOR,
+) -> str:
     """
     Create a separator string
 
@@ -25,8 +27,9 @@ def create_separator(length: int = FormatConstants.SEPARATOR_LENGTH,
     return char * length
 
 
-def format_ip_mapping(original_ip: str, masked_ip: str,
-                     ip_width: int = FormatConstants.IP_DISPLAY_WIDTH) -> str:
+def format_ip_mapping(
+    original_ip: str, masked_ip: str, ip_width: int = FormatConstants.IP_DISPLAY_WIDTH
+) -> str:
     """
     Format IP mapping display
 
@@ -42,8 +45,13 @@ def format_ip_mapping(original_ip: str, masked_ip: str,
     return f"{formatted_original}{FormatConstants.IP_MAPPING_SEPARATOR}{masked_ip}"
 
 
-def format_step_summary(step_name: str, original_count: int, processed_count: int,
-                       rate: float, emoji: str = "🔧") -> str:
+def format_step_summary(
+    step_name: str,
+    original_count: int,
+    processed_count: int,
+    rate: float,
+    emoji: str = "🔧",
+) -> str:
     """
     Format processing step summary
 
@@ -61,12 +69,13 @@ def format_step_summary(step_name: str, original_count: int, processed_count: in
     original_display = f"{original_count:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM}}"
     processed_display = f"{processed_count:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM}}"
     rate_display = f"{rate:5.{FormatConstants.RATE_DECIMAL_PLACES}f}%"
-    
+
     return f"  {emoji} {step_display} | Original: {original_display} | Processed: {processed_display} | Rate: {rate_display}"
 
 
-def format_deduplication_summary(step_name: str, unique_count: int, removed_count: int,
-                                rate: float) -> str:
+def format_deduplication_summary(
+    step_name: str, unique_count: int, removed_count: int, rate: float
+) -> str:
     """
     Format deduplication step summary
 
@@ -83,12 +92,13 @@ def format_deduplication_summary(step_name: str, unique_count: int, removed_coun
     unique_display = f"{unique_count:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM}}"
     removed_display = f"{removed_count:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM}}"
     rate_display = f"{rate:5.{FormatConstants.RATE_DECIMAL_PLACES}f}%"
-    
+
     return f"  🔄 {step_display} | Unique Pkts: {unique_display} | Removed Pkts: {removed_display} | Rate: {rate_display}"
 
 
-def format_trimming_summary(step_name: str, full_packets: int, trimmed_packets: int,
-                          rate: float) -> str:
+def format_trimming_summary(
+    step_name: str, full_packets: int, trimmed_packets: int, rate: float
+) -> str:
     """
     Format trimming step summary
 
@@ -105,13 +115,15 @@ def format_trimming_summary(step_name: str, full_packets: int, trimmed_packets: 
     full_display = f"{full_packets:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_LARGE}}"
     trimmed_display = f"{trimmed_packets:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM}}"
     rate_display = f"{rate:5.{FormatConstants.RATE_DECIMAL_PLACES}f}%"
-    
+
     return f"  ✂️  {step_display} | Full Pkts: {full_display} | Trimmed Pkts: {trimmed_display} | Rate: {rate_display}"
 
 
-def format_ip_mapping_list(ip_mappings: Dict[str, str],
-                          max_display: Optional[int] = None,
-                          show_numbers: bool = True) -> str:
+def format_ip_mapping_list(
+    ip_mappings: Dict[str, str],
+    max_display: Optional[int] = None,
+    show_numbers: bool = True,
+) -> str:
     """
     Format IP mapping list
 
@@ -125,35 +137,38 @@ def format_ip_mapping_list(ip_mappings: Dict[str, str],
     """
     if not ip_mappings:
         return ""
-    
+
     lines = []
     items = list(ip_mappings.items())
-    
+
     if max_display and len(items) > max_display:
         display_items = items[:max_display]
         show_more = True
     else:
         display_items = items
         show_more = False
-    
+
     for i, (orig_ip, masked_ip) in enumerate(display_items, 1):
         if show_numbers:
             number_part = f"   {i:2d}. "
         else:
             number_part = "   "
-        
+
         ip_mapping = format_ip_mapping(orig_ip, masked_ip)
         lines.append(f"{number_part}{ip_mapping}")
-    
+
     if show_more:
         remaining = len(items) - max_display
         lines.append(f"      ... and {remaining} more")
-    
+
     return "\n".join(lines)
 
 
-def format_section_header(title: str, emoji: str = "📋",
-                         separator_length: int = FormatConstants.SEPARATOR_LENGTH) -> str:
+def format_section_header(
+    title: str,
+    emoji: str = "📋",
+    separator_length: int = FormatConstants.SEPARATOR_LENGTH,
+) -> str:
     """
     Format section header
 
@@ -169,8 +184,7 @@ def format_section_header(title: str, emoji: str = "📋",
     return f"\n{separator}\n{emoji} {title}\n{separator}\n"
 
 
-def format_summary_section(title: str, items: List[str],
-                          emoji: str = "📈") -> str:
+def format_summary_section(title: str, items: List[str], emoji: str = "📈") -> str:
     """
     Format summary section
 
@@ -192,7 +206,9 @@ def format_summary_section(title: str, items: List[str],
     return "\n".join(lines)
 
 
-def format_file_status(filename: str, status: str, details: Optional[List[str]] = None) -> str:
+def format_file_status(
+    filename: str, status: str, details: Optional[List[str]] = None
+) -> str:
     """
     Format file status display
 
@@ -205,12 +221,12 @@ def format_file_status(filename: str, status: str, details: Optional[List[str]] 
         Formatted file status string
     """
     lines = [f"\n{status} {filename}"]
-    
+
     if details:
         for detail in details:
             if detail.strip():
                 lines.append(f"   {detail}")
-    
+
     return "\n".join(lines)
 
 
@@ -228,15 +244,16 @@ def truncate_string(text: str, max_length: int, ellipsis: str = "...") -> str:
     """
     if len(text) <= max_length:
         return text
-    
+
     if max_length <= len(ellipsis):
         return ellipsis[:max_length]
-    
-    return text[:max_length - len(ellipsis)] + ellipsis
+
+    return text[: max_length - len(ellipsis)] + ellipsis
 
 
-def pad_string(text: str, width: int, align: str = FormatConstants.LEFT_ALIGN,
-              fill_char: str = " ") -> str:
+def pad_string(
+    text: str, width: int, align: str = FormatConstants.LEFT_ALIGN, fill_char: str = " "
+) -> str:
     """
     Pad string to specified width
 
@@ -257,8 +274,9 @@ def pad_string(text: str, width: int, align: str = FormatConstants.LEFT_ALIGN,
         return text.ljust(width, fill_char)
 
 
-def join_with_separator(items: List[str], separator: str = ", ",
-                       empty_text: str = "None") -> str:
+def join_with_separator(
+    items: List[str], separator: str = ", ", empty_text: str = "None"
+) -> str:
     """
     Join string list with separator
 
@@ -275,15 +293,16 @@ def join_with_separator(items: List[str], separator: str = ", ",
 
     # Filter empty strings
     filtered_items = [item for item in items if item.strip()]
-    
+
     if not filtered_items:
         return empty_text
-    
+
     return separator.join(filtered_items)
 
 
-def format_key_value_pairs(data: Dict[str, Any], separator: str = ": ",
-                          line_prefix: str = "   ") -> str:
+def format_key_value_pairs(
+    data: Dict[str, Any], separator: str = ": ", line_prefix: str = "   "
+) -> str:
     """
     Format key-value pair data
 
@@ -297,12 +316,12 @@ def format_key_value_pairs(data: Dict[str, Any], separator: str = ": ",
     """
     if not data:
         return ""
-    
+
     lines = []
     for key, value in data.items():
         formatted_line = f"{line_prefix}{key}{separator}{value}"
         lines.append(formatted_line)
-    
+
     return "\n".join(lines)
 
 
@@ -318,7 +337,7 @@ def clean_filename(filename: str, replacement_char: str = "_") -> str:
         Cleaned filename
     """
     # Define illegal characters
-    illegal_chars = ['<', '>', ':', '"', '|', '?', '*', '/', '\\']
+    illegal_chars = ["<", ">", ":", '"', "|", "?", "*", "/", "\\"]
 
     cleaned = filename
     for char in illegal_chars:
@@ -348,6 +367,6 @@ def format_progress_text(current: int, total: int, item_name: str = "items") -> 
     """
     if total == 0:
         return f"0 {item_name}"
-    
+
     percentage = (current / total) * 100
-    return f"{current:,} / {total:,} {item_name} ({percentage:.1f}%)" 
+    return f"{current:,} / {total:,} {item_name} ({percentage:.1f}%)"

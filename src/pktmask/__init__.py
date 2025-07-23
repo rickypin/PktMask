@@ -2,7 +2,7 @@
 PktMask - IP Address Replacement Tool
 """
 
-__version__ = "0.1.0" 
+__version__ = "0.1.0"
 
 # ---------------------------------------------------------------------------
 # Optional runtime stub for PyQt6 (used by limited unit-tests).
@@ -15,6 +15,7 @@ import types
 if "PyQt6" not in sys.modules:
     try:
         import importlib
+
         importlib.import_module("PyQt6")  # noqa: F401
     except ModuleNotFoundError:
         # 构造占位模块结构: PyQt6, PyQt6.QtCore, PyQt6.QtWidgets, PyQt6.QtGui
@@ -59,14 +60,16 @@ if "PyQt6" not in sys.modules:
         qtgui_stub.QColor = object
 
         # 注册到sys.modules
-        sys.modules.update({
-            "PyQt6": pyqt6_stub,
-            "PyQt6.QtCore": qtcore_stub,
-            "PyQt6.QtWidgets": qtwidgets_stub,
-            "PyQt6.QtGui": qtgui_stub,
-        })
+        sys.modules.update(
+            {
+                "PyQt6": pyqt6_stub,
+                "PyQt6.QtCore": qtcore_stub,
+                "PyQt6.QtWidgets": qtwidgets_stub,
+                "PyQt6.QtGui": qtgui_stub,
+            }
+        )
 
         # 还需要让主包引用子模块
         pyqt6_stub.QtCore = qtcore_stub
         pyqt6_stub.QtWidgets = qtwidgets_stub
-        pyqt6_stub.QtGui = qtgui_stub 
+        pyqt6_stub.QtGui = qtgui_stub

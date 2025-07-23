@@ -103,4 +103,24 @@ exclude = [
 
 [tool.pytest.ini_options]
 addopts = "--cov=pktmask --cov-report=term-missing --cov-report=html --html=report.html --cov-fail-under=80"
-testpaths = ["tests"] 
+testpaths = ["tests"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''

@@ -14,10 +14,10 @@ from .dialog_manager import DialogManager
 from .event_coordinator import EventCoordinator
 
 __all__ = [
-    'UIManager',
-    'FileManager',
-    'PipelineManager',
-    'ReportManager',
-    'DialogManager',
-    'EventCoordinator'
+    "UIManager",
+    "FileManager",
+    "PipelineManager",
+    "ReportManager",
+    "DialogManager",
+    "EventCoordinator",
 ]
