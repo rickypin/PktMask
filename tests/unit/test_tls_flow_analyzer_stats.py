@@ -10,7 +10,7 @@ TLS流分析器统计功能的单元测试
 
 import pytest
 from collections import defaultdict
-from src.pktmask.tools.tls_flow_analyzer import TLSFlowAnalyzer
+from pktmask.tools.tls_flow_analyzer import TLSFlowAnalyzer
 
 
 class TestTLSFlowAnalyzerStats:

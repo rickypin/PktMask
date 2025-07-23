@@ -172,9 +172,9 @@ class TestLoggingSettings:
 class TestConfigurationIntegration:
     """配置集成测试"""
     
-    def test_config_save_and_load(self, temp_dir):
+    def test_config_save_and_load(self, tmp_path):
         """测试配置保存和加载"""
-        config_file = temp_dir / "test_config.yaml"
+        config_file = tmp_path / "test_config.yaml"
         
         # 创建配置
         config = AppConfig.default()
@@ -197,9 +197,9 @@ class TestConfigurationIntegration:
         assert isinstance(default_path, Path)
         assert default_path.name == "config.yaml"
     
-    def test_config_with_nonexistent_file(self, temp_dir):
+    def test_config_with_nonexistent_file(self, tmp_path):
         """测试不存在文件的配置加载"""
-        nonexistent_file = temp_dir / "nonexistent.yaml"
+        nonexistent_file = tmp_path / "nonexistent.yaml"
         
         # 加载不存在的文件应该返回默认配置
         config = AppConfig.load(nonexistent_file)
@@ -228,9 +228,9 @@ class TestConfigurationIntegration:
 class TestConfigurationEdgeCases:
     """配置边界情况测试"""
     
-    def test_invalid_config_data(self, temp_dir):
+    def test_invalid_config_data(self, tmp_path):
         """测试无效配置数据处理"""
-        config_file = temp_dir / "invalid_config.yaml"
+        config_file = tmp_path / "invalid_config.yaml"
         
         # 写入无效的YAML
         config_file.write_text("invalid: yaml: content: [")
@@ -240,9 +240,9 @@ class TestConfigurationEdgeCases:
         assert config is not None
         assert isinstance(config, AppConfig)
     
-    def test_partial_config_data(self, temp_dir):
+    def test_partial_config_data(self, tmp_path):
         """测试部分配置数据"""
-        config_file = temp_dir / "partial_config.yaml"
+        config_file = tmp_path / "partial_config.yaml"
         
         # 写入部分配置
         partial_data = {

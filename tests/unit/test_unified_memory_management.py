@@ -11,14 +11,14 @@ import time
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 
-from src.pktmask.core.pipeline.resource_manager import (
-    ResourceManager, 
-    MemoryMonitor, 
+from pktmask.core.pipeline.resource_manager import (
+    ResourceManager,
+    MemoryMonitor,
     BufferManager,
     ResourceStats
 )
-from src.pktmask.core.pipeline.base_stage import StageBase
-from src.pktmask.core.pipeline.models import StageStats
+from pktmask.core.pipeline.base_stage import StageBase
+from pktmask.core.pipeline.models import StageStats
 
 
 class TestMemoryMonitor:
