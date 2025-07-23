@@ -303,14 +303,14 @@ class UIBuilder:
 
         self.main_window.summary_text.append("Processing summary will appear here...")
 
-    # Dialog management methods
+    # 对话框管理方法
     def show_error_dialog(self, title: str, message: str):
-        """Show error dialog"""
+        """显示错误对话框"""
         QMessageBox.critical(self.main_window, title, message)
         self._logger.error(f"Error dialog: {title} - {message}")
 
     def show_info_dialog(self, title: str, message: str):
-        """Show information dialog"""
+        """显示信息对话框"""
         QMessageBox.information(self.main_window, title, message)
         self._logger.info(f"Info dialog: {title} - {message}")
 

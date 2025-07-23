@@ -192,13 +192,13 @@ def find_files_by_extension(
 
 def find_pcap_files(directory: Union[str, Path]) -> List[str]:
     """
-    Find PCAP files in directory
+    在目录中查找PCAP文件
 
     Args:
-        directory: Directory to search
+        directory: 搜索目录
 
     Returns:
-        List of found PCAP file paths
+        找到的PCAP文件路径列表
     """
     return find_files_by_extension(directory, ProcessingConstants.SUPPORTED_EXTENSIONS)
 

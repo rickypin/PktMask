@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-PktMask Logging system
-Provides unified logging management functionality
+PktMask 日志系统
+提供统一的日志管理功能
 """
 
 import logging
@@ -17,7 +17,7 @@ from ...common.enums import LogLevel
 
 
 class PktMaskLogger:
-    """PktMaskApplication log manager"""
+    """PktMask应用程序日志管理器"""
 
     _instance: Optional["PktMaskLogger"] = None
     _initialized: bool = False
@@ -36,16 +36,16 @@ class PktMaskLogger:
         PktMaskLogger._initialized = True
 
     def _setup_root_logger(self):
-        """Setup root logger"""
+        """设置根日志记录器"""
         root_logger = logging.getLogger("pktmask")
         root_logger.setLevel(logging.DEBUG)
 
-        # Avoid duplicate additionhandler
+        # 避免重复添加handler
         if root_logger.handlers:
             return
 
-        # Try to get log level from configuration
-        console_level = logging.INFO  # Default level
+        # 尝试从配置获取日志级别
+        console_level = logging.INFO  # 默认级别
         try:
             from ...config import get_app_config
 
@@ -53,10 +53,10 @@ class PktMaskLogger:
             level_str = config.logging.log_level.upper()
             console_level = getattr(logging, level_str, logging.INFO)
         except Exception:
-            # If configuration retrieval fails, use default level
+            # 如果配置获取失败，使用默认级别
             pass
 
-        # Console handler
+        # 控制台处理器
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(console_level)
         console_formatter = logging.Formatter(
@@ -66,7 +66,7 @@ class PktMaskLogger:
         console_handler.setFormatter(console_formatter)
         root_logger.addHandler(console_handler)
 
-        # File handler
+        # 文件处理器
         try:
             log_dir = Path.home() / FileConstants.CONFIG_DIR_NAME
             log_dir.mkdir(exist_ok=True)
@@ -86,46 +86,46 @@ class PktMaskLogger:
             file_handler.setFormatter(file_formatter)
             root_logger.addHandler(file_handler)
         except Exception as e:
-            # If file logging setup fails, at least ensure console logging is available
+            # 如果文件日志设置失败，至少保证控制台日志可用
             root_logger.warning(f"Failed to setup file logging: {e}")
 
         self._loggers["root"] = root_logger
 
     def get_logger(self, name: str) -> logging.Logger:
-        """Get logger with specified name"""
+        """获取指定名称的日志记录器"""
         if name not in self._loggers:
             logger = logging.getLogger(f"pktmask.{name}")
             self._loggers[name] = logger
         return self._loggers[name]
 
     def set_level(self, level: LogLevel):
-        """Set log level"""
+        """设置日志级别"""
         for logger in self._loggers.values():
             logger.setLevel(level.value)
 
     def reconfigure_from_config(self):
-        """Reconfigure logging system based on configuration"""
+        """根据配置重新配置日志系统"""
         try:
             from ...config import get_app_config
 
             config = get_app_config()
 
-            # Get configured log level
+            # 获取配置的日志级别
             level_str = config.logging.log_level.upper()
             console_level = getattr(logging, level_str, logging.INFO)
 
-            # Update level of all existing handlers
+            # 更新所有现有处理器的级别
             pktmask_logger = logging.getLogger("pktmask")
             for handler in pktmask_logger.handlers:
                 if (
                     isinstance(handler, logging.StreamHandler)
                     and handler.stream == sys.stdout
                 ):
-                    # This is console handler
+                    # 这是控制台处理器
                     handler.setLevel(console_level)
 
         except Exception as e:
-            # If reconfiguration fails, log warning but don't interrupt program
+            # 如果重新配置失败，记录警告但不中断程序
             logging.getLogger("pktmask").warning(
                 f"Failed to reconfigure logging system: {e}"
             )
@@ -133,7 +133,7 @@ class PktMaskLogger:
     def log_exception(
         self, logger_name: str, exc: Exception, context: Optional[Dict[str, Any]] = None
     ):
-        """Log exception information"""
+        """记录异常信息"""
         logger = self.get_logger(logger_name)
         context_str = ""
         if context:
@@ -146,48 +146,48 @@ class PktMaskLogger:
     def log_performance(
         self, logger_name: str, operation: str, duration: float, **kwargs
     ):
-        """Log performance information"""
+        """记录性能信息"""
         logger = self.get_logger(logger_name)
         extra_info = " ".join(f"{k}={v}" for k, v in kwargs.items())
         logger.info(f"Performance: {operation} took {duration:.3f}s {extra_info}")
 
 
-# Global log manager instance
+# 全局日志管理器实例
 _logger_manager = PktMaskLogger()
 
 
 def get_logger(name: str = "root") -> logging.Logger:
-    """Convenience function to get logger"""
+    """获取日志记录器的便利函数"""
     return _logger_manager.get_logger(name)
 
 
 def set_log_level(level: LogLevel):
-    """Convenience function to set global log level"""
+    """设置全局日志级别的便利函数"""
     _logger_manager.set_level(level)
 
 
 def reconfigure_logging():
-    """Convenience function to reconfigure logging system based on current configuration"""
+    """根据当前配置重新配置日志系统的便利函数"""
     _logger_manager.reconfigure_from_config()
 
 
 def log_exception(
     exc: Exception, logger_name: str = "root", context: Optional[Dict[str, Any]] = None
 ):
-    """Convenience function to log exceptions"""
+    """记录异常的便利函数"""
     _logger_manager.log_exception(logger_name, exc, context)
 
 
 def log_performance(
     operation: str, duration: float, logger_name: str = "performance", **kwargs
 ):
-    """Convenience function to log performance"""
+    """记录性能的便利函数"""
     _logger_manager.log_performance(logger_name, operation, duration, **kwargs)
 
 
-# Decorator：Automatically log function execution time
+# 装饰器：自动记录函数执行时间
 def log_execution_time(logger_name: str = "performance"):
-    """Decorator：Automatically log function execution time"""
+    """装饰器：自动记录函数执行时间"""
 
     def decorator(func):
         import functools

@@ -1,5 +1,5 @@
 """
-Step result data模型
+步骤结果数据模型
 
 定义各种处理步骤的结果数据结构。
 """
@@ -22,26 +22,26 @@ class StepStatus(str, Enum):
 
 
 class BaseStepResult(BaseModel):
-    """基础Step results
+    """基础步骤结果
 
     命名说明：
-    - step_name：显示用的Step name（如 "Deduplication", "IP Anonymization"）
+    - step_name：显示用的步骤名称（如 "Deduplication", "IP Anonymization"）
     - step_type：内部处理标识符（如 "dedup_packet", "mask_ip"）
-    - 两者间的mapping关系请参考 config/naming_aliases.yaml
+    - 两者间的映射关系请参考 config/naming_aliases.yaml
     """
 
-    step_name: str = Field(..., description="Step name（用于显示）")
+    step_name: str = Field(..., description="步骤名称（用于显示）")
     step_type: str = Field(..., description="步骤类型（内部标识符）")
     status: StepStatus = Field(default=StepStatus.PENDING, description="步骤状态")
-    start_time: Optional[datetime] = Field(default=None, description="Start time")
+    start_time: Optional[datetime] = Field(default=None, description="开始时间")
     end_time: Optional[datetime] = Field(default=None, description="结束时间")
-    duration_ms: int = Field(default=0, ge=0, description="执行耗时(milliseconds)")
-    input_filename: Optional[str] = Field(default=None, description="输入Filename")
-    output_filename: Optional[str] = Field(default=None, description="输出Filename")
-    error_message: Optional[str] = Field(default=None, description="Error information")
+    duration_ms: int = Field(default=0, ge=0, description="执行耗时(毫秒)")
+    input_filename: Optional[str] = Field(default=None, description="输入文件名")
+    output_filename: Optional[str] = Field(default=None, description="输出文件名")
+    error_message: Optional[str] = Field(default=None, description="错误信息")
 
     def get_duration_string(self) -> str:
-        """Get formatted duration string"""
+        """获取格式化的耗时字符串"""
         if self.duration_ms == 0:
             return "0ms"
 
@@ -62,15 +62,15 @@ class BaseStepResult(BaseModel):
 
 
 class IPAnonymizationResult(BaseStepResult):
-    """IP匿名化Step results"""
+    """IP匿名化步骤结果"""
 
     original_ips_count: int = Field(default=0, ge=0, description="原始IP数量")
     anonymized_ips_count: int = Field(default=0, ge=0, description="匿名化IP数量")
-    ip_mappings: Dict[str, str] = Field(default_factory=dict, description="IPmapping表")
+    ip_mappings: Dict[str, str] = Field(default_factory=dict, description="IP映射表")
     file_ip_mappings: Dict[str, str] = Field(
-        default_factory=dict, description="文件级IPmapping"
+        default_factory=dict, description="文件级IP映射"
     )
-    packets_modified: int = Field(default=0, ge=0, description="修改的packets数量")
+    packets_modified: int = Field(default=0, ge=0, description="修改的包数量")
 
     def __init__(self, **data):
         super().__init__(step_type="mask_ip", **data)
@@ -83,11 +83,11 @@ class IPAnonymizationResult(BaseStepResult):
 
 
 class DeduplicationResult(BaseStepResult):
-    """去重Step results"""
+    """去重步骤结果"""
 
-    original_packets: int = Field(default=0, ge=0, description="原始packets数量")
-    unique_packets: int = Field(default=0, ge=0, description="去重后packets数量")
-    duplicates_removed: int = Field(default=0, ge=0, description="移除的重复packets数量")
+    original_packets: int = Field(default=0, ge=0, description="原始包数量")
+    unique_packets: int = Field(default=0, ge=0, description="去重后包数量")
+    duplicates_removed: int = Field(default=0, ge=0, description="移除的重复包数量")
     deduplication_ratio: float = Field(
         default=0.0, ge=0.0, le=100.0, description="去重比例"
     )
@@ -112,13 +112,13 @@ class DeduplicationResult(BaseStepResult):
 
 
 class MaskingResult(BaseStepResult):
-    """掩码Step results"""
+    """掩码步骤结果"""
 
-    original_packets: int = Field(default=0, ge=0, description="原始packets数量")
-    masked_packets: int = Field(default=0, ge=0, description="掩码后packets数量")
-    packets_modified: int = Field(default=0, ge=0, description="修改的packets数量")
+    original_packets: int = Field(default=0, ge=0, description="原始包数量")
+    masked_packets: int = Field(default=0, ge=0, description="掩码后包数量")
+    packets_modified: int = Field(default=0, ge=0, description="修改的包数量")
     total_bytes_removed: int = Field(default=0, ge=0, description="移除的总字节数")
-    tls_packets_identified: int = Field(default=0, ge=0, description="识别的TLSpackets数量")
+    tls_packets_identified: int = Field(default=0, ge=0, description="识别的TLS包数量")
     payload_size_before: int = Field(default=0, ge=0, description="掩码前载荷大小")
     payload_size_after: int = Field(default=0, ge=0, description="裁切后载荷大小")
 
@@ -139,7 +139,7 @@ class MaskingResult(BaseStepResult):
 
 
 class CustomStepResult(BaseStepResult):
-    """自定义Step results"""
+    """自定义步骤结果"""
 
     custom_metrics: Dict[str, Any] = Field(
         default_factory=dict, description="自定义指标"
@@ -154,9 +154,9 @@ class CustomStepResult(BaseStepResult):
         return self.custom_metrics.get(key, default)
 
 
-# Step results类型mapping（使用标准GUI命名）
-# 注意：此mapping表定义了处理逻辑标识符与领域模型类之间的对应关系
-# 详细的命名规则和别名mapping请参考：config/naming_aliases.yaml
+# 步骤结果类型映射（使用标准GUI命名）
+# 注意：此映射表定义了处理逻辑标识符与领域模型类之间的对应关系
+# 详细的命名规则和别名映射请参考：config/naming_aliases.yaml
 STEP_RESULT_MAPPING = {
     # 标准命名（与GUI界面一致）
     "anonymize_ips": IPAnonymizationResult,  # 标准处理标识符
@@ -176,22 +176,22 @@ TrimmingResult = MaskingResult
 
 
 class FileStepResults(BaseModel):
-    """文件的所有Step results"""
+    """文件的所有步骤结果"""
 
-    filename: str = Field(..., description="Filename")
+    filename: str = Field(..., description="文件名")
     file_path: str = Field(..., description="文件路径")
-    start_time: Optional[datetime] = Field(default=None, description="文件处理Start time")
+    start_time: Optional[datetime] = Field(default=None, description="文件处理开始时间")
     end_time: Optional[datetime] = Field(default=None, description="文件处理结束时间")
     steps: Dict[str, BaseStepResult] = Field(
-        default_factory=dict, description="Step results"
+        default_factory=dict, description="步骤结果"
     )
     overall_status: StepStatus = Field(
         default=StepStatus.PENDING, description="整体状态"
     )
-    total_duration_ms: int = Field(default=0, ge=0, description="总耗时(milliseconds)")
+    total_duration_ms: int = Field(default=0, ge=0, description="总耗时(毫秒)")
 
     def add_step_result(self, step_result: BaseStepResult):
-        """添加Step results"""
+        """添加步骤结果"""
         self.steps[step_result.step_name] = step_result
         self._update_overall_status()
 
@@ -221,7 +221,7 @@ class FileStepResults(BaseModel):
             self.overall_status = StepStatus.PENDING
 
     def get_success_rate(self) -> float:
-        """获取Success rate"""
+        """获取成功率"""
         if not self.steps:
             return 0.0
 
@@ -231,7 +231,7 @@ class FileStepResults(BaseModel):
         return (successful_steps / len(self.steps)) * 100.0
 
     def get_total_packets_processed(self) -> int:
-        """获取处理的Total packets"""
+        """获取处理的总包数"""
         total = 0
         for step in self.steps.values():
             if hasattr(step, "original_packets"):
@@ -240,25 +240,25 @@ class FileStepResults(BaseModel):
 
 
 class StepResultData(BaseModel):
-    """Step result data的根模型"""
+    """步骤结果数据的根模型"""
 
     file_results: Dict[str, FileStepResults] = Field(
-        default_factory=dict, description="File results"
+        default_factory=dict, description="文件结果"
     )
     global_statistics: Dict[str, Any] = Field(
-        default_factory=dict, description="Global统计"
+        default_factory=dict, description="全局统计"
     )
 
     def add_file_result(self, file_result: FileStepResults):
-        """添加File results"""
+        """添加文件结果"""
         self.file_results[file_result.filename] = file_result
 
     def get_file_result(self, filename: str) -> Optional[FileStepResults]:
-        """获取File results"""
+        """获取文件结果"""
         return self.file_results.get(filename)
 
     def get_overall_statistics(self) -> Dict[str, Any]:
-        """获取整体Statistics data"""
+        """获取整体统计数据"""
         total_files = len(self.file_results)
         completed_files = sum(
             1
@@ -295,6 +295,6 @@ class StepResultData(BaseModel):
 
     @classmethod
     def create_step_result(cls, step_type: str, **data) -> BaseStepResult:
-        """创建指定类型的Step results"""
+        """创建指定类型的步骤结果"""
         result_class = STEP_RESULT_MAPPING.get(step_type, CustomStepResult)
         return result_class(**data)

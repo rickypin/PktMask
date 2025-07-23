@@ -1,6 +1,6 @@
 """
-Pipeline service interface
-Provides decoupled interface between GUI and core pipeline
+Pipeline 服务接口
+提供 GUI 与核心管道的解耦接口
 """
 
 from typing import Any, Callable, Dict, Optional, Tuple
@@ -9,30 +9,30 @@ from pktmask.core.events import PipelineEvents
 from pktmask.infrastructure.logging import get_logger
 
 
-# Define service layer exceptions
+# 定义服务层异常
 class PipelineServiceError(Exception):
-    """Base service layer exception"""
+    """服务层基础异常"""
 
 
 class ConfigurationError(PipelineServiceError):
-    """Configuration error"""
+    """配置错误"""
 
 
 logger = get_logger("PipelineService")
 
-# Create pipeline executor
+# 创建管道执行器
 # Dummy implementation; replace ... with real logic
 
 
 def create_pipeline_executor(config: Dict) -> object:
     """
-    Create pipeline executor
+    创建管道执行器
 
     Args:
-        config: Pipeline configuration dictionary containing stage enable status and parameters
+        config: 管道配置字典，包含各阶段的启用状态和参数
 
     Returns:
-        Executor object (opaque to GUI)
+        执行器对象（对 GUI 不透明）
     """
     try:
         from pktmask.core.pipeline.executor import PipelineExecutor
@@ -43,7 +43,7 @@ def create_pipeline_executor(config: Dict) -> object:
         raise PipelineServiceError("Failed to create executor")
 
 
-# Process all PCAP files in directory
+# 处理目录中的所有 PCAP 文件
 # Dummy implementation; replace ... with real logic
 
 
@@ -55,24 +55,24 @@ def process_directory(
     is_running_check: Callable[[], bool],
 ) -> None:
     """
-    Process all PCAP files in directory
+    处理目录中的所有 PCAP 文件
 
     Args:
-        executor: Executor object
-        input_dir: Input directory path
-        output_dir: Output directory path
-        progress_callback: Progress callback function
-        is_running_check: Function to check if should continue running
+        executor: 执行器对象
+        input_dir: 输入目录路径
+        output_dir: 输出目录路径
+        progress_callback: 进度回调函数
+        is_running_check: 检查是否继续运行的函数
     """
     try:
         import os
 
         logger.info(f"[Service] Starting directory processing: {input_dir}")
 
-        # Send pipeline start event
+        # 发送管道开始事件
         progress_callback(PipelineEvents.PIPELINE_START, {"total_subdirs": 1})
 
-        # Scan PCAP files in directory
+        # 扫描目录中的PCAP文件
         pcap_files = []
         for file in os.scandir(input_dir):
             if file.name.endswith((".pcap", ".pcapng")):
@@ -85,7 +85,7 @@ def process_directory(
             progress_callback(PipelineEvents.PIPELINE_END, {})
             return
 
-        # Send subdirectory start event
+        # 发送子目录开始事件
         rel_subdir = os.path.relpath(input_dir, input_dir)
         progress_callback(
             PipelineEvents.SUBDIR_START,
@@ -97,20 +97,20 @@ def process_directory(
             },
         )
 
-        # Process each file
+        # 处理每个文件
         for input_path in pcap_files:
             if not is_running_check():
                 break
 
-            # Send file start event
+            # 发送文件开始事件
             progress_callback(PipelineEvents.FILE_START, {"path": input_path})
 
             try:
-                # Construct output filename
+                # 构造输出文件名
                 base_name, ext = os.path.splitext(os.path.basename(input_path))
                 output_path = os.path.join(output_dir, f"{base_name}_processed{ext}")
 
-                # Use executor to process file
+                # 使用 executor 处理文件
                 result = executor.run(
                     input_path,
                     output_path,
@@ -140,7 +140,7 @@ def process_directory(
                                 },
                             )
 
-                # Send step summary events (for both successful and failed stages)
+                # 发送步骤摘要事件 (for both successful and failed stages)
                 for stage_stats in result.stage_stats:
                     progress_callback(
                         PipelineEvents.STEP_SUMMARY,
@@ -169,13 +169,13 @@ def process_directory(
                     },
                 )
 
-            # Send file completion event
+            # 发送文件完成事件
             progress_callback(PipelineEvents.FILE_END, {"path": input_path})
 
-        # Send subdirectory end event
+        # 发送子目录结束事件
         progress_callback(PipelineEvents.SUBDIR_END, {"name": rel_subdir})
 
-        # Send pipeline end event
+        # 发送管道结束事件
         progress_callback(PipelineEvents.PIPELINE_END, {})
 
         logger.info(f"[Service] Completed directory processing: {input_dir}")
@@ -186,7 +186,7 @@ def process_directory(
 
 
 def _handle_stage_progress(stage, stats, progress_callback):
-    """Handle stage progress callback"""
+    """处理阶段进度回调"""
     # Get standardized display name for the stage
     stage_display_name = _get_stage_display_name(stage.name)
 
@@ -225,14 +225,14 @@ def _get_stage_display_name(stage_name: str) -> str:
     return stage_name_mapping.get(stage_name, stage_name)
 
 
-# Stop pipeline execution
+# 停止管道执行
 # Dummy implementation; replace ... with real logic
 
 
 def stop_pipeline(executor: object) -> None:
-    """Stop pipeline execution"""
+    """停止管道执行"""
     try:
-        # Try to call executor's stop method
+        # 尝试调用执行器的stop方法
         if hasattr(executor, "stop"):
             executor.stop()
             logger.info("[Service] Pipeline stopped")
@@ -243,27 +243,27 @@ def stop_pipeline(executor: object) -> None:
         raise PipelineServiceError(f"Failed to stop pipeline: {str(e)}")
 
 
-# Return current executor statistics
+# 返回当前执行器的统计信息
 # Dummy implementation; replace ... with real logic
 
 
 def get_pipeline_status(executor: object) -> Dict[str, Any]:
-    """Return current executor statistics, such as number of processed files"""
+    """返回当前执行器的统计信息，例如已处理文件数等"""
     return {}
 
 
-# Validate configuration before actually creating executor
+# 在真正创建执行器前验证配置
 # Dummy implementation; replace ... with real logic
 
 
 def validate_config(config: Dict) -> Tuple[bool, Optional[str]]:
-    """Validate configuration validity"""
+    """验证配置有效性"""
     if not config:
         return False, "Configuration is empty"
     return True, None
 
 
-# Build pipeline configuration based on feature switches
+# 根据功能开关构建管道配置
 # Dummy implementation; replace ... with real logic
 
 
@@ -271,7 +271,7 @@ def build_pipeline_config(
     enable_anon: bool, enable_dedup: bool, enable_mask: bool
 ) -> Dict:
     """Build pipeline configuration based on feature switches (using standard naming conventions)"""
-    # Use unified configuration service
+    # 使用统一的配置服务
     from pktmask.services.config_service import get_config_service
 
     service = get_config_service()
@@ -283,7 +283,7 @@ def build_pipeline_config(
 
 
 # ============================================================================
-# CLI unified service interface
+# CLI 统一服务接口
 # ============================================================================
 
 
@@ -295,22 +295,22 @@ def process_single_file(
     verbose: bool = False,
 ) -> Dict[str, Any]:
     """
-    Process single file (CLI-specific interface)
+    处理单个文件（CLI专用接口）
 
     Args:
-        executor: Executor object
-        input_file: Input file path
-        output_file: Output file path
-        progress_callback: Progress callback function
-        verbose: Whether to enable verbose output
+        executor: 执行器对象
+        input_file: 输入文件路径
+        output_file: 输出文件路径
+        progress_callback: 进度回调函数
+        verbose: 是否启用详细输出
 
     Returns:
-        Processing result dictionary containing statistics and status
+        处理结果字典，包含统计信息和状态
     """
     try:
         logger.info(f"[Service] Processing single file: {input_file}")
 
-        # Ensure output directory exists
+        # 确保输出目录存在
         from pathlib import Path
 
         output_path = Path(output_file)
@@ -328,24 +328,24 @@ def process_single_file(
                     f"Failed to create output directory: {str(e)}"
                 )
 
-        # Send processing start event
+        # 发送处理开始事件
         if progress_callback:
             progress_callback(PipelineEvents.PIPELINE_START, {"total_files": 1})
             progress_callback(PipelineEvents.FILE_START, {"path": input_file})
 
-        # Create progress callback wrapper
+        # 创建进度回调包装器
         def stage_progress_wrapper(stage, stats):
             if progress_callback:
                 _handle_stage_progress(stage, stats, progress_callback)
 
-        # Execute processing
+        # 执行处理
         result = executor.run(
             input_file,
             output_file,
             progress_cb=stage_progress_wrapper if verbose else None,
         )
 
-        # Send processing completion event
+        # 发送处理完成事件
         if progress_callback:
             progress_callback(
                 PipelineEvents.FILE_END,
@@ -357,7 +357,7 @@ def process_single_file(
             )
             progress_callback(PipelineEvents.PIPELINE_END, {})
 
-        # Return unified format result
+        # 返回统一格式的结果
         return {
             "success": result.success,
             "input_file": result.input_file,
@@ -389,18 +389,18 @@ def process_directory_cli(
     file_pattern: str = "*.pcap,*.pcapng",
 ) -> Dict[str, Any]:
     """
-    Process all files in directory (CLI-specific interface)
+    处理目录中的所有文件（CLI专用接口）
 
     Args:
-        executor: Executor object
-        input_dir: Input directory path
-        output_dir: Output directory path
-        progress_callback: Progress callback function
-        verbose: Whether to enable verbose output
-        file_pattern: File matching pattern
+        executor: 执行器对象
+        input_dir: 输入目录路径
+        output_dir: 输出目录路径
+        progress_callback: 进度回调函数
+        verbose: 是否启用详细输出
+        file_pattern: 文件匹配模式
 
     Returns:
-        Processing result dictionary containing statistics and status
+        处理结果字典，包含统计信息和状态
     """
     try:
         import glob
@@ -408,7 +408,7 @@ def process_directory_cli(
 
         logger.info(f"[Service] Processing directory: {input_dir}")
 
-        # Scan matching files
+        # 扫描匹配的文件
         pcap_files = []
         patterns = file_pattern.split(",")
         for pattern in patterns:
@@ -431,30 +431,30 @@ def process_directory_cli(
                 "errors": [],
             }
 
-        # Ensure output directory exists
+        # 确保输出目录存在
         os.makedirs(output_dir, exist_ok=True)
 
-        # Send processing start event
+        # 发送处理开始事件
         if progress_callback:
             progress_callback(
                 PipelineEvents.PIPELINE_START, {"total_files": len(pcap_files)}
             )
 
-        # Processing statistics
+        # 处理统计
         processed_files = 0
         failed_files = 0
         all_errors = []
         total_duration = 0.0
 
-        # Process each file
+        # 处理每个文件
         for i, input_file in enumerate(pcap_files):
             try:
-                # Construct output filename
+                # 构造输出文件名
                 base_name = os.path.splitext(os.path.basename(input_file))[0]
                 ext = os.path.splitext(input_file)[1]
                 output_file = os.path.join(output_dir, f"{base_name}_processed{ext}")
 
-                # Process single file
+                # 处理单个文件
                 result = process_single_file(
                     executor, input_file, output_file, progress_callback, verbose
                 )
@@ -476,11 +476,11 @@ def process_directory_cli(
                 if progress_callback:
                     progress_callback(PipelineEvents.ERROR, {"message": error_msg})
 
-        # Send processing completion event
+        # 发送处理完成事件
         if progress_callback:
             progress_callback(PipelineEvents.PIPELINE_END, {})
 
-        # Return unified format result
+        # 返回统一格式的结果
         return {
             "success": failed_files == 0,
             "input_dir": input_dir,
@@ -501,8 +501,8 @@ def process_directory_cli(
 
 
 def create_gui_compatible_report_data(result: Dict[str, Any]) -> Dict[str, Any]:
-    """Create GUI-compatible report data format"""
-    # Convert CLI results to format expected by GUI report manager
+    """创建与GUI兼容的报告数据格式"""
+    # 转换CLI结果为GUI报告管理器期望的格式
     gui_report_data = {
         "step_results": {},
         "total_files": result.get("total_files", 1),
@@ -513,13 +513,13 @@ def create_gui_compatible_report_data(result: Dict[str, Any]) -> Dict[str, Any]:
         "success": result.get("success", False),
     }
 
-    # Convert stage statistics data
+    # 转换阶段统计数据
     stage_stats = result.get("stage_stats", [])
     for stage_stat in stage_stats:
         if isinstance(stage_stat, dict):
             stage_name = stage_stat.get("stage_name", "Unknown")
 
-            # Map to format expected by GUI
+            # 映射到GUI期望的格式
             if "dedup" in stage_name.lower():
                 gui_report_data["step_results"]["Deduplication"] = {
                     "packets_processed": stage_stat.get("packets_processed", 0),
@@ -552,19 +552,19 @@ def create_gui_compatible_report_data(result: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def generate_gui_style_report(result: Dict[str, Any]) -> str:
-    """Generate GUI-style report text"""
+    """生成GUI风格的报告文本"""
     gui_data = create_gui_compatible_report_data(result)
 
-    # Use GUI report manager format
+    # 使用GUI报告管理器的格式
     report_lines = []
 
-    # Title
+    # 标题
     report_lines.append("=" * 70)
     report_lines.append("📋 PROCESSING SUMMARY")
     report_lines.append("=" * 70)
     report_lines.append("")
 
-    # Basic information
+    # 基本信息
     report_lines.append(
         f"📊 Files Processed: {gui_data['processed_files']}/{gui_data['total_files']}"
     )
@@ -573,7 +573,7 @@ def generate_gui_style_report(result: Dict[str, Any]) -> str:
     report_lines.append(f"⏱️  Total Duration: {gui_data['duration_ms']:.1f} ms")
     report_lines.append("")
 
-    # Stage results
+    # 阶段结果
     if gui_data["step_results"]:
         report_lines.append("📈 Step Statistics:")
         report_lines.append("")
@@ -593,12 +593,12 @@ def generate_gui_style_report(result: Dict[str, Any]) -> str:
                 report_lines.append(f"  • Summary: {step_data['summary']}")
             report_lines.append("")
 
-    # Output information
+    # 输出信息
     if gui_data["output_directory"]:
         report_lines.append(f"📁 Output: {gui_data['output_directory']}")
         report_lines.append("")
 
-    # Status
+    # 状态
     status = "✅ Success" if gui_data["success"] else "❌ Failed"
     report_lines.append(f"Status: {status}")
 

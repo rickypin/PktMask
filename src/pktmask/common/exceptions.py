@@ -101,7 +101,7 @@ class FileError(PktMaskError):
 
 
 class NetworkError(PktMaskError):
-    """Network processing related errors"""
+    """网络处理相关错误"""
 
     def __init__(
         self, message: str, packet_info: Optional[Dict[str, Any]] = None, **kwargs
@@ -111,7 +111,7 @@ class NetworkError(PktMaskError):
 
 
 class UIError(PktMaskError):
-    """User interface related errors"""
+    """用户界面相关错误"""
 
     def __init__(self, message: str, component_name: Optional[str] = None, **kwargs):
         super().__init__(message, error_code="UI_ERROR", **kwargs)
@@ -119,7 +119,7 @@ class UIError(PktMaskError):
 
 
 class PluginError(PktMaskError):
-    """Plugin system related errors"""
+    """插件系统相关错误"""
 
     def __init__(self, message: str, plugin_name: Optional[str] = None, **kwargs):
         super().__init__(message, error_code="PLUGIN_ERROR", **kwargs)
@@ -179,15 +179,15 @@ def create_error_from_exception(
 
 
 def format_error_for_user(error: PktMaskError) -> str:
-    """Format error information for user display"""
+    """格式化错误信息以便向用户显示"""
     base_message = error.message
 
-    # Add additional information based on error type
+    # 根据错误类型添加额外信息
     if isinstance(error, FileError) and error.file_path:
-        return f"{base_message}\nFile: {error.file_path}"
+        return f"{base_message}\n文件: {error.file_path}"
     elif isinstance(error, ProcessingError) and error.step_name:
-        return f"{base_message}\nProcessing step: {error.step_name}"
+        return f"{base_message}\n处理步骤: {error.step_name}"
     elif isinstance(error, ConfigurationError) and error.config_key:
-        return f"{base_message}\nConfiguration key: {error.config_key}"
+        return f"{base_message}\n配置项: {error.config_key}"
 
     return base_message

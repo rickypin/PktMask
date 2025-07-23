@@ -142,7 +142,7 @@ ERROR_HANDLING_DEFAULTS = {
     "continue_on_error": False,
 }
 
-# External tools configuration
+# 外部工具配置
 EXTERNAL_TOOLS_DEFAULTS = {
     "tshark": {
         "executable_paths": [
@@ -164,7 +164,7 @@ EXTERNAL_TOOLS_DEFAULTS = {
 
 
 def get_default_config_dict():
-    """Get complete default configuration dictionary"""
+    """获取完整的默认配置字典"""
     return {
         "ui": DEFAULT_UI_CONFIG,
         "processing": DEFAULT_PROCESSING_CONFIG,
@@ -177,45 +177,45 @@ def get_default_config_dict():
 
 
 def get_processor_config(processor_name: str) -> dict:
-    """Get default configuration for specific processor"""
+    """获取特定处理器的默认配置"""
     return PROCESSOR_DEFAULTS.get(processor_name, {})
 
 
 def get_validation_constraint(key: str):
-    """Get validation constraint value"""
+    """获取验证约束值"""
     return VALIDATION_CONSTRAINTS.get(key)
 
 
 def is_valid_theme(theme: str) -> bool:
-    """Validate if theme name is valid"""
+    """验证主题名称是否有效"""
     return theme in VALIDATION_CONSTRAINTS["valid_themes"]
 
 
 def is_valid_log_level(level: str) -> bool:
-    """Validate if log level is valid"""
+    """验证日志级别是否有效"""
     return level in VALIDATION_CONSTRAINTS["valid_log_levels"]
 
 
 def is_valid_dedup_algorithm(algorithm: str) -> bool:
-    """Validate if deduplication algorithm is valid"""
+    """验证去重算法是否有效"""
     return algorithm in VALIDATION_CONSTRAINTS["valid_dedup_algorithms"]
 
 
 def get_supported_file_extensions() -> list:
-    """Get list of supported file extensions"""
+    """获取支持的文件扩展名列表"""
     return CONFIG_CONSTANTS["supported_extensions"].copy()
 
 
 def get_legacy_config_files() -> list:
-    """Get list of legacy configuration file names"""
+    """获取旧版配置文件名列表"""
     return CONFIG_CONSTANTS["legacy_config_files"].copy()
 
 
 def get_tool_config(tool_name: str) -> dict:
-    """Get default configuration for specific tool"""
+    """获取特定工具的默认配置"""
     return EXTERNAL_TOOLS_DEFAULTS.get(tool_name, {})
 
 
 def get_tshark_paths() -> list:
-    """Get default search paths for TShark executable"""
+    """获取TShark可执行文件的默认搜索路径"""
     return EXTERNAL_TOOLS_DEFAULTS.get("tshark", {}).get("executable_paths", [])

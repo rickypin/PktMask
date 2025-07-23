@@ -1,8 +1,8 @@
 """
-Unified IP Anonymization Stage - Pure StageBase Implementation
+统一IP匿名化阶段 - 纯StageBase实现
 
-Completely removes BaseProcessor dependency, directly integrates HierarchicalAnonymizationStrategy logic.
-Eliminates adapter layer, unified return of StageStats format.
+完全移除BaseProcessor依赖，直接集成HierarchicalAnonymizationStrategy逻辑。
+消除适配器层，统一返回StageStats格式。
 """
 
 from __future__ import annotations
@@ -272,15 +272,15 @@ class UnifiedIPAnonymizationStage(StageBase):
             raise ProcessingError(error_msg) from e
 
     def get_display_name(self) -> str:
-        """Get display name"""
+        """获取显示名称"""
         return "Anonymize IPs"
 
     def get_description(self) -> str:
-        """Get description"""
+        """获取描述"""
         return "Anonymize IP addresses in packets while maintaining subnet structure consistency"
 
     def get_ip_mappings(self) -> dict:
-        """Get IP mapping table"""
+        """获取IP映射表"""
         if self._strategy:
             return self._strategy.get_ip_map()
         return {}
