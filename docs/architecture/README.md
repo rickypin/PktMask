@@ -1,36 +1,36 @@
-# 架构文档
+# Architecture Documentation
 
-PktMask 采用模块化、可扩展的架构设计，支持灵活的数据包处理流程。本目录包含系统架构和设计文档。
+PktMask adopts a modular, extensible architectural design that supports flexible packet processing workflows. This directory contains system architecture and design documentation.
 
-## 🏛️ 架构概览
+## 🏛️ Architecture Overview
 
-### 📖 [系统概览](system-overview.md)
-整体架构介绍和核心设计理念
-- 系统架构图
-- 核心组件介绍
-- 设计原则和目标
-- 技术栈选择
+### 📖 [System Overview](system-overview.md)
+Overall architecture introduction and core design concepts
+- System architecture diagrams
+- Core component introduction
+- Design principles and objectives
+- Technology stack selection
 
-### 🔄 [管道架构](pipeline-architecture.md)
-处理管道的设计模式和实现
-- 管道模式设计
-- 阶段注册机制
-- 数据流控制
-- 并行处理策略
+### 🔄 [Pipeline Architecture](pipeline-architecture.md)
+Design patterns and implementation of processing pipelines
+- Pipeline pattern design
+- Stage registration mechanism
+- Data flow control
+- Parallel processing strategies
 
-### 🖥️ [GUI 架构](gui-architecture.md)
-图形界面的架构设计
-- GUI 组件结构
-- 事件处理机制
-- 状态管理
-- 用户交互设计
+### 🖥️ [GUI Architecture](gui-architecture.md)
+Architectural design of the graphical interface
+- GUI component structure
+- Event handling mechanisms
+- State management
+- User interaction design
 
-### 📋 [设计决策](design-decisions.md)
-重要的架构和设计决策记录
-- 技术选型理由
-- 架构权衡考虑
-- 性能优化策略
-- 安全性设计
+### 📋 [Design Decisions](design-decisions.md)
+Records of important architectural and design decisions
+- Technology selection rationale
+- Architectural trade-off considerations
+- Performance optimization strategies
+- Security design
 
 ## 🎯 核心概念
 

@@ -1,132 +1,132 @@
-# API 文档
+# API Documentation
 
-PktMask 提供了丰富的 API 接口，支持编程方式使用所有核心功能。本目录包含完整的 API 参考文档。
+PktMask provides rich API interfaces that support programmatic use of all core functionality. This directory contains complete API reference documentation.
 
-## 📚 API 分类
+## 📚 API Categories
 
-### 🔧 [核心 API](core-api.md)
-核心功能和基础组件的编程接口
-- 数据包处理核心
-- 配置管理
-- 事件系统
-- 异常处理
+### 🔧 [Core API](core-api.md)
+Programming interfaces for core functionality and basic components
+- Packet processing core
+- Configuration management
+- Event system
+- Exception handling
 
-### 🔄 [管道 API](pipeline-api.md)
-处理管道和阶段管理的编程接口
-- 管道构建和执行
-- 阶段注册和配置
-- 数据流控制
-- 并行处理
+### 🔄 [Pipeline API](pipeline-api.md)
+Programming interfaces for processing pipelines and stage management
+- Pipeline construction and execution
+- Stage registration and configuration
+- Data flow control
+- Parallel processing
 
-### 🛠️ [工具 API](tools-api.md)
-专用工具和实用程序的编程接口
-- TLS 分析工具
-- 验证工具
-- 文件处理工具
-- 报告生成
+### 🛠️ [Tools API](tools-api.md)
+Programming interfaces for specialized tools and utilities
+- TLS analysis tools
+- Validation tools
+- File processing tools
+- Report generation
 
-## 🎯 使用场景
+## 🎯 Usage Scenarios
 
-### 自动化脚本
+### Automation Scripts
 ```python
 from pktmask.core import PktMaskProcessor
 from pktmask.pipeline import Pipeline
 
-# 创建处理器
+# Create processor
 processor = PktMaskProcessor()
 
-# 配置管道
+# Configure pipeline
 pipeline = Pipeline()
 pipeline.add_stage('dedup')
 pipeline.add_stage('anonymize')
 pipeline.add_stage('mask')
 
-# 执行处理
+# Execute processing
 result = processor.process_file('input.pcap', pipeline)
 ```
 
-### 批量处理
+### Batch Processing
 ```python
 from pktmask.core import BatchProcessor
 
-# 批量处理多个文件
+# Batch process multiple files
 processor = BatchProcessor()
 results = processor.process_directory('/path/to/pcap/files')
 ```
 
-### 自定义工具开发
+### Custom Tool Development
 ```python
 from pktmask.tools import TLSAnalyzer
 from pktmask.utils import ReportGenerator
 
-# 使用 TLS 分析工具
+# Use TLS analysis tool
 analyzer = TLSAnalyzer()
 analysis = analyzer.analyze_file('tls_traffic.pcap')
 
-# 生成报告
+# Generate report
 generator = ReportGenerator()
 report = generator.create_html_report(analysis)
 ```
 
-## 📖 API 设计原则
+## 📖 API Design Principles
 
-### 一致性
-- 统一的命名规范
-- 一致的参数传递方式
-- 标准化的返回值格式
+### Consistency
+- Unified naming conventions
+- Consistent parameter passing methods
+- Standardized return value formats
 
-### 易用性
-- 简洁的接口设计
-- 合理的默认参数
-- 清晰的错误信息
+### Usability
+- Simple interface design
+- Reasonable default parameters
+- Clear error messages
 
-### 扩展性
-- 插件化架构
-- 可配置的处理阶段
-- 灵活的事件系统
+### Extensibility
+- Plugin-based architecture
+- Configurable processing stages
+- Flexible event system
 
-## 🔧 快速开始
+## 🔧 Quick Start
 
-### 安装和导入
+### Installation and Import
 ```python
-# 安装 PktMask
+# Install PktMask
 pip install pktmask
 
-# 导入核心模块
+# Import core modules
 from pktmask import PktMask
 from pktmask.core import Processor
 from pktmask.pipeline import Pipeline
 ```
 
-### 基本使用
+### Basic Usage
 ```python
-# 创建 PktMask 实例
+# Create PktMask instance
 pktmask = PktMask()
 
-# 处理单个文件
+# Process single file
 result = pktmask.process_file(
     input_file='input.pcap',
     output_file='output.pcap',
     operations=['dedup', 'anonymize', 'mask']
 )
 
-# 检查结果
+# Check results
 if result.success:
-    print(f"处理完成: {result.statistics}")
+    print(f"Processing completed: {result.statistics}")
 else:
-    print(f"处理失败: {result.error}")
+    print(f"Processing failed: {result.error}")
 ```
 
-### 高级配置
+### Advanced Configuration
 ```python
 from pktmask.config import Config
 
-# 自定义配置
+# Custom configuration
 config = Config()
 config.set('anonymization.method', 'prefix_preserving')
 config.set('masking.strategy', 'tls_aware')
 
-# 使用配置
+# Use configuration
 pktmask = PktMask(config=config)
 ```
 
