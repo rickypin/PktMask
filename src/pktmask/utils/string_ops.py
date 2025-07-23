@@ -67,8 +67,11 @@ def format_step_summary(
         Formatted step summary string
     """
     step_display = f"{step_name:<{FormatConstants.STEP_NAME_WIDTH}}"
-    original_display = f"{original_count:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM}}"
-    processed_display = f"{processed_count:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM}}"
+    # Format numbers with alignment
+    align = FormatConstants.RIGHT_ALIGN
+    width_medium = FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM
+    original_display = f"{original_count:{align}{width_medium}}"
+    processed_display = f"{processed_count:{align}{width_medium}}"
     rate_display = f"{rate:5.{FormatConstants.RATE_DECIMAL_PLACES}f}%"
 
     return (
@@ -93,8 +96,11 @@ def format_deduplication_summary(
         Formatted deduplication summary string
     """
     step_display = f"{step_name:<{FormatConstants.STEP_NAME_WIDTH}}"
-    unique_display = f"{unique_count:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM}}"
-    removed_display = f"{removed_count:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM}}"
+    # Format numbers with alignment
+    align = FormatConstants.RIGHT_ALIGN
+    width_medium = FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM
+    unique_display = f"{unique_count:{align}{width_medium}}"
+    removed_display = f"{removed_count:{align}{width_medium}}"
     rate_display = f"{rate:5.{FormatConstants.RATE_DECIMAL_PLACES}f}%"
 
     return (
@@ -119,8 +125,12 @@ def format_trimming_summary(
         Formatted trimming summary string
     """
     step_display = f"{step_name:<{FormatConstants.STEP_NAME_WIDTH}}"
-    full_display = f"{full_packets:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_LARGE}}"
-    trimmed_display = f"{trimmed_packets:{FormatConstants.RIGHT_ALIGN}{FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM}}"
+    # Format numbers with alignment
+    align = FormatConstants.RIGHT_ALIGN
+    width_large = FormatConstants.NUMBER_DISPLAY_WIDTH_LARGE
+    width_medium = FormatConstants.NUMBER_DISPLAY_WIDTH_MEDIUM
+    full_display = f"{full_packets:{align}{width_large}}"
+    trimmed_display = f"{trimmed_packets:{align}{width_medium}}"
     rate_display = f"{rate:5.{FormatConstants.RATE_DECIMAL_PLACES}f}%"
 
     return (

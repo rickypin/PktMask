@@ -403,7 +403,7 @@ class PipelineManager:
                 os.path.basename(self.main_window.current_output_dir)
             )
         self.main_window.update_log(
-            f"Output directory ready. Click output path to view results."
+            "Output directory ready. Click output path to view results."
         )
 
         # If configuration is enabled, automatically open output directory

@@ -64,7 +64,7 @@ class ReportManager:
 
         # Generate stop summary report
         stop_report = f"\n{'='*separator_length}\n⏹️ PROCESSING STOPPED BY USER\n{'='*separator_length}\n"
-        stop_report += f"📊 Partial Statistics (Completed Portion):\n"
+        stop_report += "📊 Partial Statistics (Completed Portion):\n"
         stop_report += f"   • Files Processed: {partial_files}\n"
         stop_report += f"   • Packets Processed: {partial_packets:,}\n"
         stop_report += f"   • Processing Time: {partial_time}\n"
@@ -83,11 +83,11 @@ class ReportManager:
                         f"   • Average Speed: {speed:,.0f} packets/second\n\n"
                     )
                 else:
-                    stop_report += f"   • Average Speed: N/A\n\n"
+                    stop_report += "   • Average Speed: N/A\n\n"
             else:
-                stop_report += f"   • Average Speed: N/A\n\n"
+                stop_report += "   • Average Speed: N/A\n\n"
         except:
-            stop_report += f"   • Average Speed: N/A\n\n"
+            stop_report += "   • Average Speed: N/A\n\n"
 
         # Display enabled processing steps
         enabled_steps = []
@@ -100,9 +100,9 @@ class ReportManager:
 
         stop_report += f"🔧 Configured Processing Steps: {', '.join(enabled_steps)}\n"
         stop_report += f"📁 Working Directory: {os.path.basename(self.main_window.base_dir) if self.main_window.base_dir else 'N/A'}\n"
-        stop_report += f"⚠️ Processing was interrupted. All intermediate files have been cleaned up.\n"
+        stop_report += "⚠️ Processing was interrupted. All intermediate files have been cleaned up.\n"
         stop_report += (
-            f"❌ No completed output files were generated due to interruption.\n"
+            "❌ No completed output files were generated due to interruption.\n"
         )
         stop_report += f"{'='*separator_length}\n"
 
@@ -132,12 +132,12 @@ class ReportManager:
             self.main_window.summary_text.append(enhanced_partial_report)
 
         # Corrected restart hint
-        restart_hint = f"\n💡 RESTART INFORMATION:\n"
+        restart_hint = "\n💡 RESTART INFORMATION:\n"
         restart_hint += (
-            f"   • Clicking 'Start' will restart processing from the beginning\n"
+            "   • Clicking 'Start' will restart processing from the beginning\n"
         )
         restart_hint += (
-            f"   • All files will be reprocessed (no partial resume capability)\n"
+            "   • All files will be reprocessed (no partial resume capability)\n"
         )
         restart_hint += (
             f"   • Any existing output files will be skipped to avoid overwriting\n"

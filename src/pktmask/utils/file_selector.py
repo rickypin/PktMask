@@ -32,7 +32,6 @@ def select_files(
     # 2. 找出所有其他处理类型的产物文件
     # 我们应该从最"新"的产物开始处理，可以根据后缀在ALL_KNOWN_SUFFIXES中的顺位来判断
     # 这是一个简化的逻辑，假设后缀按处理顺序排列
-    other_suffixes = [s for s in all_suffixes if s != current_suffix]
 
     # 寻找已经存在的、非当前步骤的产物文件
     # 优先处理已经被处理过的文件
