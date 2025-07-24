@@ -32,7 +32,6 @@ from ..marker.types import KeepRuleSet
 from .data_validator import DataValidator
 from .error_handler import ErrorCategory, ErrorRecoveryHandler, ErrorSeverity
 from .fallback_handler import FallbackHandler
-from .memory_optimizer import MemoryOptimizer
 from .stats import MaskingStats
 
 
@@ -92,13 +91,6 @@ class PayloadMasker:
         )
         self.resource_manager = ResourceManager(resource_config)
 
-        # 保持向后兼容性的内存优化器（逐步废弃）
-        memory_config = config.get("memory_optimizer", {})
-        memory_config.setdefault(
-            "max_memory_mb", self.max_memory_usage // (1024 * 1024)
-        )
-        self.memory_optimizer = MemoryOptimizer(memory_config)
-
         # 初始化错误处理器
         error_config = config.get("error_handler", {})
         error_config.setdefault("max_retry_attempts", 3)
@@ -115,21 +107,19 @@ class PayloadMasker:
         fallback_config.setdefault("enable_fallback", True)
         self.fallback_handler = FallbackHandler(fallback_config)
 
-        # 注册内存压力回调（新的统一方式）
+        # 注册内存压力回调（统一方式）
         self.resource_manager.memory_monitor.register_pressure_callback(
             self._handle_memory_pressure_unified
         )
 
-        # 保持向后兼容性
-        self.memory_optimizer.register_memory_callback(self._handle_memory_pressure)
-
         # 注册自定义错误恢复处理器
         self._register_custom_recovery_handlers()
 
+        memory_limit_mb = resource_config.get("memory_monitor", {}).get("max_memory_mb", 2048)
         self.logger.info(
             f"PayloadMasker initialized: chunk_size={self.chunk_size}, "
             f"verify_checksums={self.verify_checksums}, "
-            f"memory_limit={memory_config['max_memory_mb']}MB"
+            f"memory_limit={memory_limit_mb}MB"
         )
 
         # 检查 scapy 可用性
@@ -154,10 +144,6 @@ class PayloadMasker:
 
         # 清除当前统计信息引用
         self._current_stats = None
-
-        # 重置内存优化器状态
-        if hasattr(self.memory_optimizer, "reset"):
-            self.memory_optimizer.reset()
 
         # 重置错误处理器状态
         if hasattr(self.error_handler, "reset"):
@@ -384,13 +370,13 @@ class PayloadMasker:
 
             # 生成性能报告
             if self.enable_performance_monitoring:
-                memory_report = self.memory_optimizer.get_optimization_report()
+                resource_stats = self.resource_manager.get_resource_stats()
                 self.logger.info(
                     f"Mask application completed: processed_packets={stats.processed_packets}, "
                     f"modified_packets={stats.modified_packets}, "
                     f"execution_time={stats.execution_time:.2f}s, "
-                    f"peak_memory={memory_report['peak_memory_mb']:.1f}MB, "
-                    f"gc_count={memory_report['gc_collections']}"
+                    f"peak_memory={resource_stats.peak_memory_mb:.1f}MB, "
+                    f"current_memory={resource_stats.memory_usage_mb:.1f}MB"
                 )
             else:
                 self.logger.info(
@@ -1167,31 +1153,7 @@ class PayloadMasker:
     #     state["last"] = seq32
     #     return (state["epoch"] << 32) | seq32
 
-    def _handle_memory_pressure(self, memory_stats):
-        """处理内存压力回调
 
-        Args:
-            memory_stats: 内存统计信息
-        """
-        self.logger.warning(
-            f"Memory pressure warning: usage={memory_stats.memory_pressure*100:.1f}%, "
-            f"current_memory={memory_stats.current_usage/1024/1024:.1f}MB"
-        )
-
-        # 可以在这里实现额外的内存压力处理逻辑
-        # 例如：减少缓冲区大小、强制垃圾回收等
-        if memory_stats.memory_pressure > 0.9:  # 90%以上内存使用率
-            self.logger.error(
-                "Memory usage too high, recommend reducing chunk_size or increasing memory limit"
-            )
-
-            # 触发内存错误处理
-            self.error_handler.handle_error(
-                "Memory usage too high",
-                ErrorSeverity.HIGH,
-                ErrorCategory.MEMORY_ERROR,
-                {"memory_pressure": memory_stats.memory_pressure},
-            )
 
     def get_performance_stats(self) -> Dict[str, Any]:
         """获取性能统计信息
@@ -1199,12 +1161,22 @@ class PayloadMasker:
         Returns:
             性能统计字典
         """
-        if hasattr(self, "memory_optimizer"):
-            return self.memory_optimizer.get_optimization_report()
+        if hasattr(self, "resource_manager"):
+            resource_stats = self.resource_manager.get_resource_stats()
+            memory_pressure = self.resource_manager.get_memory_pressure()
+            return {
+                "memory_monitor_available": True,
+                "current_memory_mb": resource_stats.memory_usage_mb,
+                "peak_memory_mb": resource_stats.peak_memory_mb,
+                "memory_pressure": memory_pressure,
+                "buffer_count": resource_stats.buffer_count,
+                "gc_collections": resource_stats.gc_collections,
+                "flow_directions_count": len(self.flow_directions),
+            }
         else:
             return {
-                "memory_optimizer_available": False,
-                "seq_state_flows": len(self.seq_state),
+                "memory_monitor_available": False,
+                "flow_directions_count": len(self.flow_directions) if hasattr(self, "flow_directions") else 0,
             }
 
     def _flush_packet_buffer(self, packet_buffer: list, writer):
@@ -1328,11 +1300,12 @@ class PayloadMasker:
         def processing_error_recovery(error_info) -> bool:
             """处理错误恢复"""
             try:
-                # 清理序列号状态，重新开始
-                if hasattr(self, "seq_state"):
-                    self.seq_state.clear()
+                # 清理流方向状态，重新开始
+                if hasattr(self, "flow_directions"):
+                    self.flow_directions.clear()
+                    self.stream_id_cache.clear()
                     self.logger.info(
-                        "Cleared sequence number state to recover processing"
+                        "Cleared flow direction state to recover processing"
                     )
                     return True
                 return False

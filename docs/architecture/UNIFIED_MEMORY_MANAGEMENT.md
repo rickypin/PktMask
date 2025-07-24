@@ -165,23 +165,25 @@ def _handle_memory_pressure_unified(self, pressure: float) -> None:
         self.logger.warning("High memory pressure, flushing all buffers")
 ```
 
-### 向后兼容性
+### 迁移完成
 
-为确保平滑迁移，保留了原有的`MemoryOptimizer`接口：
+原有的`MemoryOptimizer`接口已完全移除，所有内存管理功能统一使用`ResourceManager`：
 
 ```python
-# 保持向后兼容性的内存优化器（逐步废弃）
-memory_config = config.get('memory_optimizer', {})
-self.memory_optimizer = MemoryOptimizer(memory_config)
+# 统一的资源管理器
+self.resource_manager = ResourceManager(resource_config)
 
-# 注册内存压力回调（新的统一方式）
+# 注册内存压力回调（统一方式）
 self.resource_manager.memory_monitor.register_pressure_callback(
     self._handle_memory_pressure_unified
 )
-
-# 保持向后兼容性
-self.memory_optimizer.register_memory_callback(self._handle_memory_pressure)
 ```
+
+**迁移完成状态**：
+- ✅ 移除了`MemoryOptimizer`类和相关文件
+- ✅ 更新了所有引用以使用`ResourceManager`
+- ✅ 统一了内存监控和压力处理机制
+- ✅ 更新了测试用例以反映新的架构
 
 ## 配置示例
 

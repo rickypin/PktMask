@@ -13,9 +13,6 @@ import os
 from src.pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker import (
     PayloadMasker,
 )
-from src.pktmask.core.pipeline.stages.mask_payload_v2.masker.memory_optimizer import (
-    MemoryOptimizer,
-)
 from src.pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler import (
     ErrorRecoveryHandler,
     ErrorSeverity,
@@ -320,14 +317,13 @@ class TestPayloadMasker:
 
     def test_performance_optimization_features(self):
         """测试性能优化功能"""
-        # 测试内存优化器集成
-        assert hasattr(self.masker, "memory_optimizer")
-        assert isinstance(self.masker.memory_optimizer, MemoryOptimizer)
+        # 测试资源管理器集成
+        assert hasattr(self.masker, "resource_manager")
 
         # 测试性能统计
         stats = self.masker.get_performance_stats()
         assert isinstance(stats, dict)
-        assert "max_memory_mb" in stats["config"]
+        assert "memory_monitor_available" in stats
 
     def test_merge_overlapping_ranges(self):
         """测试重叠区间合并"""
@@ -382,60 +378,7 @@ class TestPayloadMasker:
         assert result_optimized == result_simple
 
 
-class TestMemoryOptimizer:
-    """测试内存优化器"""
 
-    def setup_method(self):
-        """测试前准备"""
-        self.config = {
-            "max_memory_mb": 100,
-            "gc_threshold": 0.8,
-            "monitoring_interval": 10,
-        }
-        self.optimizer = MemoryOptimizer(self.config)
-
-    def test_memory_optimizer_initialization(self):
-        """测试内存优化器初始化"""
-        assert self.optimizer.max_memory_mb == 100
-        assert self.optimizer.gc_threshold == 0.8
-        assert self.optimizer.monitoring_interval == 10
-        assert self.optimizer.operation_count == 0
-
-    def test_memory_stats(self):
-        """测试内存统计"""
-        stats = self.optimizer.get_memory_stats()
-        assert hasattr(stats, "current_usage")
-        assert hasattr(stats, "peak_usage")
-        assert hasattr(stats, "gc_collections")
-        assert hasattr(stats, "memory_pressure")
-
-    def test_memory_pressure_check(self):
-        """测试内存压力检查"""
-        # 使用更大的内存限制来避免在测试环境中触发内存压力
-        config = {
-            "max_memory_mb": 10000,  # 10GB，足够大以避免触发
-            "gc_threshold": 0.9,  # 90%阈值
-            "monitoring_interval": 5,
-        }
-        optimizer = MemoryOptimizer(config)
-
-        # 模拟多次操作
-        for i in range(10):  # 超过monitoring_interval
-            triggered = optimizer.check_memory_pressure()
-            # 在正常情况下不应该触发优化
-            if i < 5:
-                assert not triggered
-
-    def test_memory_callback_registration(self):
-        """测试内存回调注册"""
-        callback_called = False
-
-        def test_callback(stats):
-            nonlocal callback_called
-            callback_called = True
-
-        self.optimizer.register_memory_callback(test_callback)
-        assert len(self.optimizer.memory_callbacks) == 1
 
     def test_optimization_report(self):
         """测试优化报告"""

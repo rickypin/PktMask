@@ -118,14 +118,16 @@ class TestMaskPayloadV2Performance:
         output_file = temp_output_dir / f"memory_test_{input_file.name}"
 
         # 获取初始内存使用
-        initial_memory = stage.masker.memory_optimizer.get_current_usage()
+        initial_resource_stats = stage.masker.resource_manager.get_resource_stats()
+        initial_memory = initial_resource_stats.memory_usage_mb * 1024 * 1024
 
         # 处理文件
         stats = stage.process_file(str(input_file), str(output_file))
 
         # 获取峰值内存使用
-        peak_memory = stage.masker.memory_optimizer.get_peak_usage()
-        final_memory = stage.masker.memory_optimizer.get_current_usage()
+        final_resource_stats = stage.masker.resource_manager.get_resource_stats()
+        peak_memory = final_resource_stats.peak_memory_mb * 1024 * 1024
+        final_memory = final_resource_stats.memory_usage_mb * 1024 * 1024
 
         memory_increase = final_memory - initial_memory
         memory_peak_delta = peak_memory - initial_memory

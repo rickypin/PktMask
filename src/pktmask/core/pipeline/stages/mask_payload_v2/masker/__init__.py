@@ -20,14 +20,12 @@ Masker模块 - 通用载荷掩码处理器
 from .data_validator import DataValidator
 from .error_handler import ErrorCategory, ErrorRecoveryHandler, ErrorSeverity
 from .fallback_handler import FallbackHandler, FallbackMode
-from .memory_optimizer import MemoryOptimizer
 from .payload_masker import PayloadMasker
 from .stats import MaskingStats
 
 __all__ = [
     "PayloadMasker",
     "MaskingStats",
-    "MemoryOptimizer",
     "ErrorRecoveryHandler",
     "ErrorSeverity",
     "ErrorCategory",
