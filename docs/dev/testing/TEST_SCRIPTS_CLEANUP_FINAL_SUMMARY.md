@@ -108,7 +108,7 @@ tests/
 │   ├── services/                           # 服务相关测试
 │   ├── test_config.py                      # 配置测试
 │   ├── test_infrastructure_basic.py        # 基础设施测试
-│   ├── test_mask_payload_v2_*.py          # 新版载荷掩码测试 (5个)
+│   ├── test_masking_stage_*.py          # 新版载荷掩码测试 (5个)
 │   ├── test_temporary_file_management.py   # 临时文件管理测试
 │   ├── test_tls_flow_analyzer*.py         # TLS流量分析测试 (2个)
 │   ├── test_unified_memory_management.py   # 统一内存管理测试

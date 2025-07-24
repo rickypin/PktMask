@@ -99,7 +99,7 @@ ls -la tests/archive/deprecated/
 ### 当前有效测试脚本 (13个)
 - `test_config.py` - 配置测试
 - `test_infrastructure_basic.py` - 基础设施测试
-- `test_mask_payload_v2_*.py` (5个) - 新版载荷掩码测试
+- `test_masking_stage_*.py` (5个) - 新版载荷掩码测试
 - `test_multi_tls_record_masking.py` - 多TLS记录掩码测试
 - `test_temporary_file_management.py` - 临时文件管理测试
 - `test_tls_*.py` (4个) - TLS相关测试

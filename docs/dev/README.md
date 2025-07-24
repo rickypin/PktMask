@@ -169,7 +169,7 @@ class AnonymizationStage(StageBase):
         return self.ip_mapping[ip_addr]
 ```
 
-### Mask Payloads Stage (NewMaskPayloadStage)
+### Mask Payloads Stage (MaskingStage)
 
 **Purpose**: Removes sensitive payload data while preserving protocol structure
 
@@ -181,7 +181,7 @@ class AnonymizationStage(StageBase):
 
 **Architecture**:
 ```text
-NewMaskPayloadStage
+MaskingStage
 ├── TLS Marker (tshark-based)
 │   ├── Identifies TLS message boundaries
 │   ├── Marks sequence number ranges for preservation
@@ -477,7 +477,34 @@ def process_large_file_bad(self, input_file: str) -> None:
 - Include code examples and diagrams where helpful
 - Test documentation changes locally before submitting
 
+## 📚 Organized Documentation Categories
+
+### 🏗️ [Architecture Documentation](architecture/README.md)
+Complete architectural analysis, design patterns, and system evolution
+- Comprehensive architecture analysis
+- Memory management implementation
+- Legacy system elimination records
+
+### 🧪 [Testing Documentation](testing/README.md)
+Test strategy, validation reports, and quality assurance
+- Test validation and usability reports
+- Test cleanup and maintenance guides
+- Test repair progress tracking
+
+### 🧹 [Cleanup Documentation](cleanup/README.md)
+Code cleanup, deprecated code removal, and maintenance activities
+- Deprecated code cleanup checklists
+- Dead code removal summaries
+- Cleanup execution reports
+
+### 📊 [Analysis Documentation](analysis/README.md)
+Code analysis, performance reviews, and quality assessments
+- Comprehensive code reviews
+- Performance analysis reports
+- Technical debt assessments
+- Naming convention audits
+
 ---
 
-*Last Updated: 2025-07-23*
-*For the latest development information, see the [project repository](https://github.com/yourusername/pktmask)*
+*Last Updated: 2025-07-25*
+*Documentation reorganized and cleaned up for better navigation*

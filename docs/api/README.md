@@ -1,22 +1,24 @@
 # API Documentation
 
-PktMask provides rich API interfaces that support programmatic use of all core functionality. This directory contains complete API reference documentation.
+PktMask provides rich API interfaces that support programmatic use of all core functionality.
 
-## 📚 API Categories
+> **Note**: Detailed API documentation is currently under development. For now, please refer to the source code and existing documentation.
 
-### 🔧 [Core API](core-api.md)
-Programming interfaces for core functionality and basic components
-- Packet processing core
-- Configuration management
-- Event system
-- Exception handling
+## 📚 Available API Information
 
-### 🔄 [Pipeline API](pipeline-api.md)
-Programming interfaces for processing pipelines and stage management
-- Pipeline construction and execution
-- Stage registration and configuration
-- Data flow control
-- Parallel processing
+### 🔧 Core Components
+For core API usage, see the source code documentation:
+- **Pipeline Stages**: `src/pktmask/core/pipeline/stages/`
+- **Configuration**: `src/pktmask/config/`
+- **Services**: `src/pktmask/services/`
+
+### 🔄 Architecture Reference
+- **[Unified Architecture](../ARCHITECTURE_UNIFIED.md)** - System architecture overview
+- **[Developer Documentation](../dev/README.md)** - Technical implementation details
+
+### 📖 Usage Examples
+- **[CLI Guide](../CLI_UNIFIED_GUIDE.md)** - Command-line usage examples
+- **[Tools Documentation](../tools/README.md)** - Tool-specific APIs
 
 ### 🛠️ [Tools API](tools-api.md)
 Programming interfaces for specialized tools and utilities

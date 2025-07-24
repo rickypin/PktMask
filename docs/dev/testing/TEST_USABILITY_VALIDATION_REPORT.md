@@ -24,7 +24,7 @@
 | 测试脚本 | 状态 | 描述 |
 |----------|------|------|
 | `test_unified_services.py` | 🟢 PASS | 统一服务测试，所有检查通过 |
-| `test_mask_payload_v2_boundary_conditions.py` | 🟢 PASS | V2载荷掩码边界条件测试 |
+| `test_masking_stage_boundary_conditions.py` | 🟢 PASS | V2载荷掩码边界条件测试 |
 | `test_temporary_file_management.py` | 🟢 PASS | 临时文件管理测试 |
 | `test_tls_flow_analyzer_stats.py` | 🟢 PASS | TLS流量分析器统计测试 |
 
@@ -41,10 +41,10 @@
 | `test_api_compatibility.py` | 执行失败，缺少测试数据 | 中等 |
 | `test_enhanced_config_support.py` | 执行失败，配置问题 | 中等 |
 | `test_config.py` | 执行失败，配置加载问题 | 高 |
-| `test_mask_payload_v2_base.py` | 执行失败，基础组件问题 | 高 |
-| `test_mask_payload_v2_masker.py` | 导入路径错误 | 高 |
-| `test_mask_payload_v2_stage.py` | 执行失败，阶段集成问题 | 高 |
-| `test_mask_payload_v2_tls_marker.py` | 执行失败，TLS标记器问题 | 高 |
+| `test_masking_stage_base.py` | 执行失败，基础组件问题 | 高 |
+| `test_masking_stage_masker.py` | 导入路径错误 | 高 |
+| `test_masking_stage_stage.py` | 执行失败，阶段集成问题 | 高 |
+| `test_masking_stage_tls_marker.py` | 执行失败，TLS标记器问题 | 高 |
 | `test_tls_flow_analyzer.py` | 执行失败，分析器问题 | 中等 |
 | `test_unified_memory_management.py` | 执行失败，内存管理问题 | 中等 |
 | `test_utils.py` | 执行失败，工具函数问题 | 低 |
@@ -144,7 +144,7 @@ from pktmask.core.pipeline.base_stage import StageBase
 ```
 
 #### 2. V2架构核心测试修复
-**影响测试**: `test_mask_payload_v2_*` 系列 (5个)
+**影响测试**: `test_masking_stage_*` 系列 (5个)
 **修复方案**:
 - 修复配置加载问题
 - 添加缺失的测试数据
@@ -192,7 +192,7 @@ mkdir -p tests/data/config
 ### 2. 导入路径统一
 ```python
 # 统一使用相对导入或绝对导入
-from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage
+from pktmask.core.pipeline.stages.masking_stage.stage import MaskingStage
 from pktmask.core.pipeline.base_stage import StageBase
 ```
 

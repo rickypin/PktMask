@@ -54,7 +54,7 @@ The core processing uses a unified StageBase abstract class with three main impl
 
 1. **UnifiedDeduplicationStage**: Packet deduplication (Remove Dupes)
 2. **UnifiedIPAnonymizationStage**: IP address anonymization (Anonymize IPs)  
-3. **NewMaskPayloadStage**: Payload masking with dual-module architecture (Mask Payloads)
+3. **MaskingStage**: Payload masking with dual-module architecture (Mask Payloads)
 
 **Technical Accuracy**: The StageBase system provides consistent interface contracts and proper error handling across all processing stages.
 
@@ -73,7 +73,7 @@ The processing workflow follows this sequence:
 
 ### 2.2 Dual-Module Maskstage Architecture
 
-The NewMaskPayloadStage implements a sophisticated dual-module approach:
+The MaskingStage implements a sophisticated dual-module approach:
 
 **Phase 1 - Marker Module (tshark-based)**:
 - Two-phase TLS message scanning (reassembled + segments)

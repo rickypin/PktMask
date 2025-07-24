@@ -71,7 +71,7 @@ This comprehensive audit identifies 47 instances of inconsistent naming conventi
 - **Impact**: Chinese docstrings and comments in core stage
 - **Fix**: Replace with English documentation
 
-**File: `src/pktmask/core/pipeline/stages/mask_payload_v2/masker/payload_masker.py`**
+**File: `src/pktmask/core/pipeline/stages/masking_stage/masker/payload_masker.py`**
 - Line 177: `"应用掩码规则"`
 - Line 179: `"基于 TCP_MARKER_REFERENCE.md 算法实现的完整掩码处理流程："`
 - Line 186: `"输入文件路径"`

@@ -27,12 +27,12 @@
    - **解决方案**: 替换为pytest标准的`tmp_path` fixture
    - **状态**: ✅ 19/19测试通过
 
-2. **`test_mask_payload_v2_base.py`**
+2. **`test_masking_stage_base.py`**
    - **问题**: 规则优化测试期望值不正确
    - **解决方案**: 修正测试断言，适应实际的规则合并逻辑
    - **状态**: ✅ 9/9测试通过
 
-3. **`test_mask_payload_v2_tls_marker.py`**
+3. **`test_masking_stage_tls_marker.py`**
    - **问题**: 缺少tshark工具、TLS类型保留逻辑错误、缺少方法
    - **解决方案**: 添加Mock、修正TLS保留逻辑、重写序列号测试
    - **状态**: ✅ 9/9测试通过
@@ -69,7 +69,7 @@ def test_config_save_and_load(self, tmp_path):
 
 #### 2.1 基础数据结构测试修复
 
-**问题**: `test_mask_payload_v2_base.py`中规则优化测试期望不正确
+**问题**: `test_masking_stage_base.py`中规则优化测试期望不正确
 
 **原因**: 测试期望3个不同类型的规则合并为1个，但实际实现不会合并不同类型的规则
 
@@ -90,7 +90,7 @@ assert len(ruleset.rules) >= 1
 ```python
 @patch('subprocess.run')
 @patch('os.path.exists') 
-@patch('pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker._find_tshark_executable')
+@patch('pktmask.core.pipeline.stages.masking_stage.marker.tls_marker.TLSProtocolMarker._find_tshark_executable')
 def test_tshark_version_check(self, mock_find_exec, mock_exists, mock_run):
     mock_exists.return_value = True
     mock_find_exec.return_value = '/usr/bin/tshark'
@@ -142,10 +142,10 @@ pip install psutil  # 内存管理测试需要
 #### 高优先级 (需要立即修复)
 1. **`test_deduplication_stage.py`** - 新重写的去重测试
 2. **`test_ip_anonymization.py`** - 新重写的IP匿名化测试  
-3. **`test_mask_payload_v2_stage.py`** - V2阶段集成测试
+3. **`test_masking_stage_stage.py`** - V2阶段集成测试
 
 #### 中优先级 (需要深入分析)
-4. **`test_mask_payload_v2_masker.py`** - V2掩码器测试
+4. **`test_masking_stage_masker.py`** - V2掩码器测试
 5. **`test_api_compatibility.py`** - API兼容性测试
 6. **`test_enhanced_config_support.py`** - 增强配置支持测试
 

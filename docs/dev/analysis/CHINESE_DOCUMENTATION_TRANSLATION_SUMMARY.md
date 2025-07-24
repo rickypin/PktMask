@@ -30,7 +30,7 @@ This document summarizes the completion of Phase 1 of the Chinese Documentation 
   - Translated directory-level preprocessing comments
   - **Result**: 100% English documentation
 
-- **`src/pktmask/core/pipeline/stages/mask_payload_v2/`**
+- **`src/pktmask/core/pipeline/stages/masking_stage/`**
   - **`__init__.py`**: Translated complete dual-module architecture documentation
   - **`stage.py`**: Translated main stage class documentation and comments
   - **`masker/__init__.py`**: Translated universal payload masking processor documentation

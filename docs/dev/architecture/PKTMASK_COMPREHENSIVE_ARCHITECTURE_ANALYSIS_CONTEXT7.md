@@ -59,7 +59,7 @@ PktMask Architecture (Current):
 - `PipelineExecutor`: Stage orchestration and execution
 - `UnifiedDeduplicationStage`: SHA256-based packet deduplication
 - `UnifiedIPAnonymizationStage`: Prefix-preserving IP anonymization
-- `NewMaskPayloadStage`: Dual-module payload masking architecture
+- `MaskingStage`: Dual-module payload masking architecture
 
 ## 2. Processing Logic Flow Documentation
 
@@ -85,7 +85,7 @@ PktMask Architecture (Current):
 3. Replace IP addresses packet-by-packet
 4. Recalculate checksums for modified packets
 
-### 2.3 Mask Payloads Workflow (NewMaskPayloadStage)
+### 2.3 Mask Payloads Workflow (MaskingStage)
 
 **Architecture**: Dual-module separation (Marker + Masker)
 **Design Goal**: Protocol analysis and masking application decoupling
@@ -337,9 +337,9 @@ from .adapter_exceptions import (
 
 **Current Implementation Quality**: ✅ Excellent
 
-<augment_code_snippet path="src/pktmask/core/pipeline/stages/mask_payload_v2/stage.py" mode="EXCERPT">
+<augment_code_snippet path="src/pktmask/core/pipeline/stages/masking_stage/stage.py" mode="EXCERPT">
 ````python
-class NewMaskPayloadStage(StageBase):
+class MaskingStage(StageBase):
     """双模块架构掩码处理阶段
 
     基于双模块分离设计：

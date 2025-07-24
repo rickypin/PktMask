@@ -114,7 +114,7 @@ pip install -r requirements.txt
 ### 获取帮助
 - 查看具体工具的文档
 - 提交 GitHub Issue
-- 参考 [故障排除指南](../user/troubleshooting.md)
+- 参考 [开发文档](../dev/README.md) 获取技术支持
 
 ---
 

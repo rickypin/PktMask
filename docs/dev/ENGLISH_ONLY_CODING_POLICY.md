@@ -139,7 +139,7 @@ class ProcessingStepType(Enum):
     
     ANONYMIZE_IPS = "anonymize_ips"  # UnifiedIPAnonymizationStage
     REMOVE_DUPES = "remove_dupes"   # UnifiedDeduplicationStage
-    MASK_PAYLOADS = "mask_payloads" # NewMaskPayloadStage (dual-module)
+    MASK_PAYLOADS = "mask_payloads" # MaskingStage (dual-module)
 
 # ❌ INCORRECT - Chinese enum descriptions
 class ProcessingStepType(Enum):

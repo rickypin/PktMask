@@ -296,7 +296,7 @@ class DeduplicationStage:  # PascalCase (correct)
     def process_file(self):  # snake_case (correct)
         pass
 
-class mask_payload_v2:  # snake_case (incorrect for class)
+class masking_stage:  # snake_case (incorrect for class)
     def ProcessFile(self):  # PascalCase (incorrect for method)
         pass
 ```
@@ -317,7 +317,7 @@ class mask_payload_v2:  # snake_case (incorrect for class)
 ```python
 # Mixed import styles found
 from typing import Dict, List, Optional, Any  # Good
-from pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker import TLSProtocolMarker  # Too long
+from pktmask.core.pipeline.stages.masking_stage.marker.tls_marker import TLSProtocolMarker  # Too long
 import logging  # Should be grouped with standard library
 from ..marker.types import KeepRuleSet  # Relative import (inconsistent usage)
 ```

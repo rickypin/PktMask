@@ -6,10 +6,12 @@ This directory contains historical documentation, completed project records, and
 
 ### 🎯 [Completed Projects](completed-projects/)
 Documentation records of completed major projects and refactoring work
+- **ADAPTER_LAYER_ELIMINATION_CONTEXT7.md** - Legacy adapter layer removal project
+- **github-actions-fixes.md** - GitHub Actions upgrade and modernization
+- **minimal_progress_refactor.md** - Progress reporting system refactoring
 - Architecture review reports
 - Refactoring plans and implementation records
 - Performance optimization projects
-- Feature development projects
 
 ### 🚫 [Deprecated Features](deprecated-features/)
 Documentation related to features that are no longer supported or have been replaced

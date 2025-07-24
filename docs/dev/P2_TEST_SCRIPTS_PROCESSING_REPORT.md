@@ -24,7 +24,7 @@
 - **有效性评估**: 🟢 85% 有效
 - **处理结果**: ✅ 保留，无需修复
 - **评估依据**:
-  - ✅ 核心模块存在: `PipelineExecutor`, `NewMaskPayloadStage`, `ResourceManager`
+  - ✅ 核心模块存在: `PipelineExecutor`, `MaskingStage`, `ResourceManager`
   - ✅ 功能相关: 临时文件管理是当前架构的重要组成部分
   - ✅ 测试逻辑合理: 测试临时目录清理、资源管理等核心功能
   - ✅ 导入路径正确: 使用了正确的模块路径

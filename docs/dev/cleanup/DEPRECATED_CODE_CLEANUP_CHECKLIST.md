@@ -285,9 +285,9 @@ backup_refactor_*/
 ./config/__pycache__/
 ./config/app/__pycache__/
 ./src/pktmask/tools/__pycache__/
-./src/pktmask/core/pipeline/stages/mask_payload_v2/__pycache__/
-./src/pktmask/core/pipeline/stages/mask_payload_v2/marker/__pycache__/
-./src/pktmask/core/pipeline/stages/mask_payload_v2/masker/__pycache__/
+./src/pktmask/core/pipeline/stages/masking_stage/__pycache__/
+./src/pktmask/core/pipeline/stages/masking_stage/marker/__pycache__/
+./src/pktmask/core/pipeline/stages/masking_stage/masker/__pycache__/
 ./src/pktmask/core/pipeline/stages/__pycache__/
 ./src/pktmask/core/pipeline/__pycache__/
 ./src/pktmask/core/encapsulation/__pycache__/

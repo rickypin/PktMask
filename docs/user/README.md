@@ -2,18 +2,19 @@
 
 Welcome to PktMask! This directory contains user guides and tutorials for end users.
 
-## 📖 Documentation List
+## 📖 Available Documentation
 
 ### 🚀 Quick Start
-- **[Installation Guide](installation-guide.md)** - System requirements, dependency installation, and software configuration
-- **[Quick Start](quick-start.md)** - Get started with PktMask basic features in 5 minutes
+- **[CLI Unified Guide](../CLI_UNIFIED_GUIDE.md)** - Complete command-line interface guide
+- **[Main README](../README.md)** - Project overview and basic usage
 
-### 📚 User Manual
-- **[User Guide](user-guide.md)** - Complete functionality usage instructions
-- **[MaskStage Guide](maskstage-guide.md)** - Detailed Mask Payloads functionality instructions
+### 📚 Technical Documentation
+- **[Architecture Overview](../ARCHITECTURE_UNIFIED.md)** - System architecture and design
+- **[Tools Documentation](../tools/README.md)** - Specialized tools and utilities
 
-### 🔧 Troubleshooting
-- **[Troubleshooting](troubleshooting.md)** - Common issues and solutions
+### 🔧 Development Resources
+- **[Developer Documentation](../dev/README.md)** - For developers and contributors
+- **[Deployment Checklist](../DEPLOYMENT_CHECKLIST.md)** - Production deployment guide
 
 ## 🎯 Usage Flow
 

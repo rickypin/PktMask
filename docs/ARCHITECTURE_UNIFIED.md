@@ -233,7 +233,7 @@ The following legacy naming patterns have been standardized:
 |----------------|---------------------|---------|
 | `enable_dedup`, `enable_anon`, `enable_mask` | `remove_dupes`, `anonymize_ips`, `mask_payloads` | Code variables |
 | `UnifiedIPAnonymizationStage` | `AnonymizationStage` | Stage classes |
-| `NewMaskPayloadStage` | `MaskingStage` | Stage classes |
+| `MaskingStage` | `MaskingStage` | Stage classes |
 | `--dedup`, `--anon` (shortcuts) | `--remove-dupes`, `--anonymize-ips` | CLI documentation |
 | Mixed logger patterns | `dedup_stage`, `anonymize_stage`, `mask_stage` | Logger names |
 

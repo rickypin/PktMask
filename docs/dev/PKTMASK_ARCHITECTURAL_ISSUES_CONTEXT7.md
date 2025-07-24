@@ -102,7 +102,7 @@ class DataService:      # State management + reporting
 
 **Changes Implemented:**
 - ✅ Standardized all code variables to use `remove_dupes`, `anonymize_ips`, `mask_payloads`
-- ✅ Renamed stage classes: `UnifiedIPAnonymizationStage` → `AnonymizationStage`, `NewMaskPayloadStage` → `MaskingStage`
+- ✅ Renamed stage classes: `UnifiedIPAnonymizationStage` → `AnonymizationStage`, `MaskingStage` → `MaskingStage`
 - ✅ Fixed CLI documentation examples to use full argument names instead of shortcuts
 - ✅ Standardized logger names to `dedup_stage`, `anonymize_stage`, `mask_stage`
 - ✅ Updated all configuration files and settings classes

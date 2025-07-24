@@ -57,7 +57,7 @@ This document catalogs all files in the PktMask codebase that contain Chinese co
 **Estimated Effort**: 1 hour
 
 #### 4. Masking Stage - Main Stage
-**File**: `src/pktmask/core/pipeline/stages/mask_payload_v2/stage.py`
+**File**: `src/pktmask/core/pipeline/stages/masking_stage/stage.py`
 **Issues**:
 - Line 1-6: Module docstring in Chinese
 - Line 160: Comment "阶段3: 转换统计信息"
@@ -67,7 +67,7 @@ This document catalogs all files in the PktMask codebase that contain Chinese co
 **Estimated Effort**: 1 hour
 
 #### 5. Masking Stage - Marker Module
-**File**: `src/pktmask/core/pipeline/stages/mask_payload_v2/marker/__init__.py`
+**File**: `src/pktmask/core/pipeline/stages/masking_stage/marker/__init__.py`
 **Issues**:
 - Line 1-17: Complete module docstring in Chinese
 - Describes protocol analysis and rule generation in Chinese
