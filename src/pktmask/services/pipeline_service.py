@@ -191,9 +191,9 @@ def _handle_stage_progress(stage, stats, progress_callback):
     stage_display_name = _get_stage_display_name(stage.name)
 
     # Emit log with stage-specific action wording and correct statistics
-    if stage.name == "DeduplicationStage":
+    if stage.name in ["DeduplicationStage", "UnifiedDeduplicationStage"]:
         msg = f"- {stage_display_name}: processed {stats.packets_processed} pkts, removed {stats.packets_modified} pkts"
-    elif stage.name in ["AnonStage", "IPAnonymizationStage"]:
+    elif stage.name in ["AnonStage", "IPAnonymizationStage", "UnifiedIPAnonymizationStage"]:
         # For IP anonymization, show IP statistics instead of packet statistics
         original_ips = getattr(stats, "original_ips", 0) or stats.extra_metrics.get(
             "original_ips", 0
@@ -202,7 +202,7 @@ def _handle_stage_progress(stage, stats, progress_callback):
             "anonymized_ips", 0
         )
         if original_ips > 0:
-            msg = f"- {stage_display_name}: found {original_ips} IPs, anonymized {anonymized_ips} IPs"
+            msg = f"- {stage_display_name}: processed {original_ips} IPs, anonymized {anonymized_ips} IPs"
         else:
             # Fallback to packet count if IP statistics are not available
             msg = f"- {stage_display_name}: processed {stats.packets_processed} pkts, anonymized {stats.packets_modified} IPs"
@@ -215,8 +215,10 @@ def _get_stage_display_name(stage_name: str) -> str:
     """Get standardized display name for stage based on naming consistency guide"""
     stage_name_mapping = {
         "DeduplicationStage": "Deduplication Stage",
+        "UnifiedDeduplicationStage": "Deduplication Stage",  # New Unified implementation
         "AnonStage": "Anonymize IPs Stage",
-        "IPAnonymizationStage": "Anonymize IPs Stage",  # New StageBase implementation
+        "IPAnonymizationStage": "Anonymize IPs Stage",  # Old StageBase implementation
+        "UnifiedIPAnonymizationStage": "Anonymize IPs Stage",  # New Unified implementation
         "NewMaskPayloadStage": "Mask Payloads Stage",
         "MaskStage": "Mask Payloads Stage",
         "MaskPayloadStage": "Mask Payloads Stage",

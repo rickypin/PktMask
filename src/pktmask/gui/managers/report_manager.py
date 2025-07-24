@@ -953,9 +953,10 @@ class ReportManager:
             if step_name_raw in [
                 "AnonStage",
                 "IPAnonymizationStage",
+                "UnifiedIPAnonymizationStage",  # Add new Unified stage name
             ]:  # Support both old and new stage names
                 step_type = "anonymize_ips"  # Use standard naming
-            elif step_name_raw in ["DeduplicationStage"]:
+            elif step_name_raw in ["DeduplicationStage", "UnifiedDeduplicationStage"]:  # Add new Unified stage name
                 step_type = "remove_dupes"
             elif step_name_raw in [
                 "MaskStage",
@@ -1006,6 +1007,7 @@ class ReportManager:
             in [
                 "AnonStage",
                 "IPAnonymizationStage",
+                "UnifiedIPAnonymizationStage",  # Add new Unified stage name
             ]  # Support both old and new stage names
             or "ip_mappings" in data
             or "file_ip_mappings" in data
