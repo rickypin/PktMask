@@ -22,7 +22,7 @@ from ..stylesheet import generate_stylesheet
 
 
 class UIManager:
-    """UI管理器 - 负责界面初始化和样式管理"""
+    """UI Manager - responsible for interface initialization and style management"""
 
     def __init__(self, main_window: "MainWindow"):
         self.main_window = main_window
@@ -30,7 +30,7 @@ class UIManager:
         self._logger = get_logger(__name__)
 
     def init_ui(self):
-        """初始化界面"""
+        """Initialize interface"""
         self._setup_window_properties()
         self._create_menu_bar()
         self._setup_main_layout()
@@ -40,7 +40,7 @@ class UIManager:
         self._show_initial_guides()
 
     def _setup_window_properties(self):
-        """设置窗口属性"""
+        """Set window properties"""
         self.main_window.setWindowTitle("PktMask")
 
         # 使用配置中的窗口尺寸
@@ -56,7 +56,7 @@ class UIManager:
         self.main_window.setWindowIcon(QIcon(resource_path("icon.png")))
 
     def _create_menu_bar(self):
-        """创建菜单栏"""
+        """Create menu bar"""
         menu_bar = self.main_window.menuBar()
 
         # File menu
@@ -86,7 +86,7 @@ class UIManager:
         help_menu.addAction(about_action)
 
     def _setup_main_layout(self):
-        """设置主布局"""
+        """Set up main layout"""
         main_widget = QWidget()
         self.main_window.setCentralWidget(main_widget)
 
@@ -110,8 +110,8 @@ class UIManager:
         self._setup_grid_layout(main_layout)
 
     def _create_dirs_group(self):
-        """创建目录选择组"""
-        # Step 1: Input and Output (左右分布) - 简化版
+        """Create directory selection group"""
+        # Step 1: Input and Output (left-right distribution) - simplified version
         dirs_group = QGroupBox("Set Working Directories")
         dirs_group.setMaximumHeight(UIConstants.DIRS_GROUP_HEIGHT)
         dirs_layout = QHBoxLayout(dirs_group)
@@ -158,8 +158,8 @@ class UIManager:
         self.main_window.dirs_group = dirs_group
 
     def _create_row2_widget(self):
-        """创建第二行组件（选项和执行）"""
-        # Step 2 & 3: 第二行并排布局
+        """Create second row components (options and execution)"""
+        # Step 2 & 3: Second row side-by-side layout
         row2_widget = QWidget()
         row2_widget.setMaximumHeight(90)
         row2_layout = QHBoxLayout(row2_widget)
@@ -225,7 +225,7 @@ class UIManager:
         self.main_window.row2_widget = row2_widget
 
     def _create_dashboard_group(self):
-        """创建仪表板组"""
+        """Create dashboard group"""
         dashboard_group = QGroupBox("Live Dashboard")
         dashboard_group.setMaximumHeight(140)
         dashboard_layout = QVBoxLayout(dashboard_group)
@@ -279,7 +279,7 @@ class UIManager:
         self.main_window.dashboard_group = dashboard_group
 
     def _create_log_group(self):
-        """创建日志组"""
+        """Create log group"""
         log_group = QGroupBox("Log")
         log_layout = QVBoxLayout(log_group)
         log_layout.setContentsMargins(12, 20, 12, 12)
@@ -296,7 +296,7 @@ class UIManager:
         self.main_window.log_group = log_group
 
     def _create_summary_group(self):
-        """创建摘要组"""
+        """Create summary group"""
         summary_group = QGroupBox("Summary Report")
         summary_layout = QVBoxLayout(summary_group)
         summary_layout.setContentsMargins(12, 20, 12, 12)
@@ -313,8 +313,8 @@ class UIManager:
         self.main_window.summary_group = summary_group
 
     def _setup_grid_layout(self, main_layout):
-        """设置网格布局"""
-        # 添加组件到网格布局
+        """Set up grid layout"""
+        # Add components to grid layout
         main_layout.addWidget(self.main_window.dirs_group, 0, 0, 1, 2)
         main_layout.addWidget(self.main_window.row2_widget, 1, 0, 1, 2)
         main_layout.addWidget(self.main_window.dashboard_group, 2, 0)
@@ -330,7 +330,7 @@ class UIManager:
         main_layout.setRowStretch(3, 2)  # Log row
 
     def _connect_signals(self):
-        """连接信号"""
+        """Connect signals"""
         try:
             # 目录选择信号
             self.main_window.dir_path_label.clicked.connect(
@@ -352,7 +352,7 @@ class UIManager:
 
             traceback.print_exc()
 
-        # checkbox状态变化信号 - 正确调用UIManager的方法
+        # checkbox state change signals - correctly call UIManager methods
         self.main_window.anonymize_ips_cb.stateChanged.connect(
             self._update_start_button_state
         )
@@ -364,13 +364,13 @@ class UIManager:
         )
 
     def _apply_initial_styles(self):
-        """应用初始样式"""
+        """Apply initial styles"""
         self.apply_stylesheet()
         self._update_path_link_styles()
         self._update_start_button_style()
 
     def _check_and_display_dependencies(self):
-        """检查依赖并在GUI中显示状态"""
+        """Check dependencies and display status in GUI"""
         try:
             from pktmask.infrastructure.dependency import DependencyChecker
 
@@ -426,8 +426,6 @@ class UIManager:
 
         # Read summary.md file content
         try:
-            from pktmask.utils.path import resource_path
-
             with open(resource_path("summary.md"), "r", encoding="utf-8") as f:
                 summary_md_content = f.read()
 
@@ -535,7 +533,7 @@ class UIManager:
             self._update_start_button_style()
 
     def _get_path_link_style(self) -> str:
-        """获取路径链接样式"""
+        """Get path link style"""
         theme = self.get_current_theme()
         if theme == "dark":
             return """
@@ -575,12 +573,12 @@ class UIManager:
             """
 
     def _update_path_link_styles(self):
-        """更新路径链接样式"""
+        """Update path link styles"""
         style = self._get_path_link_style()
         self.main_window.setStyleSheet(self.main_window.styleSheet() + style)
 
     def _get_start_button_style(self) -> str:
-        """获取开始按钮样式"""
+        """Get start button style"""
         theme = self.get_current_theme()
         if self.main_window.start_proc_btn.isEnabled():
             if theme == "dark":
@@ -648,13 +646,13 @@ class UIManager:
                 """
 
     def _update_start_button_style(self):
-        """更新开始按钮样式"""
+        """Update start button style"""
         style = self._get_start_button_style()
         # 移除旧的按钮样式并添加新的
         self.main_window.start_proc_btn.setStyleSheet(style)
 
     def _update_start_button_state(self):
-        """根据输入目录和选项状态更新Start按钮"""
+        """Update Start button based on input directory and option states"""
         has_input_dir = self.main_window.base_dir is not None
         has_any_action = (
             self.main_window.anonymize_ips_cb.isChecked()

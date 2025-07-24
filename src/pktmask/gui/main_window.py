@@ -66,54 +66,6 @@ class GuideDialog(QDialog):
         layout.addWidget(close_btn)
 
 
-class PipelineThread(QThread):
-    """
-    A unified thread to run processing pipeline.
-    It sends structured progress data to main thread through signals.
-
-    @deprecated: This class is deprecated, please use ServicePipelineThread instead
-    """
-
-    progress_signal = pyqtSignal(PipelineEvents, dict)
-
-    def __init__(self, pipeline, base_dir: str, output_dir: str):
-        import warnings
-
-        warnings.warn(
-            "PipelineThread is deprecated. Use ServicePipelineThread instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__()
-        self._pipeline = pipeline
-        self._base_dir = base_dir
-        self._output_dir = output_dir
-        self.is_running = True
-
-    def run(self):
-        try:
-            self._pipeline.run(
-                self._base_dir, self._output_dir, progress_callback=self.handle_progress
-            )
-        except Exception as e:
-            self.progress_signal.emit(PipelineEvents.ERROR, {"message": str(e)})
-
-    def handle_progress(self, event_type: PipelineEvents, data: dict):
-        if not self.is_running:
-            # Should ideally stop the pipeline gracefully
-            return
-        self.progress_signal.emit(event_type, data)
-
-    def stop(self):
-        self.is_running = False
-        if self._pipeline:
-            self._pipeline.stop()
-        # Send stop log and end event to trigger UI recovery
-        self.progress_signal.emit(
-            PipelineEvents.LOG, {"message": "--- Pipeline Stopped by User ---"}
-        )
-        self.progress_signal.emit(PipelineEvents.PIPELINE_END, {})
-
 
 class ServicePipelineThread(QThread):
     """
@@ -207,8 +159,8 @@ class MainWindow(QMainWindow):
         self._logger.info("PktMask main window initialization completed")
 
     def _init_managers(self):
-        """初始化所有管理器"""
-        # 导入管理器类
+        """Initialize all managers"""
+        # Import manager classes
         from .managers import (
             DialogManager,
             EventCoordinator,
@@ -234,8 +186,8 @@ class MainWindow(QMainWindow):
         self._logger.debug("All managers initialization completed")
 
     def _setup_manager_subscriptions(self):
-        """设置管理器间的订阅关系"""
-        # 订阅统计更新
+        """Set up subscription relationships between managers"""
+        # Subscribe to statistics updates
         self.event_coordinator.subscribe(
             "statistics_changed", self._handle_statistics_update
         )
@@ -267,7 +219,7 @@ class MainWindow(QMainWindow):
             )
 
     def _handle_statistics_update(self, data: dict):
-        """处理统计数据更新"""
+        """Handle statistics data updates"""
         action = data.get("action", "update")
         if action == "reset":
             # **修复**: 检查是否正在处理中，只有在开始新处理时才重置Live Dashboard显示
@@ -310,7 +262,7 @@ class MainWindow(QMainWindow):
                 getattr(self, button_name).setText(text)
 
     def _handle_pipeline_event_data(self, event_data):
-        """处理结构化管道事件数据"""
+        """Handle structured pipeline event data"""
         try:
             from pktmask.core.events import PipelineEvents
             from pktmask.domain.models.pipeline_event_data import PipelineEventData
@@ -350,7 +302,7 @@ class MainWindow(QMainWindow):
             )
 
     def _handle_statistics_data(self, stats_data):
-        """处理结构化统计数据"""
+        """Handle structured statistics data"""
         try:
             from pktmask.domain.models.statistics_data import StatisticsData
         except ImportError:
@@ -389,7 +341,7 @@ class MainWindow(QMainWindow):
             )
 
     def _on_config_changed(self, new_config):
-        """配置变更回调"""
+        """Configuration change callback"""
         self.config = new_config
         self._logger.info("Configuration updated, reapplying settings")
 
@@ -405,15 +357,15 @@ class MainWindow(QMainWindow):
         self._apply_stylesheet()
 
     def save_window_state(self):
-        """保存窗口状态到配置"""
+        """Save window state to configuration"""
         current_size = self.size()
         self.config.ui.window_width = current_size.width()
         self.config.ui.window_height = current_size.height()
         self.config.save()
 
     def save_user_preferences(self):
-        """保存用户偏好设置"""
-        # 保存处理选项的默认状态
+        """Save user preference settings"""
+        # Save default state of processing options
         self.config.ui.default_remove_dupes = self.remove_dupes_cb.isChecked()
         self.config.ui.default_anonymize_ips = self.anonymize_ips_cb.isChecked()
         self.config.ui.default_mask_payloads = self.mask_payloads_cb.isChecked()
@@ -490,11 +442,11 @@ class MainWindow(QMainWindow):
         self.file_manager.generate_default_output_path()
 
     def generate_actual_output_path(self) -> str:
-        """生成实际的输出目录路径"""
+        """Generate actual output directory path"""
         return self.file_manager.generate_actual_output_path()
 
     def open_output_directory(self):
-        """打开输出目录"""
+        """Open output directory"""
         self.file_manager.open_output_directory()
 
     def reset_state(self):
@@ -546,20 +498,20 @@ class MainWindow(QMainWindow):
         self.report_manager.generate_partial_summary_on_stop()
 
     def stop_pipeline_processing(self):
-        """停止管道处理（委托给PipelineManager）"""
+        """Stop pipeline processing (delegated to PipelineManager)"""
         self.pipeline_manager.stop_pipeline_processing()
 
     def start_pipeline_processing(self):
-        """开始管道处理（委托给PipelineManager）"""
+        """Start pipeline processing (delegated to PipelineManager)"""
         self.pipeline_manager.start_pipeline_processing()
 
     def handle_thread_progress(self, event_type: PipelineEvents, data: dict):
-        """主槽函数，根据事件类型分发UI更新任务"""
-        # 使用EventCoordinator发布结构化事件数据
+        """Main slot function to dispatch UI update tasks based on event type"""
+        # Use EventCoordinator to publish structured event data
         if hasattr(self, "event_coordinator"):
             self.event_coordinator.emit_pipeline_event(event_type, data)
 
-        # 保持原有的UI更新逻辑
+        # Maintain original UI update logic
         if event_type == PipelineEvents.PIPELINE_START:
             # Initialize progress bar to 0, maximum will be set when we know the actual file count
             self.progress_bar.setValue(0)
@@ -666,40 +618,40 @@ class MainWindow(QMainWindow):
             self.processing_error(data["message"])
 
     def collect_step_result(self, data: dict):
-        """收集每个步骤的处理结果（委托给ReportManager）"""
+        """Collect processing results for each step (delegated to ReportManager)"""
         self.report_manager.collect_step_result(data)
 
     def generate_file_complete_report(self, original_filename: str):
-        """为单个文件生成完整的处理报告（委托给ReportManager）"""
+        """Generate complete processing report for a single file (delegated to ReportManager)"""
         self.report_manager.generate_file_complete_report(original_filename)
 
     def update_summary_report(self, data: dict):
-        """更新摘要报告（委托给ReportManager）"""
+        """Update summary report (delegated to ReportManager)"""
         self.report_manager.update_summary_report(data)
 
     def set_final_summary_report(self, report: dict):
-        """设置最终汇总报告（委托给ReportManager）"""
+        """Set final summary report (delegated to ReportManager)"""
         self.report_manager.set_final_summary_report(report)
 
     def update_log(self, message: str):
-        """更新日志显示"""
+        """Update log display"""
         self.report_manager.update_log(message)
 
     def processing_finished(self):
-        """处理完成（委托给PipelineManager）"""
+        """Processing finished (delegated to PipelineManager)"""
         self.pipeline_manager.processing_finished()
 
     def processing_error(self, error_message: str):
-        """处理错误"""
+        """Handle processing error"""
         self.dialog_manager.show_processing_error(error_message)
         self.processing_finished()
 
     def on_thread_finished(self):
-        """线程完成时的回调函数，确保UI状态正确恢复"""
-        # 线程清理现在由PipelineManager处理
+        """Callback function when thread finishes, ensuring UI state is properly restored"""
+        # Thread cleanup is now handled by PipelineManager
 
     def get_elided_text(self, label: QLabel, text: str) -> str:
-        """如果文本太长，则省略文本"""
+        """Elide text if it's too long"""
         fm = label.fontMetrics()
         elided_text = fm.elidedText(text, Qt.TextElideMode.ElideMiddle, label.width())
         return elided_text
@@ -742,7 +694,7 @@ class MainWindow(QMainWindow):
         return f"summary_report_{steps_suffix}_{timestamp}.txt"
 
     def save_summary_report_to_output_dir(self):
-        """将summary report保存到输出目录"""
+        """Save summary report to output directory"""
         if not self.current_output_dir:
             return
 
@@ -789,7 +741,7 @@ class MainWindow(QMainWindow):
             return []
 
     def load_latest_summary_report(self) -> Optional[str]:
-        """加载最新的summary report内容"""
+        """Load latest summary report content"""
         summary_files = self.find_existing_summary_reports()
         if not summary_files:
             return None
@@ -822,15 +774,15 @@ class MainWindow(QMainWindow):
             return None
 
     def _get_path_link_style(self) -> str:
-        """根据当前主题生成路径链接样式（由UIManager处理）"""
+        """Generate path link style based on current theme (handled by UIManager)"""
         return self.ui_manager._get_path_link_style()
 
     def _update_path_link_styles(self):
-        """更新路径链接的样式"""
+        """Update path link styles"""
         self.ui_manager._update_path_link_styles()
 
     def _animate_progress_to(self, target_value: int):
-        """平滑动画到目标进度值"""
+        """Smooth animation to target progress value"""
         if self.progress_animation.state() == QPropertyAnimation.State.Running:
             self.progress_animation.stop()
 
@@ -840,121 +792,121 @@ class MainWindow(QMainWindow):
         self.progress_animation.start()
 
     def _update_start_button_state(self):
-        """根据输入目录和选项状态更新Start按钮"""
+        """Update Start button based on input directory and option states"""
         self.ui_manager._update_start_button_state()
 
     def _get_start_button_style(self) -> str:
-        """根据当前主题生成Start按钮样式（由UIManager处理）"""
+        """Generate Start button style based on current theme (handled by UIManager)"""
         return self.ui_manager._get_start_button_style()
 
     def _update_start_button_style(self):
-        """更新Start按钮样式"""
+        """Update Start button style"""
         self.ui_manager._update_start_button_style()
 
     # === 统计数据兼容性属性访问器 ===
     @property
     def files_processed_count(self):
-        """已处理文件数（兼容性访问器）"""
+        """Number of processed files (compatibility accessor)"""
         return self.pipeline_manager.statistics.files_processed
 
     @files_processed_count.setter
     def files_processed_count(self, value):
-        """已处理文件数设置器（兼容性访问器）"""
+        """Processed files count setter (compatibility accessor)"""
         self.pipeline_manager.statistics.update_file_count(value)
 
     @property
     def packets_processed_count(self):
-        """已处理包数（兼容性访问器）"""
+        """Number of processed packets (compatibility accessor)"""
         return self.pipeline_manager.statistics.packets_processed
 
     @packets_processed_count.setter
     def packets_processed_count(self, value):
-        """已处理包数设置器（兼容性访问器）"""
+        """Processed packets count setter (compatibility accessor)"""
         self.pipeline_manager.statistics.update_packet_count(value)
 
     @property
     def file_processing_results(self):
-        """文件处理结果（兼容性访问器）"""
+        """File processing results (compatibility accessor)"""
         return self.pipeline_manager.statistics.file_processing_results
 
     @file_processing_results.setter
     def file_processing_results(self, value):
-        """文件处理结果设置器（兼容性访问器）"""
+        """File processing results setter (compatibility accessor)"""
         self.pipeline_manager.statistics.file_processing_results = value
 
     @property
     def global_ip_mappings(self):
-        """全局IP映射（兼容性访问器）"""
+        """Global IP mappings (compatibility accessor)"""
         return self.pipeline_manager.statistics.global_ip_mappings
 
     @global_ip_mappings.setter
     def global_ip_mappings(self, value):
-        """全局IP映射设置器（兼容性访问器）"""
+        """Global IP mappings setter (compatibility accessor)"""
         self.pipeline_manager.statistics.global_ip_mappings = value
 
     @property
     def all_ip_reports(self):
-        """所有IP报告（兼容性访问器）"""
+        """All IP reports (compatibility accessor)"""
         return self.pipeline_manager.statistics.all_ip_reports
 
     @all_ip_reports.setter
     def all_ip_reports(self, value):
-        """所有IP报告设置器（兼容性访问器）"""
+        """All IP reports setter (compatibility accessor)"""
         self.pipeline_manager.statistics.all_ip_reports = value
 
     @property
     def processed_files_count(self):
-        """已处理文件计数（兼容性访问器）"""
+        """Processed files count (compatibility accessor)"""
         return self.pipeline_manager.statistics.processed_files_count
 
     @processed_files_count.setter
     def processed_files_count(self, value):
-        """已处理文件计数设置器（兼容性访问器）"""
+        """Processed files count setter (compatibility accessor)"""
         self.pipeline_manager.statistics.processed_files_count = value
 
     @property
     def current_processing_file(self):
-        """当前处理文件（兼容性访问器）"""
+        """Current processing file (compatibility accessor)"""
         return self.pipeline_manager.statistics.current_processing_file
 
     @current_processing_file.setter
     def current_processing_file(self, value):
-        """当前处理文件设置器（兼容性访问器）"""
+        """Current processing file setter (compatibility accessor)"""
         self.pipeline_manager.statistics.set_current_processing_file(value)
 
     @property
     def subdirs_files_counted(self):
-        """子目录文件计数（兼容性访问器）"""
+        """Subdirectory files count (compatibility accessor)"""
         return self.pipeline_manager.statistics.subdirs_files_counted
 
     @subdirs_files_counted.setter
     def subdirs_files_counted(self, value):
-        """子目录文件计数设置器（兼容性访问器）"""
+        """Subdirectory files count setter (compatibility accessor)"""
         self.pipeline_manager.statistics.subdirs_files_counted = value
 
     @property
     def subdirs_packets_counted(self):
-        """子目录包计数（兼容性访问器）"""
+        """Subdirectory packets count (compatibility accessor)"""
         return self.pipeline_manager.statistics.subdirs_packets_counted
 
     @subdirs_packets_counted.setter
     def subdirs_packets_counted(self, value):
-        """子目录包计数设置器（兼容性访问器）"""
+        """Subdirectory packets count setter (compatibility accessor)"""
         self.pipeline_manager.statistics.subdirs_packets_counted = value
 
     @property
     def printed_summary_headers(self):
-        """已打印摘要头（兼容性访问器）"""
+        """Printed summary headers (compatibility accessor)"""
         return self.pipeline_manager.statistics.printed_summary_headers
 
     @printed_summary_headers.setter
     def printed_summary_headers(self, value):
-        """已打印摘要头设置器（兼容性访问器）"""
+        """Printed summary headers setter (compatibility accessor)"""
         self.pipeline_manager.statistics.printed_summary_headers = value
 
     def _init_legacy_attributes(self):
-        """初始化遗留属性（使用StatisticsManager）"""
-        # 通过属性访问器初始化，确保数据存储在StatisticsManager中
+        """Initialize legacy attributes (using StatisticsManager)"""
+        # Initialize through property accessors to ensure data is stored in StatisticsManager
         self.all_ip_reports = {}
         self.files_processed_count = 0
         self.packets_processed_count = 0
@@ -967,7 +919,7 @@ class MainWindow(QMainWindow):
         self.processed_files_count = 0
 
     def set_test_mode(self, enabled: bool = True):
-        """设置测试模式（用于自动化测试）"""
+        """Set test mode (for automated testing)"""
         self._test_mode = enabled
         if enabled:
             self._logger.info(

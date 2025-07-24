@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import QTimer
 
 if TYPE_CHECKING:
-    from ..main_window import MainWindow, PipelineThread
+    from ..main_window import MainWindow, ServicePipelineThread
 
 from pktmask.core.events import PipelineEvents
 from pktmask.infrastructure.logging import get_logger
@@ -35,7 +35,7 @@ class PipelineManager:
         self.statistics = StatisticsManager()
 
         # Processing state
-        self.processing_thread: "PipelineThread" = None
+        self.processing_thread: "ServicePipelineThread" = None
         self.user_stopped = False
 
         # Retain timer setup
@@ -230,7 +230,7 @@ class PipelineManager:
 
     def start_processing(self, executor):
         """Start processing thread"""
-        # 导入新的PipelineThread（避免循环导入）
+        # 导入ServicePipelineThread（避免循环导入）
         from ..main_window import ServicePipelineThread
 
         # Create processing thread

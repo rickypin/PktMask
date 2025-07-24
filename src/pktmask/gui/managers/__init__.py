@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-GUI管理器模块
-提供MainWindow各个职责的管理器类
+GUI Manager Module
+Provides manager classes for various MainWindow responsibilities
 """
 
 from .dialog_manager import DialogManager
