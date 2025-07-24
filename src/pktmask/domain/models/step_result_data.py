@@ -25,7 +25,7 @@ class BaseStepResult(BaseModel):
     """基础步骤结果
 
     命名说明：
-    - step_name：显示用的步骤名称（如 "Deduplication", "IP Anonymization"）
+    - step_name：显示用的步骤名称（如 "Deduplication", "Anonymize IPs"）
     - step_type：内部处理标识符（如 "dedup_packet", "mask_ip"）
     - 两者间的映射关系请参考 config/naming_aliases.yaml
     """

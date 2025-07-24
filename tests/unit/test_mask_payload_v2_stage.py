@@ -1,7 +1,7 @@
 """
-新一代 MaskPayload 阶段主类测试
+Next-Generation MaskPayload Stage Main Class Tests
 
-测试 NewMaskPayloadStage 的基础功能和接口兼容性。
+Tests NewMaskPayloadStage basic functionality and interface compatibility.
 """
 
 import pytest

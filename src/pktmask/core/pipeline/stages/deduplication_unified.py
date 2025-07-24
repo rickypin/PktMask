@@ -46,7 +46,7 @@ class UnifiedDeduplicationStage(StageBase):
         self.priority = config.get("priority", 0)
 
         # Logger
-        self.logger = get_logger("unified_deduplication")
+        self.logger = get_logger("dedup_stage")
 
         # Deduplication state
         self._packet_hashes: Set[str] = set()
@@ -164,7 +164,7 @@ class UnifiedDeduplicationStage(StageBase):
                                 f"High memory pressure during deduplication at packet {i}/{total_packets}"
                             )
 
-                        # 生成数据包哈希 with error handling
+                        # Generate packet hash with error handling
                         packet_hash = self._generate_packet_hash(packet)
 
                         if packet_hash not in self._packet_hashes:
@@ -272,15 +272,15 @@ class UnifiedDeduplicationStage(StageBase):
             raise ProcessingError(error_msg) from e
 
     def get_display_name(self) -> str:
-        """获取显示名称"""
+        """Get display name for this stage"""
         return "Remove Dupes"
 
     def _cleanup_stage_specific(self) -> None:
-        """Stage特定的资源清理"""
-        # 清理去重状态
+        """Stage-specific resource cleanup"""
+        # Clear deduplication state
         self._packet_hashes.clear()
 
-        # 清理统计信息
+        # Clear statistics
         self._stats.clear()
 
         self.logger.debug("UnifiedDeduplicationStage specific cleanup completed")

@@ -174,21 +174,21 @@ class PayloadMasker:
     def apply_masking(
         self, input_path: str, output_path: str, keep_rules: KeepRuleSet
     ) -> MaskingStats:
-        """应用掩码规则
+        """Apply masking rules
 
-        基于 TCP_MARKER_REFERENCE.md 算法实现的完整掩码处理流程：
-        1. 预处理保留规则，构建高效查找结构
-        2. 逐包处理载荷，支持多层封装剥离
-        3. 应用序列号匹配，处理32位回绕
-        4. 执行精确掩码操作，保持载荷长度不变
+        Complete masking processing flow based on TCP_MARKER_REFERENCE.md algorithm:
+        1. Preprocess keep rules, build efficient lookup structure
+        2. Process packets payload by payload, support multi-layer encapsulation stripping
+        3. Apply sequence number matching, handle 32-bit wraparound
+        4. Execute precise masking operations, maintain payload length unchanged
 
         Args:
-            input_path: 输入文件路径
-            output_path: 输出文件路径
-            keep_rules: 保留规则集合
+            input_path: Input file path
+            output_path: Output file path
+            keep_rules: Keep rules set
 
         Returns:
-            MaskingStats: 掩码处理统计信息
+            MaskingStats: Masking processing statistics
         """
         self.logger.info(f"Starting mask application: {input_path} -> {output_path}")
         start_time = time.time()
@@ -584,36 +584,36 @@ class PayloadMasker:
             rule_lookup: 预处理的规则查找结构
 
         Returns:
-            Tuple[处理后的数据包, 是否被修改]
+            Tuple[processed packet, whether modified]
         """
         try:
-            # 查找最内层的 TCP/IP
+            # Find innermost TCP/IP layers
             tcp_layer, ip_layer = self._find_innermost_tcp(packet)
 
             if tcp_layer is None or ip_layer is None:
-                # 非 TCP 包，原样返回
+                # Non-TCP packet, return as-is
                 return packet, False
 
-            # 构建流标识
+            # Build stream identifier
             stream_id = self._build_stream_id(ip_layer, tcp_layer)
 
-            # 确定流方向
+            # Determine flow direction
             direction = self._determine_flow_direction(ip_layer, tcp_layer, stream_id)
 
-            # 添加调试日志
+            # Add debug logging
             src_info = f"{ip_layer.src}:{tcp_layer.sport}"
             dst_info = f"{ip_layer.dst}:{tcp_layer.dport}"
             self.logger.debug(
                 f"Processing packet: {src_info}->{dst_info}, stream_id={stream_id}, direction={direction}"
             )
 
-            # 获取 TCP 载荷
+            # Get TCP payload
             payload = bytes(tcp_layer.payload) if tcp_layer.payload else b""
             if not payload:
-                # 无载荷，原样返回
+                # No payload, return as-is
                 return packet, False
 
-            # 直接使用绝对序列号，不进行64位转换
+            # Use absolute sequence numbers directly, no 64-bit conversion
             seq_start = tcp_layer.seq
             seq_end = tcp_layer.seq + len(payload)
 
@@ -637,24 +637,24 @@ class PayloadMasker:
                 self.logger.debug(f"Available streams: {available_streams}")
                 self.logger.debug(f"Available directions: {available_directions}")
 
-            # 应用保留规则（对于无规则的情况，将执行全掩码）
+            # Apply keep rules (for cases with no rules, full masking will be executed)
             new_payload = self._apply_keep_rules(payload, seq_start, seq_end, rule_data)
 
-            # 检查载荷是否发生变化
+            # Check if payload has changed
             if new_payload is None or new_payload == payload:
-                # 如果_apply_keep_rules返回None或未修改，但我们需要确保全掩码处理
+                # If _apply_keep_rules returns None or unmodified, but we need to ensure full masking
                 if (
                     rule_data["header_only_ranges"] == []
                     and rule_data["full_preserve_ranges"] == []
                 ):
-                    # 无任何保留规则，执行全掩码
+                    # No keep rules, execute full masking
                     new_payload = b"\x00" * len(payload)
                     self.logger.debug(f"Performing full masking: {len(payload)} bytes")
                 else:
-                    # 有规则但未修改，原样返回
+                    # Has rules but unmodified, return as-is
                     return packet, False
 
-            # 修改数据包载荷
+            # Modify packet payload
             modified_packet = self._modify_packet_payload(
                 packet, tcp_layer, new_payload
             )

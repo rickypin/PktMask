@@ -24,12 +24,12 @@ step_name_mapping:
 
   ip_anonymization:
     aliases: ["anon_ip", "anonymize_ips"]
-    canonical: "IP Anonymization"
+    canonical: "Anonymize IPs"
     description: "IP address anonymization processing"
 
   payload_masking:
     aliases: ["mask_payload", "mask_payloads"]
-    canonical: "Payload Masking"
+    canonical: "Mask Payloads"
     description: "Payload masking processing"
 
 # 处理器类型映射

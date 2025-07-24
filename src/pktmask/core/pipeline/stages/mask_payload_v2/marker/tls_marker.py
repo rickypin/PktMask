@@ -1,8 +1,8 @@
 """
-TLS协议标记器
+TLS Protocol Marker
 
-基于 tls_flow_analyzer 代码逻辑的TLS协议分析器，生成TCP序列号保留规则。
-复用核心算法而非直接依赖，保持工具与主程序的独立性。
+TLS protocol analyzer based on tls_flow_analyzer code logic, generates TCP sequence number preservation rules.
+Reuses core algorithms rather than direct dependencies, maintaining independence between tools and main program.
 """
 
 from __future__ import annotations

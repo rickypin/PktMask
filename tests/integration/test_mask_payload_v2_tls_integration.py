@@ -1,7 +1,7 @@
 """
-TLS协议标记器集成测试
+TLS Protocol Marker Integration Tests
 
-使用真实的TLS测试文件验证TLS协议标记器的功能。
+Uses real TLS test files to validate TLS protocol marker functionality.
 """
 
 import pytest

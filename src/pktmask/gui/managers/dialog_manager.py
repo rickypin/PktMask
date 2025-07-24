@@ -74,8 +74,8 @@ class DialogManager:
             
             <p>PktMask is a powerful network packet processing tool designed for:</p>
             <ul>
-                <li>🔄 <b>Remove Duplicates</b> - Eliminate duplicate packets</li>
-                <li>🛡️ <b>IP Anonymization</b> - Advanced hierarchical IP masking</li>
+                <li>🔄 <b>Remove Dupes</b> - Eliminate duplicate packets</li>
+                <li>🛡️ <b>Anonymize IPs</b> - Advanced hierarchical IP masking</li>
                 <li>✂️ <b>Smart Trimming</b> - Intelligent payload reduction</li>
             </ul>
             

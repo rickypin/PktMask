@@ -1,8 +1,8 @@
 """
-新一代 MaskStage 端到端集成测试
+Next-Generation MaskStage End-to-End Integration Tests
 
-测试完整的文件处理流程：输入pcap文件 -> Marker模块分析 -> Masker模块掩码 -> 输出掩码文件
-验证双模块架构的完整功能和性能。
+Tests complete file processing workflow: input pcap file -> Marker module analysis -> Masker module masking -> output masked file
+Validates dual-module architecture complete functionality and performance.
 """
 
 import pytest
@@ -17,26 +17,26 @@ from pktmask.core.pipeline.models import StageStats
 
 
 class TestMaskPayloadV2EndToEnd:
-    """新一代 MaskStage 端到端测试"""
+    """Next-Generation MaskStage End-to-End Tests"""
 
     @pytest.fixture
     def test_files(self):
-        """获取测试文件列表"""
+        """Get test file list"""
         test_data_dir = Path("tests/data/tls")
         if not test_data_dir.exists():
-            pytest.skip("TLS测试数据目录不存在")
+            pytest.skip("TLS test data directory does not exist")
 
         pcap_files = list(test_data_dir.glob("*.pcap")) + list(
             test_data_dir.glob("*.pcapng")
         )
         if not pcap_files:
-            pytest.skip("没有找到TLS测试文件")
+            pytest.skip("No TLS test files found")
 
-        return pcap_files[:2]  # 只使用前2个文件进行端到端测试
+        return pcap_files[:2]  # Only use first 2 files for end-to-end testing
 
     @pytest.fixture
     def temp_output_dir(self):
-        """创建临时输出目录"""
+        """Create temporary output directory"""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield Path(temp_dir)
 

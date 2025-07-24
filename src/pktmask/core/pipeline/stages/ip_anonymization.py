@@ -1,5 +1,5 @@
 """
-IP Anonymization Stage - StageBase Architecture Implementation
+Anonymize IPs Stage - StageBase Architecture Implementation
 
 This module provides a unified IP anonymization stage based on the StageBase architecture,
 replacing the old BaseProcessor wrapper approach with direct implementation.
@@ -16,7 +16,7 @@ from pktmask.core.pipeline.stages.ip_anonymization_unified import (
 
 
 class IPAnonymizationStage(UnifiedIPAnonymizationStage):
-    """IP Anonymization Stage - StageBase Architecture Implementation
+    """Anonymize IPs Stage - StageBase Architecture Implementation
 
     This stage provides a unified IP anonymization implementation based on the StageBase
     architecture, directly inheriting from UnifiedIPAnonymizationStage for better
@@ -32,7 +32,7 @@ class IPAnonymizationStage(UnifiedIPAnonymizationStage):
     name: str = "IPAnonymizationStage"
 
     def __init__(self, config: Dict[str, Any]):
-        """Initialize IP Anonymization Stage
+        """Initialize Anonymize IPs Stage
 
         Args:
             config: Configuration dictionary with the following optional parameters:

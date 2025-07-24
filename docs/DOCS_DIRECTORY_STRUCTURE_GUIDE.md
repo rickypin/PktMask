@@ -1,9 +1,9 @@
-# PktMask 项目 docs 目录结构使用说明
+# PktMask Project docs Directory Structure Usage Guide
 
-> **版本**: v1.0.0  
-> **创建日期**: 2025-07-22  
-> **适用范围**: PktMask ≥ 4.0.0  
-> **维护状态**: ✅ 活跃维护  
+> **Version**: v1.0.0
+> **Creation Date**: 2025-07-22
+> **Applicable Scope**: PktMask ≥ 4.0.0
+> **Maintenance Status**: ✅ Active Maintenance
 
 ---
 

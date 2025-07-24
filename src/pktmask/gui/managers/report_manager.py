@@ -92,11 +92,11 @@ class ReportManager:
         # Display enabled processing steps
         enabled_steps = []
         if self.main_window.anonymize_ips_cb.isChecked():
-            enabled_steps.append("IP Anonymization")
+            enabled_steps.append("Anonymize IPs")
         if self.main_window.remove_dupes_cb.isChecked():
             enabled_steps.append("Deduplication")
         if self.main_window.mask_payloads_cb.isChecked():
-            enabled_steps.append("Payload Masking")
+            enabled_steps.append("Mask Payloads")
 
         stop_report += f"🔧 Configured Processing Steps: {', '.join(enabled_steps)}\n"
         stop_report += f"📁 Working Directory: {os.path.basename(self.main_window.base_dir) if self.main_window.base_dir else 'N/A'}\n"
@@ -160,11 +160,11 @@ class ReportManager:
             # Check if file is fully processed (all configured steps completed)
             expected_steps = set()
             if self.main_window.anonymize_ips_cb.isChecked():
-                expected_steps.add("IP Anonymization")
+                expected_steps.add("Anonymize IPs")
             if self.main_window.remove_dupes_cb.isChecked():
                 expected_steps.add("Deduplication")
             if self.main_window.mask_payloads_cb.isChecked():
-                expected_steps.add("Payload Masking")
+                expected_steps.add("Mask Payloads")
 
             completed_steps = set(steps_data.keys())
             is_fully_completed = expected_steps.issubset(completed_steps)
@@ -197,7 +197,7 @@ class ReportManager:
         report += f"   Status: FULLY COMPLETED\n"
 
         # Get final output filename
-        step_order = ["Deduplication", "IP Anonymization", "Payload Masking"]
+        step_order = ["Deduplication", "Anonymize IPs", "Mask Payloads"]
         final_output = None
         for step_name in reversed(step_order):
             if step_name in steps_data:
@@ -218,12 +218,12 @@ class ReportManager:
             original_packets = steps_data["Deduplication"]["data"].get(
                 "total_packets", 0
             )
-        elif "IP Anonymization" in steps_data:
-            original_packets = steps_data["IP Anonymization"]["data"].get(
+        elif "Anonymize IPs" in steps_data:
+            original_packets = steps_data["Anonymize IPs"]["data"].get(
                 "total_packets", 0
             )
-        elif "Payload Masking" in steps_data:
-            original_packets = steps_data["Payload Masking"]["data"].get(
+        elif "Mask Payloads" in steps_data:
+            original_packets = steps_data["Mask Payloads"]["data"].get(
                 "total_packets", 0
             )
 
@@ -231,7 +231,7 @@ class ReportManager:
             if step_name in steps_data:
                 data = steps_data[step_name]["data"]
 
-                if step_name == "IP Anonymization":
+                if step_name == "Anonymize IPs":
                     # Support new AnonStage field names (retrieved from extra_metrics)
                     extra_metrics = data.get("extra_metrics", {})
                     original_ips = data.get(
@@ -241,7 +241,7 @@ class ReportManager:
                         "anonymized_ips", extra_metrics.get("anonymized_ips", 0)
                     )
                     rate = (masked_ips / original_ips * 100) if original_ips > 0 else 0
-                    report += f"   🛡️  IP Anonymization: {original_ips} → {masked_ips} IPs ({rate:.1f}%)\n"
+                    report += f"   🛡️  Anonymize IPs: {original_ips} → {masked_ips} IPs ({rate:.1f}%)\n"
                     file_ip_mappings = data.get(
                         "file_ip_mappings", extra_metrics.get("file_ip_mappings", {})
                     )
@@ -256,13 +256,13 @@ class ReportManager:
                     )
                     report += f"   🔄 Deduplication: {removed} removed ({rate:.1f}%)\n"
 
-                elif step_name == "Payload Masking":
+                elif step_name == "Mask Payloads":
                     # Support new MaskPayloadStage field names
                     masked = data.get("packets_modified", data.get("masked_packets", 0))
                     rate = (
                         (masked / original_packets * 100) if original_packets > 0 else 0
                     )
-                    report += f"   ✂️  Payload Masking: {masked} masked ({rate:.1f}%)\n"
+                    report += f"   ✂️  Mask Payloads: {masked} masked ({rate:.1f}%)\n"
 
         # Display IP mappings (if any)
         if file_ip_mappings:
@@ -312,7 +312,7 @@ class ReportManager:
                     hasattr(self.main_window, "anonymize_ips_cb")
                     and self.main_window.anonymize_ips_cb.isChecked()
                 ):
-                    expected_steps.add("IP Anonymization")
+                    expected_steps.add("Anonymize IPs")
                 if (
                     hasattr(self.main_window, "remove_dupes_cb")
                     and self.main_window.remove_dupes_cb.isChecked()
@@ -322,7 +322,7 @@ class ReportManager:
                     hasattr(self.main_window, "mask_payloads_cb")
                     and self.main_window.mask_payloads_cb.isChecked()
                 ):
-                    expected_steps.add("Payload Masking")
+                    expected_steps.add("Mask Payloads")
             except AttributeError:
                 # Fallback: if GUI components are not available, infer from actual completed steps
                 # This handles cases where the method is called outside of GUI context
@@ -332,9 +332,9 @@ class ReportManager:
                         completed_steps  # Assume all completed steps were expected
                     )
 
-            # If we have IP mappings and IP Anonymization step exists, consider it completed
-            if not expected_steps and "IP Anonymization" in file_result["steps"]:
-                expected_steps.add("IP Anonymization")
+            # If we have IP mappings and Anonymize IPs step exists, consider it completed
+            if not expected_steps and "Anonymize IPs" in file_result["steps"]:
+                expected_steps.add("Anonymize IPs")
 
             completed_steps = set(file_result["steps"].keys())
             if expected_steps.issubset(completed_steps) or (
@@ -419,25 +419,25 @@ class ReportManager:
                 "total_packets", 0
             )
             output_filename = steps_data["Deduplication"]["data"].get("output_filename")
-        elif "IP Anonymization" in steps_data:
+        elif "Anonymize IPs" in steps_data:
             # If no deduplication step, get from IP anonymization step
-            original_packets = steps_data["IP Anonymization"]["data"].get(
+            original_packets = steps_data["Anonymize IPs"]["data"].get(
                 "total_packets", 0
             )
-            output_filename = steps_data["IP Anonymization"]["data"].get(
+            output_filename = steps_data["Anonymize IPs"]["data"].get(
                 "output_filename"
             )
-        elif "Payload Masking" in steps_data:
+        elif "Mask Payloads" in steps_data:
             # Finally get from payload masking step
-            original_packets = steps_data["Payload Masking"]["data"].get(
+            original_packets = steps_data["Mask Payloads"]["data"].get(
                 "total_packets", 0
             )
-            output_filename = steps_data["Payload Masking"]["data"].get(
+            output_filename = steps_data["Mask Payloads"]["data"].get(
                 "output_filename"
             )
 
         # Get final output filename from the last processing step
-        step_order = ["Deduplication", "IP Anonymization", "Payload Masking"]
+        step_order = ["Deduplication", "Anonymize IPs", "Mask Payloads"]
         for step_name in reversed(step_order):
             if step_name in steps_data:
                 final_output = steps_data[step_name]["data"].get("output_filename")
@@ -479,13 +479,13 @@ class ReportManager:
 
                 self._logger.info(f"🔍 Processing step {step_name}: type={step_type}")
 
-                # For Payload Masking, record detailed data fields
-                if step_name == "Payload Masking":
+                # For Mask Payloads, record detailed data fields
+                if step_name == "Mask Payloads":
                     self._logger.info(
-                        f"🔍 Payload Masking data: packets_processed={data.get('packets_processed')}, packets_modified={data.get('packets_modified')}"
+                        f"🔍 Mask Payloads data: packets_processed={data.get('packets_processed')}, packets_modified={data.get('packets_modified')}"
                     )
                     self._logger.info(
-                        f"🔍 Payload Masking data: total_packets={data.get('total_packets')}, masked_packets={data.get('masked_packets')}"
+                        f"🔍 Mask Payloads data: total_packets={data.get('total_packets')}, masked_packets={data.get('masked_packets')}"
                     )
 
                 if step_type in [
@@ -513,7 +513,7 @@ class ReportManager:
                     rate = (removed / total_before * 100) if total_before > 0 else 0
                     line = f"  🔄 {step_name:<18} | Unique Pkts: {unique:>4} | Removed Pkts: {removed:>4} | Rate: {rate:5.1f}%"
 
-                elif step_type in ["mask_payloads"]:  # Use standard naming
+                elif step_type in ["mask_payloads", "mask payloads"]:  # Use standard naming
                     # Fix: MaskStage returns different field names
                     total = data.get("total_packets", data.get("packets_processed", 0))
                     masked = data.get("masked_packets", data.get("packets_modified", 0))
@@ -525,7 +525,7 @@ class ReportManager:
                             step_name, data
                         )
                     else:
-                        line = f"  ✂️  {step_name:<18} | Total Pkts: {total:>5} | Masked Pkts: {masked:>4} | Rate: {rate:5.1f}%"
+                        line = f"  🎭 {step_name:<18} | Total Pkts: {total:>5} | Masked Pkts: {masked:>4} | Rate: {rate:5.1f}%"
                 else:
                     continue
 
@@ -576,9 +576,9 @@ class ReportManager:
         if self.main_window.remove_dupes_cb.isChecked():
             enabled_steps.append("Deduplication")
         if self.main_window.anonymize_ips_cb.isChecked():
-            enabled_steps.append("IP Anonymization")
+            enabled_steps.append("Anonymize IPs")
         if self.main_window.mask_payloads_cb.isChecked():
-            enabled_steps.append("Payload Masking")
+            enabled_steps.append("Mask Payloads")
 
         completion_report = f"\n{'='*separator_length}\n🎉 PROCESSING COMPLETED!\n{'='*separator_length}\n"
         completion_report += f"🎯 All {current_files_processed} files have been successfully processed.\n"
@@ -630,7 +630,7 @@ class ReportManager:
         # Add IP mapping summary information, including detailed mapping table
         text = f"\n{'='*separator_length}\n📋 DIRECTORY PROCESSING SUMMARY\n{'='*separator_length}\n"
         text += f"📂 Directory: {subdir}\n\n"
-        text += f"🔒 IP Anonymization Summary:\n"
+        text += f"🔒 Anonymize IPs Summary:\n"
         text += f"   • Total Unique IPs Discovered: {stats.get('total_unique_ips', 'N/A')}\n"
         text += f"   • Total IPs Anonymized: {stats.get('total_mapped_ips', 'N/A')}\n\n"
 
@@ -961,8 +961,9 @@ class ReportManager:
                 "MaskStage",
                 "MaskPayloadStage",
                 "NewMaskPayloadStage",
+                "Mask Payloads",  # Add the actual display name from NewMaskPayloadStage
                 "Mask Payloads (v2)",
-                "Payload Masking Stage",
+                "Mask Payloads Stage",
             ]:
                 step_type = "mask_payloads"  # Use standard naming
             else:
@@ -983,9 +984,9 @@ class ReportManager:
 
         # 标准化步骤名称 - 修复Pipeline和ReportManager之间的映射不匹配
         step_display_names = {
-            "anonymize_ips": "IP Anonymization",  # Standard naming
+            "anonymize_ips": "Anonymize IPs",  # Standard naming
             "remove_dupes": "Deduplication",
-            "mask_payloads": "Payload Masking",  # Standard naming
+            "mask_payloads": "Mask Payloads",  # Standard naming
         }
 
         step_name = step_display_names.get(step_type, step_type)
@@ -1116,7 +1117,7 @@ class ReportManager:
         # 遍历所有处理过的文件，找出使用Enhanced Masking的文件
         for filename, file_result in self.main_window.file_processing_results.items():
             steps_data = file_result.get("steps", {})
-            payload_step = steps_data.get("Payload Masking")
+            payload_step = steps_data.get("Mask Payloads")
 
             if payload_step and self._is_enhanced_masking(payload_step.get("data", {})):
                 enhanced_files.append(filename)
@@ -1193,7 +1194,7 @@ class ReportManager:
 
         file_result = self.main_window.file_processing_results[filename]
         steps_data = file_result.get("steps", {})
-        payload_step = steps_data.get("Payload Masking")
+        payload_step = steps_data.get("Mask Payloads")
 
         if not payload_step or not self._is_enhanced_masking(
             payload_step.get("data", {})

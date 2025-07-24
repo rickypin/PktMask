@@ -20,10 +20,10 @@ from pktmask.utils.reporting import FileReporter
 
 
 class UnifiedIPAnonymizationStage(StageBase):
-    """统一IP匿名化阶段 - 消除BaseProcessor依赖
+    """Unified IP anonymization stage - eliminates BaseProcessor dependency
 
-    直接集成IP匿名化逻辑，无适配器层，统一接口。
-    保持所有现有功能：层次化匿名化、子网结构保持、统计信息收集。
+    Directly integrates IP anonymization logic without adapter layer, unified interface.
+    Maintains all existing features: hierarchical anonymization, subnet structure preservation, statistics collection.
     """
 
     name: str = "UnifiedIPAnonymizationStage"
@@ -51,7 +51,7 @@ class UnifiedIPAnonymizationStage(StageBase):
         self.priority = config.get("priority", 0)
 
         # Logger
-        self.logger = get_logger("unified_ip_anonymization")
+        self.logger = get_logger("anonymize_stage")
 
         # Core components - direct initialization, no lazy loading
         self._strategy: Optional[HierarchicalAnonymizationStrategy] = None
@@ -311,35 +311,35 @@ class UnifiedIPAnonymizationStage(StageBase):
         self._stats.clear()
 
     def _cleanup_stage_specific(self) -> None:
-        """Stage特定的资源清理"""
-        # 清理IP映射和统计信息
+        """Stage-specific resource cleanup"""
+        # Clear IP mapping and statistics
         if self._strategy:
-            # 重置策略状态
+            # Reset strategy state
             if hasattr(self._strategy, "reset"):
                 self._strategy.reset()
 
-        # 清理统计信息
+        # Clear statistics
         self._stats.clear()
 
         self.logger.debug("UnifiedIPAnonymizationStage specific cleanup completed")
 
 
 class SimpleIPAnonymizationStrategy:
-    """简化的IP匿名化策略 - 避免复杂依赖"""
+    """Simplified IP anonymization strategy - avoids complex dependencies"""
 
     def __init__(self):
         self._ip_map = {}
 
     def build_mapping_from_directory(self, all_pcap_files: List[str]):
-        """构建IP映射 - 简化版本"""
-        # 简化实现：为测试目的创建空映射
+        """Build IP mapping - simplified version"""
+        # Simplified implementation: create empty mapping for testing purposes
         self._ip_map = {}
 
     def get_ip_map(self):
-        """获取IP映射"""
+        """Get IP mapping"""
         return self._ip_map
 
     def anonymize_packet(self, pkt):
-        """匿名化数据包 - 简化版本"""
-        # 简化实现：直接返回原包，标记为未修改
+        """Anonymize packet - simplified version"""
+        # Simplified implementation: return original packet, marked as unmodified
         return pkt, False

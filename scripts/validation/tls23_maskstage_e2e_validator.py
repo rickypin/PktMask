@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """
-Enhanced TLS MaskStage 端到端验证器 (Phase 3 增强版)
+Enhanced TLS MaskStage End-to-End Validator (Phase 3 Enhanced Version)
 
-专门用于验证Enhanced MaskStage的完整TLS协议类型(20-24)掩码功能：
-- TLS-20 (ChangeCipherSpec): 完全保留验证
-- TLS-21 (Alert): 完全保留验证
-- TLS-22 (Handshake): 完全保留验证
-- TLS-23 (ApplicationData): 智能掩码验证(5字节头部保留)
-- TLS-24 (Heartbeat): 完全保留验证
+Specifically used to validate Enhanced MaskStage's complete TLS protocol type (20-24) masking functionality:
+- TLS-20 (ChangeCipherSpec): Complete preservation validation
+- TLS-21 (Alert): Complete preservation validation
+- TLS-22 (Handshake): Complete preservation validation
+- TLS-23 (ApplicationData): Smart masking validation (5-byte header preservation)
+- TLS-24 (Heartbeat): Complete preservation validation
 
-新增验证功能：
-- 多协议类型验证 (validate_protocol_type_detection)
-- 跨TCP段处理验证 (validate_cross_segment_handling)
-- 边界安全处理验证 (validate_boundary_safety)
-- 完全保留策略验证 (validate_complete_preservation)
-- 智能掩码策略验证 (validate_smart_masking)
+New validation features:
+- Multi-protocol type validation (validate_protocol_type_detection)
+- Cross-TCP segment processing validation (validate_cross_segment_handling)
+- Boundary safety processing validation (validate_boundary_safety)
+- Complete preservation strategy validation (validate_complete_preservation)
+- Smart masking strategy validation (validate_smart_masking)
 
 Author: PktMask Core Team
 Version: v2.0 (Phase 3 Day 15 增强版)

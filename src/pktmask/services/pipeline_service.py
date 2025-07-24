@@ -215,12 +215,12 @@ def _get_stage_display_name(stage_name: str) -> str:
     """Get standardized display name for stage based on naming consistency guide"""
     stage_name_mapping = {
         "DeduplicationStage": "Deduplication Stage",
-        "AnonStage": "IP Anonymization Stage",
-        "IPAnonymizationStage": "IP Anonymization Stage",  # New StageBase implementation
-        "NewMaskPayloadStage": "Payload Masking Stage",
-        "MaskStage": "Payload Masking Stage",
-        "MaskPayloadStage": "Payload Masking Stage",
-        "Mask Payloads (v2)": "Payload Masking Stage",
+        "AnonStage": "Anonymize IPs Stage",
+        "IPAnonymizationStage": "Anonymize IPs Stage",  # New StageBase implementation
+        "NewMaskPayloadStage": "Mask Payloads Stage",
+        "MaskStage": "Mask Payloads Stage",
+        "MaskPayloadStage": "Mask Payloads Stage",
+        "Mask Payloads (v2)": "Mask Payloads Stage",
     }
     return stage_name_mapping.get(stage_name, stage_name)
 
@@ -528,7 +528,7 @@ def create_gui_compatible_report_data(result: Dict[str, Any]) -> Dict[str, Any]:
                     "summary": f"Processed {stage_stat.get('packets_processed', 0)} packets, removed {stage_stat.get('packets_modified', 0)} duplicates",
                 }
             elif "anon" in stage_name.lower() or "ip" in stage_name.lower():
-                gui_report_data["step_results"]["IP Anonymization"] = {
+                gui_report_data["step_results"]["Anonymize IPs"] = {
                     "packets_processed": stage_stat.get("packets_processed", 0),
                     "packets_modified": stage_stat.get("packets_modified", 0),
                     "ips_anonymized": stage_stat.get("packets_modified", 0),
@@ -536,7 +536,7 @@ def create_gui_compatible_report_data(result: Dict[str, Any]) -> Dict[str, Any]:
                     "summary": f"Anonymized {stage_stat.get('packets_modified', 0)} IP addresses",
                 }
             elif "mask" in stage_name.lower() or "payload" in stage_name.lower():
-                gui_report_data["step_results"]["Payload Masking"] = {
+                gui_report_data["step_results"]["Mask Payloads"] = {
                     "packets_processed": stage_stat.get("packets_processed", 0),
                     "packets_modified": stage_stat.get("packets_modified", 0),
                     "total_packets": stage_stat.get("packets_processed", 0),

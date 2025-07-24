@@ -28,7 +28,7 @@ pktmask <command> <input> -o <output> [options]
 
 ## Core Commands
 
-### 1. mask - Payload Masking Processing
+### 1. mask - Mask Payloads Processing
 
 **Single File Processing**:
 ```bash

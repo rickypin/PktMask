@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Test IP Anonymization Fix
+Test Anonymize IPs Fix
 
-This script tests the fix for missing IP Anonymization entries in individual file reports.
+This script tests the fix for missing Anonymize IPs entries in individual file reports.
 """
 
 import sys
@@ -78,7 +78,7 @@ def test_collect_step_result_fix():
         # Check if it would match the condition in generate_file_complete_report
         step_type = step_data.get("type")
         matches_condition = step_type in ["anonymize_ips", "mask_ip", "mask_ips"]
-        print(f"  Matches IP anonymization condition: {matches_condition}")
+        print(f"  Matches Anonymize IPs condition: {matches_condition}")
 
         if matches_condition:
             data = step_data.get("data", {})
@@ -97,17 +97,17 @@ def test_collect_step_result_fix():
                 rate = masked_ips / original_ips * 100
                 line = f"  🛡️  {step_name:<18} | Original IPs: {original_ips:>3} | Anonymized IPs: {masked_ips:>3} | Rate: {rate:5.1f}%"
                 print(f"  Generated line: {line}")
-                print("  ✅ Would generate IP Anonymization entry")
+                print("  ✅ Would generate Anonymize IPs entry")
             else:
-                print("  ❌ Would NOT generate IP Anonymization entry (no IP data)")
+                print("  ❌ Would NOT generate Anonymize IPs entry (no IP data)")
         else:
-            print("  ❌ Would NOT generate IP Anonymization entry (condition failed)")
+            print("  ❌ Would NOT generate Anonymize IPs entry (condition failed)")
 
     print()
 
     # Test the expected outcome
-    if "IP Anonymization" in stored_steps:
-        step_data = stored_steps["IP Anonymization"]
+    if "Anonymize IPs" in stored_steps:
+        step_data = stored_steps["Anonymize IPs"]
         if step_data.get("type") == "anonymize_ips":
             print(
                 "✅ Test PASSED: IPAnonymizationStage correctly stored as 'anonymize_ips' type"
@@ -117,7 +117,7 @@ def test_collect_step_result_fix():
             print(f"❌ Test FAILED: Wrong type stored: {step_data.get('type')}")
             return False
     else:
-        print("❌ Test FAILED: No 'IP Anonymization' step stored")
+        print("❌ Test FAILED: No 'Anonymize IPs' step stored")
         return False
 
 
@@ -149,7 +149,7 @@ def test_step_type_inference():
                 "MaskPayloadStage",
                 "NewMaskPayloadStage",
                 "Mask Payloads (v2)",
-                "Payload Masking Stage",
+                "Mask Payloads Stage",
             ]:
                 step_type = "mask_payloads"
             else:
@@ -169,9 +169,9 @@ def test_step_type_inference():
 
 def main():
     """Run all tests"""
-    print("🔍 Testing IP Anonymization Fix")
+    print("🔍 Testing Anonymize IPs Fix")
     print("=" * 80)
-    print("Testing the fix for missing IP Anonymization entries")
+    print("Testing the fix for missing Anonymize IPs entries")
     print("in individual file reports.")
     print("=" * 80)
     print()
@@ -184,7 +184,7 @@ def main():
             print("🎉 ALL TESTS PASSED!")
             print("✅ IPAnonymizationStage is now correctly recognized")
             print("✅ Step type inference works correctly")
-            print("✅ IP Anonymization entries should now appear in reports")
+            print("✅ Anonymize IPs entries should now appear in reports")
         else:
             print("❌ TESTS FAILED!")
             print("The fix needs further investigation.")

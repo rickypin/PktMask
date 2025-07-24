@@ -597,8 +597,8 @@ class MainWindow(QMainWindow):
                     ]["steps"]
                     step_order = [
                         "Deduplication",
-                        "IP Anonymization",
-                        "Payload Masking",
+                        "Anonymize IPs",
+                        "Mask Payloads",
                     ]
                     for step_name in reversed(step_order):
                         if step_name in steps_data:

@@ -336,9 +336,9 @@ class UIBuilder:
            - Output directory will be auto-generated or you can customize it
         
         2. Processing Options:
-           - IP Anonymization: Replace IP addresses with anonymized versions
-           - Packet Deduplication: Remove duplicate packets
-           - Payload Masking: Mask sensitive payload data
+           - Anonymize IPs: Replace IP addresses with anonymized versions
+           - Remove Dupes: Remove duplicate packets
+           - Mask Payloads: Mask sensitive payload data
         
         3. Processing:
            - Click 'Start Processing' to begin
@@ -370,9 +370,9 @@ class UIBuilder:
         A desktop application for batch processing pcap/pcapng files.
         
         Features:
-        - IP Address Anonymization
-        - Packet Deduplication  
-        - Payload Masking
+        - Anonymize IPs
+        - Remove Dupes
+        - Mask Payloads
         - Batch Processing
         
         © 2024 PktMask Team

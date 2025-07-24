@@ -214,7 +214,7 @@ class UIStrings(Enum):
     CHECKBOX_REMOVE_DUPES = "Remove Dupes"
     CHECKBOX_ANONYMIZE_IPS = "Anonymize IPs"
     CHECKBOX_MASK_PAYLOADS = "Mask Payloads"
-    CHECKBOX_WEB_FOCUSED = "Web-Focused Traffic Only (功能已移除)"
+    CHECKBOX_WEB_FOCUSED = "Web-Focused Traffic Only (Feature Removed)"
 
     # 路径标签默认文本
     PATH_INPUT_DEFAULT = "Click and pick your pcap directory"

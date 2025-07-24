@@ -422,7 +422,7 @@ class NewMaskPayloadStage(StageBase):
 
     def get_display_name(self) -> str:
         """获取显示名称"""
-        return "Payload Masking Stage"
+        return "Mask Payloads"
 
     def get_description(self) -> str:
         """获取描述信息"""
