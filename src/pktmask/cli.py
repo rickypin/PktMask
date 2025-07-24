@@ -202,26 +202,15 @@ def _run_unified_pipeline(
 def _create_enhanced_progress_callback(
     verbose: bool = False, show_stages: bool = False, report_service=None
 ):
-    """创建增强的进度回调函数"""
-    from pktmask.core.events import PipelineEvents
+    """创建增强的进度回调函数 - 使用简化的进度报告系统"""
+    from pktmask.core.progress.simple_progress import create_simple_progress_callback
 
-    # 创建基础进度回调
-    base_callback = create_cli_progress_callback(verbose, show_stages)
-
-    def enhanced_callback(event_type: PipelineEvents, data: Dict[str, Any]):
-        # 调用基础回调
-        base_callback(event_type, data)
-
-        # 添加报告服务回调
-        if report_service:
-            if event_type == PipelineEvents.STEP_SUMMARY:
-                stage_name = data.get("step_name", "Unknown")
-                report_service.add_stage_stats(stage_name, data)
-            elif event_type == PipelineEvents.ERROR:
-                error_message = data.get("message", "Unknown error")
-                report_service.add_error(error_message)
-
-    return enhanced_callback
+    # 使用简化的进度报告系统
+    return create_simple_progress_callback(
+        verbose=verbose,
+        show_stages=show_stages,
+        report_service=report_service
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-UI管理器 - 负责界面初始化和样式管理
+UI Manager - Responsible for interface initialization and style management
 """
 
 from typing import TYPE_CHECKING
@@ -30,7 +30,7 @@ class UIManager:
         self._logger = get_logger(__name__)
 
     def init_ui(self):
-        """Initialize interface"""
+        """Initialize user interface components and layout"""
         self._setup_window_properties()
         self._create_menu_bar()
         self._setup_main_layout()
@@ -330,9 +330,9 @@ class UIManager:
         main_layout.setRowStretch(3, 2)  # Log row
 
     def _connect_signals(self):
-        """Connect signals"""
+        """Connect UI component signals to their handlers"""
         try:
-            # 目录选择信号
+            # Directory selection signals
             self.main_window.dir_path_label.clicked.connect(
                 self.main_window.file_manager.choose_folder
             )
@@ -340,7 +340,7 @@ class UIManager:
                 self.main_window.file_manager.handle_output_click
             )
 
-            # 处理按钮信号
+            # Processing button signals
             self.main_window.start_proc_btn.clicked.connect(
                 self.main_window.pipeline_manager.toggle_pipeline_processing
             )
@@ -516,17 +516,17 @@ class UIManager:
 
     # Style management methods
     def get_current_theme(self) -> str:
-        """Detect whether current system is light or dark mode"""
+        """Detect whether current system is using light or dark mode"""
         bg_color = self.main_window.palette().color(self.main_window.backgroundRole())
         return "dark" if bg_color.lightness() < 128 else "light"
 
     def apply_stylesheet(self):
-        """Apply stylesheet"""
+        """Apply theme-appropriate stylesheet to the main window"""
         theme = self.get_current_theme()
         self.main_window.setStyleSheet(generate_stylesheet(theme))
 
     def handle_theme_change(self, event: QEvent):
-        """Handle theme changes"""
+        """Handle system theme changes and update UI accordingly"""
         if event.type() == QEvent.Type.ApplicationPaletteChange:
             self.apply_stylesheet()
             self._update_path_link_styles()

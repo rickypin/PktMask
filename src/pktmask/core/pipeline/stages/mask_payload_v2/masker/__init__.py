@@ -1,20 +1,21 @@
 """
-Masker模块 - 通用载荷掩码处理器
+Masker Module - Universal Payload Masking Processor
 
-本模块负责接收 KeepRuleSet 和原始 pcap 文件，应用保留规则进行精确掩码，
-处理序列号匹配和回绕，生成掩码后的 pcap 文件。
+This module receives KeepRuleSet and original pcap files, applies preservation rules
+for precise masking, handles sequence number matching and wraparound, and generates
+masked pcap files.
 
-核心组件：
-- PayloadMasker: 载荷掩码处理器主类
-- ErrorRecoveryHandler: 错误恢复处理器
-- PerformanceMonitor: 性能监控器
-- MaskingStats: 掩码统计信息
+Core Components:
+- PayloadMasker: Main payload masking processor class
+- ErrorRecoveryHandler: Error recovery handler
+- PerformanceMonitor: Performance monitoring system
+- MaskingStats: Masking statistics information
 
-技术特点：
-- 基于 scapy 的通用载荷处理
-- 支持 TCP 序列号回绕处理
-- 基于 TCP_MARKER_REFERENCE 算法
-- 协议无关的掩码应用
+Technical Features:
+- Universal payload processing based on scapy
+- TCP sequence number wraparound handling support
+- Based on TCP_MARKER_REFERENCE algorithm
+- Protocol-agnostic masking application
 """
 
 from .data_validator import DataValidator

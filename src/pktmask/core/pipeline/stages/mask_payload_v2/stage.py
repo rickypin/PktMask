@@ -1,8 +1,8 @@
 """
-新一代 MaskPayload 阶段主类
+Next-Generation MaskPayload Stage Main Class
 
-实现基于双模块架构的新一代掩码处理阶段，集成 Marker 和 Masker 模块。
-支持完全向后兼容的配置格式转换。
+Implements next-generation masking processing stage based on dual-module architecture,
+integrating Marker and Masker modules. Supports fully backward-compatible configuration format conversion.
 """
 
 from __future__ import annotations
@@ -157,10 +157,10 @@ class MaskingStage(StageBase):
                 str(working_input_path), str(output_path), keep_rules
             )
 
-            # 阶段3: 转换统计信息
+            # Phase 3: Convert statistics information
             stage_stats = self._convert_to_stage_stats(masking_stats)
         finally:
-            # 清理临时文件（如果创建了的话）
+            # Clean up temporary files (if created)
             self._cleanup_input_file(working_input_path, input_path)
 
         self.logger.info(
@@ -289,18 +289,18 @@ class MaskingStage(StageBase):
                 )
 
     def _cleanup_input_file(self, working_path: Path, original_path: Path) -> None:
-        """清理工作文件和临时目录
+        """Clean up working files and temporary directories
 
         Args:
-            working_path: 工作文件路径
-            original_path: 原始文件路径
+            working_path: Working file path
+            original_path: Original file path
         """
-        # 如果工作路径与原始路径不同，说明创建了临时文件，需要清理
+        # If working path differs from original path, temporary file was created and needs cleanup
         if working_path != original_path:
             with self.safe_operation("temporary file cleanup"):
                 if working_path.exists():
                     try:
-                        # 删除临时文件
+                        # Delete temporary file
                         working_path.unlink()
                         self.logger.debug(f"Cleaned up temporary file: {working_path}")
                     except OSError as e:
@@ -391,13 +391,13 @@ class MaskingStage(StageBase):
         return PayloadMasker(self.masker_config)
 
     def _convert_to_stage_stats(self, masking_stats) -> StageStats:
-        """转换掩码统计信息为阶段统计信息
+        """Convert masking statistics to stage statistics
 
         Args:
-            masking_stats: MaskingStats 实例
+            masking_stats: MaskingStats instance
 
         Returns:
-            StageStats 实例
+            StageStats instance
         """
         return StageStats(
             stage_name=self.get_display_name(),
@@ -437,10 +437,10 @@ class MaskingStage(StageBase):
         return tools
 
     def _cleanup_stage_specific(self) -> None:
-        """Stage特定的资源清理"""
+        """Stage-specific resource cleanup"""
         if self.marker:
             self.marker.cleanup()
         if self.masker:
-            # 使用新的cleanup方法
+            # Use new cleanup method
             self.masker.cleanup()
         self.logger.debug("MaskingStage specific cleanup completed")

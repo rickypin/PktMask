@@ -1,21 +1,21 @@
 """
-MaskPayload 阶段 - 双模块架构实现
+MaskPayload Stage - Dual-Module Architecture Implementation
 
-本模块实现了基于双模块分离设计的新一代掩码处理阶段：
-- Marker模块: 基于 tshark 的协议分析器，生成 TCP 序列号保留规则
-- Masker模块: 基于 scapy 的通用载荷处理器，应用保留规则
+This module implements next-generation masking processing stage based on dual-module separation design:
+- Marker Module: tshark-based protocol analyzer that generates TCP sequence number keep rules
+- Masker Module: scapy-based universal payload processor that applies keep rules
 
-设计目标：
-1. 职责分离：协议分析与掩码应用完全解耦
-2. 协议无关：Masker模块支持任意协议的保留规则
-3. 易于扩展：新增协议仅需扩展Marker模块
-4. 独立测试：两个模块可独立验证和调试
-5. 性能优化：针对不同场景选择最优处理策略
+Design Goals:
+1. Separation of Concerns: Protocol analysis and masking application are completely decoupled
+2. Protocol Agnostic: Masker module supports keep rules for any protocol
+3. Easy Extension: Adding new protocols only requires extending the Marker module
+4. Independent Testing: Both modules can be independently verified and debugged
+5. Performance Optimization: Optimal processing strategy selection for different scenarios
 
-版本: v1.0.0
-状态: 开发中
-遵循标准: Context7 文档标准
-风险等级: P0 (高风险架构重构)
+Version: v1.0.0
+Status: In Development
+Standards: Context7 Documentation Standards
+Risk Level: P0 (High-Risk Architecture Refactoring)
 """
 
 from .stage import MaskingStage

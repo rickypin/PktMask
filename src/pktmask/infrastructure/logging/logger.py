@@ -36,16 +36,16 @@ class PktMaskLogger:
         PktMaskLogger._initialized = True
 
     def _setup_root_logger(self):
-        """设置根日志记录器"""
+        """Set up root logger configuration"""
         root_logger = logging.getLogger("pktmask")
         root_logger.setLevel(logging.DEBUG)
 
-        # 避免重复添加handler
+        # Avoid duplicate handler addition
         if root_logger.handlers:
             return
 
-        # 尝试从配置获取日志级别
-        console_level = logging.INFO  # 默认级别
+        # Try to get log level from configuration
+        console_level = logging.INFO  # Default level
         try:
             from ...config import get_app_config
 
@@ -53,10 +53,10 @@ class PktMaskLogger:
             level_str = config.logging.log_level.upper()
             console_level = getattr(logging, level_str, logging.INFO)
         except Exception:
-            # 如果配置获取失败，使用默认级别
+            # If configuration retrieval fails, use default level
             pass
 
-        # 控制台处理器
+        # Console handler
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(console_level)
         console_formatter = logging.Formatter(
@@ -133,7 +133,7 @@ class PktMaskLogger:
     def log_exception(
         self, logger_name: str, exc: Exception, context: Optional[Dict[str, Any]] = None
     ):
-        """记录异常信息"""
+        """Log exception information with context"""
         logger = self.get_logger(logger_name)
         context_str = ""
         if context:
@@ -146,18 +146,18 @@ class PktMaskLogger:
     def log_performance(
         self, logger_name: str, operation: str, duration: float, **kwargs
     ):
-        """记录性能信息"""
+        """Log performance information for operations"""
         logger = self.get_logger(logger_name)
         extra_info = " ".join(f"{k}={v}" for k, v in kwargs.items())
         logger.info(f"Performance: {operation} took {duration:.3f}s {extra_info}")
 
 
-# 全局日志管理器实例
+# Global logger manager instance
 _logger_manager = PktMaskLogger()
 
 
 def get_logger(name: str = "root") -> logging.Logger:
-    """获取日志记录器的便利函数"""
+    """Convenience function to get a logger instance"""
     return _logger_manager.get_logger(name)
 
 

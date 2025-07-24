@@ -80,10 +80,10 @@ class ErrorHandler:
         else:
             error = create_error_from_exception(exception, custom_data)
 
-        # 更新严重性统计
+        # Update severity statistics
         self.stats["severity_counts"][error.severity.name] += 1
 
-        # 创建错误上下文
+        # Create error context
         context = create_error_context(
             exception=error,
             operation=operation,
@@ -92,25 +92,25 @@ class ErrorHandler:
             custom_data=custom_data,
         )
 
-        # 记录错误
+        # Log error
         self._log_error(error, context)
 
-        # 尝试恢复
+        # Attempt recovery
         recovery_result = None
         if auto_recover and self.auto_recovery_enabled:
             recovery_result = self._attempt_recovery(error, context)
 
-        # 生成错误报告
+        # Generate error report
         self._generate_error_report(error, context, recovery_result)
 
-        # 通知用户（如果需要）
+        # Notify user (if needed)
         if self.user_notification_enabled:
             self._notify_user(error, context, recovery_result)
 
-        # 调用错误回调
+        # Call error callbacks
         self._call_error_callbacks(error, context, recovery_result)
 
-        # 更新统计
+        # Update statistics
         if recovery_result and recovery_result.success:
             self.stats["recovered_errors"] += 1
 

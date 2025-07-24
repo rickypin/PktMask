@@ -44,7 +44,7 @@ class PipelineManager:
     # === Use statistics attribute directly, no additional accessors needed ===
 
     def _setup_timer(self):
-        """Set up timer"""
+        """Set up processing time tracking timer"""
         self.main_window.time_elapsed = 0
         self.main_window.timer = QTimer()
         self.main_window.timer.timeout.connect(self.main_window.update_time_elapsed)
@@ -179,7 +179,7 @@ class PipelineManager:
         self.start_processing(executor)
 
     def stop_pipeline_processing(self):
-        """Stop processing flow"""
+        """Stop the processing pipeline and clean up resources"""
         self.main_window.user_stopped = True  # Set stop flag
         self.main_window.update_log("--- Stopping pipeline... ---")
 
@@ -229,8 +229,8 @@ class PipelineManager:
             self.main_window.start_proc_btn.setText("Start")
 
     def start_processing(self, executor):
-        """Start processing thread"""
-        # 导入ServicePipelineThread（避免循环导入）
+        """Start processing thread with the given executor"""
+        # Import ServicePipelineThread (avoid circular import)
         from ..main_window import ServicePipelineThread
 
         # Create processing thread

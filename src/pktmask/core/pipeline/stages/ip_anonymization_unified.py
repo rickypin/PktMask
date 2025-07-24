@@ -1,8 +1,8 @@
 """
-统一IP匿名化阶段 - 纯StageBase实现
+Unified IP Anonymization Stage - Pure StageBase Implementation
 
-完全移除BaseProcessor依赖，直接集成HierarchicalAnonymizationStrategy逻辑。
-消除适配器层，统一返回StageStats格式。
+Completely removes BaseProcessor dependency, directly integrates HierarchicalAnonymizationStrategy logic.
+Eliminates adapter layer, unified StageStats format return.
 """
 
 from __future__ import annotations
@@ -272,15 +272,15 @@ class AnonymizationStage(StageBase):
             raise ProcessingError(error_msg) from e
 
     def get_display_name(self) -> str:
-        """获取显示名称"""
+        """Get display name for UI presentation"""
         return "Anonymize IPs"
 
     def get_description(self) -> str:
-        """获取描述"""
+        """Get stage description for UI and documentation"""
         return "Anonymize IP addresses in packets while maintaining subnet structure consistency"
 
     def get_ip_mappings(self) -> dict:
-        """获取IP映射表"""
+        """Get IP address mapping table for analysis and reporting"""
         if self._strategy:
             return self._strategy.get_ip_map()
         return {}
@@ -288,13 +288,13 @@ class AnonymizationStage(StageBase):
     def prepare_for_directory(
         self, directory: str | Path, all_files: List[str]
     ) -> None:
-        """目录级预处理 - 构建全局IP映射"""
+        """Directory-level preprocessing - build global IP mapping"""
         if not self._initialized:
             self.initialize()
 
         self.logger.info(f"Preparing IP mapping for directory: {directory}")
 
-        # 使用策略的build_mapping_from_directory方法构建IP映射
+        # Use strategy's build_mapping_from_directory method to build IP mapping
         self._strategy.build_mapping_from_directory(all_files)
 
         ip_count = len(self._strategy.get_ip_map())
@@ -303,11 +303,11 @@ class AnonymizationStage(StageBase):
         )
 
     def get_stats(self) -> Dict[str, Any]:
-        """获取处理统计信息"""
+        """Get processing statistics for analysis and reporting"""
         return self._stats.copy()
 
     def reset_stats(self):
-        """重置统计信息"""
+        """Reset processing statistics to initial state"""
         self._stats.clear()
 
     def _cleanup_stage_specific(self) -> None:

@@ -1,8 +1,8 @@
 """
-统一去重阶段 - 纯StageBase实现
+Unified Deduplication Stage - Pure StageBase Implementation
 
-完全移除BaseProcessor依赖，直接集成SHA256哈希去重算法。
-消除适配器层，统一返回StageStats格式。
+Completely removes BaseProcessor dependency, directly integrates SHA256 hash deduplication algorithm.
+Eliminates adapter layer, unified StageStats format return.
 """
 
 from __future__ import annotations
@@ -148,7 +148,7 @@ class DeduplicationStage(StageBase):
 
             self.logger.info(f"Loaded {total_packets} packets from {input_path}")
 
-            # 去重处理 with memory monitoring and error handling
+            # Deduplication processing with memory monitoring and error handling
             unique_packets = []
             removed_count = 0
 
@@ -286,7 +286,7 @@ class DeduplicationStage(StageBase):
         self.logger.debug("DeduplicationStage specific cleanup completed")
 
     def get_description(self) -> str:
-        """获取描述"""
+        """Get stage description for UI and documentation"""
         return "Remove completely duplicate packets to reduce file size"
 
     def _generate_packet_hash(self, packet) -> str:
