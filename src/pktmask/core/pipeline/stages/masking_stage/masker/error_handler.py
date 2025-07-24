@@ -1,7 +1,7 @@
 """
-错误处理和恢复系统
+Error handling and recovery system
 
-提供完善的异常处理、错误恢复和错误报告机制。
+Provides comprehensive exception handling, error recovery and error reporting mechanisms.
 """
 
 from __future__ import annotations
@@ -16,24 +16,24 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 
 class ErrorSeverity(Enum):
-    """错误严重程度"""
+    """Error severity levels"""
 
-    LOW = "low"  # 轻微错误，可以继续处理
-    MEDIUM = "medium"  # 中等错误，需要警告但可以恢复
-    HIGH = "high"  # 严重错误，需要停止当前操作
-    CRITICAL = "critical"  # 致命错误，需要立即停止所有操作
+    LOW = "low"  # Minor error, can continue processing
+    MEDIUM = "medium"  # Medium error, needs warning but can recover
+    HIGH = "high"  # Serious error, needs to stop current operation
+    CRITICAL = "critical"  # Fatal error, needs to stop all operations immediately
 
 
 class ErrorCategory(Enum):
-    """错误类别"""
+    """Error categories"""
 
-    INPUT_ERROR = "input_error"  # 输入文件错误
-    OUTPUT_ERROR = "output_error"  # 输出文件错误
-    PROCESSING_ERROR = "processing_error"  # 处理过程错误
-    MEMORY_ERROR = "memory_error"  # 内存相关错误
-    NETWORK_ERROR = "network_error"  # 网络相关错误
-    SYSTEM_ERROR = "system_error"  # 系统级错误
-    VALIDATION_ERROR = "validation_error"  # 数据验证错误
+    INPUT_ERROR = "input_error"  # Input file error
+    OUTPUT_ERROR = "output_error"  # Output file error
+    PROCESSING_ERROR = "processing_error"  # Processing error
+    MEMORY_ERROR = "memory_error"  # Memory related error
+    NETWORK_ERROR = "network_error"  # Network related error
+    SYSTEM_ERROR = "system_error"  # System level error
+    VALIDATION_ERROR = "validation_error"  # Data validation error
 
 
 @dataclass
@@ -53,13 +53,13 @@ class ErrorInfo:
 
 
 class ErrorRecoveryHandler:
-    """错误恢复处理器
+    """Error recovery handler
 
-    提供完善的异常处理、错误恢复和错误报告机制。
+    Provides comprehensive exception handling, error recovery and error reporting mechanisms.
     """
 
     def __init__(self, config: Dict[str, Any]):
-        """初始化错误处理器
+        """Initialize error handler
 
         Args:
             config: 配置字典
@@ -101,16 +101,16 @@ class ErrorRecoveryHandler:
         """处理错误
 
         Args:
-            error: 错误对象或错误消息
-            severity: 错误严重程度
-            category: 错误类别
-            context: 错误上下文信息
-            attempt_recovery: 是否尝试恢复
+            error: Error object or error message
+            severity: Error severity level
+            category: Error category
+            context: Error context information
+            attempt_recovery: Whether to attempt recovery
 
         Returns:
-            ErrorInfo: 错误信息对象
+            ErrorInfo: Error information object
         """
-        # 创建错误信息
+        # Create error information
         error_info = ErrorInfo(
             timestamp=time.time(),
             severity=severity,
@@ -123,25 +123,25 @@ class ErrorRecoveryHandler:
             context=context or {},
         )
 
-        # 记录错误
+        # Log error
         self._log_error(error_info)
 
-        # 更新统计
+        # Update statistics
         self.total_errors += 1
         self.error_count_by_category[category] = (
             self.error_count_by_category.get(category, 0) + 1
         )
 
-        # 添加到历史记录
+        # Add to history
         self.error_history.append(error_info)
 
-        # 尝试恢复
+        # Attempt recovery
         if attempt_recovery and self.enable_auto_recovery:
             self._attempt_recovery(error_info)
 
-        # 检查是否需要快速失败
+        # Check if fast failure is needed
         if self.fail_fast and severity in [ErrorSeverity.HIGH, ErrorSeverity.CRITICAL]:
-            raise RuntimeError(f"快速失败模式: {error_info.message}")
+            raise RuntimeError(f"Fast failure mode: {error_info.message}")
 
         return error_info
 
@@ -167,19 +167,19 @@ class ErrorRecoveryHandler:
         delay: Optional[float] = None,
         error_category: ErrorCategory = ErrorCategory.PROCESSING_ERROR,
     ) -> Any:
-        """重试操作
+        """Retry operation
 
         Args:
-            operation: 要重试的操作
-            max_attempts: 最大重试次数
-            delay: 重试延迟
-            error_category: 错误类别
+            operation: Operation to retry
+            max_attempts: Maximum retry attempts
+            delay: Retry delay
+            error_category: Error category
 
         Returns:
-            操作结果
+            Operation result
 
         Raises:
-            最后一次尝试的异常
+            Exception from last attempt
         """
         max_attempts = max_attempts or self.max_retry_attempts
         delay = delay or self.retry_delay
@@ -190,13 +190,13 @@ class ErrorRecoveryHandler:
             try:
                 result = operation()
                 if attempt > 0:
-                    self.logger.info(f"操作在第{attempt + 1}次尝试后成功")
+                    self.logger.info(f"Operation succeeded after {attempt + 1} attempts")
                 return result
             except Exception as e:
                 last_exception = e
 
                 if attempt < max_attempts - 1:
-                    self.logger.warning(f"操作失败，第{attempt + 1}次尝试: {e}")
+                    self.logger.warning(f"Operation failed, attempt {attempt + 1}: {e}")
                     self.handle_error(
                         e,
                         ErrorSeverity.MEDIUM,
@@ -208,7 +208,7 @@ class ErrorRecoveryHandler:
                     if delay > 0:
                         time.sleep(delay)
                 else:
-                    self.logger.error(f"操作在{max_attempts}次尝试后仍然失败: {e}")
+                    self.logger.error(f"Operation failed after {max_attempts} attempts: {e}")
                     self.handle_error(
                         e,
                         ErrorSeverity.HIGH,
@@ -219,14 +219,14 @@ class ErrorRecoveryHandler:
         raise last_exception
 
     def _log_error(self, error_info: ErrorInfo):
-        """记录错误日志"""
+        """Log error information"""
         log_message = f"[{error_info.category.value.upper()}] {error_info.message}"
 
         if error_info.context:
             context_str = ", ".join(f"{k}={v}" for k, v in error_info.context.items())
-            log_message += f" (上下文: {context_str})"
+            log_message += f" (Context: {context_str})"
 
-        # 根据严重程度选择日志级别
+        # Select log level based on severity
         if error_info.severity == ErrorSeverity.LOW:
             self.logger.debug(log_message)
         elif error_info.severity == ErrorSeverity.MEDIUM:
@@ -236,16 +236,16 @@ class ErrorRecoveryHandler:
         else:  # CRITICAL
             self.logger.critical(log_message)
 
-        # 如果有异常和堆栈跟踪，记录详细信息
+        # If there are exceptions and stack traces, log detailed information
         if error_info.exception and error_info.traceback_str:
-            self.logger.debug(f"异常详情:\n{error_info.traceback_str}")
+            self.logger.debug(f"Exception details:\n{error_info.traceback_str}")
 
-        # 写入错误日志文件
+        # Write to error log file
         if self.error_log_file:
             self._write_error_log_file(error_info)
 
     def _attempt_recovery(self, error_info: ErrorInfo):
-        """尝试错误恢复"""
+        """Attempt error recovery"""
         error_info.recovery_attempted = True
 
         # 获取对应类别的恢复处理器
@@ -283,18 +283,18 @@ class ErrorRecoveryHandler:
                 return False
 
         def file_error_recovery(error_info: ErrorInfo) -> bool:
-            """文件错误恢复"""
+            """File error recovery"""
             try:
-                # 检查文件路径是否存在
+                # Check if file path exists
                 if "file_path" in error_info.context:
                     file_path = Path(error_info.context["file_path"])
                     if not file_path.exists():
-                        self.logger.warning(f"文件不存在: {file_path}")
+                        self.logger.warning(f"File does not exist: {file_path}")
                         return False
 
-                    # 检查文件权限
+                    # Check file permissions
                     if not file_path.is_file() or not file_path.stat().st_size > 0:
-                        self.logger.warning(f"文件无效或为空: {file_path}")
+                        self.logger.warning(f"File is invalid or empty: {file_path}")
                         return False
 
                 return True
@@ -309,7 +309,7 @@ class ErrorRecoveryHandler:
         self.register_recovery_handler(ErrorCategory.OUTPUT_ERROR, file_error_recovery)
 
     def _write_error_log_file(self, error_info: ErrorInfo):
-        """写入错误日志文件"""
+        """Write error log file"""
         try:
             log_file = Path(self.error_log_file)
             log_file.parent.mkdir(parents=True, exist_ok=True)

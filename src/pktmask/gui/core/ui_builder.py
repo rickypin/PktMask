@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-UI构建器 - 专注于界面构建和管理
+UI Builder - Focused on interface construction and management
 
-合并原有的 UIManager 和 DialogManager 功能，
-提供简化的界面构建和对话框管理接口。
+Merges original UIManager and DialogManager functionality,
+providing simplified interface construction and dialog management interface.
 """
 
 from typing import List
@@ -36,13 +36,13 @@ from ..styles.stylesheet import generate_stylesheet
 
 
 class UIBuilder:
-    """UI构建器 - 专注于界面构建和管理
+    """UI Builder - Focused on interface construction and management
 
-    职责：
-    1. 界面构建（布局、控件创建）
-    2. 样式管理（主题、样式表）
-    3. 对话框管理（各种弹窗）
-    4. 菜单管理（菜单栏、上下文菜单）
+    Responsibilities:
+    1. Interface construction (layout, widget creation)
+    2. Style management (themes, stylesheets)
+    3. Dialog management (various popups)
+    4. Menu management (menu bar, context menus)
     """
 
     def __init__(self, main_window):
@@ -173,11 +173,11 @@ class UIBuilder:
         layout.addWidget(self.main_window.output_path_label, 1)
 
     def _create_options_group(self):
-        """创建选项组"""
+        """Create options group"""
         self.main_window.options_group = QGroupBox("Processing Options")
         layout = QVBoxLayout(self.main_window.options_group)
 
-        # 处理选项（使用标准GUI命名）
+        # Processing options (using standard GUI naming)
         self.main_window.anonymize_ips_cb = QCheckBox("Anonymize IPs")
         self.main_window.anonymize_ips_cb.setChecked(True)
 
@@ -238,42 +238,42 @@ class UIBuilder:
         layout.addWidget(self.main_window.summary_text)
 
     def _apply_initial_styles(self):
-        """应用初始样式"""
+        """Apply initial styles"""
         theme = self._get_current_theme()
         self.main_window.setStyleSheet(generate_stylesheet(theme))
 
     def _check_and_display_dependencies(self):
-        """检查依赖并在GUI中显示状态"""
+        """Check dependencies and display status in GUI"""
         try:
             from pktmask.infrastructure.dependency import DependencyChecker
 
             checker = DependencyChecker()
 
             if not checker.are_dependencies_satisfied():
-                # 依赖不满足时显示状态信息
+                # Display status information when dependencies are not satisfied
                 status_messages = checker.get_status_messages()
                 self._display_dependency_status(status_messages)
-            # 依赖满足时不显示任何额外信息（保持界面清洁）
+            # Don't display any additional information when dependencies are satisfied (keep interface clean)
 
         except Exception as e:
             self._logger.error(f"Dependency check failed: {e}")
-            # 如果依赖检查失败，显示通用错误信息
+            # If dependency check fails, display generic error information
             self.main_window.log_text.append("⚠️  Unable to verify system dependencies")
             self.main_window.log_text.append("   Some features may not work properly")
             self.main_window.log_text.append("")
 
     def _display_dependency_status(self, messages: List[str]):
-        """在Log模块中显示依赖状态"""
+        """Display dependency status in Log module"""
         if hasattr(self.main_window, "log_text"):
-            # 添加依赖状态标题
+            # Add dependency status title
             self.main_window.log_text.append("⚠️  Dependency Status Check:")
             self.main_window.log_text.append("-" * 40)
 
-            # 添加具体状态信息
+            # Add specific status information
             for message in messages:
                 self.main_window.log_text.append(f"❌ {message}")
 
-            # 添加解决建议
+            # Add resolution suggestions
             self.main_window.log_text.append("")
             self.main_window.log_text.append("💡 Installation Guide:")
             self.main_window.log_text.append("   • Install Wireshark (includes tshark)")
@@ -286,7 +286,7 @@ class UIBuilder:
             self.main_window.log_text.append("")
 
     def _show_initial_guides(self):
-        """显示初始指引"""
+        """Show initial guides"""
         self.main_window.log_text.append("🚀 Welcome to PktMask!")
         self.main_window.log_text.append("")
         self.main_window.log_text.append("┌─ Quick Start Guide ──────────┐")
@@ -303,19 +303,19 @@ class UIBuilder:
 
         self.main_window.summary_text.append("Processing summary will appear here...")
 
-    # 对话框管理方法
+    # Dialog management methods
     def show_error_dialog(self, title: str, message: str):
-        """显示错误对话框"""
+        """Show error dialog"""
         QMessageBox.critical(self.main_window, title, message)
         self._logger.error(f"Error dialog: {title} - {message}")
 
     def show_info_dialog(self, title: str, message: str):
-        """显示信息对话框"""
+        """Show information dialog"""
         QMessageBox.information(self.main_window, title, message)
         self._logger.info(f"Info dialog: {title} - {message}")
 
     def show_question_dialog(self, title: str, message: str) -> bool:
-        """显示确认对话框"""
+        """Show confirmation dialog"""
         reply = QMessageBox.question(
             self.main_window,
             title,
@@ -379,40 +379,40 @@ class UIBuilder:
         """
         QMessageBox.about(self.main_window, "About PktMask", about_text)
 
-    # 样式管理方法
+    # Style management methods
     def _get_current_theme(self) -> str:
-        """获取当前主题"""
+        """Get current theme"""
         bg_color = self.main_window.palette().color(self.main_window.backgroundRole())
         return "dark" if bg_color.lightness() < 128 else "light"
 
     def apply_theme_change(self, event: QEvent):
-        """处理主题变化"""
+        """Handle theme changes"""
         if event.type() == QEvent.Type.ApplicationPaletteChange:
             theme = self._get_current_theme()
             self.main_window.setStyleSheet(generate_stylesheet(theme))
 
     def update_start_button_state(self):
-        """更新开始按钮状态"""
-        # 检查是否选择了目录
+        """Update start button state"""
+        # Check if directory is selected
         has_input = hasattr(self.main_window, "base_dir") and self.main_window.base_dir
 
-        # 检查是否选择了处理选项
+        # Check if processing options are selected
         has_options = (
             self.main_window.anonymize_ips_cb.isChecked()
             or self.main_window.remove_dupes_cb.isChecked()
             or self.main_window.mask_payloads_cb.isChecked()
         )
 
-        # 更新按钮状态
+        # Update button state
         self.main_window.start_proc_btn.setEnabled(has_input and has_options)
 
-    # 事件处理方法
+    # Event handling methods
     def _handle_select_input(self):
-        """处理选择输入目录"""
+        """Handle input directory selection"""
         if hasattr(self.main_window, "data_service"):
             self.main_window.data_service.select_input_directory()
 
     def _handle_select_output(self):
-        """处理选择输出目录"""
+        """Handle output directory selection"""
         if hasattr(self.main_window, "data_service"):
             self.main_window.data_service.select_output_directory()

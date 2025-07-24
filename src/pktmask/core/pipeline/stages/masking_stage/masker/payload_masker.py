@@ -1,7 +1,7 @@
 """
-通用载荷掩码处理器
+Universal Payload Masking Processor
 
-基于 TCP_MARKER_REFERENCE 算法的通用载荷掩码处理器。
+Universal payload masking processor based on TCP_MARKER_REFERENCE algorithm.
 """
 
 from __future__ import annotations
@@ -17,11 +17,11 @@ try:
 
     SCAPY_AVAILABLE = True
 except ImportError:
-    # 在测试环境中可能没有 scapy
+    # Scapy may not be available in test environment
     PcapReader = PcapWriter = IP = TCP = Raw = None
     SCAPY_AVAILABLE = False
 
-# 尝试导入隧道协议支持（可选）
+# Try to import tunnel protocol support (optional)
 try:
     from scapy.contrib import geneve, vxlan
 except ImportError:
@@ -36,33 +36,33 @@ from .stats import MaskingStats
 
 
 class PayloadMasker:
-    """载荷掩码处理器
+    """Payload masking processor
 
-    基于 TCP_MARKER_REFERENCE.md 算法实现的通用载荷掩码处理器。
-    支持多层封装、序列号回绕处理和精确的保留规则应用。
+    Universal payload masking processor based on TCP_MARKER_REFERENCE.md algorithm.
+    Supports multi-layer encapsulation, sequence number wraparound handling and precise keep rule application.
     """
 
     def __init__(self, config: Dict[str, Any]):
-        """初始化载荷掩码处理器
+        """Initialize payload masking processor
 
         Args:
-            config: 配置字典
+            config: Configuration dictionary
         """
         self.config = config
         self.logger = logging.getLogger(
             f"{self.__class__.__module__}.{self.__class__.__name__}"
         )
 
-        # 注释：移除序列号状态管理，直接使用绝对序列号
+        # Note: Remove sequence number state management, use absolute sequence numbers directly
         # self.seq_state = defaultdict(lambda: {"last": None, "epoch": 0})
 
-        # 流方向识别状态管理（与Marker模块保持一致）
-        self.flow_directions = {}  # 存储每个流的方向信息
-        self.stream_id_cache = {}  # 缓存数据包的stream_id
-        self.flow_id_counter = 0  # 流ID计数器，模拟tshark的tcp.stream
-        self.tuple_to_stream_id = {}  # 五元组到stream_id的映射
+        # Flow direction identification state management (consistent with Marker module)
+        self.flow_directions = {}  # Store direction information for each flow
+        self.stream_id_cache = {}  # Cache stream_id for packets
+        self.flow_id_counter = 0  # Flow ID counter, simulating tshark's tcp.stream
+        self.tuple_to_stream_id = {}  # Mapping from five-tuple to stream_id
 
-        # 配置参数
+        # Configuration parameters
         self.chunk_size = config.get("chunk_size", 1000)
         self.verify_checksums = config.get("verify_checksums", True)
         self.mask_byte_value = config.get("mask_byte_value", 0x00)
@@ -75,7 +75,7 @@ class PayloadMasker:
             "max_memory_usage", 2 * 1024 * 1024 * 1024
         )  # 2GB
 
-        # 初始化统一资源管理器
+        # Initialize unified resource manager
         resource_config = config.get("resource_manager", {})
         resource_config.setdefault(
             "memory_monitor",
@@ -91,18 +91,18 @@ class PayloadMasker:
         )
         self.resource_manager = ResourceManager(resource_config)
 
-        # 初始化错误处理器
+        # Initialize error handler
         error_config = config.get("error_handler", {})
         error_config.setdefault("max_retry_attempts", 3)
         error_config.setdefault("enable_auto_recovery", True)
         self.error_handler = ErrorRecoveryHandler(error_config)
 
-        # 初始化数据验证器
+        # Initialize data validator
         validator_config = config.get("data_validator", {})
         validator_config.setdefault("enable_checksum_validation", self.verify_checksums)
         self.data_validator = DataValidator(validator_config)
 
-        # 初始化降级处理器
+        # Initialize fallback handler
         fallback_config = config.get("fallback_handler", {})
         fallback_config.setdefault("enable_fallback", True)
         self.fallback_handler = FallbackHandler(fallback_config)
@@ -112,7 +112,7 @@ class PayloadMasker:
             self._handle_memory_pressure_unified
         )
 
-        # 注册自定义错误恢复处理器
+        # Register custom error recovery handlers
         self._register_custom_recovery_handlers()
 
         memory_limit_mb = resource_config.get("memory_monitor", {}).get("max_memory_mb", 2048)
@@ -122,27 +122,27 @@ class PayloadMasker:
             f"memory_limit={memory_limit_mb}MB"
         )
 
-        # 检查 scapy 可用性
+        # Check scapy availability
         if not SCAPY_AVAILABLE:
             self.logger.warning("Scapy unavailable, some features may be limited")
 
     def _reset_processing_state(self) -> None:
-        """重置处理状态以避免多文件处理时的状态污染
+        """Reset processing state to avoid state pollution during multi-file processing
 
-        在每次apply_masking调用开始时重置所有可能导致状态污染的变量。
-        这确保了每个文件的处理都是独立的，不会受到之前文件处理的影响。
+        Reset all variables that may cause state pollution at the beginning of each apply_masking call.
+        This ensures that each file processing is independent and not affected by previous file processing.
         """
         self.logger.debug("Resetting PayloadMasker processing state")
 
-        # 重置流方向识别状态
+        # Reset flow direction identification state
         self.flow_directions.clear()
         self.stream_id_cache.clear()
         self.tuple_to_stream_id.clear()
 
-        # 重置流ID计数器
+        # Reset flow ID counter
         self.flow_id_counter = 0
 
-        # 清除当前统计信息引用
+        # Clear current statistics reference
         self._current_stats = None
 
         # 重置错误处理器状态
@@ -153,7 +153,7 @@ class PayloadMasker:
         if hasattr(self.data_validator, "reset"):
             self.data_validator.reset()
 
-        # 重置降级处理器状态
+        # Reset fallback handler state
         if hasattr(self.fallback_handler, "reset"):
             self.fallback_handler.reset()
 
@@ -179,7 +179,7 @@ class PayloadMasker:
         self.logger.info(f"Starting mask application: {input_path} -> {output_path}")
         start_time = time.time()
 
-        # 重置状态以避免多文件处理时的状态污染
+        # Reset state to avoid state pollution during multi-file processing
         self._reset_processing_state()
 
         # 创建统计信息
@@ -187,7 +187,7 @@ class PayloadMasker:
             success=True, input_file=input_path, output_file=output_path
         )
 
-        # 设置当前统计信息，以便在掩码处理过程中更新
+        # Set current statistics for updates during masking process
         self._current_stats = stats
 
         try:
@@ -213,7 +213,7 @@ class PayloadMasker:
             for warning in input_validation.warnings:
                 self.logger.warning(f"Input file warning: {warning}")
 
-            # 检查 scapy 可用性
+            # Check scapy availability
             if not SCAPY_AVAILABLE:
                 error_msg = "Scapy unavailable, cannot process pcap files"
                 self.error_handler.handle_error(
@@ -224,7 +224,7 @@ class PayloadMasker:
                 )
                 raise RuntimeError(error_msg)
 
-            # 1. 预处理保留规则
+            # 1. Preprocess keep rules
             self.logger.info("Preprocessing keep rules...")
             rule_lookup = self.error_handler.retry_operation(
                 lambda: self._preprocess_keep_rules(keep_rules),
@@ -234,7 +234,7 @@ class PayloadMasker:
                 f"Preprocessing completed, {len(rule_lookup)} flow directions total"
             )
 
-            # 2. 逐包处理载荷 - 优化的流式处理
+            # 2. Process payload packet by packet - optimized streaming processing
             self.logger.info("Starting packet-by-packet processing...")
 
             # 性能监控
@@ -244,7 +244,7 @@ class PayloadMasker:
                 process = psutil.Process()
                 process.memory_info().rss
 
-            # 使用统一的缓冲区管理
+            # Use unified buffer management
             packet_buffer = self.resource_manager.create_buffer("packet_buffer")
 
             # 使用错误处理包装文件操作
@@ -257,7 +257,7 @@ class PayloadMasker:
                         stats.processed_packets += 1
 
                         try:
-                            # 处理单个数据包
+                            # Process single packet
                             modified_packet, packet_modified = self._process_packet(
                                 packet, rule_lookup
                             )
@@ -269,19 +269,19 @@ class PayloadMasker:
                             packet_buffer.append(modified_packet)
 
                         except Exception as e:
-                            # 处理单个数据包的错误
+                            # Handle single packet error
                             self.error_handler.handle_error(
                                 e,
                                 ErrorSeverity.MEDIUM,
                                 ErrorCategory.PROCESSING_ERROR,
                                 {"packet_number": stats.processed_packets},
                             )
-                            # 对于单个数据包错误，添加原始数据包以保持完整性
+                            # For single packet errors, add original packet to maintain integrity
                             packet_buffer.append(packet)
 
-                        # 统一的缓冲区管理：检查是否需要刷新缓冲区
+                        # Unified buffer management: Check if buffer needs to be flushed
                         if self.resource_manager.should_flush_buffer("packet_buffer"):
-                            # 刷新缓冲区并写入
+                            # Flush buffer and write
                             buffered_packets = self.resource_manager.flush_buffer(
                                 "packet_buffer"
                             )
@@ -308,7 +308,7 @@ class PayloadMasker:
                     if remaining_packets:
                         self._write_packets_to_file(remaining_packets, writer)
 
-            # 执行文件处理，带重试机制
+            # Execute file processing with retry mechanism
             self.error_handler.retry_operation(
                 process_file, error_category=ErrorCategory.INPUT_ERROR
             )
@@ -329,7 +329,7 @@ class PayloadMasker:
                 )
                 stats.add_error(error_msg)
 
-            # 记录处理状态警告
+            # Log processing state warnings
             for warning in processing_validation.warnings:
                 self.logger.warning(f"Processing state warning: {warning}")
 
@@ -386,7 +386,7 @@ class PayloadMasker:
                 )
 
         except Exception as e:
-            # 处理顶级异常
+            # Handle top-level exception
             error_info = self.error_handler.handle_error(
                 e,
                 ErrorSeverity.HIGH,
@@ -396,7 +396,7 @@ class PayloadMasker:
 
             self.logger.error(f"Mask application failed: {e}")
 
-            # 尝试降级处理
+            # Attempt fallback processing
             fallback_mode = self.fallback_handler.get_recommended_fallback_mode(
                 {
                     "error_category": ErrorCategory.PROCESSING_ERROR.value,
@@ -417,7 +417,7 @@ class PayloadMasker:
                 self.logger.info(
                     f"Fallback processing succeeded: {fallback_result.message}"
                 )
-                stats.success = True  # 降级处理成功
+                stats.success = True  # Fallback processing succeeded
                 stats.add_error(
                     f"Original processing failed, fallback processing succeeded: {fallback_result.message}"
                 )
@@ -439,7 +439,7 @@ class PayloadMasker:
             stats.error_details = error_summary
 
         finally:
-            # 清理当前统计信息引用
+            # Clear current statistics reference
             self._current_stats = None
 
         return stats
@@ -447,21 +447,21 @@ class PayloadMasker:
     def _preprocess_keep_rules(
         self, keep_rules: KeepRuleSet
     ) -> Dict[str, Dict[str, Dict]]:
-        """预处理保留规则，构建高效查找结构
+        """Preprocess keep rules to build efficient lookup structure
 
-        基于 TCP_MARKER_REFERENCE.md 的区间预编算法，为每个流方向构建优化的查找结构。
+        Based on TCP_MARKER_REFERENCE.md interval pre-computation algorithm, build optimized lookup structure for each flow direction.
 
         Args:
-            keep_rules: 保留规则集合
+            keep_rules: Keep rule set
 
         Returns:
-            Dict[流标识, Dict[方向, 查找结构]]
+            Dict[flow_id, Dict[direction, lookup_structure]]
         """
         rule_lookup = defaultdict(
             lambda: defaultdict(lambda: {"header_only": [], "full_preserve": []})
         )
 
-        # 按流、方向和保留策略分组规则
+        # Group rules by flow, direction and preservation strategy
         for rule in keep_rules.rules:
             preserve_strategy = rule.metadata.get("preserve_strategy", "full_preserve")
 
@@ -469,7 +469,7 @@ class PayloadMasker:
             if preserve_strategy == "full_message":
                 preserve_strategy = "full_preserve"
             elif preserve_strategy not in ["header_only", "full_preserve"]:
-                # 对于未知策略，默认使用 full_preserve
+                # For unknown strategies, default to full_preserve
                 self.logger.warning(
                     f"Unknown preserve strategy '{preserve_strategy}', using 'full_preserve' instead"
                 )
@@ -485,7 +485,7 @@ class PayloadMasker:
             processed_lookup[stream_id] = {}
 
             for direction, strategy_groups in directions.items():
-                # 分别处理不同保留策略的规则
+                # Process rules for different preservation strategies separately
                 header_only_ranges = strategy_groups["header_only"]
                 full_preserve_ranges = strategy_groups["full_preserve"]
 
@@ -563,11 +563,11 @@ class PayloadMasker:
         return merged
 
     def _process_packet(self, packet, rule_lookup: Dict) -> Tuple[Any, bool]:
-        """处理单个数据包
+        """Process single packet
 
         Args:
-            packet: 原始数据包
-            rule_lookup: 预处理的规则查找结构
+            packet: Original packet
+            rule_lookup: Preprocessed rule lookup structure
 
         Returns:
             Tuple[processed packet, whether modified]
@@ -603,14 +603,14 @@ class PayloadMasker:
             seq_start = tcp_layer.seq
             seq_end = tcp_layer.seq + len(payload)
 
-            # 获取匹配的规则数据，如果没有匹配规则则使用空规则数据
+            # Get matching rule data, use empty rule data if no matching rules
             if stream_id in rule_lookup and direction in rule_lookup[stream_id]:
                 rule_data = rule_lookup[stream_id][direction]
                 self.logger.debug(
                     f"Found matching rule: stream_id={stream_id}, direction={direction}"
                 )
             else:
-                # 没有匹配的规则，使用空规则数据（将导致全掩码处理）
+                # No matching rules, use empty rule data (will result in full masking)
                 rule_data = {"header_only_ranges": [], "full_preserve_ranges": []}
                 available_streams = list(rule_lookup.keys())
                 available_directions = {}
@@ -670,7 +670,7 @@ class PayloadMasker:
         max_depth = 10  # 防止无限递归
         depth = 0
 
-        # 递归遍历所有层，支持多种隧道协议
+        # Recursively traverse all layers, supporting multiple tunnel protocols
         while current and depth < max_depth:
             depth += 1
 
@@ -683,7 +683,7 @@ class PayloadMasker:
                 tcp_layer = current[TCP]
                 break
 
-            # 处理特殊的隧道协议
+            # Handle special tunnel protocols
             if hasattr(current, "name"):
                 layer_name = current.name
 
@@ -735,8 +735,8 @@ class PayloadMasker:
         Returns:
             流标识字符串（数字形式，如"0", "1"等）
         """
-        # Marker模块使用tshark的tcp.stream字段，返回数字形式的stream_id
-        # 我们需要模拟相同的逻辑：为每个唯一的TCP流分配一个递增的数字ID
+        # Marker module uses tshark's tcp.stream field, returns numeric stream_id
+        # We need to simulate the same logic: assign an incremental numeric ID for each unique TCP flow
 
         src_ip = str(ip_layer.src)
         dst_ip = str(ip_layer.dst)
@@ -749,11 +749,11 @@ class PayloadMasker:
         else:
             tuple_key = f"{dst_ip}:{dst_port}-{src_ip}:{src_port}"
 
-        # 检查是否已为此流分配了stream_id
+        # Check if stream_id has been assigned for this flow
         if tuple_key in self.tuple_to_stream_id:
             return self.tuple_to_stream_id[tuple_key]
 
-        # 为新流分配数字ID
+        # Assign numeric ID for new flow
         stream_id = str(self.flow_id_counter)
         self.tuple_to_stream_id[tuple_key] = stream_id
         self.flow_id_counter += 1
@@ -817,23 +817,23 @@ class PayloadMasker:
     def _apply_keep_rules(
         self, payload: bytes, seg_start: int, seg_end: int, rule_data: Dict
     ) -> bytes:
-        """应用保留规则到载荷
+        """Apply keep rules to payload
 
-        基于 TCP_MARKER_REFERENCE.md 的核心算法实现，使用优化的二分查找。
+        Core algorithm implementation based on TCP_MARKER_REFERENCE.md, using optimized binary search.
 
-        修改说明：现在总是返回处理后的载荷，实现默认全掩码策略。
-        - 如果有保留规则，则根据规则选择性保留
-        - 如果无保留规则，则返回全零载荷
-        - 不再返回None，确保所有TCP载荷都被处理
+        Modification note: Now always returns processed payload, implementing default full masking strategy.
+        - If there are keep rules, selectively preserve according to rules
+        - If no keep rules, return all-zero payload
+        - No longer returns None, ensures all TCP payloads are processed
 
         Args:
-            payload: 原始载荷
-            seg_start: 段起始序列号
-            seg_end: 段结束序列号
-            rule_data: 规则数据
+            payload: Original payload
+            seg_start: Segment start sequence number
+            seg_end: Segment end sequence number
+            rule_data: Rule data
 
         Returns:
-            处理后的载荷（总是返回，不再返回None）
+            Processed payload (always returns, no longer returns None)
         """
         if not payload:
             return b""

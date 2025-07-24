@@ -140,10 +140,10 @@ class MaskingStage(StageBase):
     def _process_with_dual_module_mode(
         self, input_path: Path, output_path: Path, start_time: float
     ) -> StageStats:
-        """使用双模块架构处理文件"""
+        """Process file using dual-module architecture"""
         self.logger.debug("Using dual-module architecture processing mode")
 
-        # 优化：检查是否需要创建临时文件副本以避免重复读取
+        # Optimization: Check if temporary file copy is needed to avoid duplicate reads
         working_input_path = self._prepare_input_file(input_path)
 
         try:
@@ -171,38 +171,38 @@ class MaskingStage(StageBase):
         return stage_stats
 
     def _prepare_input_file(self, input_path: Path) -> Path:
-        """准备输入文件，实现简单的文件读取优化
+        """Prepare input file with simple file read optimization
 
-        策略：
-        1. 小文件（<50MB）：直接使用原文件，性能影响可忽略
-        2. 中等文件（50-200MB）：记录性能提示，但不做优化（避免过度工程化）
-        3. 大文件（>200MB）：创建临时硬链接，减少磁盘I/O
+        Strategy:
+        1. Small files (<50MB): Use original file directly, performance impact negligible
+        2. Medium files (50-200MB): Log performance hint but no optimization (avoid over-engineering)
+        3. Large files (>200MB): Create temporary hard link to reduce disk I/O
 
         Args:
-            input_path: 原始输入文件路径
+            input_path: Original input file path
 
         Returns:
-            工作文件路径（可能是原路径或临时文件路径）
+            Working file path (may be original path or temporary file path)
         """
         try:
             file_size = input_path.stat().st_size
             file_size_mb = file_size / (1024 * 1024)
 
-            # 小文件：直接使用，性能影响可忽略
+            # Small file: Use directly, performance impact negligible
             if file_size_mb < 50:
                 self.logger.debug(
                     f"Small file ({file_size_mb:.1f}MB), using direct access"
                 )
                 return input_path
 
-            # 中等文件：记录提示但不优化
+            # Medium file: Log hint but no optimization
             elif file_size_mb < 200:
                 self.logger.info(
                     f"Medium file ({file_size_mb:.1f}MB), dual-module processing may cause some I/O overhead"
                 )
                 return input_path
 
-            # 大文件：创建临时硬链接优化
+            # Large file: Create temporary hard link optimization
             else:
                 return self._create_temp_hardlink(input_path, file_size_mb)
 
@@ -211,14 +211,14 @@ class MaskingStage(StageBase):
             return input_path
 
     def _create_temp_hardlink(self, input_path: Path, file_size_mb: float) -> Path:
-        """为大文件创建临时硬链接，避免重复I/O
+        """Create temporary hard link for large files to avoid duplicate I/O
 
         Args:
-            input_path: 原始文件路径
-            file_size_mb: 文件大小（MB）
+            input_path: Original file path
+            file_size_mb: File size (MB)
 
         Returns:
-            临时硬链接路径
+            Temporary hard link path
         """
         import os
         import tempfile
@@ -230,7 +230,7 @@ class MaskingStage(StageBase):
             temp_dir = Path(tempfile.mkdtemp(prefix="pktmask_stage_"))
             temp_file = temp_dir / f"input_{input_path.name}"
 
-            # 创建硬链接（不占用额外磁盘空间）with enhanced error handling
+            # Create hard link (no additional disk space) with enhanced error handling
             try:
                 os.link(str(input_path), str(temp_file))
             except OSError as e:
@@ -318,7 +318,7 @@ class MaskingStage(StageBase):
                                 f"Cleaned up temporary directory: {temp_dir}"
                             )
                         except OSError as e:
-                            # 目录不为空或其他错误，记录但不抛出异常
+                            # Directory not empty or other error, log but don't raise exception
                             self.logger.debug(
                                 f"Could not remove temporary directory {temp_dir}: {e} "
                                 f"(directory may not be empty)"
@@ -331,26 +331,26 @@ class MaskingStage(StageBase):
     def _process_with_basic_mode(
         self, input_path: Path, output_path: Path, start_time: float
     ) -> StageStats:
-        """基础模式处理（透传复制）"""
+        """Basic mode processing (passthrough copy)"""
         self.logger.debug("Using basic mode (passthrough copy)")
 
         import shutil
 
-        # 验证输入文件
+        # Validate input file
         if not input_path.exists():
-            raise FileNotFoundError(f"输入文件不存在: {input_path}")
+            raise FileNotFoundError(f"Input file does not exist: {input_path}")
         if not input_path.is_file():
-            raise ValueError(f"输入路径不是文件: {input_path}")
+            raise ValueError(f"Input path is not a file: {input_path}")
 
-        # 简单复制文件
+        # Simple file copy
         shutil.copy2(str(input_path), str(output_path))
 
         duration_ms = (time.time() - start_time) * 1000
 
-        # 创建基础统计信息
+        # Create basic statistics
         stage_stats = StageStats(
             stage_name=self.get_display_name(),
-            packets_processed=0,  # 基础模式不统计包数
+            packets_processed=0,  # Basic mode doesn't count packets
             packets_modified=0,
             duration_ms=duration_ms,
             extra_metrics={
@@ -368,23 +368,23 @@ class MaskingStage(StageBase):
         return stage_stats
 
     def _create_marker(self):
-        """创建 Marker 模块实例
+        """Create Marker module instance
 
         Returns:
-            ProtocolMarker 实例
+            ProtocolMarker instance
         """
         if self.protocol == "tls":
             from .marker.tls_marker import TLSProtocolMarker
 
             return TLSProtocolMarker(self.marker_config)
         else:
-            raise ValueError(f"不支持的协议: {self.protocol}")
+            raise ValueError(f"Unsupported protocol: {self.protocol}")
 
     def _create_masker(self):
-        """创建 Masker 模块实例
+        """Create Masker module instance
 
         Returns:
-            PayloadMasker 实例
+            PayloadMasker instance
         """
         from .masker.payload_masker import PayloadMasker
 
@@ -423,14 +423,14 @@ class MaskingStage(StageBase):
         return "Mask Payloads"
 
     def get_description(self) -> str:
-        """获取描述信息"""
+        """Get description information"""
         return (
-            f"新一代载荷掩码处理器 (协议: {self.protocol}, 模式: {self.mode})。"
-            "基于双模块架构，支持协议分析与掩码应用分离。"
+            f"Next-generation payload masking processor (Protocol: {self.protocol}, Mode: {self.mode}). "
+            "Based on dual-module architecture, supports separation of protocol analysis and mask application."
         )
 
     def get_required_tools(self) -> list[str]:
-        """获取所需工具列表"""
+        """Get required tools list"""
         tools = ["scapy"]
         if self.protocol == "tls":
             tools.append("tshark")

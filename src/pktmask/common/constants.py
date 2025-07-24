@@ -2,41 +2,41 @@
 # -*- coding: utf-8 -*-
 
 """
-PktMask 常量定义
-统一管理应用程序中的所有常量，避免硬编码
+PktMask Constants Definition
+Unified management of all constants in the application to avoid hard coding
 """
 
 from pathlib import Path
 
 
 class UIConstants:
-    """界面相关常量"""
+    """UI-related constants"""
 
-    # 窗口尺寸
+    # Window dimensions
     WINDOW_MIN_WIDTH = 1200
     WINDOW_MIN_HEIGHT = 800
     DEFAULT_WINDOW_WIDTH = 1200
     DEFAULT_WINDOW_HEIGHT = 800
 
-    # 对话框尺寸
+    # Dialog dimensions
     GUIDE_DIALOG_MIN_WIDTH = 700
     GUIDE_DIALOG_MIN_HEIGHT = 500
     ABOUT_DIALOG_WIDTH = 700
     ABOUT_DIALOG_HEIGHT = 500
 
-    # 字体设置
+    # Font settings
     DEFAULT_FONT_SIZE = 12
     LOG_FONT_SIZE = 12
     SUMMARY_FONT_SIZE = 12
 
-    # 布局间距
+    # Layout spacing
     LAYOUT_SPACING = 18
     LAYOUT_MARGINS = 15
     GROUP_BOX_MARGINS = 15
     GROUP_BOX_SPACING = 12
     GROUP_BOX_INNER_SPACING = 10
 
-    # 组件高度
+    # Component heights
     GROUP_BOX_MAX_HEIGHT = 100
     DIRS_GROUP_HEIGHT = 100
     ROW2_WIDGET_HEIGHT = 90
@@ -247,13 +247,13 @@ PROCESS_DISPLAY_NAMES = {
     # Legacy naming - maintain backward compatibility (non-standard naming removed)
 }
 
-# 错误消息
+# Error messages
 ERROR_MESSAGES = {
-    "file_not_found": "文件未找到: {path}",
-    "invalid_file_format": "不支持的文件格式: {format}",
-    "processing_failed": "处理失败: {reason}",
-    "config_load_failed": "配置加载失败: {reason}",
-    "permission_denied": "权限不足: {path}",
-    "disk_space_insufficient": "磁盘空间不足",
-    "invalid_input": "输入无效: {input}",
+    "file_not_found": "File not found: {path}",
+    "invalid_file_format": "Unsupported file format: {format}",
+    "processing_failed": "Processing failed: {reason}",
+    "config_load_failed": "Configuration loading failed: {reason}",
+    "permission_denied": "Permission denied: {path}",
+    "disk_space_insufficient": "Insufficient disk space",
+    "invalid_input": "Invalid input: {input}",
 }

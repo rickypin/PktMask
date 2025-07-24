@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-数据服务 - 统一的数据和文件管理
+Data Service - Unified Data and File Management
 
-合并原有的 FileManager 和 ReportManager 功能，
-提供简化的数据处理和文件管理接口。
+Merges original FileManager and ReportManager functionality,
+providing simplified data processing and file management interface.
 """
 
 import os
@@ -21,7 +21,7 @@ from pktmask.utils.time import current_timestamp
 
 
 class ProcessingStats:
-    """简化的处理统计信息"""
+    """Simplified processing statistics"""
 
     def __init__(self):
         self.files_processed = 0
@@ -34,51 +34,51 @@ class ProcessingStats:
         self.file_results: Dict[str, Dict] = {}
 
     def start_processing(self):
-        """开始处理计时"""
+        """Start processing timer"""
         self.start_time = datetime.now()
 
     def end_processing(self):
-        """结束处理计时"""
+        """End processing timer"""
         self.end_time = datetime.now()
         if self.start_time:
             self.processing_time = (self.end_time - self.start_time).total_seconds()
 
     def add_file_result(self, filename: str, result: Dict[str, Any]):
-        """添加文件处理结果"""
+        """Add file processing result"""
         self.file_results[filename] = result
         self.files_processed += 1
 
-        # 累计统计
+        # Cumulative statistics
         if "packets_processed" in result:
             self.packets_processed += result["packets_processed"]
         if "packets_modified" in result:
             self.packets_modified += result["packets_modified"]
 
     def add_error(self, error_message: str):
-        """添加错误信息"""
+        """Add error information"""
         self.errors.append(error_message)
 
     def get_completion_rate(self) -> float:
-        """获取完成率"""
+        """Get completion rate"""
         if self.packets_processed == 0:
             return 0.0
         return (self.packets_modified / self.packets_processed) * 100
 
     def get_processing_speed(self) -> float:
-        """获取处理速度（包/秒）"""
+        """Get processing speed (packets/second)"""
         if self.processing_time == 0:
             return 0.0
         return self.packets_processed / self.processing_time
 
 
 class DataService:
-    """数据服务 - 统一的数据和文件管理
+    """Data Service - Unified Data and File Management
 
-    职责：
-    1. 文件操作（目录选择、路径生成）
-    2. 数据处理（统计收集、结果管理）
-    3. 报告生成（日志、摘要、详细报告）
-    4. 配置管理（用户偏好、路径记录）
+    Responsibilities:
+    1. File operations (directory selection, path generation)
+    2. Data processing (statistics collection, result management)
+    3. Report generation (logs, summaries, detailed reports)
+    4. Configuration management (user preferences, path recording)
     """
 
     def __init__(self, main_window):
@@ -86,7 +86,7 @@ class DataService:
         self.config = get_app_config()
         self._logger = get_logger(__name__)
 
-        # 路径管理
+        # Path management
         self.input_dir: Optional[str] = None
         self.output_dir: Optional[str] = None
         self.current_output_dir: Optional[str] = None
@@ -94,10 +94,10 @@ class DataService:
             os.path.expanduser("~"), "Desktop"
         )
 
-        # 统计管理
+        # Statistics management
         self.stats = ProcessingStats()
 
-        # 报告管理
+        # Report management
         self.log_messages: List[str] = []
 
         self._logger.info("Data service initialization completed")
@@ -240,30 +240,30 @@ class DataService:
         return info
 
     def add_log_message(self, message: str):
-        """添加日志消息"""
+        """Add log message"""
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_message = f"[{timestamp}] {message}"
         self.log_messages.append(formatted_message)
 
-        # 更新UI显示
+        # Update UI display
         if hasattr(self.main_window, "log_text"):
             self.main_window.log_text.append(formatted_message)
 
-            # 自动滚动到底部
+            # Auto-scroll to bottom
             cursor = self.main_window.log_text.textCursor()
             cursor.movePosition(cursor.MoveOperation.End)
             self.main_window.log_text.setTextCursor(cursor)
 
     def generate_processing_report(self) -> str:
-        """生成处理报告"""
+        """Generate processing report"""
         report_lines = []
 
-        # 报告标题
+        # Report title
         report_lines.append("=" * 60)
         report_lines.append("PROCESSING SUMMARY REPORT")
         report_lines.append("=" * 60)
 
-        # 基本信息
+        # Basic information
         if self.input_dir:
             report_lines.append(f"Input Directory: {self.input_dir}")
         if self.current_output_dir:
@@ -294,7 +294,7 @@ class DataService:
             for error in self.stats.errors:
                 report_lines.append(f"  - {error}")
 
-        # 文件详情
+        # File details
         if self.stats.file_results:
             report_lines.append("")
             report_lines.append("FILE PROCESSING DETAILS:")
@@ -312,7 +312,7 @@ class DataService:
     def save_report_to_file(
         self, report_content: str, filename: str = "processing_report.txt"
     ):
-        """保存报告到文件"""
+        """Save report to file"""
         try:
             if self.current_output_dir:
                 report_path = os.path.join(self.current_output_dir, filename)
@@ -334,25 +334,25 @@ class DataService:
             self._logger.warning("Output directory does not exist or is not set")
 
     def reset_stats(self):
-        """重置统计信息"""
+        """Reset statistics"""
         self.stats = ProcessingStats()
         self.log_messages.clear()
 
-        # 清空UI显示
+        # Clear UI display
         if hasattr(self.main_window, "log_text"):
             self.main_window.log_text.clear()
         if hasattr(self.main_window, "summary_text"):
             self.main_window.summary_text.clear()
 
     def cleanup(self):
-        """清理资源"""
+        """Clean up resources"""
         try:
-            # 保存用户偏好
+            # Save user preferences
             if self.last_opened_dir:
-                # 这里可以保存到配置文件
+                # Can save to configuration file here
                 pass
 
-            self._logger.info("数据服务资源清理完成")
+            self._logger.info("Data service resource cleanup completed")
 
         except Exception as e:
             self._logger.error(f"Failed to cleanup resources: {e}")

@@ -30,12 +30,12 @@ class ErrorHandler:
         self.recovery_manager = get_recovery_manager()
         self.error_reporter = get_error_reporter()
 
-        # 错误处理配置
+        # Error handling configuration
         self.auto_recovery_enabled = True
         self.user_notification_enabled = True
         self.detailed_logging_enabled = True
 
-        # 错误处理统计
+        # Error handling statistics
         self.stats = {
             "total_errors": 0,
             "handled_errors": 0,
@@ -59,22 +59,22 @@ class ErrorHandler:
         auto_recover: bool = True,
     ) -> Optional[Any]:
         """
-        处理异常的主要入口点
+        Main entry point for exception handling
 
         Args:
-            exception: 发生的异常
-            operation: 当前操作
-            component: 当前组件
-            user_action: 用户操作描述
-            custom_data: 自定义数据
-            auto_recover: 是否尝试自动恢复
+            exception: The exception that occurred
+            operation: Current operation
+            component: Current component
+            user_action: User action description
+            custom_data: Custom data
+            auto_recover: Whether to attempt automatic recovery
 
         Returns:
-            恢复结果（如果有）
+            Recovery result (if any)
         """
         self.stats["total_errors"] += 1
 
-        # 转换为PktMask异常
+        # Convert to PktMask exception
         if isinstance(exception, PktMaskError):
             error = exception
         else:
@@ -121,21 +121,21 @@ class ErrorHandler:
         return recovery_result
 
     def _log_error(self, error: PktMaskError, context: ErrorContext) -> None:
-        """记录错误信息"""
+        """Log error information"""
         try:
-            # 基本错误记录
+            # Basic error logging
             log_exception(
                 error,
                 logger_name=context.component or "error_handler",
                 context={"error_context": context.to_dict()},
             )
 
-            # 详细日志（如果启用）
+            # Detailed logging (if enabled)
             if self.detailed_logging_enabled:
                 logger.debug(f"Error context details: {context.to_dict()}")
 
         except Exception as log_error:
-            # 记录日志失败不应该影响错误处理
+            # Logging failure should not affect error handling
             print(f"Failed to log error: {log_error}", file=sys.stderr)
 
     def _attempt_recovery(
@@ -162,7 +162,7 @@ class ErrorHandler:
         context: ErrorContext,
         recovery_result: Optional[RecoveryResult],
     ) -> None:
-        """生成错误报告"""
+        """Generate error report"""
         try:
             self.error_reporter.report_error(error, context, recovery_result)
         except Exception as report_error:
@@ -174,14 +174,14 @@ class ErrorHandler:
         context: ErrorContext,
         recovery_result: Optional[RecoveryResult],
     ) -> None:
-        """通知用户错误信息"""
-        # 这里可以根据错误严重性决定通知方式
-        # 对于高严重性错误，可能需要显示对话框
-        # 对于低严重性错误，可能只需要状态栏通知
+        """Notify user of error information"""
+        # Notification method can be determined based on error severity
+        # For high severity errors, may need to show dialog box
+        # For low severity errors, may only need status bar notification
 
         if error.severity in [ErrorSeverity.HIGH, ErrorSeverity.CRITICAL]:
             logger.warning(f"Critical error occurred: {error.message}")
-            # TODO: 显示用户对话框
+            # TODO: Show user dialog box
         else:
             logger.info(f"Error handled: {error.message}")
 
@@ -199,12 +199,12 @@ class ErrorHandler:
                 logger.error(f"Error callback failed: {callback_error}")
 
     def register_error_callback(self, callback: Callable) -> None:
-        """注册错误回调函数"""
+        """Register error callback function"""
         self.error_callbacks.append(callback)
         logger.debug(f"Registered error callback: {callback.__name__}")
 
     def unregister_error_callback(self, callback: Callable) -> None:
-        """取消注册错误回调函数"""
+        """Unregister error callback function"""
         if callback in self.error_callbacks:
             self.error_callbacks.remove(callback)
             logger.debug(f"Unregistered error callback: {callback.__name__}")
@@ -220,18 +220,18 @@ class ErrorHandler:
         logger.debug(f"User notification {'enabled' if enabled else 'disabled'}")
 
     def set_detailed_logging_enabled(self, enabled: bool) -> None:
-        """设置是否启用详细日志"""
+        """Set whether to enable detailed logging"""
         self.detailed_logging_enabled = enabled
         logger.debug(f"Detailed logging {'enabled' if enabled else 'disabled'}")
 
     def get_error_stats(self) -> Dict[str, Any]:
-        """获取错误处理统计信息"""
+        """Get error handling statistics"""
         stats = self.stats.copy()
         stats["recovery_stats"] = self.recovery_manager.get_recovery_stats()
         return stats
 
     def reset_stats(self) -> None:
-        """重置统计信息"""
+        """Reset statistics"""
         self.stats = {
             "total_errors": 0,
             "handled_errors": 0,
@@ -245,26 +245,26 @@ class ErrorHandler:
     def handle_critical_error(
         self, error: Exception, context_data: Optional[Dict[str, Any]] = None
     ) -> None:
-        """处理严重错误"""
-        # 强制创建PktMask异常
+        """Handle critical error"""
+        # Force create PktMask exception
         if isinstance(error, PktMaskError):
             pkt_error = error
         else:
             pkt_error = create_error_from_exception(error, context_data)
 
-        # 设置为严重错误
+        # Set as critical error
         pkt_error.severity = ErrorSeverity.CRITICAL
 
-        # 记录严重错误
+        # Log critical error
         logger.critical(f"Critical error: {pkt_error.message}")
 
-        # 处理错误（不尝试自动恢复）
+        # Handle error (do not attempt automatic recovery)
         self.handle_exception(pkt_error, auto_recover=False)
 
     def handle_file_processing_error(
         self, error: Exception, file_path: str
     ) -> Optional[RecoveryResult]:
-        """处理文件处理错误"""
+        """Handle file processing error"""
         self.context_manager.set_current_file(file_path)
 
         return self.handle_exception(
@@ -277,7 +277,7 @@ class ErrorHandler:
     def handle_gui_error(
         self, error: Exception, component: str, user_action: str
     ) -> Optional[RecoveryResult]:
-        """处理GUI错误"""
+        """Handle GUI error"""
         return self.handle_exception(
             error,
             operation="gui_operation",
@@ -288,7 +288,7 @@ class ErrorHandler:
     def handle_config_error(
         self, error: Exception, config_key: Optional[str] = None
     ) -> Optional[RecoveryResult]:
-        """处理配置错误"""
+        """Handle configuration error"""
         custom_data = {"config_key": config_key} if config_key else None
 
         return self.handle_exception(
@@ -324,68 +324,68 @@ class GlobalExceptionHandler:
     def handle_exception(
         self, exc_type: Type[BaseException], exc_value: BaseException, exc_traceback
     ) -> None:
-        """处理未捕获的异常"""
-        # 忽略KeyboardInterrupt等系统异常
+        """Handle uncaught exceptions"""
+        # Ignore system exceptions like KeyboardInterrupt
         if issubclass(exc_type, (KeyboardInterrupt, SystemExit)):
             self.original_excepthook(exc_type, exc_value, exc_traceback)
             return
 
         logger.critical(f"Unhandled exception: {exc_type.__name__}: {exc_value}")
 
-        # 使用错误处理器处理
+        # Use error handler to process
         self.error_handler.handle_critical_error(exc_value)
 
-        # 调用原始处理器（通常是打印到stderr）
+        # Call original handler (usually print to stderr)
         self.original_excepthook(exc_type, exc_value, exc_traceback)
 
 
-# 全局错误处理器实例
+# Global error handler instances
 _error_handler = ErrorHandler()
 _global_exception_handler = GlobalExceptionHandler(_error_handler)
 
 
 def get_error_handler() -> ErrorHandler:
-    """获取全局错误处理器"""
+    """Get global error handler"""
     return _error_handler
 
 
 def install_global_exception_handler() -> None:
-    """安装全局异常处理器"""
+    """Install global exception handler"""
     _global_exception_handler.install()
 
 
 def uninstall_global_exception_handler() -> None:
-    """卸载全局异常处理器"""
+    """Uninstall global exception handler"""
     _global_exception_handler.uninstall()
 
 
-# 便利函数
+# Convenience functions
 def handle_error(exception: Exception, **kwargs) -> Optional[Any]:
-    """便利函数：处理错误"""
+    """Convenience function: handle error"""
     return _error_handler.handle_exception(exception, **kwargs)
 
 
 def handle_critical_error(
     error: Exception, context_data: Optional[Dict[str, Any]] = None
 ) -> None:
-    """便利函数：处理严重错误"""
+    """Convenience function: handle critical error"""
     _error_handler.handle_critical_error(error, context_data)
 
 
 def handle_file_error(error: Exception, file_path: str) -> Optional[RecoveryResult]:
-    """便利函数：处理文件错误"""
+    """Convenience function: handle file error"""
     return _error_handler.handle_file_processing_error(error, file_path)
 
 
 def handle_gui_error(
     error: Exception, component: str, user_action: str
 ) -> Optional[RecoveryResult]:
-    """便利函数：处理GUI错误"""
+    """Convenience function: handle GUI error"""
     return _error_handler.handle_gui_error(error, component, user_action)
 
 
 def handle_config_error(
     error: Exception, config_key: Optional[str] = None
 ) -> Optional[RecoveryResult]:
-    """便利函数：处理配置错误"""
+    """Convenience function: handle configuration error"""
     return _error_handler.handle_config_error(error, config_key)
