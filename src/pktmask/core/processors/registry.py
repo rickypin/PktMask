@@ -40,17 +40,13 @@ class ProcessorRegistry:
                 NewMaskPayloadStage as MaskingProcessor,
             )
 
-            # Register processors with standard naming
+            # Register processors with standard naming only
             cls._processors.update(
                 {
                     # Standard naming keys (consistent with GUI interface)
                     "anonymize_ips": UnifiedIPAnonymizationStage,
                     "remove_dupes": UnifiedDeduplicationStage,
                     "mask_payloads": MaskingProcessor,
-                    # Legacy aliases for backward compatibility
-                    "anon_ip": UnifiedIPAnonymizationStage,
-                    "dedup_packet": UnifiedDeduplicationStage,
-                    "mask_payload": MaskingProcessor,
                 }
             )
 

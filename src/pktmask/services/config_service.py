@@ -23,9 +23,9 @@ class MaskMode(Enum):
 class ProcessingOptions:
     """处理选项配置"""
 
-    enable_dedup: bool = False
-    enable_anon: bool = False
-    enable_mask: bool = False
+    enable_remove_dupes: bool = False
+    enable_anonymize_ips: bool = False
+    enable_mask_payloads: bool = False
     mask_mode: MaskMode = MaskMode.ENHANCED
     mask_protocol: str = "tls"
 
@@ -70,15 +70,15 @@ class ConfigService:
         config: Dict[str, Any] = {}
 
         # 去重配置
-        if options.enable_dedup:
+        if options.enable_remove_dupes:
             config["remove_dupes"] = {"enabled": True}
 
         # IP匿名化配置
-        if options.enable_anon:
+        if options.enable_anonymize_ips:
             config["anonymize_ips"] = {"enabled": True}
 
         # 载荷掩码配置
-        if options.enable_mask:
+        if options.enable_mask_payloads:
             config["mask_payloads"] = self._build_mask_config(options)
 
         logger.debug(f"Built pipeline config with {len(config)} stages")
@@ -180,9 +180,9 @@ class ConfigService:
             mode_enum = MaskMode.ENHANCED
 
         return ProcessingOptions(
-            enable_dedup=enable_dedup,
-            enable_anon=enable_anon,
-            enable_mask=enable_mask,
+            enable_remove_dupes=enable_dedup,
+            enable_anonymize_ips=enable_anon,
+            enable_mask_payloads=enable_mask,
             mask_mode=mode_enum,
             mask_protocol=mask_protocol,
             tshark_path=tshark_path,
@@ -203,9 +203,9 @@ class ConfigService:
             处理选项配置
         """
         return ProcessingOptions(
-            enable_dedup=dedup_checked,
-            enable_anon=anon_checked,
-            enable_mask=mask_checked,
+            enable_remove_dupes=dedup_checked,
+            enable_anonymize_ips=anon_checked,
+            enable_mask_payloads=mask_checked,
             mask_mode=MaskMode.ENHANCED,  # GUI默认使用增强模式
             mask_protocol="tls",  # GUI默认使用TLS协议
         )

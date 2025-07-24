@@ -274,21 +274,7 @@ class PipelineExecutor:
             # For unknown errors, provide generic but helpful message
             return f"Unexpected error occurred ({error_type})"
 
-    def _get_config_with_fallback(
-        self, config: Dict, standard_key: str, legacy_key: str
-    ) -> Dict:
-        """获取配置，支持标准键名和旧键名的向后兼容性"""
-        # 优先使用标准键名
-        if standard_key in config:
-            return config[standard_key]
-        # 回退到旧键名
-        elif legacy_key in config:
-            self._logger.warning(
-                f"Using deprecated config key '{legacy_key}', recommend updating to '{standard_key}'"
-            )
-            return config[legacy_key]
-        # 返回空配置
-        return {}
+
 
     def _build_pipeline(self, config: Dict) -> List[StageBase]:
         """根据配置动态装配 Pipeline。"""
@@ -296,9 +282,9 @@ class PipelineExecutor:
         stages: List[StageBase] = []
 
         # ------------------------------------------------------------------
-        # Remove Dupes Stage (标准命名：remove_dupes，向后兼容：dedup)
+        # Remove Dupes Stage (标准命名：remove_dupes)
         # ------------------------------------------------------------------
-        dedup_cfg = self._get_config_with_fallback(config, "remove_dupes", "dedup")
+        dedup_cfg = config.get("remove_dupes", {})
         if dedup_cfg.get("enabled", False):
             from pktmask.core.pipeline.stages.deduplication_unified import UnifiedDeduplicationStage
 
@@ -307,9 +293,9 @@ class PipelineExecutor:
             stages.append(stage)
 
         # ------------------------------------------------------------------
-        # Anonymize IPs Stage (标准命名：anonymize_ips，向后兼容：anon)
+        # Anonymize IPs Stage (标准命名：anonymize_ips)
         # ------------------------------------------------------------------
-        anon_cfg = self._get_config_with_fallback(config, "anonymize_ips", "anon")
+        anon_cfg = config.get("anonymize_ips", {})
         if anon_cfg.get("enabled", False):
             from pktmask.core.pipeline.stages.ip_anonymization_unified import (
                 UnifiedIPAnonymizationStage,
@@ -320,9 +306,9 @@ class PipelineExecutor:
             stages.append(stage)
 
         # ------------------------------------------------------------------
-        # Mask Payloads Stage (标准命名：mask_payloads，向后兼容：mask)
+        # Mask Payloads Stage (标准命名：mask_payloads)
         # ------------------------------------------------------------------
-        mask_cfg = self._get_config_with_fallback(config, "mask_payloads", "mask")
+        mask_cfg = config.get("mask_payloads", {})
         if mask_cfg.get("enabled", False):
             # 直接使用新一代双模块架构
             from pktmask.core.pipeline.stages.mask_payload_v2.stage import (

@@ -237,8 +237,8 @@ def cmd_mask(
     output_path: Path = typer.Option(
         ..., "-o", "--output", help="Output file/directory path"
     ),
-    dedup: bool = typer.Option(False, "--dedup", help="Enable Remove Dupes processing"),
-    anon: bool = typer.Option(False, "--anon", help="Enable Anonymize IPs processing"),
+    remove_dupes: bool = typer.Option(False, "--remove-dupes", help="Enable Remove Dupes processing"),
+    anonymize_ips: bool = typer.Option(False, "--anonymize-ips", help="Enable Anonymize IPs processing"),
     mode: str = typer.Option(
         "enhanced", "--mode", help="Mask Payloads mode: enhanced|basic"
     ),
@@ -283,8 +283,8 @@ def cmd_mask(
     _run_unified_pipeline(
         input_path=input_path,
         output_path=output_path,
-        enable_dedup=dedup,
-        enable_anon=anon,
+        enable_dedup=remove_dupes,
+        enable_anon=anonymize_ips,
         enable_mask=True,
         mask_mode=mode,
         mask_protocol=protocol,
@@ -404,14 +404,14 @@ def cmd_batch(
     output_dir: Path = typer.Option(
         ..., "-o", "--output", help="Output directory path"
     ),
-    dedup: bool = typer.Option(
-        True, "--dedup/--no-dedup", help="Enable/disable Remove Dupes processing"
+    remove_dupes: bool = typer.Option(
+        True, "--remove-dupes/--no-remove-dupes", help="Enable/disable Remove Dupes processing"
     ),
-    anon: bool = typer.Option(
-        True, "--anon/--no-anon", help="Enable/disable Anonymize IPs processing"
+    anonymize_ips: bool = typer.Option(
+        True, "--anonymize-ips/--no-anonymize-ips", help="Enable/disable Anonymize IPs processing"
     ),
-    mask: bool = typer.Option(
-        True, "--mask/--no-mask", help="Enable/disable Mask Payloads processing"
+    mask_payloads: bool = typer.Option(
+        True, "--mask-payloads/--no-mask-payloads", help="Enable/disable Mask Payloads processing"
     ),
     mode: str = typer.Option(
         "enhanced", "--mode", help="Mask Payloads mode: enhanced|basic"
@@ -461,9 +461,9 @@ def cmd_batch(
     _run_unified_pipeline(
         input_path=input_dir,
         output_path=output_dir,
-        enable_dedup=dedup,
-        enable_anon=anon,
-        enable_mask=mask,
+        enable_dedup=remove_dupes,
+        enable_anon=anonymize_ips,
+        enable_mask=mask_payloads,
         mask_mode=mode,
         mask_protocol=protocol,
         verbose=verbose,
