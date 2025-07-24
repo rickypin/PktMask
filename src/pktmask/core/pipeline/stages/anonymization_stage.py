@@ -57,9 +57,6 @@ class AnonymizationStage(StageBase):
         self._strategy: Optional[HierarchicalAnonymizationStrategy] = None
         self._reporter: Optional[FileReporter] = None
 
-        # Use full HierarchicalAnonymizationStrategy for IP anonymization
-        self._use_simple_strategy = False
-
         # Statistics
         self._stats = {}
 
@@ -82,15 +79,8 @@ class AnonymizationStage(StageBase):
             if config:
                 self.config.update(config)
 
-            if self._use_simple_strategy:
-                # Use simplified strategy to avoid encapsulation adapter issues
-                from pktmask.core.strategy import SimpleIPAnonymizationStrategy
-
-                self._strategy = SimpleIPAnonymizationStrategy()
-            else:
-                # Use full HierarchicalAnonymizationStrategy
-                self._strategy = HierarchicalAnonymizationStrategy()
-
+            # Initialize HierarchicalAnonymizationStrategy
+            self._strategy = HierarchicalAnonymizationStrategy()
             self._reporter = FileReporter()
 
             self._initialized = True
@@ -324,22 +314,4 @@ class AnonymizationStage(StageBase):
         self.logger.debug("AnonymizationStage specific cleanup completed")
 
 
-class SimpleIPAnonymizationStrategy:
-    """Simplified IP anonymization strategy - avoids complex dependencies"""
 
-    def __init__(self):
-        self._ip_map = {}
-
-    def build_mapping_from_directory(self, all_pcap_files: List[str]):
-        """Build IP mapping - simplified version"""
-        # Simplified implementation: create empty mapping for testing purposes
-        self._ip_map = {}
-
-    def get_ip_map(self):
-        """Get IP mapping"""
-        return self._ip_map
-
-    def anonymize_packet(self, pkt):
-        """Anonymize packet - simplified version"""
-        # Simplified implementation: return original packet, marked as unmodified
-        return pkt, False
