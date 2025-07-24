@@ -300,9 +300,9 @@ class PipelineExecutor:
         # ------------------------------------------------------------------
         dedup_cfg = self._get_config_with_fallback(config, "remove_dupes", "dedup")
         if dedup_cfg.get("enabled", False):
-            from pktmask.core.pipeline.stages.dedup import DeduplicationStage
+            from pktmask.core.pipeline.stages.deduplication_unified import UnifiedDeduplicationStage
 
-            stage = DeduplicationStage(dedup_cfg)
+            stage = UnifiedDeduplicationStage(dedup_cfg)
             stage.initialize()
             stages.append(stage)
 
@@ -311,11 +311,11 @@ class PipelineExecutor:
         # ------------------------------------------------------------------
         anon_cfg = self._get_config_with_fallback(config, "anonymize_ips", "anon")
         if anon_cfg.get("enabled", False):
-            from pktmask.core.pipeline.stages.ip_anonymization import (
-                IPAnonymizationStage,
+            from pktmask.core.pipeline.stages.ip_anonymization_unified import (
+                UnifiedIPAnonymizationStage,
             )
 
-            stage = IPAnonymizationStage(anon_cfg)
+            stage = UnifiedIPAnonymizationStage(anon_cfg)
             stage.initialize()
             stages.append(stage)
 

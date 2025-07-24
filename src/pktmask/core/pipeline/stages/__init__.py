@@ -1,10 +1,12 @@
-# 直接导入具体类，简化导入机制
-from pktmask.core.pipeline.stages.dedup import DeduplicationStage
+# 直接导入统一版本，消除包装层
+from pktmask.core.pipeline.stages.deduplication_unified import (
+    UnifiedDeduplicationStage,
+)
 from pktmask.core.pipeline.stages.ip_anonymization_unified import (
-    UnifiedIPAnonymizationStage as AnonStage,
+    UnifiedIPAnonymizationStage,
 )
 from pktmask.core.pipeline.stages.mask_payload_v2.stage import (
-    NewMaskPayloadStage as MaskStage,
+    NewMaskPayloadStage,
 )
 
-__all__ = ["MaskStage", "DeduplicationStage", "AnonStage"]
+__all__ = ["NewMaskPayloadStage", "UnifiedDeduplicationStage", "UnifiedIPAnonymizationStage"]
