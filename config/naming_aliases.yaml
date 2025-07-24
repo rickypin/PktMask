@@ -1,10 +1,15 @@
 # Naming alias mapping configuration
 # Records formal mapping relationships between domain models and processing logic
+#
+# Version: 2.0 (Updated for StageBase architecture)
+# Last Updated: 2025-07-25
+#
+# Note: Historical aliases have been removed as part of the StageBase architecture
+# migration. Only current standard naming conventions are maintained.
 
-# Result type mapping
+# Result type mapping (current standard naming only)
 result_type_mapping:
   # Deduplication related
-  dedup_packet: "DeduplicationResult"
   remove_dupes: "DeduplicationResult"
 
   # IP anonymization related
@@ -12,78 +17,77 @@ result_type_mapping:
 
   # Payload masking related
   mask_payloads: "MaskingResult"
-  mask_payload: "MaskingResult"
 
-# Step name mapping
+# Step name mapping (updated for StageBase architecture)
 step_name_mapping:
   # Standardized step names
   deduplication:
-    aliases: ["remove_dupes", "dedup_packet", "dedup"]
-    canonical: "Deduplication"
+    aliases: ["remove_dupes"]  # Current standard naming
+    canonical: "Remove Dupes"
     description: "Packet deduplication processing"
 
   ip_anonymization:
-    aliases: ["anon_ip", "anonymize_ips"]
+    aliases: ["anonymize_ips"]  # Current standard naming
     canonical: "Anonymize IPs"
     description: "IP address anonymization processing"
 
   payload_masking:
-    aliases: ["mask_payload", "mask_payloads"]
+    aliases: ["mask_payloads"]  # Current standard naming
     canonical: "Mask Payloads"
     description: "Payload masking processing"
 
-# 处理器类型映射
-processor_type_mapping:
-  # 去重处理器
-  dedup:
-    class_name: "DeduplicationProcessor"
-    legacy_aliases: ["Deduplicator"]
-    
-  # IP匿名化处理器
-  anon:
-    class_name: "IPAnonymizationProcessor" 
-    legacy_aliases: ["IPAnonymizer"]
-    
-  # 载荷掩码处理器
-  mask:
-    class_name: "MaskingProcessor"
-    legacy_aliases: ["MaskProcessor"]
+# Processor type mapping (deprecated - using StageBase architecture)
+# processor_type_mapping:
+#   # Deduplication processor
+#   dedup:
+#     class_name: "DeduplicationProcessor"
+#     legacy_aliases: ["Deduplicator"]
+#
+#   # IP anonymization processor
+#   anon:
+#     class_name: "IPAnonymizationProcessor"
+#     legacy_aliases: ["IPAnonymizer"]
+#
+#   # Payload masking processor
+#   mask:
+#     class_name: "MaskingProcessor"
+#     legacy_aliases: ["MaskProcessor"]
 
-# Stage类型映射
+# Stage type mapping (StageBase architecture - current implementation)
 stage_type_mapping:
-  # 去重Stage
+  # Deduplication Stage
   dedup:
     class_name: "DeduplicationStage"
-    legacy_aliases: ["DedupStage", "UnifiedDeduplicationStage"]
+    description: "Unified deduplication processing stage"
 
-  # IP匿名化Stage
+  # IP Anonymization Stage
   anon:
     class_name: "AnonymizationStage"
-    legacy_aliases: ["IPAnonymizationStage", "UnifiedIPAnonymizationStage"]
+    description: "Unified IP anonymization processing stage"
 
-  # 载荷掩码Stage
+  # Payload Masking Stage
   mask:
     class_name: "MaskingStage"
-    legacy_aliases: ["MaskPayloadStage", "NewMaskPayloadStage"]
+    description: "Unified payload masking processing stage"
 
-# 配置键映射（使用标准GUI命名）
+# Configuration key mapping (using standard GUI naming)
 config_key_mapping:
-  # Pipeline配置键
+  # Pipeline configuration keys
   remove_dupes:
-    description: "Remove Dupes 配置"
+    description: "Remove Dupes configuration"
     enabled_key: "enabled"
 
   anonymize_ips:
-    description: "Anonymize IPs 配置"
+    description: "Anonymize IPs configuration"
     enabled_key: "enabled"
     strategy_key: "strategy"
 
   mask_payloads:
-    description: "Mask Payloads 配置"
+    description: "Mask Payloads configuration"
     enabled_key: "enabled"
     mode_key: "mode"
 
-# 文件后缀映射（使用标准命名）
+# File suffix mapping (using standard naming)
 file_suffix_mapping:
   remove_dupes: "-RemoveDupes"
   anonymize_ips: "-AnonymizeIPs"
