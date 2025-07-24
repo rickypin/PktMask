@@ -97,7 +97,10 @@ class MemoryMonitor:
             return pressure
 
         except ImportError:
-            self.logger.warning("psutil not available, memory monitoring disabled")
+            # psutil not available - return 0 to not affect normal functionality
+            return 0.0
+        except Exception as e:
+            self.logger.warning(f"Memory check failed: {e}")
             return 0.0
 
     def register_pressure_callback(self, callback: Callable[[float], None]) -> None:
@@ -301,26 +304,41 @@ class ResourceManager:
         self.cleanup_callbacks.append(callback)
 
     def cleanup(self) -> None:
-        """Clean up all managed resources"""
+        """Clean up all managed resources with improved error handling"""
         self.logger.debug("Starting resource cleanup")
 
+        cleanup_errors = []
+
         # Execute cleanup callbacks
-        for callback in self.cleanup_callbacks:
+        for i, callback in enumerate(self.cleanup_callbacks):
             try:
                 callback()
             except Exception as e:
-                self.logger.warning(f"Cleanup callback failed: {e}")
+                cleanup_errors.append(f"Callback {i}: {e}")
 
         # Clean up buffers
-        self.buffer_manager.cleanup_all_buffers()
+        try:
+            self.buffer_manager.cleanup_all_buffers()
+        except Exception as e:
+            cleanup_errors.append(f"Buffer cleanup: {e}")
 
         # Clean up temp files
-        self._cleanup_temp_files()
+        try:
+            self._cleanup_temp_files()
+        except Exception as e:
+            cleanup_errors.append(f"Temp file cleanup: {e}")
 
         # Trigger final garbage collection
-        self.memory_monitor.trigger_gc()
+        try:
+            self.memory_monitor.trigger_gc()
+        except Exception as e:
+            cleanup_errors.append(f"Garbage collection: {e}")
 
-        self.logger.debug("Resource cleanup completed")
+        # Log results
+        if cleanup_errors:
+            self.logger.warning(f"Resource cleanup completed with errors: {'; '.join(cleanup_errors)}")
+        else:
+            self.logger.debug("Resource cleanup completed successfully")
 
     def get_resource_stats(self) -> ResourceStats:
         """Get current resource usage statistics"""

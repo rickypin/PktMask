@@ -47,6 +47,9 @@ class StageBase(metaclass=abc.ABCMeta):
         resource_config = self.config.get("resource_manager", {})
         self.resource_manager = ResourceManager(resource_config)
 
+        # Temporary file tracking for unified cleanup
+        self._temp_files: List[Path] = []
+
         # Exception handling configuration
         self.enable_error_recovery = self.config.get("enable_error_recovery", True)
         self.max_retry_attempts = self.config.get("max_retry_attempts", 3)
@@ -92,6 +95,45 @@ class StageBase(metaclass=abc.ABCMeta):
         return None
 
     # ---------------------------------------------------------------------
+    # Temporary file management
+    # ---------------------------------------------------------------------
+    def register_temp_file(self, file_path: Path) -> None:
+        """Register temporary file for cleanup.
+
+        Args:
+            file_path: Path to temporary file
+        """
+        if file_path not in self._temp_files:
+            self._temp_files.append(file_path)
+            self.logger.debug(f"Registered temp file for cleanup: {file_path}")
+
+    def _cleanup_temp_files(self) -> None:
+        """Clean up all registered temporary files."""
+        cleanup_errors = []
+
+        for temp_file in self._temp_files:
+            try:
+                if temp_file.exists():
+                    temp_file.unlink()
+                    self.logger.debug(f"Cleaned temp file: {temp_file}")
+                else:
+                    self.logger.debug(f"Temp file already removed: {temp_file}")
+            except PermissionError as e:
+                cleanup_errors.append(f"Permission denied for {temp_file}: {e}")
+            except OSError as e:
+                cleanup_errors.append(f"OS error for {temp_file}: {e}")
+            except Exception as e:
+                cleanup_errors.append(f"Unexpected error for {temp_file}: {e}")
+
+        # Clear the list after cleanup attempt
+        self._temp_files.clear()
+
+        if cleanup_errors:
+            self.logger.warning(f"Temp file cleanup completed with errors: {'; '.join(cleanup_errors)}")
+        else:
+            self.logger.debug("All temporary files cleaned successfully")
+
+    # ---------------------------------------------------------------------
     # Core processing method
     # ---------------------------------------------------------------------
     @abc.abstractmethod
@@ -129,21 +171,35 @@ class StageBase(metaclass=abc.ABCMeta):
         """
         self.logger.debug(f"Starting cleanup for {self.__class__.__name__}")
 
+        cleanup_errors = []
+
         try:
             # Stage-specific cleanup
             self._cleanup_stage_specific()
+        except Exception as e:
+            cleanup_errors.append(f"Stage-specific cleanup failed: {e}")
 
+        try:
+            # Clean up temporary files
+            self._cleanup_temp_files()
+        except Exception as e:
+            cleanup_errors.append(f"Temp file cleanup failed: {e}")
+
+        try:
             # Unified resource cleanup
             self.resource_manager.cleanup()
-
-            # Reset initialization state
-            self._initialized = False
-
-            self.logger.debug(f"Cleanup completed for {self.__class__.__name__}")
-
         except Exception as e:
-            self.logger.error(f"Error during cleanup: {e}")
-            raise
+            cleanup_errors.append(f"Resource manager cleanup failed: {e}")
+
+        # Reset initialization state
+        self._initialized = False
+
+        if cleanup_errors:
+            error_msg = f"Cleanup completed with errors: {'; '.join(cleanup_errors)}"
+            self.logger.warning(error_msg)
+            # Don't raise exception for cleanup errors, just log them
+        else:
+            self.logger.debug(f"Cleanup completed successfully for {self.__class__.__name__}")
 
     def _cleanup_stage_specific(self) -> None:
         """Stage-specific cleanup logic.

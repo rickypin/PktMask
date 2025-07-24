@@ -1233,34 +1233,33 @@ class PayloadMasker:
             # 这里可以添加更多的内存压力处理逻辑
 
     def cleanup(self) -> None:
-        """清理PayloadMasker资源"""
+        """Clean up PayloadMasker resources"""
         self.logger.debug("Starting PayloadMasker cleanup")
 
         try:
-            # 清理统一资源管理器
-            if hasattr(self, "resource_manager"):
-                self.resource_manager.cleanup()
+            # Use simple component list to avoid hasattr checks
+            cleanup_components = [
+                getattr(self, 'resource_manager', None),
+                getattr(self, 'error_handler', None),
+                getattr(self, 'data_validator', None),
+                getattr(self, 'fallback_handler', None)
+            ]
 
-            # 清理其他组件
-            if hasattr(self, "error_handler") and hasattr(
-                self.error_handler, "cleanup"
-            ):
-                self.error_handler.cleanup()
+            cleanup_errors = []
+            for component in cleanup_components:
+                if component and hasattr(component, 'cleanup'):
+                    try:
+                        component.cleanup()
+                    except Exception as e:
+                        cleanup_errors.append(f"{component.__class__.__name__}: {e}")
 
-            if hasattr(self, "data_validator") and hasattr(
-                self.data_validator, "cleanup"
-            ):
-                self.data_validator.cleanup()
-
-            if hasattr(self, "fallback_handler") and hasattr(
-                self.fallback_handler, "cleanup"
-            ):
-                self.fallback_handler.cleanup()
-
-            # 重置状态
+            # Reset processing state
             self._reset_processing_state()
 
-            self.logger.debug("PayloadMasker cleanup completed")
+            if cleanup_errors:
+                self.logger.warning(f"PayloadMasker cleanup completed with errors: {'; '.join(cleanup_errors)}")
+            else:
+                self.logger.debug("PayloadMasker cleanup completed successfully")
 
         except Exception as e:
             self.logger.error(f"Error during PayloadMasker cleanup: {e}")

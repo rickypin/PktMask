@@ -248,8 +248,8 @@ class MaskingStage(StageBase):
                     )
                 return input_path
 
-            # Register temp file and directory for cleanup tracking
-            self.resource_manager.register_temp_file(temp_file)
+            # Register temp file using unified temp file management
+            self.register_temp_file(temp_file)
             # Also register a cleanup callback for the directory
             self.resource_manager.register_cleanup_callback(
                 lambda: self._cleanup_temp_directory(temp_dir)
