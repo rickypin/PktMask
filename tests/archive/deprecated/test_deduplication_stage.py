@@ -12,7 +12,7 @@ import shutil
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from pktmask.core.pipeline.stages.deduplication_unified import UnifiedDeduplicationStage as DeduplicationStage
+from pktmask.core.pipeline.stages.deduplication_stage import DeduplicationStage
 from pktmask.core.pipeline.models import StageStats
 
 

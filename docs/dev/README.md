@@ -136,8 +136,8 @@ src/pktmask/
 
 **Implementation Details**:
 ```python
-# Located in: src/pktmask/core/pipeline/stages/deduplication_unified.py
-class UnifiedDeduplicationStage(StageBase):
+# Located in: src/pktmask/core/pipeline/stages/deduplication_stage.py
+class DeduplicationStage(StageBase):
     def process_packet(self, packet: Packet) -> ProcessingResult:
         # Hash-based duplicate detection
         packet_hash = self._calculate_packet_hash(packet)
@@ -148,7 +148,7 @@ class UnifiedDeduplicationStage(StageBase):
         return ProcessingResult.KEEP
 ```
 
-### Anonymize IPs Stage (UnifiedIPAnonymizationStage)
+### Anonymize IPs Stage (AnonymizationStage)
 
 **Purpose**: Replaces real IP addresses with consistent anonymized versions
 
@@ -160,8 +160,8 @@ class UnifiedDeduplicationStage(StageBase):
 
 **Implementation Details**:
 ```python
-# Located in: src/pktmask/core/pipeline/stages/ip_anonymization_unified.py
-class UnifiedIPAnonymizationStage(StageBase):
+# Located in: src/pktmask/core/pipeline/stages/anonymization_stage.py
+class AnonymizationStage(StageBase):
     def anonymize_ip(self, ip_addr: str) -> str:
         # Consistent mapping using cryptographic hash
         if ip_addr not in self.ip_mapping:

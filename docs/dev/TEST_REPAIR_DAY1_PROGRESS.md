@@ -65,13 +65,13 @@ class TestProcessor(unittest.TestCase):
 
 #### 新架构 (StageBase)
 ```python
-from pktmask.core.pipeline.stages.deduplication_unified import UnifiedDeduplicationStage
+from pktmask.core.pipeline.stages.deduplication_stage import DeduplicationStage
 from pktmask.core.pipeline.models import StageStats
 
-class TestUnifiedDeduplicationStage(unittest.TestCase):
+class TestDeduplicationStage(unittest.TestCase):
     def test_processing(self):
         config = {'enabled': True, 'name': 'test_dedup'}
-        stage = UnifiedDeduplicationStage(config)
+        stage = DeduplicationStage(config)
         assert stage.initialize() == True
         result = stage.process_file(input_path, output_path)
         assert isinstance(result, StageStats)
@@ -83,8 +83,8 @@ class TestUnifiedDeduplicationStage(unittest.TestCase):
 | 旧导入 | 新导入 | 状态 |
 |--------|--------|------|
 | `pktmask.core.processors.base_processor` | `pktmask.core.pipeline.base_stage` | ✅ 已更新 |
-| `pktmask.core.pipeline.stages.dedup` | `pktmask.core.pipeline.stages.deduplication_unified` | ✅ 已更新 |
-| `pktmask.core.pipeline.stages.ip_anonymization` | `pktmask.core.pipeline.stages.ip_anonymization_unified` | ✅ 已更新 |
+| `pktmask.core.pipeline.stages.dedup` | `pktmask.core.pipeline.stages.deduplication_stage` | ✅ 已更新 |
+| `pktmask.core.pipeline.stages.ip_anonymization` | `pktmask.core.pipeline.stages.anonymization_stage` | ✅ 已更新 |
 | `pktmask.adapters.*` | N/A (已移除) | 🗑️ 移至归档 |
 | `pktmask.core.tcp_payload_masker.api.types` | N/A (已移除) | 🗑️ 移至归档 |
 

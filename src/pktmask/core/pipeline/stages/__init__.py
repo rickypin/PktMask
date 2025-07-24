@@ -1,11 +1,11 @@
 # Direct import of unified versions, eliminating wrapper layers
-from pktmask.core.pipeline.stages.deduplication_unified import (
+from pktmask.core.pipeline.stages.deduplication_stage import (
     DeduplicationStage,
 )
-from pktmask.core.pipeline.stages.ip_anonymization_unified import (
+from pktmask.core.pipeline.stages.anonymization_stage import (
     AnonymizationStage,
 )
-from pktmask.core.pipeline.stages.mask_payload_v2.stage import (
+from pktmask.core.pipeline.stages.masking_stage.stage import (
     MaskingStage,
 )
 

@@ -1,0 +1,156 @@
+{
+  "overall_pass_rate": 100.0,
+  "maskstage_mode": "pipeline",
+  "files": [
+    {
+      "status": "pass",
+      "records_before": 12,
+      "records_after": 12,
+      "input_tls23_pkts": 12,
+      "masked_zero_pkts": 12,
+      "output_tls23_pkts": 12,
+      "masked_records": 12,
+      "unmasked_records": 0,
+      "masked_ok_frames": [
+        11,
+        16,
+        25,
+        34,
+        43,
+        52,
+        61,
+        70,
+        79,
+        88,
+        97,
+        98
+      ],
+      "failed_frames": [],
+      "failed_frame_details": [],
+      "success_frame_details": [
+        {
+          "frame": 11,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            969
+          ],
+          "zero_bytes": 969,
+          "num_records": 1,
+          "protocol_types": null
+        },
+        {
+          "frame": 16,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            435
+          ],
+          "zero_bytes": 435,
+          "num_records": 1,
+          "protocol_types": null
+        },
+        {
+          "frame": 25,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 8208,
+          "num_records": 1,
+          "protocol_types": null
+        },
+        {
+          "frame": 34,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 8208,
+          "num_records": 1,
+          "protocol_types": null
+        },
+        {
+          "frame": 43,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 8208,
+          "num_records": 1,
+          "protocol_types": null
+        },
+        {
+          "frame": 52,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 8208,
+          "num_records": 1,
+          "protocol_types": null
+        },
+        {
+          "frame": 61,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 8208,
+          "num_records": 1,
+          "protocol_types": null
+        },
+        {
+          "frame": 70,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 8208,
+          "num_records": 1,
+          "protocol_types": null
+        },
+        {
+          "frame": 79,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 8208,
+          "num_records": 1,
+          "protocol_types": null
+        },
+        {
+          "frame": 88,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 8208,
+          "num_records": 1,
+          "protocol_types": null
+        },
+        {
+          "frame": 97,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            8208
+          ],
+          "zero_bytes": 8208,
+          "num_records": 1,
+          "protocol_types": null
+        },
+        {
+          "frame": 98,
+          "path": "eth:ethertype:ip:tcp:tls",
+          "lengths": [
+            863
+          ],
+          "zero_bytes": 863,
+          "num_records": 1,
+          "protocol_types": null
+        }
+      ],
+      "file": "ssl_3.pcap",
+      "maskstage_mode": "pipeline"
+    }
+  ]
+}

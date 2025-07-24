@@ -7,10 +7,10 @@ Uses real TLS test files to validate TLS protocol marker functionality.
 import pytest
 from pathlib import Path
 
-from pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker import (
+from pktmask.core.pipeline.stages.masking_stage.marker.tls_marker import (
     TLSProtocolMarker,
 )
-from pktmask.core.pipeline.stages.mask_payload_v2.marker.types import KeepRuleSet
+from pktmask.core.pipeline.stages.masking_stage.marker.types import KeepRuleSet
 
 
 class TestTLSMarkerIntegration:

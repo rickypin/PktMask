@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 from unittest.mock import patch
 
-from pktmask.core.pipeline.stages.mask_payload_v2.stage import MaskingStage
+from pktmask.core.pipeline.stages.masking_stage.stage import MaskingStage
 from pktmask.core.pipeline.models import StageStats
 
 

@@ -19,7 +19,7 @@ This document provides a detailed analysis of technical debt in the PktMask code
 
 **Examples**:
 ```python
-# src/pktmask/core/pipeline/stages/mask_payload_v2/masker/__init__.py
+# src/pktmask/core/pipeline/stages/masking_stage/masker/__init__.py
 """
 Masker模块 - 通用载荷掩码处理器
 

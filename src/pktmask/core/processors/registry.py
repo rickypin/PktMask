@@ -30,13 +30,13 @@ class ProcessorRegistry:
 
         try:
             # Import all StageBase implementations
-            from ..pipeline.stages.deduplication_unified import (
+            from ..pipeline.stages.deduplication_stage import (
                 DeduplicationStage,
             )
-            from ..pipeline.stages.ip_anonymization_unified import (
+            from ..pipeline.stages.anonymization_stage import (
                 AnonymizationStage,
             )
-            from ..pipeline.stages.mask_payload_v2.stage import (
+            from ..pipeline.stages.masking_stage.stage import (
                 MaskingStage,
             )
 

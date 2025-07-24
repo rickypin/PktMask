@@ -9,10 +9,10 @@ import subprocess
 from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
 
-from pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker import (
+from pktmask.core.pipeline.stages.masking_stage.marker.tls_marker import (
     TLSProtocolMarker,
 )
-from pktmask.core.pipeline.stages.mask_payload_v2.marker.types import (
+from pktmask.core.pipeline.stages.masking_stage.marker.types import (
     KeepRule,
     KeepRuleSet,
 )

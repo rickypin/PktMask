@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 from pathlib import Path
 from typing import List, Tuple
 
-from pktmask.core.pipeline.stages.mask_payload_v2.marker.types import (
+from pktmask.core.pipeline.stages.masking_stage.marker.types import (
     KeepRule,
     KeepRuleSet,
     FlowInfo,

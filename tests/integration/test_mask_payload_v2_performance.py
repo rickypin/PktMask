@@ -10,7 +10,7 @@ import time
 import os
 from pathlib import Path
 
-from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage
+from pktmask.core.pipeline.stages.masking_stage.stage import MaskingStage as NewMaskPayloadStage
 
 
 class TestMaskPayloadV2Performance:

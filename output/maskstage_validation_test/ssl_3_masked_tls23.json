@@ -1,0 +1,120 @@
+{
+  "summary": {
+    "total_frames": 12,
+    "total_records": 12,
+    "by_path": {
+      "eth:ethertype:ip:tcp:tls": 12
+    },
+    "total_matches": 12
+  },
+  "matches": [
+    {
+      "frame": 11,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        969
+      ],
+      "zero_bytes": 969
+    },
+    {
+      "frame": 16,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        435
+      ],
+      "zero_bytes": 435
+    },
+    {
+      "frame": 25,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        8208
+      ],
+      "zero_bytes": 8208
+    },
+    {
+      "frame": 34,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        8208
+      ],
+      "zero_bytes": 8208
+    },
+    {
+      "frame": 43,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        8208
+      ],
+      "zero_bytes": 8208
+    },
+    {
+      "frame": 52,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        8208
+      ],
+      "zero_bytes": 8208
+    },
+    {
+      "frame": 61,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        8208
+      ],
+      "zero_bytes": 8208
+    },
+    {
+      "frame": 70,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        8208
+      ],
+      "zero_bytes": 8208
+    },
+    {
+      "frame": 79,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        8208
+      ],
+      "zero_bytes": 8208
+    },
+    {
+      "frame": 88,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        8208
+      ],
+      "zero_bytes": 8208
+    },
+    {
+      "frame": 97,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        8208
+      ],
+      "zero_bytes": 8208
+    },
+    {
+      "frame": 98,
+      "path": "eth:ethertype:ip:tcp:tls",
+      "num_records": 1,
+      "lengths": [
+        863
+      ],
+      "zero_bytes": 863
+    }
+  ]
+}

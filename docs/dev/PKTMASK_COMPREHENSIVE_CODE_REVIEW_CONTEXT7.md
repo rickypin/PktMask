@@ -241,7 +241,7 @@ The dual-module MaskingStage design, while complex, provides necessary flexibili
 
 #### DeduplicationStage Implementation
 ```python
-# Located: src/pktmask/core/pipeline/stages/deduplication_unified.py
+# Located: src/pktmask/core/pipeline/stages/deduplication_stage.py
 class DeduplicationStage(StageBase):
     def _generate_packet_hash(self, packet) -> str:
         # Uses SHA256 for packet deduplication
@@ -256,7 +256,7 @@ class DeduplicationStage(StageBase):
 
 #### AnonymizationStage Implementation
 ```python
-# Located: src/pktmask/core/pipeline/stages/ip_anonymization_unified.py
+# Located: src/pktmask/core/pipeline/stages/anonymization_stage.py
 class AnonymizationStage(StageBase):
     def process_file(self, input_path: Path, output_path: Path) -> StageStats:
         # Two-phase processing: scan then anonymize
@@ -272,7 +272,7 @@ class AnonymizationStage(StageBase):
 
 #### MaskingStage Dual-Module Architecture
 ```python
-# Located: src/pktmask/core/pipeline/stages/mask_payload_v2/stage.py
+# Located: src/pktmask/core/pipeline/stages/masking_stage/stage.py
 class MaskingStage(StageBase):
     def process_file(self, input_path: Path, output_path: Path) -> StageStats:
         # Phase 1: Marker module analysis

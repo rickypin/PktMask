@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 
-from pktmask.core.pipeline.stages.ip_anonymization_unified import UnifiedIPAnonymizationStage as IPAnonymizationStage
+from pktmask.core.pipeline.stages.anonymization_stage import AnonymizationStage as IPAnonymizationStage
 from pktmask.core.pipeline.models import StageStats
 
 

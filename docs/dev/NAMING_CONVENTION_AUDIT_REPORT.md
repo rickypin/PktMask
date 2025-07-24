@@ -53,7 +53,7 @@ This comprehensive audit identifies 47 instances of inconsistent naming conventi
 
 #### 🔴 P0 Issues (Mixed Language)
 
-**File: `src/pktmask/core/pipeline/stages/deduplication_unified.py`**
+**File: `src/pktmask/core/pipeline/stages/deduplication_stage.py`**
 - Line 167: `"# 生成数据包哈希 with error handling"`
 - Line 275: `"获取显示名称"`
 - Line 280: `"Stage特定的资源清理"`
@@ -62,7 +62,7 @@ This comprehensive audit identifies 47 instances of inconsistent naming conventi
 - **Impact**: Mixed Chinese comments in core processing code
 - **Fix**: Replace with professional English equivalents
 
-**File: `src/pktmask/core/pipeline/stages/ip_anonymization_unified.py`**
+**File: `src/pktmask/core/pipeline/stages/anonymization_stage.py`**
 - Line 23: `"统一IP匿名化阶段 - 消除BaseProcessor依赖"`
 - Line 25: `"直接集成IP匿名化逻辑，无适配器层，统一接口。"`
 - Line 26: `"保持所有现有功能：层次化匿名化、子网结构保持、统计信息收集。"`
@@ -90,7 +90,7 @@ This comprehensive audit identifies 47 instances of inconsistent naming conventi
 - **Impact**: Logger name follows standard naming
 - **Status**: ✅ Already standardized
 
-**File: `src/pktmask/core/pipeline/stages/ip_anonymization_unified.py`**
+**File: `src/pktmask/core/pipeline/stages/anonymization_stage.py`**
 - Line 54: `self.logger = get_logger("anonymize_stage")`
 - **Impact**: Logger name follows standard naming
 - **Status**: ✅ Already standardized

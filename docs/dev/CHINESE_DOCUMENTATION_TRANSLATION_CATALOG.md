@@ -21,7 +21,7 @@ This document catalogs all files in the PktMask codebase that contain Chinese co
 ### P0 - Core Pipeline Stages (Critical)
 
 #### 1. Deduplication Stage
-**File**: `src/pktmask/core/pipeline/stages/deduplication_unified.py`
+**File**: `src/pktmask/core/pipeline/stages/deduplication_stage.py`
 **Issues**:
 - Line 1-6: Module docstring in Chinese
 - Line 151: Comment "去重处理 with memory monitoring and error handling"
@@ -35,7 +35,7 @@ This document catalogs all files in the PktMask codebase that contain Chinese co
 **Estimated Effort**: 2 hours
 
 #### 2. IP Anonymization Stage
-**File**: `src/pktmask/core/pipeline/stages/ip_anonymization_unified.py`
+**File**: `src/pktmask/core/pipeline/stages/anonymization_stage.py`
 **Issues**:
 - Line 1-6: Module docstring in Chinese
 - Line 275: Method docstring "获取显示名称"
@@ -48,7 +48,7 @@ This document catalogs all files in the PktMask codebase that contain Chinese co
 **Estimated Effort**: 2 hours
 
 #### 3. Masking Stage - Masker Module
-**File**: `src/pktmask/core/pipeline/stages/mask_payload_v2/masker/__init__.py`
+**File**: `src/pktmask/core/pipeline/stages/masking_stage/masker/__init__.py`
 **Issues**:
 - Line 1-18: Complete module docstring in Chinese
 - Describes core components, technical features in Chinese

@@ -817,17 +817,17 @@ def run_maskstage_internal(
 
     try:
         from pktmask.core.pipeline.executor import PipelineExecutor
-        from pktmask.core.pipeline.stages.mask_payload_v2.stage import (
-            NewMaskPayloadStage as MaskStage,
+        from pktmask.core.pipeline.stages.masking_stage.stage import (
+            MaskingStage as MaskStage,
         )
     except ImportError as imp_err:
         raise RuntimeError(f"无法导入 Enhanced MaskStage: {imp_err}")
 
     # 配置Enhanced MaskStage处理（Enhanced 模式）
     config = {
-        "dedup": {"enabled": False},
-        "anon": {"enabled": False},
-        "mask": {
+        "remove_dupes": {"enabled": False},
+        "anonymize_ips": {"enabled": False},
+        "mask_payloads": {
             "enabled": True,
             "protocol": "tls",  # 协议类型
             "mode": "enhanced",  # 使用增强模式
@@ -865,8 +865,8 @@ def run_maskstage_direct(
         )
 
     try:
-        from pktmask.core.pipeline.stages.mask_payload_v2.stage import (
-            NewMaskPayloadStage as MaskStage,
+        from pktmask.core.pipeline.stages.masking_stage.stage import (
+            MaskingStage as MaskStage,
         )
     except ImportError as imp_err:
         raise RuntimeError(f"无法导入 Enhanced MaskStage: {imp_err}")

@@ -8,7 +8,7 @@ import pytest
 from unittest.mock import Mock, patch
 from pathlib import Path
 
-from pktmask.core.pipeline.stages.mask_payload_v2.stage import MaskingStage
+from pktmask.core.pipeline.stages.masking_stage.stage import MaskingStage
 from pktmask.core.pipeline.models import StageStats
 
 
@@ -89,10 +89,10 @@ class TestMaskingStage:
         assert not stage._initialized
 
     @patch(
-        "pktmask.core.pipeline.stages.mask_payload_v2.marker.tls_marker.TLSProtocolMarker"
+        "pktmask.core.pipeline.stages.masking_stage.marker.tls_marker.TLSProtocolMarker"
     )
     @patch(
-        "pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PayloadMasker"
+        "pktmask.core.pipeline.stages.masking_stage.masker.payload_masker.PayloadMasker"
     )
     def test_process_file_integration(self, mock_masker_class, mock_marker_class):
         """测试文件处理集成"""

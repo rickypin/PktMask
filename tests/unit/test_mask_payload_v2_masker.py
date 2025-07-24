@@ -10,22 +10,22 @@ from pathlib import Path
 import tempfile
 import os
 
-from src.pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker import (
+from pktmask.core.pipeline.stages.masking_stage.masker.payload_masker import (
     PayloadMasker,
 )
-from src.pktmask.core.pipeline.stages.mask_payload_v2.masker.error_handler import (
+from pktmask.core.pipeline.stages.masking_stage.masker.error_handler import (
     ErrorRecoveryHandler,
     ErrorSeverity,
     ErrorCategory,
 )
-from src.pktmask.core.pipeline.stages.mask_payload_v2.masker.data_validator import (
+from pktmask.core.pipeline.stages.masking_stage.masker.data_validator import (
     DataValidator,
 )
-from src.pktmask.core.pipeline.stages.mask_payload_v2.masker.fallback_handler import (
+from pktmask.core.pipeline.stages.masking_stage.masker.fallback_handler import (
     FallbackHandler,
     FallbackMode,
 )
-from src.pktmask.core.pipeline.stages.mask_payload_v2.marker.types import (
+from pktmask.core.pipeline.stages.masking_stage.marker.types import (
     KeepRule,
     KeepRuleSet,
     FlowInfo,
@@ -186,16 +186,16 @@ class TestPayloadMasker:
         assert result[20:26] == payload[20:26]
 
     @patch(
-        "src.pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PcapReader"
+        "pktmask.core.pipeline.stages.masking_stage.masker.payload_masker.PcapReader"
     )
     @patch(
-        "src.pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PcapWriter"
+        "pktmask.core.pipeline.stages.masking_stage.masker.payload_masker.PcapWriter"
     )
     def test_apply_masking_no_scapy(self, mock_writer, mock_reader):
         """测试没有scapy时的错误处理和降级处理"""
         # 模拟scapy不可用
         with patch(
-            "src.pktmask.core.pipeline.stages.mask_payload_v2.masker.payload_masker.PcapReader",
+            "pktmask.core.pipeline.stages.masking_stage.masker.payload_masker.PcapReader",
             None,
         ):
             masker = PayloadMasker(self.config)

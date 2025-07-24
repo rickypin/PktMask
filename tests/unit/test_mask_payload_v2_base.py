@@ -8,7 +8,7 @@ import pytest
 from pathlib import Path
 from typing import Dict, Any
 
-from pktmask.core.pipeline.stages.mask_payload_v2.marker.types import (
+from pktmask.core.pipeline.stages.masking_stage.marker.types import (
     KeepRule,
     KeepRuleSet,
     FlowInfo,
