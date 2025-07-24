@@ -20,7 +20,7 @@ from .types import (
     PayloadInfo,
 )
 
-# ProcessingAdapter 已移至 pktmask.adapters.encapsulation_adapter
+# ProcessingAdapter has been eliminated - use direct scapy operations instead
 
 __all__ = [
     # 数据类型
@@ -32,7 +32,6 @@ __all__ = [
     # 核心组件
     "EncapsulationDetector",
     "ProtocolStackParser",
-    "ProcessingAdapter",
 ]
 
 __version__ = "1.0.0"

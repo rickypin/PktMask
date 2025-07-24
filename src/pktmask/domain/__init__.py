@@ -21,10 +21,8 @@ from .models import (
     TimingData,
 )
 
-# 注意：适配器已经迁移到 pktmask.adapters 模块
-# 为了避免循环导入，不再从这里导出适配器
-# 请直接使用：
-#   from pktmask.adapters import EventDataAdapter, StatisticsDataAdapter
+# Note: Legacy adapter layer has been eliminated
+# Direct scapy operations are now used instead of adapter abstraction
 
 __all__ = [
     # 数据模型

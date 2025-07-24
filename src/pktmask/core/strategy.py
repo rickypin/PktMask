@@ -330,33 +330,51 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
 
     def __init__(self):
         self._ip_map: Dict[str, str] = {}
-        # New: Encapsulation processing adapter (lazy initialization to avoid circular imports)
-        self._encap_adapter = None
-        self._encap_stats = {
+        # Direct IP processing statistics (no adapter layer needed)
+        self._ip_stats = {
             "total_packets_scanned": 0,
-            "encapsulated_packets": 0,
-            "multi_layer_ip_packets": 0,
-            "plain_packets": 0,
+            "ipv4_packets": 0,
+            "ipv6_packets": 0,
+            "multi_ip_packets": 0,
         }
 
-    def _get_encap_adapter(self):
-        """Lazy initialize encapsulation adapter to avoid circular imports"""
-        if self._encap_adapter is None:
-            from pktmask.adapters.encapsulation_adapter import ProcessingAdapter
+    def _extract_ips_from_packet(self, packet) -> List[Tuple[str, str, str]]:
+        """Extract IP addresses directly from packet using scapy
 
-            self._encap_adapter = ProcessingAdapter()
-        return self._encap_adapter
+        Args:
+            packet: Scapy packet object
+
+        Returns:
+            List of (src_ip, dst_ip, ip_version) tuples
+        """
+        ips = []
+
+        # Process IPv4 layers
+        if packet.haslayer(IP):
+            ip_layer = packet.getlayer(IP)
+            ips.append((ip_layer.src, ip_layer.dst, "ipv4"))
+            self._ip_stats["ipv4_packets"] += 1
+
+        # Process IPv6 layers
+        if packet.haslayer(IPv6):
+            ip_layer = packet.getlayer(IPv6)
+            ips.append((ip_layer.src, ip_layer.dst, "ipv6"))
+            self._ip_stats["ipv6_packets"] += 1
+
+        # Track multi-IP packets (both IPv4 and IPv6)
+        if packet.haslayer(IP) and packet.haslayer(IPv6):
+            self._ip_stats["multi_ip_packets"] += 1
+
+        return ips
 
     def reset(self):
         self._ip_map = {}
-        # Reset encapsulation statistics
-        if self._encap_adapter is not None:
-            self._encap_adapter.reset_stats()
-        self._encap_stats = {
+        # Reset IP processing statistics
+        self._ip_stats = {
             "total_packets_scanned": 0,
-            "encapsulated_packets": 0,
-            "multi_layer_ip_packets": 0,
-            "plain_packets": 0,
+            "ipv4_packets": 0,
+            "ipv6_packets": 0,
+            "multi_ip_packets": 0,
         }
 
     def get_ip_map(self) -> Dict[str, str]:
@@ -436,9 +454,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                 freq_ipv6_7.get(":".join(parts[:7]), 0) + 1
             )
 
-        # 【Enhanced】Get encapsulation adapter once for the entire process
-        encap_adapter = self._get_encap_adapter()
-
+        # Direct IP processing without adapter layer
         for f in files_to_process:
             file_path = os.path.join(subdir_path, f)
             ext = os.path.splitext(f)[1].lower()
@@ -446,26 +462,12 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                 reader_class = PcapNgReader if ext == ".pcapng" else PcapReader
                 with reader_class(file_path) as reader:
                     for packet in reader:
-                        self._encap_stats["total_packets_scanned"] += 1
+                        self._ip_stats["total_packets_scanned"] += 1
 
-                        # 【Enhanced】Use encapsulation adapter to analyze packets and extract IPs from all layers
-                        ip_analysis = encap_adapter.analyze_packet_for_ip_processing(
-                            packet
-                        )
+                        # Direct IP extraction using scapy
+                        ip_pairs = self._extract_ips_from_packet(packet)
 
-                        # Update encapsulation statistics
-                        if ip_analysis["has_encapsulation"]:
-                            self._encap_stats["encapsulated_packets"] += 1
-                            if ip_analysis["has_multiple_ips"]:
-                                self._encap_stats["multi_layer_ip_packets"] += 1
-                        else:
-                            self._encap_stats["plain_packets"] += 1
-
-                        # 【Enhanced】Process IP addresses from all layers
-                        ip_pairs = encap_adapter.extract_ips_for_anonymization(
-                            ip_analysis
-                        )
-                        for src_ip, dst_ip, context in ip_pairs:
+                        for src_ip, dst_ip, ip_version in ip_pairs:
                             # 处理IPv4地址
                             if "." in src_ip:
                                 process_ipv4_address(src_ip)
@@ -477,16 +479,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                             elif ":" in dst_ip:
                                 process_ipv6_address(dst_ip)
 
-                        # 【Compatibility】Keep original simple IP extraction as fallback
-                        if not ip_pairs:
-                            # Fall back to original logic
-                            if packet.haslayer(IP):
-                                process_ipv4_address(packet.getlayer(IP).src)
-                                process_ipv4_address(packet.getlayer(IP).dst)
-
-                            if packet.haslayer(IPv6):
-                                process_ipv6_address(packet.getlayer(IPv6).src)
-                                process_ipv6_address(packet.getlayer(IPv6).dst)
+                        # No fallback needed - direct scapy extraction handles all cases
 
             except Exception as e:
                 error_log.append(f"Error scanning file {file_path}: {str(e)}")
@@ -495,17 +488,16 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         end_time = time.time()
         duration = end_time - start_time
 
-        # 【Enhanced】Get encapsulation processing statistics
-        encap_proc_stats = encap_adapter.get_processing_stats()
-
+        # Direct IP processing statistics
         log_performance(
             "ip_prescan_addresses",
             duration,
             "ip_anonymization.performance",
             files_processed=len(files_to_process),
             unique_ips=len(unique_ips),
-            encapsulated_packets=self._encap_stats["encapsulated_packets"],
-            multi_layer_ip_packets=self._encap_stats["multi_layer_ip_packets"],
+            ipv4_packets=self._ip_stats["ipv4_packets"],
+            ipv6_packets=self._ip_stats["ipv6_packets"],
+            multi_ip_packets=self._ip_stats["multi_ip_packets"],
         )
 
         logger = get_logger("anonymization.strategy")
@@ -513,29 +505,19 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
             f"Frequency statistics completed: unique IPs={len(unique_ips)}, duration={duration:.2f}s"
         )
 
-        # 【Enhanced】Encapsulation processing statistics report
+        # Direct IP processing statistics report
         logger.info(
-            f"Encapsulation processing statistics: total packets={self._encap_stats['total_packets_scanned']}, "
-            f"encapsulated={self._encap_stats['encapsulated_packets']}, "
-            f"multi-layer IP={self._encap_stats['multi_layer_ip_packets']}, "
-            f"normal={self._encap_stats['plain_packets']}"
+            f"IP processing statistics: total packets={self._ip_stats['total_packets_scanned']}, "
+            f"IPv4={self._ip_stats['ipv4_packets']}, "
+            f"IPv6={self._ip_stats['ipv6_packets']}, "
+            f"multi-IP={self._ip_stats['multi_ip_packets']}"
         )
-        if self._encap_stats["total_packets_scanned"] > 0:
-            encap_ratio = (
-                self._encap_stats["encapsulated_packets"]
-                / self._encap_stats["total_packets_scanned"]
-            )
-            multi_ip_ratio = (
-                self._encap_stats["multi_layer_ip_packets"]
-                / self._encap_stats["total_packets_scanned"]
-            )
+        if self._ip_stats["total_packets_scanned"] > 0:
+            ipv4_ratio = self._ip_stats["ipv4_packets"] / self._ip_stats["total_packets_scanned"]
+            ipv6_ratio = self._ip_stats["ipv6_packets"] / self._ip_stats["total_packets_scanned"]
+            multi_ip_ratio = self._ip_stats["multi_ip_packets"] / self._ip_stats["total_packets_scanned"]
             logger.info(
-                f"Encapsulation ratio: {encap_ratio:.1%}, multi-layer IP ratio: {multi_ip_ratio:.1%}"
-            )
-
-        if encap_proc_stats["encapsulation_distribution"]:
-            logger.debug(
-                f"Encapsulation type distribution: {encap_proc_stats['encapsulation_distribution']}"
+                f"IP distribution: IPv4={ipv4_ratio:.1%}, IPv6={ipv6_ratio:.1%}, multi-IP={multi_ip_ratio:.1%}"
             )
 
         if freq_ipv4_1:
@@ -724,45 +706,26 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         """Anonymize single packet based on built mapping. 【Enhanced】Support multi-layer encapsulated IP anonymization."""
         is_anonymized = False
 
-        # 【Enhanced】Use encapsulation adapter to analyze packet
-        encap_adapter = self._get_encap_adapter()
-        ip_analysis = encap_adapter.analyze_packet_for_ip_processing(pkt)
+        # Direct IP anonymization using scapy
+        # Process IPv4
+        if pkt.haslayer(IP):
+            layer = pkt.getlayer(IP)
+            if layer.src in self._ip_map:
+                layer.src = self._ip_map[layer.src]
+                is_anonymized = True
+            if layer.dst in self._ip_map:
+                layer.dst = self._ip_map[layer.dst]
+                is_anonymized = True
 
-        if ip_analysis["has_encapsulation"] and ip_analysis["ip_layers"]:
-            # 【Enhanced】Multi-layer encapsulation processing - anonymize IPs at all layers
-            for ip_layer_info in ip_analysis["ip_layers"]:
-                ip_layer = ip_layer_info.layer_object
-
-                # Anonymize source IP
-                if ip_layer_info.src_ip in self._ip_map:
-                    ip_layer.src = self._ip_map[ip_layer_info.src_ip]
-                    is_anonymized = True
-
-                # Anonymize destination IP
-                if ip_layer_info.dst_ip in self._ip_map:
-                    ip_layer.dst = self._ip_map[ip_layer_info.dst_ip]
-                    is_anonymized = True
-        else:
-            # 【Compatibility】Fall back to original logic for simple packets
-            # Process IPv4
-            if pkt.haslayer(IP):
-                layer = pkt.getlayer(IP)
-                if layer.src in self._ip_map:
-                    layer.src = self._ip_map[layer.src]
-                    is_anonymized = True
-                if layer.dst in self._ip_map:
-                    layer.dst = self._ip_map[layer.dst]
-                    is_anonymized = True
-
-            # Process IPv6
-            if pkt.haslayer(IPv6):
-                layer = pkt.getlayer(IPv6)
-                if layer.src in self._ip_map:
-                    layer.src = self._ip_map[layer.src]
-                    is_anonymized = True
-                if layer.dst in self._ip_map:
-                    layer.dst = self._ip_map[layer.dst]
-                    is_anonymized = True
+        # Process IPv6
+        if pkt.haslayer(IPv6):
+            layer = pkt.getlayer(IPv6)
+            if layer.src in self._ip_map:
+                layer.src = self._ip_map[layer.src]
+                is_anonymized = True
+            if layer.dst in self._ip_map:
+                layer.dst = self._ip_map[layer.dst]
+                is_anonymized = True
 
         # Delete checksums to force recalculation (applies to all modified IP layers)
         if is_anonymized:
