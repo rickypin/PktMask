@@ -136,10 +136,10 @@ source .venv/bin/activate
 python -m pktmask mask tests/data/tls/ssl_3.pcap -o /tmp/test_basic.pcap --mode basic
 
 # Test enhanced mask with IP anonymization
-python -m pktmask mask tests/data/tls/ssl_3.pcap -o /tmp/test_enhanced.pcap --anon --mode enhanced --verbose
+python -m pktmask mask tests/data/tls/ssl_3.pcap -o /tmp/test_enhanced.pcap --anonymize-ips --mode enhanced --verbose
 
 # Test full pipeline (dedup + anon + mask)
-python -m pktmask mask tests/data/tls/ssl_3.pcap -o /tmp/test_full.pcap --dedup --anon --mode enhanced --verbose
+python -m pktmask mask tests/data/tls/ssl_3.pcap -o /tmp/test_full.pcap --remove-dupes --anonymize-ips --mode enhanced --verbose
 ```
 
 Expected results:

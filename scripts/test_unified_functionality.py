@@ -65,15 +65,15 @@ class UnifiedFunctionalityTester:
         try:
             # GUI 配置
             gui_options = self.config_service.create_options_from_gui(
-                dedup_checked=True, anon_checked=True, mask_checked=True
+                remove_dupes_checked=True, anonymize_ips_checked=True, mask_payloads_checked=True
             )
             gui_config = self.config_service.build_pipeline_config(gui_options)
 
             # CLI 配置
             cli_options = self.config_service.create_options_from_cli_args(
-                enable_dedup=True,
-                enable_anon=True,
-                enable_mask=True,
+                remove_dupes=True,
+                anonymize_ips=True,
+                mask_payloads=True,
                 mask_mode="enhanced",
             )
             cli_config = self.config_service.build_pipeline_config(cli_options)
@@ -168,7 +168,7 @@ class UnifiedFunctionalityTester:
 
         try:
             # 测试配置服务
-            config = build_config_from_cli_args(enable_dedup=True, enable_anon=True)
+            config = build_config_from_cli_args(remove_dupes=True, anonymize_ips=True)
             is_valid, error = self.config_service.validate_config(config)
 
             if not is_valid:

@@ -31,22 +31,22 @@ class ProcessorRegistry:
         try:
             # Import all StageBase implementations
             from ..pipeline.stages.deduplication_unified import (
-                UnifiedDeduplicationStage,
+                DeduplicationStage,
             )
             from ..pipeline.stages.ip_anonymization_unified import (
-                UnifiedIPAnonymizationStage,
+                AnonymizationStage,
             )
             from ..pipeline.stages.mask_payload_v2.stage import (
-                NewMaskPayloadStage as MaskingProcessor,
+                MaskingStage,
             )
 
             # Register processors with standard naming only
             cls._processors.update(
                 {
                     # Standard naming keys (consistent with GUI interface)
-                    "anonymize_ips": UnifiedIPAnonymizationStage,
-                    "remove_dupes": UnifiedDeduplicationStage,
-                    "mask_payloads": MaskingProcessor,
+                    "anonymize_ips": AnonymizationStage,
+                    "remove_dupes": DeduplicationStage,
+                    "mask_payloads": MaskingStage,
                 }
             )
 

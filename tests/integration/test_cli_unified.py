@@ -47,13 +47,13 @@ class TestCLIUnified:
 
         # 测试CLI参数配置
         cli_options = config_service.create_options_from_cli_args(
-            enable_dedup=True, enable_anon=True, enable_mask=True, mask_mode="enhanced"
+            remove_dupes=True, anonymize_ips=True, mask_payloads=True, mask_mode="enhanced"
         )
         cli_config = config_service.build_pipeline_config(cli_options)
 
         # 测试GUI配置
         gui_options = config_service.create_options_from_gui(
-            dedup_checked=True, anon_checked=True, mask_checked=True
+            remove_dupes_checked=True, anonymize_ips_checked=True, mask_payloads_checked=True
         )
         gui_config = config_service.build_pipeline_config(gui_options)
 
@@ -377,13 +377,13 @@ class TestGUICLIConsistency:
 
         # GUI配置
         gui_options = service.create_options_from_gui(
-            dedup_checked=True, anon_checked=True, mask_checked=True
+            remove_dupes_checked=True, anonymize_ips_checked=True, mask_payloads_checked=True
         )
         gui_config = service.build_pipeline_config(gui_options)
 
         # CLI配置
         cli_options = service.create_options_from_cli_args(
-            enable_dedup=True, enable_anon=True, enable_mask=True, mask_mode="enhanced"
+            remove_dupes=True, anonymize_ips=True, mask_payloads=True, mask_mode="enhanced"
         )
         cli_config = service.build_pipeline_config(cli_options)
 

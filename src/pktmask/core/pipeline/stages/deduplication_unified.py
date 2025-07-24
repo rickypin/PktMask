@@ -18,14 +18,14 @@ from pktmask.core.pipeline.models import StageStats
 from pktmask.infrastructure.logging import get_logger
 
 
-class UnifiedDeduplicationStage(StageBase):
-    """统一去重阶段 - 消除BaseProcessor依赖
+class DeduplicationStage(StageBase):
+    """Unified deduplication stage - eliminates BaseProcessor dependency
 
-    直接集成SHA256哈希去重算法，无适配器层，统一接口。
-    保持所有现有功能：字节级去重、统计信息收集、空间节省计算。
+    Directly integrates SHA256 hash deduplication algorithm, no adapter layer, unified interface.
+    Maintains all existing functionality: byte-level deduplication, statistics collection, space savings calculation.
     """
 
-    name: str = "UnifiedDeduplicationStage"
+    name: str = "DeduplicationStage"
 
     def __init__(self, config: Dict[str, Any]):
         """Initialize unified deduplication stage.
@@ -55,7 +55,7 @@ class UnifiedDeduplicationStage(StageBase):
         self._stats = {}
 
         self.logger.info(
-            f"UnifiedDeduplicationStage created: algorithm={self.algorithm}"
+            f"DeduplicationStage created: algorithm={self.algorithm}"
         )
 
     def initialize(self, config: Optional[Dict] = None) -> bool:
@@ -110,7 +110,7 @@ class UnifiedDeduplicationStage(StageBase):
         """
         if not self._initialized:
             if not self.initialize():
-                raise RuntimeError("UnifiedDeduplicationStage initialization failed")
+                raise RuntimeError("DeduplicationStage initialization failed")
 
         # Validate input with enhanced error handling
         self.validate_file_access(input_path, "deduplication")
@@ -283,7 +283,7 @@ class UnifiedDeduplicationStage(StageBase):
         # Clear statistics
         self._stats.clear()
 
-        self.logger.debug("UnifiedDeduplicationStage specific cleanup completed")
+        self.logger.debug("DeduplicationStage specific cleanup completed")
 
     def get_description(self) -> str:
         """获取描述"""

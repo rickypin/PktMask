@@ -152,26 +152,26 @@ class ConfigService:
 
     def create_options_from_cli_args(
         self,
-        enable_dedup: bool = False,
-        enable_anon: bool = False,
-        enable_mask: bool = False,
+        remove_dupes: bool = False,
+        anonymize_ips: bool = False,
+        mask_payloads: bool = False,
         mask_mode: str = "enhanced",
         mask_protocol: str = "tls",
         tshark_path: Optional[str] = None,
     ) -> ProcessingOptions:
         """
-        从CLI参数创建处理选项
+        Create processing options from CLI arguments
 
         Args:
-            enable_dedup: 启用去重
-            enable_anon: 启用IP匿名化
-            enable_mask: 启用载荷掩码
-            mask_mode: 掩码模式
-            mask_protocol: 掩码协议
-            tshark_path: TShark路径
+            remove_dupes: Enable deduplication processing
+            anonymize_ips: Enable IP anonymization processing
+            mask_payloads: Enable payload masking processing
+            mask_mode: Masking mode
+            mask_protocol: Masking protocol
+            tshark_path: TShark executable path
 
         Returns:
-            处理选项配置
+            Processing options configuration
         """
         try:
             mode_enum = MaskMode(mask_mode.lower())
@@ -180,42 +180,42 @@ class ConfigService:
             mode_enum = MaskMode.ENHANCED
 
         return ProcessingOptions(
-            enable_remove_dupes=enable_dedup,
-            enable_anonymize_ips=enable_anon,
-            enable_mask_payloads=enable_mask,
+            enable_remove_dupes=remove_dupes,
+            enable_anonymize_ips=anonymize_ips,
+            enable_mask_payloads=mask_payloads,
             mask_mode=mode_enum,
             mask_protocol=mask_protocol,
             tshark_path=tshark_path,
         )
 
     def create_options_from_gui(
-        self, dedup_checked: bool, anon_checked: bool, mask_checked: bool
+        self, remove_dupes_checked: bool, anonymize_ips_checked: bool, mask_payloads_checked: bool
     ) -> ProcessingOptions:
         """
-        从GUI状态创建处理选项
+        Create processing options from GUI state
 
         Args:
-            dedup_checked: 去重复选框状态
-            anon_checked: IP匿名化复选框状态
-            mask_checked: 载荷掩码复选框状态
+            remove_dupes_checked: Remove dupes checkbox state
+            anonymize_ips_checked: Anonymize IPs checkbox state
+            mask_payloads_checked: Mask payloads checkbox state
 
         Returns:
-            处理选项配置
+            Processing options configuration
         """
         return ProcessingOptions(
-            enable_remove_dupes=dedup_checked,
-            enable_anonymize_ips=anon_checked,
-            enable_mask_payloads=mask_checked,
-            mask_mode=MaskMode.ENHANCED,  # GUI默认使用增强模式
-            mask_protocol="tls",  # GUI默认使用TLS协议
+            enable_remove_dupes=remove_dupes_checked,
+            enable_anonymize_ips=anonymize_ips_checked,
+            enable_mask_payloads=mask_payloads_checked,
+            mask_mode=MaskMode.ENHANCED,  # GUI defaults to enhanced mode
+            mask_protocol="tls",  # GUI defaults to TLS protocol
         )
 
     def get_available_modes(self) -> List[str]:
-        """获取可用的掩码模式"""
+        """Get available masking modes"""
         return [mode.value for mode in MaskMode]
 
     def get_available_protocols(self) -> List[str]:
-        """获取可用的协议类型"""
+        """Get available protocol types"""
         return ["tls", "http"]
 
     def get_default_tshark_path(self) -> Optional[str]:
@@ -237,22 +237,22 @@ def get_config_service() -> ConfigService:
     return _config_service
 
 
-# 便捷函数
+# Convenience functions
 def build_config_from_cli_args(**kwargs) -> Dict[str, Any]:
-    """从CLI参数构建配置"""
+    """Build configuration from CLI arguments"""
     service = get_config_service()
     options = service.create_options_from_cli_args(**kwargs)
     return service.build_pipeline_config(options)
 
 
-def build_config_from_gui(dedup: bool, anon: bool, mask: bool) -> Dict[str, Any]:
-    """从GUI状态构建配置"""
+def build_config_from_gui(remove_dupes: bool, anonymize_ips: bool, mask_payloads: bool) -> Dict[str, Any]:
+    """Build configuration from GUI state"""
     service = get_config_service()
-    options = service.create_options_from_gui(dedup, anon, mask)
+    options = service.create_options_from_gui(remove_dupes, anonymize_ips, mask_payloads)
     return service.build_pipeline_config(options)
 
 
 def validate_pipeline_config(config: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
-    """验证管道配置"""
+    """Validate pipeline configuration"""
     service = get_config_service()
     return service.validate_config(config)

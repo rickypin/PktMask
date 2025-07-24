@@ -159,9 +159,9 @@ class PipelineManager:
 
         # Create and configure new PipelineExecutor
         config = build_pipeline_config(
-            enable_anon=self.main_window.anonymize_ips_cb.isChecked(),
-            enable_dedup=self.main_window.remove_dupes_cb.isChecked(),
-            enable_mask=self.main_window.mask_payloads_cb.isChecked(),
+            anonymize_ips=self.main_window.anonymize_ips_cb.isChecked(),
+            remove_dupes=self.main_window.remove_dupes_cb.isChecked(),
+            mask_payloads=self.main_window.mask_payloads_cb.isChecked(),
         )
         if not config:
             self._logger.warning("No processing steps selected")

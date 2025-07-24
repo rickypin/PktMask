@@ -58,9 +58,9 @@ def _run_unified_pipeline(
     try:
         # 构建配置
         config = build_config_from_cli_args(
-            enable_dedup=enable_dedup,
-            enable_anon=enable_anon,
-            enable_mask=enable_mask,
+            remove_dupes=enable_dedup,
+            anonymize_ips=enable_anon,
+            mask_payloads=enable_mask,
             mask_mode=mask_mode or "enhanced",
             mask_protocol=mask_protocol,
         )
@@ -271,10 +271,10 @@ def cmd_mask(
 
     Examples:
         # Process single file
-        pktmask mask input.pcap -o output.pcap --dedup --anon
+        pktmask mask input.pcap -o output.pcap --remove-dupes --anonymize-ips
 
         # Process directory
-        pktmask mask /path/to/pcaps -o /path/to/output --dedup --anon --verbose
+        pktmask mask /path/to/pcaps -o /path/to/output --remove-dupes --anonymize-ips --verbose
 
         # Custom file pattern
         pktmask mask /path/to/pcaps -o /path/to/output --pattern "*.pcap,*.cap"

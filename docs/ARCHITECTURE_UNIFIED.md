@@ -49,8 +49,8 @@ This document describes the complete architectural design of the PktMask project
 ┌─────────────────────────────────────────────────────────────┐
 │                   StageBase Architecture                    │
 ├─────────────────────────────────────────────────────────────┤
-│  UnifiedIPAnonymizationStage  │  UnifiedDeduplicationStage  │
-│  NewMaskPayloadStage          │  Other processing stages    │
+│  AnonymizationStage     │  DeduplicationStage             │
+│  MaskingStage           │  Other processing stages        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -69,7 +69,7 @@ This document describes the complete architectural design of the PktMask project
 class ConfigService:
     def build_pipeline_config(self, options: ProcessingOptions) -> Dict[str, Any]
     def create_options_from_cli_args(self, **kwargs) -> ProcessingOptions
-    def create_options_from_gui(self, dedup: bool, anon: bool, mask: bool) -> ProcessingOptions
+    def create_options_from_gui(self, remove_dupes: bool, anonymize_ips: bool, mask_payloads: bool) -> ProcessingOptions
     def validate_config(self, config: Dict[str, Any]) -> Tuple[bool, Optional[str]]
 ```
 
@@ -119,7 +119,125 @@ def process_directory_cli(executor, input_dir, output_dir, progress_callback, ve
 - Text format: Human-readable detailed reports
 - JSON format: Machine-readable structured data
 
-### 2. Configuration Unification Mechanism
+## Naming Conventions (Standardized)
+
+PktMask follows consistent naming conventions across all components to ensure clarity and maintainability. This standardization was implemented to resolve architectural inconsistencies and improve developer experience.
+
+### 1. Core Processing Features
+
+The three main processing features use standardized naming across all contexts:
+
+#### GUI Display Names
+- **"Remove Dupes"** - Packet deduplication processing
+- **"Anonymize IPs"** - IP address anonymization processing
+- **"Mask Payloads"** - Payload masking processing
+
+#### Code Variables and Parameters
+```python
+# Method parameters and variables
+remove_dupes: bool = False
+anonymize_ips: bool = False
+mask_payloads: bool = False
+
+# ProcessingOptions dataclass fields
+enable_remove_dupes: bool = False
+enable_anonymize_ips: bool = False
+enable_mask_payloads: bool = False
+```
+
+#### CLI Arguments
+```bash
+# Full argument names (recommended)
+--remove-dupes     # Enable deduplication processing
+--anonymize-ips    # Enable IP anonymization processing
+--mask-payloads    # Enable payload masking processing
+
+# Usage examples
+pktmask mask input.pcap -o output.pcap --remove-dupes --anonymize-ips
+pktmask batch /data/pcaps -o /data/output --remove-dupes --anonymize-ips --mask-payloads
+```
+
+#### Configuration Keys
+```yaml
+# Pipeline configuration structure
+remove_dupes:
+  enabled: true
+  algorithm: "sha256"
+
+anonymize_ips:
+  enabled: true
+  preserve_subnet_structure: true
+
+mask_payloads:
+  enabled: true
+  mode: "enhanced"
+  protocol: "tls"
+```
+
+### 2. Stage Architecture Naming
+
+#### Stage Class Names
+```python
+# Standardized stage class names
+class DeduplicationStage(StageBase):     # Packet deduplication
+class AnonymizationStage(StageBase):     # IP anonymization
+class MaskingStage(StageBase):           # Payload masking
+```
+
+#### Logger Names
+```python
+# Consistent logger naming pattern
+self.logger = get_logger("dedup_stage")      # DeduplicationStage
+self.logger = get_logger("anonymize_stage")  # AnonymizationStage
+self.logger = get_logger("mask_stage")       # MaskingStage
+```
+
+### 3. Service Layer Naming
+
+#### Method Naming Patterns
+```python
+# ConfigService methods use full descriptive names
+def create_options_from_cli_args(
+    self,
+    remove_dupes: bool = False,
+    anonymize_ips: bool = False,
+    mask_payloads: bool = False,
+    # ...
+) -> ProcessingOptions
+
+def create_options_from_gui(
+    self,
+    remove_dupes_checked: bool,
+    anonymize_ips_checked: bool,
+    mask_payloads_checked: bool
+) -> ProcessingOptions
+```
+
+### 4. Naming Convention Benefits
+
+#### Developer Experience
+- **Consistency**: Same terminology across GUI, CLI, and code
+- **Clarity**: Descriptive names that clearly indicate functionality
+- **Maintainability**: Easier to locate and modify related code
+
+#### User Experience
+- **Predictability**: Consistent terminology across all interfaces
+- **Documentation**: Clear mapping between GUI options and CLI arguments
+- **Learning**: Reduced cognitive load when switching between interfaces
+
+### 5. Migration from Legacy Names
+
+The following legacy naming patterns have been standardized:
+
+| Legacy Pattern | Standardized Pattern | Context |
+|----------------|---------------------|---------|
+| `enable_dedup`, `enable_anon`, `enable_mask` | `remove_dupes`, `anonymize_ips`, `mask_payloads` | Code variables |
+| `UnifiedIPAnonymizationStage` | `AnonymizationStage` | Stage classes |
+| `NewMaskPayloadStage` | `MaskingStage` | Stage classes |
+| `--dedup`, `--anon` (shortcuts) | `--remove-dupes`, `--anonymize-ips` | CLI documentation |
+| Mixed logger patterns | `dedup_stage`, `anonymize_stage`, `mask_stage` | Logger names |
+
+### 3. Configuration Unification Mechanism
 
 #### Configuration Flow
 ```
@@ -131,13 +249,13 @@ CLI Args ───┘
 #### Configuration Mapping
 | GUI Option | CLI Parameter | Config Key | Description |
 |-----------|---------------|------------|-------------|
-| Remove Dupes checkbox | `--dedup` | `remove_dupes.enabled` | Deduplication processing |
-| Anonymize IPs checkbox | `--anon` | `anonymize_ips.enabled` | IP anonymization |
-| Mask Payloads checkbox | `--mask` | `mask_payloads.enabled` | Payload masking |
+| Remove Dupes checkbox | `--remove-dupes` | `remove_dupes.enabled` | Deduplication processing |
+| Anonymize IPs checkbox | `--anonymize-ips` | `anonymize_ips.enabled` | IP anonymization |
+| Mask Payloads checkbox | `--mask-payloads` | `mask_payloads.enabled` | Payload masking |
 | Masking mode selection | `--mode` | `mask_payloads.mode` | enhanced/basic |
 | Protocol type | `--protocol` | `mask_payloads.protocol` | tls/http |
 
-### 3. Processing Flow Unification
+### 4. Processing Flow Unification
 
 #### Single File Processing Flow
 ```
@@ -150,7 +268,7 @@ Input Directory → File Scanning → Config Validation → Executor Creation �
 Loop Processing → Progress Updates → Result Aggregation → Report Generation
 ```
 
-### 4. Error Handling Unification
+### 5. Error Handling Unification
 
 #### Error Hierarchy
 1. **Configuration Errors**: Parameter validation failures
@@ -162,7 +280,7 @@ Loop Processing → Progress Updates → Result Aggregation → Report Generatio
 - **GUI**: Graphical error dialogs + logging
 - **CLI**: Command line error output + exit codes + optional reports
 
-### 5. Performance Optimization
+### 6. Performance Optimization
 
 #### Memory Management
 - Unified memory pool management

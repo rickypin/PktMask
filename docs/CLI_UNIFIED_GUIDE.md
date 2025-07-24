@@ -36,7 +36,7 @@ pktmask <command> <input> -o <output> [options]
 pktmask mask input.pcap -o output.pcap
 
 # Enable all processing options
-pktmask mask input.pcap -o output.pcap --dedup --anon --verbose
+pktmask mask input.pcap -o output.pcap --remove-dupes --anonymize-ips --verbose
 
 # Custom masking mode
 pktmask mask input.pcap -o output.pcap --mode basic --protocol tls
@@ -45,7 +45,7 @@ pktmask mask input.pcap -o output.pcap --mode basic --protocol tls
 **Directory Batch Processing**:
 ```bash
 # Process all files in directory
-pktmask mask /path/to/pcaps -o /path/to/output --dedup --anon
+pktmask mask /path/to/pcaps -o /path/to/output --remove-dupes --anonymize-ips
 
 # Custom file matching pattern
 pktmask mask /path/to/pcaps -o /path/to/output --pattern "*.pcap,*.cap"
@@ -55,8 +55,8 @@ pktmask mask /path/to/pcaps -o /path/to/output --verbose --save-report --report-
 ```
 
 **Parameter Description**:
-- `--dedup`: Enable Remove Dupes processing
-- `--anon`: Enable Anonymize IPs processing
+- `--remove-dupes`: Enable Remove Dupes processing
+- `--anonymize-ips`: Enable Anonymize IPs processing
 - `--mode`: Masking mode (`enhanced`|`basic`)
 - `--protocol`: Protocol type (`tls`|`http`)
 - `--verbose`: Detailed output
@@ -177,7 +177,7 @@ pktmask mask input.pcap -o output.pcap --format json
 
 ### Example 1: Basic Single File Processing
 ```bash
-pktmask mask sample.pcap -o processed.pcap --dedup --anon
+pktmask mask sample.pcap -o processed.pcap --remove-dupes --anonymize-ips
 ```
 
 ### Example 2: Directory Batch Processing
@@ -232,7 +232,7 @@ CLI is now fully consistent with GUI:
 ```bash
 ❌ Configuration error: No processing stages enabled
 ```
-Solution: Enable at least one processing option (--dedup, --anon, or default mask)
+Solution: Enable at least one processing option (--remove-dupes, --anonymize-ips, or default mask)
 
 **2. File Permission Issues**
 ```bash
@@ -267,10 +267,10 @@ Legacy commands are still compatible, but new unified commands are recommended:
 
 ```bash
 # Legacy (still supported)
-pktmask mask input.pcap -o output.pcap --dedup --anon --mode enhanced
+pktmask mask input.pcap -o output.pcap --remove-dupes --anonymize-ips --mode enhanced
 
 # New (recommended)
-pktmask mask input.pcap -o output.pcap --dedup --anon --verbose --save-report
+pktmask mask input.pcap -o output.pcap --remove-dupes --anonymize-ips --verbose --save-report
 ```
 
 ### Migrating from GUI

@@ -27,17 +27,17 @@ class TestConfigService:
     """配置服务测试"""
 
     def test_processing_options_creation(self):
-        """测试处理选项创建"""
+        """Test processing options creation"""
         options = ProcessingOptions(
-            enable_dedup=True,
-            enable_anon=True,
-            enable_mask=True,
+            enable_remove_dupes=True,
+            enable_anonymize_ips=True,
+            enable_mask_payloads=True,
             mask_mode=MaskMode.ENHANCED,
         )
 
-        assert options.enable_dedup is True
-        assert options.enable_anon is True
-        assert options.enable_mask is True
+        assert options.enable_remove_dupes is True
+        assert options.enable_anonymize_ips is True
+        assert options.enable_mask_payloads is True
         assert options.mask_mode == MaskMode.ENHANCED
 
     def test_config_service_initialization(self):
@@ -46,10 +46,10 @@ class TestConfigService:
         assert service is not None
 
     def test_build_pipeline_config(self):
-        """测试管道配置构建"""
+        """Test pipeline configuration building"""
         service = ConfigService()
         options = ProcessingOptions(
-            enable_dedup=True, enable_anon=True, enable_mask=True
+            enable_remove_dupes=True, enable_anonymize_ips=True, enable_mask_payloads=True
         )
 
         config = service.build_pipeline_config(options)
@@ -81,37 +81,37 @@ class TestConfigService:
         assert "empty" in error.lower()
 
     def test_cli_args_to_options(self):
-        """测试CLI参数转换为选项"""
+        """Test CLI arguments to options conversion"""
         service = ConfigService()
         options = service.create_options_from_cli_args(
-            enable_dedup=True, enable_anon=False, enable_mask=True, mask_mode="basic"
+            remove_dupes=True, anonymize_ips=False, mask_payloads=True, mask_mode="basic"
         )
 
-        assert options.enable_dedup is True
-        assert options.enable_anon is False
-        assert options.enable_mask is True
+        assert options.enable_remove_dupes is True
+        assert options.enable_anonymize_ips is False
+        assert options.enable_mask_payloads is True
         assert options.mask_mode == MaskMode.BASIC
 
     def test_gui_state_to_options(self):
-        """测试GUI状态转换为选项"""
+        """Test GUI state to options conversion"""
         service = ConfigService()
         options = service.create_options_from_gui(
-            dedup_checked=True, anon_checked=True, mask_checked=False
+            remove_dupes_checked=True, anonymize_ips_checked=True, mask_payloads_checked=False
         )
 
-        assert options.enable_dedup is True
-        assert options.enable_anon is True
-        assert options.enable_mask is False
+        assert options.enable_remove_dupes is True
+        assert options.enable_anonymize_ips is True
+        assert options.enable_mask_payloads is False
 
     def test_convenience_functions(self):
-        """测试便捷函数"""
-        # 测试CLI配置构建
-        cli_config = build_config_from_cli_args(enable_dedup=True, enable_anon=True)
+        """Test convenience functions"""
+        # Test CLI configuration building
+        cli_config = build_config_from_cli_args(remove_dupes=True, anonymize_ips=True)
         assert "remove_dupes" in cli_config
         assert "anonymize_ips" in cli_config
 
-        # 测试GUI配置构建
-        gui_config = build_config_from_gui(dedup=True, anon=True, mask=False)
+        # Test GUI configuration building
+        gui_config = build_config_from_gui(remove_dupes=True, anonymize_ips=True, mask_payloads=False)
         assert "remove_dupes" in gui_config
         assert "anonymize_ips" in gui_config
         assert "mask_payloads" not in gui_config

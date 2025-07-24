@@ -286,9 +286,9 @@ class PipelineExecutor:
         # ------------------------------------------------------------------
         dedup_cfg = config.get("remove_dupes", {})
         if dedup_cfg.get("enabled", False):
-            from pktmask.core.pipeline.stages.deduplication_unified import UnifiedDeduplicationStage
+            from pktmask.core.pipeline.stages.deduplication_unified import DeduplicationStage
 
-            stage = UnifiedDeduplicationStage(dedup_cfg)
+            stage = DeduplicationStage(dedup_cfg)
             stage.initialize()
             stages.append(stage)
 
@@ -298,10 +298,10 @@ class PipelineExecutor:
         anon_cfg = config.get("anonymize_ips", {})
         if anon_cfg.get("enabled", False):
             from pktmask.core.pipeline.stages.ip_anonymization_unified import (
-                UnifiedIPAnonymizationStage,
+                AnonymizationStage,
             )
 
-            stage = UnifiedIPAnonymizationStage(anon_cfg)
+            stage = AnonymizationStage(anon_cfg)
             stage.initialize()
             stages.append(stage)
 
@@ -312,11 +312,11 @@ class PipelineExecutor:
         if mask_cfg.get("enabled", False):
             # 直接使用新一代双模块架构
             from pktmask.core.pipeline.stages.mask_payload_v2.stage import (
-                NewMaskPayloadStage,
+                MaskingStage,
             )
 
             # 创建 MaskStage 实例
-            stage = NewMaskPayloadStage(mask_cfg)
+            stage = MaskingStage(mask_cfg)
             stage.initialize()
             stages.append(stage)
 

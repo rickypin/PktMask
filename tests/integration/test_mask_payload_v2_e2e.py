@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 from unittest.mock import patch
 
-from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage
+from pktmask.core.pipeline.stages.mask_payload_v2.stage import MaskingStage
 from pktmask.core.pipeline.models import StageStats
 
 
@@ -65,7 +65,7 @@ class TestMaskPayloadV2EndToEnd:
         self, test_files, temp_output_dir, stage_config
     ):
         """测试端到端文件处理流程"""
-        stage = NewMaskPayloadStage(stage_config)
+        stage = MaskingStage(stage_config)
 
         # 初始化阶段
         success = stage.initialize()
@@ -162,7 +162,7 @@ class TestMaskPayloadV2EndToEnd:
         self, test_files, temp_output_dir, stage_config
     ):
         """验证双模块架构的正确工作"""
-        stage = NewMaskPayloadStage(stage_config)
+        stage = MaskingStage(stage_config)
         stage.initialize()
 
         input_file = test_files[0]
@@ -201,7 +201,7 @@ class TestMaskPayloadV2EndToEnd:
 
     def test_error_handling_and_recovery(self, temp_output_dir, stage_config):
         """测试错误处理和恢复机制"""
-        stage = NewMaskPayloadStage(stage_config)
+        stage = MaskingStage(stage_config)
         stage.initialize()
 
         # 测试不存在的输入文件
@@ -248,7 +248,7 @@ class TestMaskPayloadV2EndToEnd:
         for i, config in enumerate(configs):
             print(f"\n测试配置 {i+1}: {config}")
 
-            stage = NewMaskPayloadStage(config)
+            stage = MaskingStage(config)
             success = stage.initialize()
 
             if success:

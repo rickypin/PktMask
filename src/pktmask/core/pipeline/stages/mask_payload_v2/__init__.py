@@ -18,6 +18,6 @@ MaskPayload 阶段 - 双模块架构实现
 风险等级: P0 (高风险架构重构)
 """
 
-from .stage import NewMaskPayloadStage
+from .stage import MaskingStage
 
-__all__ = ["NewMaskPayloadStage"]
+__all__ = ["MaskingStage"]

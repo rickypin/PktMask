@@ -260,7 +260,7 @@ executor = PipelineExecutor(config)  # 统一StageBase架构处理
 pktmask mask input.pcap -o output.pcap --mode enhanced
 
 # 组合处理（Remove Dupes + Anonymize IPs + Mask Payloads）
-pktmask mask input.pcap -o output.pcap --dedup --anon --mode enhanced
+pktmask mask input.pcap -o output.pcap --remove-dupes --anonymize-ips --mode enhanced
 ```
 
 **编程接口用户**:

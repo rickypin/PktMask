@@ -193,7 +193,7 @@ def _handle_stage_progress(stage, stats, progress_callback):
     # Emit log with stage-specific action wording and correct statistics
     if stage.name in ["DeduplicationStage", "UnifiedDeduplicationStage"]:
         msg = f"- {stage_display_name}: processed {stats.packets_processed} pkts, removed {stats.packets_modified} pkts"
-    elif stage.name in ["AnonStage", "IPAnonymizationStage", "UnifiedIPAnonymizationStage"]:
+    elif stage.name in ["AnonStage", "IPAnonymizationStage", "UnifiedIPAnonymizationStage", "AnonymizationStage"]:
         # For IP anonymization, show IP statistics instead of packet statistics
         original_ips = getattr(stats, "original_ips", 0) or stats.extra_metrics.get(
             "original_ips", 0
@@ -219,9 +219,11 @@ def _get_stage_display_name(stage_name: str) -> str:
         "AnonStage": "Anonymize IPs Stage",
         "IPAnonymizationStage": "Anonymize IPs Stage",  # Old StageBase implementation
         "UnifiedIPAnonymizationStage": "Anonymize IPs Stage",  # New Unified implementation
+        "AnonymizationStage": "Anonymize IPs Stage",  # Standardized naming
         "NewMaskPayloadStage": "Mask Payloads Stage",
         "MaskStage": "Mask Payloads Stage",
         "MaskPayloadStage": "Mask Payloads Stage",
+        "MaskingStage": "Mask Payloads Stage",  # Standardized naming
         "Mask Payloads (v2)": "Mask Payloads Stage",
     }
     return stage_name_mapping.get(stage_name, stage_name)
@@ -270,15 +272,15 @@ def validate_config(config: Dict) -> Tuple[bool, Optional[str]]:
 
 
 def build_pipeline_config(
-    enable_anon: bool, enable_dedup: bool, enable_mask: bool
+    anonymize_ips: bool, remove_dupes: bool, mask_payloads: bool
 ) -> Dict:
     """Build pipeline configuration based on feature switches (using standard naming conventions)"""
-    # 使用统一的配置服务
+    # Use unified configuration service
     from pktmask.services.config_service import get_config_service
 
     service = get_config_service()
     options = service.create_options_from_gui(
-        dedup_checked=enable_dedup, anon_checked=enable_anon, mask_checked=enable_mask
+        remove_dupes_checked=remove_dupes, anonymize_ips_checked=anonymize_ips, mask_payloads_checked=mask_payloads
     )
 
     return service.build_pipeline_config(options)

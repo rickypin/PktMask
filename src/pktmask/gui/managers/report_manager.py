@@ -504,7 +504,7 @@ class ReportManager:
                         masked_ips = extra_metrics.get("anonymized_ips", 0)
 
                     rate = (masked_ips / original_ips * 100) if original_ips > 0 else 0
-                    line = f"  🛡️  {step_name:<18} | Original IPs: {original_ips:>3} | Anonymized IPs: {masked_ips:>3} | Rate: {rate:5.1f}%"
+                    line = f"  🎭 {step_name:<18} | Total IPs: {original_ips:>5} | Anonymized IPs: {masked_ips:>4} | Rate: {rate:5.1f}%"
 
                 elif step_type == "remove_dupes":
                     unique = data.get("unique_packets", 0)
@@ -525,7 +525,7 @@ class ReportManager:
                             step_name, data
                         )
                     else:
-                        line = f"  🎭 {step_name:<18} | Total Pkts: {total:>5} | Masked Pkts: {masked:>4} | Rate: {rate:5.1f}%"
+                        line = f"  🛡️ {step_name:<18} | Total Pkts: {total:>5} | Masked Pkts: {masked:>4} | Rate: {rate:5.1f}%"
                 else:
                     continue
 
@@ -954,6 +954,7 @@ class ReportManager:
                 "AnonStage",
                 "IPAnonymizationStage",
                 "UnifiedIPAnonymizationStage",  # Add new Unified stage name
+                "AnonymizationStage",  # Add standardized stage name
             ]:  # Support both old and new stage names
                 step_type = "anonymize_ips"  # Use standard naming
             elif step_name_raw in ["DeduplicationStage", "UnifiedDeduplicationStage"]:  # Add new Unified stage name
@@ -962,6 +963,7 @@ class ReportManager:
                 "MaskStage",
                 "MaskPayloadStage",
                 "NewMaskPayloadStage",
+                "MaskingStage",  # Add standardized stage name
                 "Mask Payloads",  # Add the actual display name from NewMaskPayloadStage
                 "Mask Payloads (v2)",
                 "Mask Payloads Stage",
@@ -1008,6 +1010,7 @@ class ReportManager:
                 "AnonStage",
                 "IPAnonymizationStage",
                 "UnifiedIPAnonymizationStage",  # Add new Unified stage name
+                "AnonymizationStage",  # Add standardized stage name
             ]  # Support both old and new stage names
             or "ip_mappings" in data
             or "file_ip_mappings" in data

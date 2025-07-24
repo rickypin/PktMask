@@ -7,24 +7,24 @@
 
 from __future__ import annotations
 
-import logging
 import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 from pktmask.core.pipeline.base_stage import StageBase
 from pktmask.core.pipeline.models import StageStats
+from pktmask.infrastructure.logging import get_logger
 
 
-class NewMaskPayloadStage(StageBase):
-    """双模块架构掩码处理阶段
+class MaskingStage(StageBase):
+    """Dual-module architecture masking processing stage
 
-    基于双模块分离设计：
-    - Marker模块: 协议分析和规则生成
-    - Masker模块: 通用载荷掩码应用
+    Based on dual-module separation design:
+    - Marker module: Protocol analysis and rule generation
+    - Masker module: Universal payload masking application
     """
 
-    name: str = "NewMaskPayloadStage"
+    name: str = "MaskingStage"
 
     def __init__(self, config: Dict[str, Any]):
         """Initialize new generation mask payload stage.
@@ -37,9 +37,7 @@ class NewMaskPayloadStage(StageBase):
                 - mode: Processing mode ("enhanced", "basic")
         """
         super().__init__(config)
-        self.logger = logging.getLogger(
-            f"{self.__class__.__module__}.{self.__class__.__name__}"
-        )
+        self.logger = get_logger("mask_stage")
 
         # Parse configuration
         self.protocol = config.get("protocol", "tls")
@@ -55,7 +53,7 @@ class NewMaskPayloadStage(StageBase):
         self.config_validator = None
 
         self.logger.info(
-            f"NewMaskPayloadStage created: protocol={self.protocol}, mode={self.mode}"
+            f"MaskingStage created: protocol={self.protocol}, mode={self.mode}"
         )
 
     def initialize(self, config: Optional[Dict] = None) -> bool:
@@ -71,7 +69,7 @@ class NewMaskPayloadStage(StageBase):
             return True
 
         try:
-            self.logger.info("Starting NewMaskPayloadStage initialization")
+            self.logger.info("Starting MaskingStage initialization")
 
             # Update configuration if provided
             if config:
@@ -87,11 +85,11 @@ class NewMaskPayloadStage(StageBase):
             self.masker = self._create_masker()
 
             self._initialized = True
-            self.logger.info("NewMaskPayloadStage initialization successful")
+            self.logger.info("MaskingStage initialization successful")
             return True
 
         except Exception as e:
-            self.logger.error(f"NewMaskPayloadStage initialization failed: {e}")
+            self.logger.error(f"MaskingStage initialization failed: {e}")
             return False
 
     def process_file(self, input_path: Path, output_path: Path) -> StageStats:
@@ -111,7 +109,7 @@ class NewMaskPayloadStage(StageBase):
         """
         if not self._initialized:
             if not self.initialize():
-                raise RuntimeError("NewMaskPayloadStage initialization failed")
+                raise RuntimeError("MaskingStage initialization failed")
 
         # Validate input parameters
         if not input_path.exists():
@@ -445,4 +443,4 @@ class NewMaskPayloadStage(StageBase):
         if self.masker:
             # 使用新的cleanup方法
             self.masker.cleanup()
-        self.logger.debug("NewMaskPayloadStage specific cleanup completed")
+        self.logger.debug("MaskingStage specific cleanup completed")

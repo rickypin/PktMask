@@ -1,12 +1,12 @@
-# 直接导入统一版本，消除包装层
+# Direct import of unified versions, eliminating wrapper layers
 from pktmask.core.pipeline.stages.deduplication_unified import (
-    UnifiedDeduplicationStage,
+    DeduplicationStage,
 )
 from pktmask.core.pipeline.stages.ip_anonymization_unified import (
-    UnifiedIPAnonymizationStage,
+    AnonymizationStage,
 )
 from pktmask.core.pipeline.stages.mask_payload_v2.stage import (
-    NewMaskPayloadStage,
+    MaskingStage,
 )
 
-__all__ = ["NewMaskPayloadStage", "UnifiedDeduplicationStage", "UnifiedIPAnonymizationStage"]
+__all__ = ["MaskingStage", "DeduplicationStage", "AnonymizationStage"]

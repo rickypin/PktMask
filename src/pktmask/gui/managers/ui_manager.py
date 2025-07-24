@@ -486,9 +486,9 @@ class UIManager:
                 # Subtitle
                 subtitle = line[3:].strip()
                 emoji_map = {
-                    "Anonymize IPs": "🛡️",
+                    "Anonymize IPs": "🎭",
                     "Remove Dupes": "🔄",
-                    "Mask Payloads": "✂️",
+                    "Mask Payloads": "🛡️",
                     "Processing Flow": "⚡",
                     "Key Benefits": "🎯",
                 }

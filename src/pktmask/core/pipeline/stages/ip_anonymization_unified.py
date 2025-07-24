@@ -19,14 +19,14 @@ from pktmask.infrastructure.logging import get_logger
 from pktmask.utils.reporting import FileReporter
 
 
-class UnifiedIPAnonymizationStage(StageBase):
+class AnonymizationStage(StageBase):
     """Unified IP anonymization stage - eliminates BaseProcessor dependency
 
     Directly integrates IP anonymization logic without adapter layer, unified interface.
     Maintains all existing features: hierarchical anonymization, subnet structure preservation, statistics collection.
     """
 
-    name: str = "UnifiedIPAnonymizationStage"
+    name: str = "AnonymizationStage"
 
     def __init__(self, config: Dict[str, Any]):
         """Initialize unified IP anonymization stage.
@@ -63,7 +63,7 @@ class UnifiedIPAnonymizationStage(StageBase):
         # Statistics
         self._stats = {}
 
-        self.logger.info(f"UnifiedIPAnonymizationStage created: method={self.method}")
+        self.logger.info(f"AnonymizationStage created: method={self.method}")
 
     def initialize(self, config: Optional[Dict] = None) -> bool:
         """Initialize IP anonymization components.
@@ -120,7 +120,7 @@ class UnifiedIPAnonymizationStage(StageBase):
         """
         if not self._initialized:
             if not self.initialize():
-                raise RuntimeError("UnifiedIPAnonymizationStage initialization failed")
+                raise RuntimeError("AnonymizationStage initialization failed")
 
         # Validate input with enhanced error handling
         self.validate_file_access(input_path, "IP anonymization")
@@ -321,7 +321,7 @@ class UnifiedIPAnonymizationStage(StageBase):
         # Clear statistics
         self._stats.clear()
 
-        self.logger.debug("UnifiedIPAnonymizationStage specific cleanup completed")
+        self.logger.debug("AnonymizationStage specific cleanup completed")
 
 
 class SimpleIPAnonymizationStrategy:

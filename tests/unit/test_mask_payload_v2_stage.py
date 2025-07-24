@@ -1,19 +1,19 @@
 """
 Next-Generation MaskPayload Stage Main Class Tests
 
-Tests NewMaskPayloadStage basic functionality and interface compatibility.
+Tests MaskingStage basic functionality and interface compatibility.
 """
 
 import pytest
 from unittest.mock import Mock, patch
 from pathlib import Path
 
-from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage
+from pktmask.core.pipeline.stages.mask_payload_v2.stage import MaskingStage
 from pktmask.core.pipeline.models import StageStats
 
 
-class TestNewMaskPayloadStage:
-    """测试 NewMaskPayloadStage 主类"""
+class TestMaskingStage:
+    """测试 MaskingStage 主类"""
 
     def test_stage_creation(self):
         """测试阶段创建"""
@@ -26,7 +26,7 @@ class TestNewMaskPayloadStage:
             "masker_config": {"chunk_size": 1000, "verify_checksums": True},
         }
 
-        stage = NewMaskPayloadStage(config)
+        stage = MaskingStage(config)
 
         assert stage.protocol == "tls"
         assert stage.mode == "enhanced"
@@ -38,7 +38,7 @@ class TestNewMaskPayloadStage:
         """测试阶段初始化"""
         config = {"protocol": "tls", "mode": "enhanced"}
 
-        stage = NewMaskPayloadStage(config)
+        stage = MaskingStage(config)
 
         # 初始化应该成功
         assert stage.initialize()
@@ -50,7 +50,7 @@ class TestNewMaskPayloadStage:
         """测试不支持的协议"""
         config = {"protocol": "unsupported", "mode": "enhanced"}
 
-        stage = NewMaskPayloadStage(config)
+        stage = MaskingStage(config)
 
         # 初始化应该失败
         assert not stage.initialize()
@@ -59,7 +59,7 @@ class TestNewMaskPayloadStage:
     def test_display_name_and_description(self):
         """测试显示名称和描述"""
         config = {"protocol": "tls", "mode": "enhanced"}
-        stage = NewMaskPayloadStage(config)
+        stage = MaskingStage(config)
 
         assert stage.get_display_name() == "Mask Payloads (v2)"
         assert "新一代载荷掩码处理器" in stage.get_description()
@@ -70,7 +70,7 @@ class TestNewMaskPayloadStage:
         """测试所需工具列表"""
         # TLS协议需要 tshark 和 scapy
         config = {"protocol": "tls"}
-        stage = NewMaskPayloadStage(config)
+        stage = MaskingStage(config)
         tools = stage.get_required_tools()
 
         assert "scapy" in tools
@@ -79,7 +79,7 @@ class TestNewMaskPayloadStage:
     def test_cleanup(self):
         """测试资源清理"""
         config = {"protocol": "tls", "mode": "enhanced"}
-        stage = NewMaskPayloadStage(config)
+        stage = MaskingStage(config)
 
         # 初始化后清理
         stage.initialize()
@@ -120,7 +120,7 @@ class TestNewMaskPayloadStage:
 
         # 创建阶段并初始化
         config = {"protocol": "tls", "mode": "enhanced"}
-        stage = NewMaskPayloadStage(config)
+        stage = MaskingStage(config)
         assert stage.initialize()
 
         # 模拟文件路径
@@ -153,7 +153,7 @@ class TestNewMaskPayloadStage:
     def test_process_file_without_initialization(self):
         """测试未初始化时处理文件"""
         config = {"protocol": "tls"}
-        stage = NewMaskPayloadStage(config)
+        stage = MaskingStage(config)
 
         # 模拟初始化失败
         with patch.object(stage, "initialize", return_value=False):
@@ -167,7 +167,7 @@ class TestNewMaskPayloadStage:
         """测试默认配置值"""
         # 最小配置
         config = {}
-        stage = NewMaskPayloadStage(config)
+        stage = MaskingStage(config)
 
         assert stage.protocol == "tls"  # 默认协议
         assert stage.mode == "enhanced"  # 默认模式

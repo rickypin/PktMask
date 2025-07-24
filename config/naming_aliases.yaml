@@ -54,17 +54,17 @@ stage_type_mapping:
   # 去重Stage
   dedup:
     class_name: "DeduplicationStage"
-    legacy_aliases: ["DedupStage"]
-    
+    legacy_aliases: ["DedupStage", "UnifiedDeduplicationStage"]
+
   # IP匿名化Stage
   anon:
-    class_name: "AnonStage"
-    legacy_aliases: ["IPAnonymizationStage"]
-    
+    class_name: "AnonymizationStage"
+    legacy_aliases: ["IPAnonymizationStage", "UnifiedIPAnonymizationStage"]
+
   # 载荷掩码Stage
   mask:
-    class_name: "MaskStage"
-    legacy_aliases: ["MaskPayloadStage"]
+    class_name: "MaskingStage"
+    legacy_aliases: ["MaskPayloadStage", "NewMaskPayloadStage"]
 
 # 配置键映射（使用标准GUI命名）
 config_key_mapping:
