@@ -47,6 +47,164 @@ def create_pipeline_executor(config: Dict) -> object:
 # Dummy implementation; replace ... with real logic
 
 
+def _process_files_common(
+    executor: object,
+    pcap_files: list,
+    output_dir: str,
+    progress_callback: Optional[Callable[[PipelineEvents, Dict], None]] = None,
+    is_running_check: Optional[Callable[[], bool]] = None,
+    verbose: bool = False,
+    interface_type: str = "gui"
+) -> Dict[str, Any]:
+    """
+    Common file processing logic shared between GUI and CLI interfaces
+
+    Args:
+        executor: 执行器对象
+        pcap_files: PCAP文件列表
+        output_dir: 输出目录路径
+        progress_callback: 进度回调函数
+        is_running_check: 检查是否继续运行的函数 (GUI only)
+        verbose: 是否启用详细输出 (CLI only)
+        interface_type: 接口类型 ("gui" or "cli")
+
+    Returns:
+        处理结果字典，包含统计信息和状态
+    """
+    import os
+
+    # 处理统计
+    processed_files = 0
+    failed_files = 0
+    all_errors = []
+    total_duration = 0.0
+    all_stage_stats = []
+
+    # 处理每个文件
+    for input_path in pcap_files:
+        # Check for interruption (GUI only)
+        if is_running_check and not is_running_check():
+            break
+
+        # 发送文件开始事件
+        if progress_callback:
+            progress_callback(PipelineEvents.FILE_START, {"path": input_path})
+
+        try:
+            # 构造输出文件名
+            base_name, ext = os.path.splitext(os.path.basename(input_path))
+            output_path = os.path.join(output_dir, f"{base_name}_processed{ext}")
+
+            # 使用 executor 处理文件
+            if interface_type == "gui":
+                # GUI直接调用executor.run
+                result = executor.run(
+                    input_path,
+                    output_path,
+                    progress_cb=lambda stage, stats: _handle_stage_progress(
+                        stage, stats, progress_callback
+                    ),
+                )
+            else:
+                # CLI通过process_single_file调用
+                single_result = process_single_file(
+                    executor, input_path, output_path, progress_callback, verbose
+                )
+                # 转换为executor.run的结果格式以保持一致性
+                class MockResult:
+                    def __init__(self, single_result):
+                        self.success = single_result["success"]
+                        self.errors = single_result.get("errors", [])
+                        self.stage_stats = single_result.get("stage_stats", [])
+                        self.duration_ms = single_result.get("duration_ms", 0.0)
+
+                result = MockResult(single_result)
+
+            # 处理结果统计
+            if result.success:
+                processed_files += 1
+            else:
+                failed_files += 1
+                all_errors.extend(result.errors)
+
+            total_duration += getattr(result, 'duration_ms', 0.0)
+
+            # GUI特定的错误和步骤处理
+            if interface_type == "gui":
+                # Check if processing was successful
+                if not result.success:
+                    # Send error information to GUI for failed processing
+                    for error in result.errors:
+                        progress_callback(
+                            PipelineEvents.ERROR,
+                            {
+                                "message": f"File {os.path.basename(input_path)}: {error}"
+                            },
+                        )
+
+                    # Send user-friendly error messages from stage statistics
+                    for stage_stats in result.stage_stats:
+                        if hasattr(stage_stats, 'extra_metrics') and "user_message" in stage_stats.extra_metrics:
+                            progress_callback(
+                                PipelineEvents.ERROR,
+                                {
+                                    "message": f"File {os.path.basename(input_path)}: {stage_stats.extra_metrics['user_message']}"
+                                },
+                            )
+
+                # 发送步骤摘要事件 (for both successful and failed stages)
+                for stage_stats in result.stage_stats:
+                    if hasattr(stage_stats, 'stage_name'):
+                        progress_callback(
+                            PipelineEvents.STEP_SUMMARY,
+                            {
+                                "step_name": stage_stats.stage_name,
+                                "filename": os.path.basename(input_path),
+                                "packets_processed": getattr(stage_stats, 'packets_processed', 0),
+                                "packets_modified": getattr(stage_stats, 'packets_modified', 0),
+                                "duration_ms": getattr(stage_stats, 'duration_ms', 0.0),
+                                **(stage_stats.extra_metrics if hasattr(stage_stats, 'extra_metrics') else {}),
+                            },
+                        )
+
+            # 收集stage统计信息
+            if hasattr(result, 'stage_stats'):
+                all_stage_stats.extend(result.stage_stats)
+
+        except Exception as e:
+            failed_files += 1
+            error_msg = f"Failed to process {input_path}: {str(e)}"
+            all_errors.append(error_msg)
+
+            # Log the exception with full context
+            logger.error(f"[Service] Unexpected error processing file {input_path}: {e}", exc_info=True)
+
+            # Send user-friendly error message
+            if progress_callback:
+                if interface_type == "gui":
+                    progress_callback(
+                        PipelineEvents.ERROR,
+                        {
+                            "message": f"Unexpected error processing file {os.path.basename(input_path)}: {str(e)}"
+                        },
+                    )
+                else:
+                    progress_callback(PipelineEvents.ERROR, {"message": error_msg})
+
+        # 发送文件完成事件
+        if progress_callback:
+            progress_callback(PipelineEvents.FILE_END, {"path": input_path})
+
+    return {
+        "processed_files": processed_files,
+        "failed_files": failed_files,
+        "errors": all_errors,
+        "total_duration": total_duration,
+        "stage_stats": all_stage_stats,
+        "total_files": len(pcap_files)
+    }
+
+
 def process_directory(
     executor: object,
     input_dir: str,
@@ -72,7 +230,7 @@ def process_directory(
         # 发送管道开始事件
         progress_callback(PipelineEvents.PIPELINE_START, {"total_subdirs": 1})
 
-        # 扫描目录中的PCAP文件
+        # 扫描目录中的PCAP文件 (GUI-specific file discovery)
         pcap_files = []
         for file in os.scandir(input_dir):
             if file.name.endswith((".pcap", ".pcapng")):
@@ -85,7 +243,7 @@ def process_directory(
             progress_callback(PipelineEvents.PIPELINE_END, {})
             return
 
-        # 发送子目录开始事件
+        # 发送子目录开始事件 (GUI-specific)
         rel_subdir = os.path.relpath(input_dir, input_dir)
         progress_callback(
             PipelineEvents.SUBDIR_START,
@@ -97,82 +255,18 @@ def process_directory(
             },
         )
 
-        # 处理每个文件
-        for input_path in pcap_files:
-            if not is_running_check():
-                break
+        # 使用共同的文件处理逻辑
+        _process_files_common(
+            executor=executor,
+            pcap_files=pcap_files,
+            output_dir=output_dir,
+            progress_callback=progress_callback,
+            is_running_check=is_running_check,
+            verbose=True,  # GUI always wants detailed progress
+            interface_type="gui"
+        )
 
-            # 发送文件开始事件
-            progress_callback(PipelineEvents.FILE_START, {"path": input_path})
-
-            try:
-                # 构造输出文件名
-                base_name, ext = os.path.splitext(os.path.basename(input_path))
-                output_path = os.path.join(output_dir, f"{base_name}_processed{ext}")
-
-                # 使用 executor 处理文件
-                result = executor.run(
-                    input_path,
-                    output_path,
-                    progress_cb=lambda stage, stats: _handle_stage_progress(
-                        stage, stats, progress_callback
-                    ),
-                )
-
-                # Check if processing was successful
-                if not result.success:
-                    # Send error information to GUI for failed processing
-                    for error in result.errors:
-                        progress_callback(
-                            PipelineEvents.ERROR,
-                            {
-                                "message": f"File {os.path.basename(input_path)}: {error}"
-                            },
-                        )
-
-                    # Send user-friendly error messages from stage statistics
-                    for stage_stats in result.stage_stats:
-                        if "user_message" in stage_stats.extra_metrics:
-                            progress_callback(
-                                PipelineEvents.ERROR,
-                                {
-                                    "message": f"File {os.path.basename(input_path)}: {stage_stats.extra_metrics['user_message']}"
-                                },
-                            )
-
-                # 发送步骤摘要事件 (for both successful and failed stages)
-                for stage_stats in result.stage_stats:
-                    progress_callback(
-                        PipelineEvents.STEP_SUMMARY,
-                        {
-                            "step_name": stage_stats.stage_name,
-                            "filename": os.path.basename(input_path),
-                            "packets_processed": stage_stats.packets_processed,
-                            "packets_modified": stage_stats.packets_modified,
-                            "duration_ms": stage_stats.duration_ms,
-                            **stage_stats.extra_metrics,
-                        },
-                    )
-
-            except Exception as e:
-                # Log the exception with full context
-                logger.error(
-                    f"[Service] Unexpected error processing file {input_path}: {e}",
-                    exc_info=True,
-                )
-
-                # Send user-friendly error message to GUI
-                progress_callback(
-                    PipelineEvents.ERROR,
-                    {
-                        "message": f"Unexpected error processing file {os.path.basename(input_path)}: {str(e)}"
-                    },
-                )
-
-            # 发送文件完成事件
-            progress_callback(PipelineEvents.FILE_END, {"path": input_path})
-
-        # 发送子目录结束事件
+        # 发送子目录结束事件 (GUI-specific)
         progress_callback(PipelineEvents.SUBDIR_END, {"name": rel_subdir})
 
         # 发送管道结束事件
@@ -412,7 +506,7 @@ def process_directory_cli(
 
         logger.info(f"[Service] Processing directory: {input_dir}")
 
-        # 扫描匹配的文件
+        # 扫描匹配的文件 (CLI-specific file discovery with glob)
         pcap_files = []
         patterns = file_pattern.split(",")
         for pattern in patterns:
@@ -438,62 +532,37 @@ def process_directory_cli(
         # 确保输出目录存在
         os.makedirs(output_dir, exist_ok=True)
 
-        # 发送处理开始事件
+        # 发送处理开始事件 (CLI-specific)
         if progress_callback:
             progress_callback(
                 PipelineEvents.PIPELINE_START, {"total_files": len(pcap_files)}
             )
 
-        # 处理统计
-        processed_files = 0
-        failed_files = 0
-        all_errors = []
-        total_duration = 0.0
-
-        # 处理每个文件
-        for i, input_file in enumerate(pcap_files):
-            try:
-                # 构造输出文件名
-                base_name = os.path.splitext(os.path.basename(input_file))[0]
-                ext = os.path.splitext(input_file)[1]
-                output_file = os.path.join(output_dir, f"{base_name}_processed{ext}")
-
-                # 处理单个文件
-                result = process_single_file(
-                    executor, input_file, output_file, progress_callback, verbose
-                )
-
-                if result["success"]:
-                    processed_files += 1
-                else:
-                    failed_files += 1
-                    all_errors.extend(result.get("errors", []))
-
-                total_duration += result["duration_ms"]
-
-            except Exception as e:
-                failed_files += 1
-                error_msg = f"Failed to process {input_file}: {str(e)}"
-                all_errors.append(error_msg)
-                logger.error(f"[Service] {error_msg}")
-
-                if progress_callback:
-                    progress_callback(PipelineEvents.ERROR, {"message": error_msg})
+        # 使用共同的文件处理逻辑
+        result = _process_files_common(
+            executor=executor,
+            pcap_files=pcap_files,
+            output_dir=output_dir,
+            progress_callback=progress_callback,
+            is_running_check=None,  # CLI doesn't support interruption
+            verbose=verbose,
+            interface_type="cli"
+        )
 
         # 发送处理完成事件
         if progress_callback:
             progress_callback(PipelineEvents.PIPELINE_END, {})
 
-        # 返回统一格式的结果
+        # 返回CLI期望的格式
         return {
-            "success": failed_files == 0,
+            "success": result["failed_files"] == 0,
             "input_dir": input_dir,
             "output_dir": output_dir,
-            "duration_ms": total_duration,
-            "total_files": len(pcap_files),
-            "processed_files": processed_files,
-            "failed_files": failed_files,
-            "errors": all_errors,
+            "duration_ms": result["total_duration"],
+            "total_files": result["total_files"],
+            "processed_files": result["processed_files"],
+            "failed_files": result["failed_files"],
+            "errors": result["errors"],
         }
 
     except Exception as e:

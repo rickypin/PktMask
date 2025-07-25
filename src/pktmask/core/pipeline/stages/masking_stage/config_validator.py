@@ -143,13 +143,13 @@ class ConfigValidator:
         return {"errors": errors, "warnings": warnings}
 
     def _validate_mode(self, mode: str, full_config: Dict) -> Dict:
-        """验证处理模式"""
+        """验证处理模式 - 现在只支持enhanced模式"""
         errors = []
         warnings = []
 
-        valid_modes = ["enhanced", "basic", "debug"]
-        if mode not in valid_modes:
-            errors.append(f"不支持的模式: {mode}，支持的模式: {valid_modes}")
+        # 只支持enhanced模式，但保持向后兼容
+        if mode not in ["enhanced"]:
+            warnings.append(f"模式 '{mode}' 已废弃，自动使用 'enhanced' 模式")
 
         return {"errors": errors, "warnings": warnings}
 

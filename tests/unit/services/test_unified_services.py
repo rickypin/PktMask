@@ -13,7 +13,6 @@ from datetime import datetime
 from pktmask.services.config_service import (
     ConfigService,
     ProcessingOptions,
-    MaskMode,
     get_config_service,
     build_config_from_cli_args,
     build_config_from_gui,
@@ -32,13 +31,11 @@ class TestConfigService:
             enable_remove_dupes=True,
             enable_anonymize_ips=True,
             enable_mask_payloads=True,
-            mask_mode=MaskMode.ENHANCED,
         )
 
         assert options.enable_remove_dupes is True
         assert options.enable_anonymize_ips is True
         assert options.enable_mask_payloads is True
-        assert options.mask_mode == MaskMode.ENHANCED
 
     def test_config_service_initialization(self):
         """测试配置服务初始化"""
@@ -84,13 +81,12 @@ class TestConfigService:
         """Test CLI arguments to options conversion"""
         service = ConfigService()
         options = service.create_options_from_cli_args(
-            remove_dupes=True, anonymize_ips=False, mask_payloads=True, mask_mode="basic"
+            remove_dupes=True, anonymize_ips=False, mask_payloads=True
         )
 
         assert options.enable_remove_dupes is True
         assert options.enable_anonymize_ips is False
         assert options.enable_mask_payloads is True
-        assert options.mask_mode == MaskMode.BASIC
 
     def test_gui_state_to_options(self):
         """Test GUI state to options conversion"""

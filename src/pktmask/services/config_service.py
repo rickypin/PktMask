@@ -4,19 +4,11 @@
 """
 
 from dataclasses import dataclass
-from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 from pktmask.infrastructure.logging import get_logger
 
 logger = get_logger("ConfigService")
-
-
-class MaskMode(Enum):
-    """掩码模式枚举"""
-
-    BASIC = "basic"
-    ENHANCED = "enhanced"
 
 
 @dataclass
@@ -26,7 +18,6 @@ class ProcessingOptions:
     enable_remove_dupes: bool = False
     enable_anonymize_ips: bool = False
     enable_mask_payloads: bool = False
-    mask_mode: MaskMode = MaskMode.ENHANCED
     mask_protocol: str = "tls"
 
     # TShark配置
@@ -94,7 +85,7 @@ class ConfigService:
         mask_config = {
             "enabled": True,
             "protocol": options.mask_protocol,
-            "mode": options.mask_mode.value,
+            "mode": "enhanced",  # Always use enhanced mode
             "marker_config": {
                 "preserve": {
                     "application_data": options.preserve_application_data,
@@ -139,10 +130,6 @@ class ConfigService:
         if "mask_payloads" in config:
             mask_config = config["mask_payloads"]
             if mask_config.get("enabled", False):
-                mode = mask_config.get("mode", "enhanced")
-                if mode not in ["basic", "enhanced"]:
-                    return False, f"Invalid mask mode: {mode}"
-
                 protocol = mask_config.get("protocol", "tls")
                 if protocol not in ["tls", "http"]:
                     return False, f"Invalid protocol: {protocol}"
@@ -155,7 +142,6 @@ class ConfigService:
         remove_dupes: bool = False,
         anonymize_ips: bool = False,
         mask_payloads: bool = False,
-        mask_mode: str = "enhanced",
         mask_protocol: str = "tls",
         tshark_path: Optional[str] = None,
     ) -> ProcessingOptions:
@@ -166,24 +152,16 @@ class ConfigService:
             remove_dupes: Enable deduplication processing
             anonymize_ips: Enable IP anonymization processing
             mask_payloads: Enable payload masking processing
-            mask_mode: Masking mode
             mask_protocol: Masking protocol
             tshark_path: TShark executable path
 
         Returns:
             Processing options configuration
         """
-        try:
-            mode_enum = MaskMode(mask_mode.lower())
-        except ValueError:
-            logger.warning(f"Invalid mask mode '{mask_mode}', using 'enhanced'")
-            mode_enum = MaskMode.ENHANCED
-
         return ProcessingOptions(
             enable_remove_dupes=remove_dupes,
             enable_anonymize_ips=anonymize_ips,
             enable_mask_payloads=mask_payloads,
-            mask_mode=mode_enum,
             mask_protocol=mask_protocol,
             tshark_path=tshark_path,
         )
@@ -206,17 +184,48 @@ class ConfigService:
             enable_remove_dupes=remove_dupes_checked,
             enable_anonymize_ips=anonymize_ips_checked,
             enable_mask_payloads=mask_payloads_checked,
-            mask_mode=MaskMode.ENHANCED,  # GUI defaults to enhanced mode
             mask_protocol="tls",  # GUI defaults to TLS protocol
         )
 
+    def create_options_from_unified_args(
+        self,
+        dedup: bool = False,
+        anon: bool = False,
+        mask: bool = False,
+        protocol: str = "tls",
+        tshark_path: Optional[str] = None,
+    ) -> ProcessingOptions:
+        """
+        Create processing options from unified CLI arguments
+
+        This method provides a direct mapping from the new unified CLI parameter names
+        to the internal ProcessingOptions structure.
+
+        Args:
+            dedup: Enable deduplication processing
+            anon: Enable IP anonymization processing
+            mask: Enable payload masking processing
+            protocol: Masking protocol
+            tshark_path: TShark executable path
+
+        Returns:
+            Processing options configuration
+        """
+        return ProcessingOptions(
+            enable_remove_dupes=dedup,
+            enable_anonymize_ips=anon,
+            enable_mask_payloads=mask,
+            mask_protocol=protocol,
+            tshark_path=tshark_path,
+        )
+
     def get_available_modes(self) -> List[str]:
-        """Get available masking modes"""
-        return [mode.value for mode in MaskMode]
+        """Get available masking modes - only enhanced mode is supported"""
+        return ["enhanced"]
 
     def get_available_protocols(self) -> List[str]:
         """Get available protocol types"""
-        return ["tls", "http"]
+        return ["tls"]  # Only TLS is currently implemented
 
     def get_default_tshark_path(self) -> Optional[str]:
         """获取默认TShark路径"""
@@ -249,6 +258,13 @@ def build_config_from_gui(remove_dupes: bool, anonymize_ips: bool, mask_payloads
     """Build configuration from GUI state"""
     service = get_config_service()
     options = service.create_options_from_gui(remove_dupes, anonymize_ips, mask_payloads)
+    return service.build_pipeline_config(options)
+
+
+def build_config_from_unified_args(**kwargs) -> Dict[str, Any]:
+    """Build configuration from unified CLI arguments"""
+    service = get_config_service()
+    options = service.create_options_from_unified_args(**kwargs)
     return service.build_pipeline_config(options)
 
 

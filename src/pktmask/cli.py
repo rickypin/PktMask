@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional, Union
 import typer
 
 from pktmask.services.config_service import (
-    build_config_from_cli_args,
+    build_config_from_unified_args,
     validate_pipeline_config,
 )
 from pktmask.services.output_service import (
@@ -34,13 +34,39 @@ app = typer.Typer(
 # ---------------------------------------------------------------------------
 
 
+def _validate_process_parameters(dedup: bool, anon: bool, mask: bool, protocol: str = "tls") -> tuple[bool, str | None]:
+    """Validate that at least one operation is selected for process command"""
+    if not any([dedup, anon, mask]):
+        return False, "At least one operation must be specified: --dedup, --anon, or --mask"
+
+    # Validate protocol parameter when mask is enabled
+    if mask and protocol not in ["tls"]:
+        return False, f"Invalid protocol '{protocol}'. Currently supported protocols: tls"
+
+    return True, None
+
+
+def _build_config_from_unified_args(
+    dedup: bool = False,
+    anon: bool = False,
+    mask: bool = False,
+    protocol: str = "tls"
+) -> Dict[str, Any]:
+    """Build configuration from unified CLI arguments"""
+    return build_config_from_unified_args(
+        dedup=dedup,
+        anon=anon,
+        mask=mask,
+        protocol=protocol
+    )
+
+
 def _run_unified_pipeline(
     input_path: Union[Path, str],
     output_path: Union[Path, str],
     enable_dedup: bool = False,
     enable_anon: bool = False,
     enable_mask: bool = False,
-    mask_mode: Optional[str] = None,
     mask_protocol: str = "tls",
     verbose: bool = False,
     output_format: str = "text",
@@ -57,12 +83,11 @@ def _run_unified_pipeline(
 
     try:
         # 构建配置
-        config = build_config_from_cli_args(
-            remove_dupes=enable_dedup,
-            anonymize_ips=enable_anon,
-            mask_payloads=enable_mask,
-            mask_mode=mask_mode or "enhanced",
-            mask_protocol=mask_protocol,
+        config = build_config_from_unified_args(
+            dedup=enable_dedup,
+            anon=enable_anon,
+            mask=enable_mask,
+            protocol=mask_protocol,
         )
 
         # 验证配置
@@ -214,24 +239,22 @@ def _create_enhanced_progress_callback(
 
 
 # ---------------------------------------------------------------------------
-# Main Command: mask
+# Unified Processing Command (Recommended)
 # ---------------------------------------------------------------------------
 
 
-@app.command("mask")
-def cmd_mask(
+@app.command("process")
+def cmd_process(
     input_path: Path = typer.Argument(
         ..., exists=True, help="Input PCAP/PCAPNG file or directory"
     ),
     output_path: Path = typer.Option(
         ..., "-o", "--output", help="Output file/directory path"
     ),
-    remove_dupes: bool = typer.Option(False, "--remove-dupes", help="Enable Remove Dupes processing"),
-    anonymize_ips: bool = typer.Option(False, "--anonymize-ips", help="Enable Anonymize IPs processing"),
-    mode: str = typer.Option(
-        "enhanced", "--mode", help="Mask Payloads mode: enhanced|basic"
-    ),
-    protocol: str = typer.Option("tls", "--protocol", help="Protocol type: tls|http"),
+    dedup: bool = typer.Option(False, "--dedup", help="Enable Remove Dupes processing"),
+    anon: bool = typer.Option(False, "--anon", help="Enable Anonymize IPs processing"),
+    mask: bool = typer.Option(False, "--mask", help="Enable Mask Payloads processing"),
+    protocol: str = typer.Option("tls", "--protocol", help="Protocol type: tls (http support planned)"),
     verbose: bool = typer.Option(
         False, "--verbose", "-v", help="Enable verbose progress output"
     ),
@@ -248,136 +271,76 @@ def cmd_mask(
         False, "--save-report", help="Save detailed processing report"
     ),
     report_format: str = typer.Option(
-        "text", "--report-format", help="Report format: text|json|gui"
+        "text", "--report-format", help="Report format: text|json"
     ),
     report_detailed: bool = typer.Option(
-        False, "--report-detailed", help="Include detailed stage statistics in report"
+        False, "--report-detailed", help="Include detailed statistics in report"
     ),
 ):
-    """Execute Mask Payloads pipeline with optional Remove Dupes and Anonymize IPs processing.
+    """Unified processing command with flexible operation combinations.
 
-    Supports both single file and directory batch processing.
-
-    Examples:
-        # Process single file
-        pktmask mask input.pcap -o output.pcap --remove-dupes --anonymize-ips
-
-        # Process directory
-        pktmask mask /path/to/pcaps -o /path/to/output --remove-dupes --anonymize-ips --verbose
-
-        # Custom file pattern
-        pktmask mask /path/to/pcaps -o /path/to/output --pattern "*.pcap,*.cap"
-    """
-
-    _run_unified_pipeline(
-        input_path=input_path,
-        output_path=output_path,
-        enable_dedup=remove_dupes,
-        enable_anon=anonymize_ips,
-        enable_mask=True,
-        mask_mode=mode,
-        mask_protocol=protocol,
-        verbose=verbose,
-        output_format=output_format,
-        show_progress=not no_progress,
-        file_pattern=file_pattern,
-        save_report=save_report,
-        report_format=report_format,
-        report_detailed=report_detailed,
-    )
-
-
-# ---------------------------------------------------------------------------
-# Standalone dedup/anon commands (for quick processing)
-# ---------------------------------------------------------------------------
-
-
-@app.command("dedup")
-def cmd_dedup(
-    input_path: Path = typer.Argument(
-        ..., exists=True, help="Input PCAP/PCAPNG file or directory"
-    ),
-    output_path: Path = typer.Option(
-        ..., "-o", "--output", help="Output file/directory path"
-    ),
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="Enable verbose progress output"
-    ),
-    output_format: str = typer.Option(
-        "text", "--format", help="Output format: text|json"
-    ),
-    no_progress: bool = typer.Option(
-        False, "--no-progress", help="Disable progress display"
-    ),
-    file_pattern: str = typer.Option(
-        "*.pcap,*.pcapng", "--pattern", help="File pattern for directory processing"
-    ),
-):
-    """Execute Remove Dupes processing only.
-
-    Supports both single file and directory batch processing.
+    This is the recommended command for all PktMask operations. You can specify
+    any combination of dedup, anon, and mask operations.
 
     Examples:
-        # Process single file
-        pktmask dedup input.pcap -o output.pcap
+        # Single operations
+        pktmask process input.pcap -o output.pcap --dedup
+        pktmask process input.pcap -o output.pcap --anon
+        pktmask process input.pcap -o output.pcap --mask
 
-        # Process directory
-        pktmask dedup /path/to/pcaps -o /path/to/output --verbose
+        # Combinations
+        pktmask process input.pcap -o output.pcap --dedup --anon
+        pktmask process input.pcap -o output.pcap --anon --mask --protocol tls
+        pktmask process input.pcap -o output.pcap --dedup --anon --mask --verbose
+
+        # Directory processing
+        pktmask process /data/pcaps -o /data/output --dedup --anon --mask
     """
 
-    _run_unified_pipeline(
-        input_path=input_path,
-        output_path=output_path,
-        enable_dedup=True,
-        verbose=verbose,
-        output_format=output_format,
-        show_progress=not no_progress,
-        file_pattern=file_pattern,
-    )
+    # Validate that at least one operation is specified
+    is_valid, error_msg = _validate_process_parameters(dedup, anon, mask, protocol)
+    if not is_valid:
+        typer.echo(f"❌ {error_msg}", err=True)
+        raise typer.Exit(1)
+
+    # Build configuration using unified arguments
+    try:
+        config = _build_config_from_unified_args(
+            dedup=dedup,
+            anon=anon,
+            mask=mask,
+            protocol=protocol
+        )
+
+        # Validate configuration
+        is_valid, error_msg = validate_pipeline_config(config)
+        if not is_valid:
+            typer.echo(f"❌ Configuration error: {error_msg}", err=True)
+            raise typer.Exit(1)
+
+        # Execute using existing unified pipeline
+        _run_unified_pipeline(
+            input_path=input_path,
+            output_path=output_path,
+            enable_dedup=dedup,
+            enable_anon=anon,
+            enable_mask=mask,
+            mask_protocol=protocol,
+            verbose=verbose,
+            output_format=output_format,
+            show_progress=not no_progress,
+            file_pattern=file_pattern,
+            save_report=save_report,
+            report_format=report_format,
+            report_detailed=report_detailed,
+        )
+
+    except Exception as e:
+        typer.echo(f"❌ Processing failed: {e}", err=True)
+        raise typer.Exit(1)
 
 
-@app.command("anon")
-def cmd_anon(
-    input_path: Path = typer.Argument(
-        ..., exists=True, help="Input PCAP/PCAPNG file or directory"
-    ),
-    output_path: Path = typer.Option(
-        ..., "-o", "--output", help="Output file/directory path"
-    ),
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="Enable verbose progress output"
-    ),
-    output_format: str = typer.Option(
-        "text", "--format", help="Output format: text|json"
-    ),
-    no_progress: bool = typer.Option(
-        False, "--no-progress", help="Disable progress display"
-    ),
-    file_pattern: str = typer.Option(
-        "*.pcap,*.pcapng", "--pattern", help="File pattern for directory processing"
-    ),
-):
-    """Execute Anonymize IPs processing only.
 
-    Supports both single file and directory batch processing.
-
-    Examples:
-        # Process single file
-        pktmask anon input.pcap -o output.pcap
-
-        # Process directory
-        pktmask anon /path/to/pcaps -o /path/to/output --verbose
-    """
-
-    _run_unified_pipeline(
-        input_path=input_path,
-        output_path=output_path,
-        enable_anon=True,
-        verbose=verbose,
-        output_format=output_format,
-        show_progress=not no_progress,
-        file_pattern=file_pattern,
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -401,9 +364,6 @@ def cmd_batch(
     ),
     mask_payloads: bool = typer.Option(
         True, "--mask-payloads/--no-mask-payloads", help="Enable/disable Mask Payloads processing"
-    ),
-    mode: str = typer.Option(
-        "enhanced", "--mode", help="Mask Payloads mode: enhanced|basic"
     ),
     protocol: str = typer.Option("tls", "--protocol", help="Protocol type: tls|http"),
     verbose: bool = typer.Option(
@@ -429,7 +389,7 @@ def cmd_batch(
         pktmask batch /path/to/pcaps -o /path/to/output
 
         # Process with custom settings
-        pktmask batch /path/to/pcaps -o /path/to/output --no-dedup --mode basic
+        pktmask batch /path/to/pcaps -o /path/to/output --no-remove-dupes
 
         # Process with verbose output and JSON format
         pktmask batch /path/to/pcaps -o /path/to/output --verbose --format json
@@ -453,7 +413,6 @@ def cmd_batch(
         enable_dedup=remove_dupes,
         enable_anon=anonymize_ips,
         enable_mask=mask_payloads,
-        mask_mode=mode,
         mask_protocol=protocol,
         verbose=verbose,
         output_format=output_format,

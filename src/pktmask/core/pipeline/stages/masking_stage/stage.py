@@ -34,14 +34,12 @@ class MaskingStage(StageBase):
                 - protocol: Protocol type ("tls", "http", "auto")
                 - marker_config: Marker module configuration
                 - masker_config: Masker module configuration
-                - mode: Processing mode ("enhanced", "basic")
         """
         super().__init__(config)
         self.logger = get_logger("mask_stage")
 
         # Parse configuration
         self.protocol = config.get("protocol", "tls")
-        self.mode = config.get("mode", "enhanced")
         self.marker_config = config.get("marker_config", {})
         self.masker_config = config.get("masker_config", {})
 
@@ -53,7 +51,7 @@ class MaskingStage(StageBase):
         self.config_validator = None
 
         self.logger.info(
-            f"MaskingStage created: protocol={self.protocol}, mode={self.mode}"
+            f"MaskingStage created: protocol={self.protocol}"
         )
 
     def initialize(self, config: Optional[Dict] = None) -> bool:
@@ -122,13 +120,7 @@ class MaskingStage(StageBase):
         start_time = time.time()
 
         try:
-            # Check for basic mode (fallback processing)
-            if self.mode == "basic":
-                return self._process_with_basic_mode(
-                    input_path, output_path, start_time
-                )
-
-            # Dual-module processing mode
+            # Use dual-module processing mode (enhanced mode)
             return self._process_with_dual_module_mode(
                 input_path, output_path, start_time
             )
@@ -328,44 +320,7 @@ class MaskingStage(StageBase):
                         f"Temporary file already cleaned up: {working_path}"
                     )
 
-    def _process_with_basic_mode(
-        self, input_path: Path, output_path: Path, start_time: float
-    ) -> StageStats:
-        """Basic mode processing (passthrough copy)"""
-        self.logger.debug("Using basic mode (passthrough copy)")
 
-        import shutil
-
-        # Validate input file
-        if not input_path.exists():
-            raise FileNotFoundError(f"Input file does not exist: {input_path}")
-        if not input_path.is_file():
-            raise ValueError(f"Input path is not a file: {input_path}")
-
-        # Simple file copy
-        shutil.copy2(str(input_path), str(output_path))
-
-        duration_ms = (time.time() - start_time) * 1000
-
-        # Create basic statistics
-        stage_stats = StageStats(
-            stage_name=self.get_display_name(),
-            packets_processed=0,  # Basic mode doesn't count packets
-            packets_modified=0,
-            duration_ms=duration_ms,
-            extra_metrics={
-                "mode": "basic",
-                "operation": "passthrough_copy",
-                "success": True,
-                "file_size": input_path.stat().st_size,
-            },
-        )
-
-        self.logger.info(
-            f"Basic mode processing completed: file_size={stage_stats.extra_metrics['file_size']} bytes"
-        )
-
-        return stage_stats
 
     def _create_marker(self):
         """Create Marker module instance
@@ -411,7 +366,7 @@ class MaskingStage(StageBase):
                 "preservation_ratio": masking_stats.preservation_ratio,
                 "processing_speed_mbps": masking_stats.processing_speed_mbps,
                 "protocol": self.protocol,
-                "mode": self.mode,
+                "mode": "enhanced",  # Always enhanced mode
                 "success": masking_stats.success,
                 "errors": masking_stats.errors,
                 "warnings": masking_stats.warnings,
@@ -425,7 +380,7 @@ class MaskingStage(StageBase):
     def get_description(self) -> str:
         """Get description information"""
         return (
-            f"Next-generation payload masking processor (Protocol: {self.protocol}, Mode: {self.mode}). "
+            f"Next-generation payload masking processor (Protocol: {self.protocol}, Mode: enhanced). "
             "Based on dual-module architecture, supports separation of protocol analysis and mask application."
         )
 

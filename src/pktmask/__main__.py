@@ -22,13 +22,12 @@ def main(ctx: typer.Context):
 
 
 # Import and register CLI commands (no nesting, keep simple)
-from pktmask.cli import cmd_anon, cmd_batch, cmd_dedup, cmd_info, cmd_mask
+from pktmask.cli import cmd_batch, cmd_info, cmd_process
 
+# Register core commands
 app.command(
-    "mask", help="Process PCAP files (Remove Dupes, Anonymize IPs, Mask Payloads)"
-)(cmd_mask)
-app.command("dedup", help="Execute Remove Dupes only")(cmd_dedup)
-app.command("anon", help="Execute Anonymize IPs only")(cmd_anon)
+    "process", help="Unified processing with flexible operation combinations"
+)(cmd_process)
 app.command(
     "batch", help="Batch process all PCAP files in a directory with full pipeline"
 )(cmd_batch)

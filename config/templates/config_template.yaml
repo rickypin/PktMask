@@ -44,7 +44,6 @@ processing:
   dedup_threshold: 0.95                   # 去重相似度阈值 (0.0-1.0)
 
   # Mask Payloads 设置
-  mask_mode: "enhanced"                   # 掩码模式: enhanced(智能协议分析), basic(透传)
   preserve_tls_handshake: true            # 保留TLS握手数据
   preserve_tls_alerts: true               # 保留TLS告警数据
   tls_header_preserve_bytes: 5            # TLS头部保留字节数

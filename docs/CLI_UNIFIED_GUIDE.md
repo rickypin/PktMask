@@ -2,13 +2,14 @@
 
 ## Overview
 
-PktMask CLI now achieves complete functional unification with the GUI, supporting all core processing capabilities, including:
+PktMask CLI now features a completely redesigned command structure that addresses previous inconsistencies and limitations, providing:
 
-- ✅ **Single File Processing**: Process individual PCAP/PCAPNG files
-- ✅ **Directory Batch Processing**: Batch process multiple files in directories
-- ✅ **Unified Configuration System**: Uses the same configuration logic as GUI
-- ✅ **Rich Output Options**: Detailed progress display, statistics, and report generation
-- ✅ **Complete Error Handling**: Unified error handling and recovery mechanisms
+- ✅ **Unified Command Interface**: Single `process` command with flexible operation combinations
+- ✅ **Consistent Parameter Design**: Standardized `--dedup`, `--anon`, and `--mask` flags
+- ✅ **Flexible Operation Combinations**: Any combination of operations can be executed together
+- ✅ **Clean Command Structure**: Removed deprecated commands for simplified interface
+- ✅ **Enhanced Validation**: Comprehensive parameter validation and error handling
+- ✅ **GUI Consistency**: Identical functionality and results between CLI and GUI
 
 ## Installation and Basic Usage
 
@@ -28,37 +29,48 @@ pktmask <command> <input> -o <output> [options]
 
 ## Core Commands
 
-### 1. mask - Mask Payloads Processing
+### 1. process - Unified Processing (RECOMMENDED)
 
-**Single File Processing**:
+The new `process` command provides a unified interface for all PktMask operations with flexible combinations.
+
+**Single Operations**:
 ```bash
-# Basic masking processing
-pktmask mask input.pcap -o output.pcap
+# Deduplication only
+pktmask process input.pcap -o output.pcap --dedup
 
-# Enable all processing options
-pktmask mask input.pcap -o output.pcap --remove-dupes --anonymize-ips --verbose
+# IP anonymization only
+pktmask process input.pcap -o output.pcap --anon
 
-# Custom masking mode
-pktmask mask input.pcap -o output.pcap --mode basic --protocol tls
+# Payload masking only
+pktmask process input.pcap -o output.pcap --mask
 ```
 
-**Directory Batch Processing**:
+**Operation Combinations**:
+```bash
+# Dedup + Anon (previously impossible combination)
+pktmask process input.pcap -o output.pcap --dedup --anon
+
+# Anon + Mask
+pktmask process input.pcap -o output.pcap --anon --mask --protocol tls
+
+# All operations
+pktmask process input.pcap -o output.pcap --dedup --anon --mask --verbose
+```
+
+**Directory Processing**:
 ```bash
 # Process all files in directory
-pktmask mask /path/to/pcaps -o /path/to/output --remove-dupes --anonymize-ips
+pktmask process /data/pcaps -o /data/output --dedup --anon --mask
 
-# Custom file matching pattern
-pktmask mask /path/to/pcaps -o /path/to/output --pattern "*.pcap,*.cap"
-
-# Detailed output and report generation
-pktmask mask /path/to/pcaps -o /path/to/output --verbose --save-report --report-detailed
+# Custom file pattern and detailed output
+pktmask process /data/pcaps -o /data/output --mask --pattern "*.pcap,*.cap" --verbose
 ```
 
 **Parameter Description**:
-- `--remove-dupes`: Enable Remove Dupes processing
-- `--anonymize-ips`: Enable Anonymize IPs processing
-- `--mode`: Masking mode (`enhanced`|`basic`)
-- `--protocol`: Protocol type (`tls`|`http`)
+- `--dedup`: Enable Remove Dupes processing
+- `--anon`: Enable Anonymize IPs processing
+- `--mask`: Enable Mask Payloads processing
+- `--protocol`: Protocol type (`tls` - http support planned)
 - `--verbose`: Detailed output
 - `--format`: Output format (`text`|`json`)
 - `--no-progress`: Disable progress display
@@ -67,27 +79,7 @@ pktmask mask /path/to/pcaps -o /path/to/output --verbose --save-report --report-
 - `--report-format`: Report format (`text`|`json`)
 - `--report-detailed`: Include detailed statistics
 
-### 2. dedup - Remove Dupes Processing
-
-```bash
-# Single file deduplication
-pktmask dedup input.pcap -o output.pcap
-
-# Directory batch deduplication
-pktmask dedup /path/to/pcaps -o /path/to/output --verbose
-```
-
-### 3. anon - Anonymize IPs
-
-```bash
-# Single file anonymization
-pktmask anon input.pcap -o output.pcap
-
-# Directory batch anonymization
-pktmask anon /path/to/pcaps -o /path/to/output --verbose
-```
-
-### 4. batch - Batch Processing (Recommended)
+### 2. batch - Batch Processing
 
 Command optimized for large-scale batch processing:
 
@@ -97,7 +89,7 @@ pktmask batch /path/to/pcaps -o /path/to/output
 
 # Custom processing options
 pktmask batch /path/to/pcaps -o /path/to/output \
-  --no-dedup --mode basic --verbose --format json
+  --no-remove-dupes --verbose --format json
 
 # Generate detailed reports
 pktmask batch /path/to/pcaps -o /path/to/output \
@@ -177,20 +169,39 @@ pktmask mask input.pcap -o output.pcap --format json
 
 ### Example 1: Basic Single File Processing
 ```bash
-pktmask mask sample.pcap -o processed.pcap --remove-dupes --anonymize-ips
+# Single operation
+pktmask process sample.pcap -o processed.pcap --dedup
+
+# Multiple operations
+pktmask process sample.pcap -o processed.pcap --dedup --anon --mask
 ```
 
-### Example 2: Directory Batch Processing
+### Example 2: Flexible Operation Combinations
 ```bash
-pktmask batch /data/pcaps -o /data/processed \
-  --verbose --save-report --report-detailed
+# Dedup + Anon without masking
+pktmask process input.pcap -o output.pcap --dedup --anon
+
+# Anon + Mask without deduplication
+pktmask process input.pcap -o output.pcap --anon --mask
+
+# All operations together
+pktmask process input.pcap -o output.pcap --dedup --anon --mask
 ```
 
-### Example 3: Custom Configuration Processing
+### Example 3: Directory Batch Processing
 ```bash
-pktmask mask /data/pcaps -o /data/output \
-  --mode basic --protocol http \
-  --pattern "*.pcapng" --format json
+# Unified approach with selective operations
+pktmask process /data/pcaps -o /data/output --dedup --anon --mask --verbose
+
+# Batch command for full pipeline
+pktmask batch /data/pcaps -o /data/processed --verbose --save-report
+```
+
+### Example 4: Custom Configuration Processing
+```bash
+# New approach with protocol specification
+pktmask process /data/pcaps -o /data/output --mask --protocol tls \
+  --pattern "*.pcapng" --format json --save-report
 ```
 
 ### Example 4: Analysis Only (No Processing)
@@ -259,27 +270,14 @@ pktmask mask input.pcap -o output.pcap --save-report --report-detailed
 pktmask mask input.pcap -o output.pcap --format json
 ```
 
-## Migration Guide
+## CLI and GUI Consistency
 
-### Migrating from Legacy CLI
-
-Legacy commands are still compatible, but new unified commands are recommended:
-
-```bash
-# Legacy (still supported)
-pktmask mask input.pcap -o output.pcap --remove-dupes --anonymize-ips --mode enhanced
-
-# New (recommended)
-pktmask mask input.pcap -o output.pcap --remove-dupes --anonymize-ips --verbose --save-report
-```
-
-### Migrating from GUI
-
-GUI users can easily switch to CLI:
+The CLI provides the same functionality as the GUI with additional flexibility:
 
 1. **Same Configuration Options**: All GUI options have corresponding CLI parameters
 2. **Same Processing Results**: CLI and GUI produce identical processing results
 3. **Same Report Format**: CLI can generate the same detailed reports as GUI
+4. **Enhanced Flexibility**: CLI supports operation combinations for maximum efficiency
 
 ## Summary
 

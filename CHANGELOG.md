@@ -257,10 +257,10 @@ executor = PipelineExecutor(config)  # 统一StageBase架构处理
 **CLI 用户**:
 ```bash
 # 标准掩码处理
-pktmask mask input.pcap -o output.pcap --mode enhanced
+pktmask mask input.pcap -o output.pcap
 
 # 组合处理（Remove Dupes + Anonymize IPs + Mask Payloads）
-pktmask mask input.pcap -o output.pcap --remove-dupes --anonymize-ips --mode enhanced
+pktmask mask input.pcap -o output.pcap --remove-dupes --anonymize-ips
 ```
 
 **编程接口用户**:
@@ -268,8 +268,7 @@ pktmask mask input.pcap -o output.pcap --remove-dupes --anonymize-ips --mode enh
 # 推荐配置
 config = {
     "mask": {
-        "enabled": True,
-        "mode": "enhanced"
+        "enabled": True
     }
 }
 ```
@@ -279,7 +278,7 @@ config = {
 | 组件 | v0.1.0 | v0.2.0 | 建议迁移 |
 |------|---------|---------|----------|
 | MaskStage API | ✅ | ✅ | 无需变更 |
-| CLI 接口 | ✅ | ✅ | 推荐使用 `--mode processor_adapter` |
+| CLI 接口 | ✅ | ✅ | 无需变更 |
 | GUI 界面 | ✅ | ✅ 自动更新 | 无需变更 |
 | 配置文件 | ✅ | ⚠️ 废弃警告 | 参考 [向后兼容性文档](docs/development/BACKWARD_COMPATIBILITY.md) |
 

@@ -97,7 +97,6 @@ PROCESSOR_DEFAULTS = {
     },
     "mask_payloads": {
         "enabled": True,
-        "mode": "enhanced",
         "preserve_tls_handshake": True,
         "preserve_tls_alerts": True,
     },

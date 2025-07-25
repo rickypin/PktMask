@@ -74,7 +74,6 @@ class UnifiedFunctionalityTester:
                 remove_dupes=True,
                 anonymize_ips=True,
                 mask_payloads=True,
-                mask_mode="enhanced",
             )
             cli_config = self.config_service.build_pipeline_config(cli_options)
 

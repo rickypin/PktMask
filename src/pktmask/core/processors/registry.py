@@ -228,7 +228,6 @@ class ProcessorRegistry:
 
         return {
             "protocol": "tls",
-            "mode": "enhanced",
             "marker_config": {
                 "tshark_path": tshark_path,
                 "preserve": {

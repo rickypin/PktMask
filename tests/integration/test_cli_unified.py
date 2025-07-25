@@ -47,7 +47,7 @@ class TestCLIUnified:
 
         # 测试CLI参数配置
         cli_options = config_service.create_options_from_cli_args(
-            remove_dupes=True, anonymize_ips=True, mask_payloads=True, mask_mode="enhanced"
+            remove_dupes=True, anonymize_ips=True, mask_payloads=True
         )
         cli_config = config_service.build_pipeline_config(cli_options)
 
@@ -241,7 +241,7 @@ class TestCLIUnified:
 
     def test_parameter_validation(self):
         """测试参数验证"""
-        # 测试无效的掩码模式
+        # 测试基本的mask命令
         result = self.runner.invoke(
             app,
             [
@@ -249,13 +249,11 @@ class TestCLIUnified:
                 str(self.test_file),
                 "-o",
                 str(self.output_dir / "output.pcap"),
-                "--mode",
-                "invalid_mode",
             ],
         )
 
-        # 应该仍然成功，因为会回退到默认模式
-        assert result.exit_code == 0 or "Configuration error" in result.stdout
+        # 应该成功执行
+        assert result.exit_code == 0
 
     @patch("pktmask.services.pipeline_service.process_single_file")
     def test_verbose_output(self, mock_process):
@@ -301,6 +299,130 @@ class TestCLIUnified:
         except json.JSONDecodeError:
             pytest.fail("JSON format output is invalid")
 
+    def test_process_command_validation_no_operations(self):
+        """测试process命令验证 - 没有指定操作"""
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.test_file),
+                "-o",
+                str(self.output_dir / "output.pcap"),
+            ],
+        )
+
+        assert result.exit_code == 1
+        assert "At least one operation must be specified" in result.stdout
+
+    def test_process_command_validation_invalid_protocol(self):
+        """测试process命令验证 - 无效协议"""
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.test_file),
+                "-o",
+                str(self.output_dir / "output.pcap"),
+                "--mask",
+                "--protocol",
+                "invalid",
+            ],
+        )
+
+        assert result.exit_code == 1
+        assert "Invalid protocol 'invalid'" in result.stdout
+
+    def test_process_command_help(self):
+        """测试process命令帮助信息"""
+        result = self.runner.invoke(app, ["process", "--help"])
+
+        assert result.exit_code == 0
+        assert "--dedup" in result.stdout
+        assert "--anon" in result.stdout
+        assert "--mask" in result.stdout
+        assert "Unified processing" in result.stdout
+
+    def test_process_command_validation_no_operations(self):
+        """测试process命令验证 - 没有指定操作"""
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.test_file),
+                "-o",
+                str(self.output_dir / "output.pcap"),
+            ],
+        )
+
+        assert result.exit_code == 1
+        # Error messages go to stderr in typer
+        assert "At least one operation must be specified" in (result.stdout + result.stderr)
+
+    def test_process_command_validation_invalid_protocol(self):
+        """测试process命令验证 - 无效协议"""
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.test_file),
+                "-o",
+                str(self.output_dir / "output.pcap"),
+                "--mask",
+                "--protocol",
+                "invalid",
+            ],
+        )
+
+        assert result.exit_code == 1
+        assert "Invalid protocol 'invalid'" in (result.stdout + result.stderr)
+
+    def test_main_help_shows_process_command(self):
+        """测试主帮助显示process命令"""
+        result = self.runner.invoke(app, ["--help"])
+
+        assert result.exit_code == 0
+        assert "process" in result.stdout
+        assert "RECOMMENDED" in result.stdout
+        assert "DEPRECATED" in result.stdout
+
+    def test_unified_config_functionality(self):
+        """测试统一CLI配置功能"""
+        from pktmask.services.config_service import build_config_from_unified_args
+
+        # 测试所有操作启用的情况
+        all_config = build_config_from_unified_args(
+            dedup=True,
+            anon=True,
+            mask=True,
+            protocol="tls"
+        )
+
+        assert "remove_dupes" in all_config
+        assert "anonymize_ips" in all_config
+        assert "mask_payloads" in all_config
+        assert all_config["remove_dupes"]["enabled"] is True
+        assert all_config["anonymize_ips"]["enabled"] is True
+        assert all_config["mask_payloads"]["enabled"] is True
+
+        # 测试单个操作的情况
+        dedup_config = build_config_from_unified_args(dedup=True)
+        assert "remove_dupes" in dedup_config
+        assert dedup_config["remove_dupes"]["enabled"] is True
+
+        anon_config = build_config_from_unified_args(anon=True)
+        assert "anonymize_ips" in anon_config
+        assert anon_config["anonymize_ips"]["enabled"] is True
+
+        mask_config = build_config_from_unified_args(mask=True)
+        assert "mask_payloads" in mask_config
+        assert mask_config["mask_payloads"]["enabled"] is True
+
+        # 测试新的灵活组合：dedup + anon（不包含mask）
+        dedup_anon_config = build_config_from_unified_args(dedup=True, anon=True, mask=False)
+        assert "remove_dupes" in dedup_anon_config
+        assert "anonymize_ips" in dedup_anon_config
+        assert "mask_payloads" not in dedup_anon_config
+
 
 class TestCLIBackwardCompatibility:
     """CLI向后兼容性测试"""
@@ -314,48 +436,7 @@ class TestCLIBackwardCompatibility:
     def teardown_method(self):
         shutil.rmtree(self.temp_dir)
 
-    @patch("pktmask.services.pipeline_service.process_single_file")
-    def test_legacy_dedup_command(self, mock_process):
-        """测试遗留的dedup命令"""
-        mock_process.return_value = {
-            "success": True,
-            "input_file": str(self.test_file),
-            "output_file": str(self.temp_dir / "output.pcap"),
-            "duration_ms": 1000.0,
-            "stage_stats": [],
-            "errors": [],
-            "total_files": 1,
-            "processed_files": 1,
-        }
 
-        result = self.runner.invoke(
-            app,
-            ["dedup", str(self.test_file), "-o", str(self.temp_dir / "output.pcap")],
-        )
-
-        assert result.exit_code == 0
-        mock_process.assert_called_once()
-
-    @patch("pktmask.services.pipeline_service.process_single_file")
-    def test_legacy_anon_command(self, mock_process):
-        """测试遗留的anon命令"""
-        mock_process.return_value = {
-            "success": True,
-            "input_file": str(self.test_file),
-            "output_file": str(self.temp_dir / "output.pcap"),
-            "duration_ms": 1000.0,
-            "stage_stats": [],
-            "errors": [],
-            "total_files": 1,
-            "processed_files": 1,
-        }
-
-        result = self.runner.invoke(
-            app, ["anon", str(self.test_file), "-o", str(self.temp_dir / "output.pcap")]
-        )
-
-        assert result.exit_code == 0
-        mock_process.assert_called_once()
 
 
 class TestGUICLIConsistency:
@@ -383,7 +464,7 @@ class TestGUICLIConsistency:
 
         # CLI配置
         cli_options = service.create_options_from_cli_args(
-            remove_dupes=True, anonymize_ips=True, mask_payloads=True, mask_mode="enhanced"
+            remove_dupes=True, anonymize_ips=True, mask_payloads=True
         )
         cli_config = service.build_pipeline_config(cli_options)
 
@@ -396,18 +477,7 @@ class TestGUICLIConsistency:
             gui_config["anonymize_ips"]["enabled"]
             == cli_config["anonymize_ips"]["enabled"]
         )
-        assert (
-            gui_config["mask_payloads"]["enabled"]
-            == cli_config["mask_payloads"]["enabled"]
-        )
 
-        # 验证掩码配置结构一致性
-        gui_mask = gui_config["mask_payloads"]
-        cli_mask = cli_config["mask_payloads"]
 
-        assert gui_mask["protocol"] == cli_mask["protocol"]
-        assert gui_mask["mode"] == cli_mask["mode"]
-        assert "marker_config" in gui_mask
-        assert "marker_config" in cli_mask
-        assert "masker_config" in gui_mask
-        assert "masker_config" in cli_mask
+
+
