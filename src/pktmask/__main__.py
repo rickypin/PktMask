@@ -21,16 +21,19 @@ def main(ctx: typer.Context):
     # When there are subcommands, Typer handles automatically
 
 
-# Import and register CLI commands (no nesting, keep simple)
-from pktmask.cli import cmd_info, cmd_process
+# Import and register simplified CLI commands
+from pktmask.cli.commands import process_command, validate_command, config_command
 
-# Register core commands
+# Register core commands using new simplified interface
 app.command(
-    "process", help="Unified processing with flexible operation combinations"
-)(cmd_process)
-app.command("info", help="Display information about PCAP files or directories")(
-    cmd_info
-)
+    "process", help="Process PCAP/PCAPNG files with unified core processing"
+)(process_command)
+app.command(
+    "validate", help="Validate PCAP/PCAPNG files without processing"
+)(validate_command)
+app.command(
+    "config", help="Display configuration summary for given options"
+)(config_command)
 
 if __name__ == "__main__":
     app()

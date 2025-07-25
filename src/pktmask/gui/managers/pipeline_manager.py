@@ -20,6 +20,13 @@ from pktmask.services import (
     create_pipeline_executor,
 )
 
+# Import GUI protection layer for safe rollout
+from ..core.feature_flags import GUIFeatureFlags
+from ..core.gui_consistent_processor import (
+    GUIConsistentProcessor,
+    GUIThreadingHelper
+)
+
 from .statistics_manager import StatisticsManager
 
 
@@ -157,26 +164,11 @@ class PipelineManager:
             ]:
                 cb.setEnabled(False)
 
-        # Create and configure new PipelineExecutor
-        config = build_pipeline_config(
-            anonymize_ips=self.main_window.anonymize_ips_cb.isChecked(),
-            remove_dupes=self.main_window.remove_dupes_cb.isChecked(),
-            mask_payloads=self.main_window.mask_payloads_cb.isChecked(),
-        )
-        if not config:
-            self._logger.warning("No processing steps selected")
-            return
-
-        try:
-            executor = create_pipeline_executor(config)
-        except ConfigurationError as e:
-            self._logger.error(f"Configuration error: {str(e)}")
-            self.main_window.update_log(f"Configuration error: {str(e)}")
-            return
-        self._logger.info(f"Built PipelineExecutor containing {len(config)} Stages")
-
-        # Start processing
-        self.start_processing(executor)
+        # Check feature flag to determine which implementation to use
+        if GUIFeatureFlags.should_use_consistent_processor():
+            self._start_with_consistent_processor()
+        else:
+            self._start_with_legacy_implementation()
 
     def stop_pipeline_processing(self):
         """Stop the processing pipeline and clean up resources"""
@@ -228,8 +220,122 @@ class PipelineManager:
             self.main_window.start_proc_btn.setEnabled(True)
             self.main_window.start_proc_btn.setText("Start")
 
+    def _start_with_consistent_processor(self):
+        """Start processing using new ConsistentProcessor (feature flag enabled)
+
+        CRITICAL: This method preserves 100% GUI functionality while using
+        the new unified core processing logic.
+        """
+        # Log feature flag status for debugging
+        if GUIFeatureFlags.is_gui_debug_mode():
+            status = GUIFeatureFlags.get_status_summary()
+            self._logger.info(f"Feature flags: {status}")
+            self.main_window.update_log(f"🔧 Using new unified processing core")
+
+        # Get checkbox states using exact same logic as legacy implementation
+        remove_dupes_checked = self.main_window.remove_dupes_cb.isChecked()
+        anonymize_ips_checked = self.main_window.anonymize_ips_cb.isChecked()
+        mask_payloads_checked = self.main_window.mask_payloads_cb.isChecked()
+
+        # Validate options using GUI wrapper
+        try:
+            GUIConsistentProcessor.validate_gui_options(
+                remove_dupes_checked, anonymize_ips_checked, mask_payloads_checked
+            )
+        except ValueError as e:
+            self._logger.warning(f"No processing steps selected: {str(e)}")
+            self.main_window.update_log(f"⚠️ {str(e)}")
+            return
+
+        # Create threaded executor using GUI helper
+        try:
+            self.processing_thread = GUIThreadingHelper.create_threaded_executor(
+                remove_dupes_checked=remove_dupes_checked,
+                anonymize_ips_checked=anonymize_ips_checked,
+                mask_payloads_checked=mask_payloads_checked,
+                base_dir=self.main_window.base_dir,
+                output_dir=self.main_window.current_output_dir
+            )
+        except Exception as e:
+            self._logger.error(f"Configuration error: {str(e)}")
+            self.main_window.update_log(f"❌ Configuration error: {str(e)}")
+            return
+
+        # Log configuration summary
+        config_summary = GUIConsistentProcessor.get_gui_configuration_summary(
+            remove_dupes_checked, anonymize_ips_checked, mask_payloads_checked
+        )
+        self._logger.info(f"Configuration: {config_summary}")
+
+        # Start processing using same UI flow as legacy
+        self._start_gui_thread_processing()
+
+    def _start_gui_thread_processing(self):
+        """Common GUI thread processing setup for both implementations
+
+        CRITICAL: This method preserves the exact UI state management,
+        signal connections, and timing behavior as the original implementation.
+        """
+        # Connect signals (same as original start_processing)
+        self.processing_thread.progress_signal.connect(self.handle_thread_progress)
+        self.processing_thread.finished.connect(self.on_thread_finished)
+
+        # Update UI state (same as original start_processing)
+        self.main_window.start_proc_btn.setText("Stop")
+        self.main_window.start_proc_btn.setEnabled(True)
+        self.main_window.ui_manager._update_start_button_style()
+
+        # Reset statistics before starting new processing (same as original)
+        self.statistics.reset_all_statistics()
+
+        # Also reset the main window's packet counting cache (same as original)
+        if hasattr(self.main_window, "_counted_files"):
+            self.main_window._counted_files.clear()
+
+        # Start timing (unified use of StatisticsManager) (same as original)
+        self.statistics.start_timing()
+        self.main_window.time_elapsed = 0
+        self.main_window.start_time = (
+            self.statistics.start_time
+        )  # Maintain compatibility
+        self.main_window.timer.start(100)  # Update every 100ms
+
+        # Start thread (same as original)
+        self.processing_thread.start()
+
+        self._logger.info(
+            f"Processing thread started, output directory: {self.main_window.current_output_dir}"
+        )
+
+    def _start_with_legacy_implementation(self):
+        """Start processing using legacy service layer (feature flag disabled)
+
+        CRITICAL: This method preserves the exact original implementation
+        for instant rollback capability.
+        """
+        # Original implementation preserved exactly
+        config = build_pipeline_config(
+            anonymize_ips=self.main_window.anonymize_ips_cb.isChecked(),
+            remove_dupes=self.main_window.remove_dupes_cb.isChecked(),
+            mask_payloads=self.main_window.mask_payloads_cb.isChecked(),
+        )
+        if not config:
+            self._logger.warning("No processing steps selected")
+            return
+
+        try:
+            executor = create_pipeline_executor(config)
+        except ConfigurationError as e:
+            self._logger.error(f"Configuration error: {str(e)}")
+            self.main_window.update_log(f"Configuration error: {str(e)}")
+            return
+        self._logger.info(f"Built PipelineExecutor containing {len(config)} Stages")
+
+        # Start processing using legacy method
+        self.start_processing(executor)
+
     def start_processing(self, executor):
-        """Start processing thread with the given executor"""
+        """Start processing thread with the given executor (legacy implementation)"""
         # Import ServicePipelineThread (avoid circular import)
         from ..main_window import ServicePipelineThread
 
@@ -238,36 +344,10 @@ class PipelineManager:
             executor, self.main_window.base_dir, self.main_window.current_output_dir
         )
 
-        # Connect signals
-        self.processing_thread.progress_signal.connect(self.handle_thread_progress)
-        self.processing_thread.finished.connect(self.on_thread_finished)
+        # Use common GUI thread setup
+        self._start_gui_thread_processing()
 
-        # Update UI state
-        self.main_window.start_proc_btn.setText("Stop")
-        self.main_window.start_proc_btn.setEnabled(True)
-        self.main_window.ui_manager._update_start_button_style()
-
-        # Reset statistics before starting new processing
-        self.statistics.reset_all_statistics()
-
-        # Also reset the main window's packet counting cache
-        if hasattr(self.main_window, "_counted_files"):
-            self.main_window._counted_files.clear()
-
-        # Start timing (unified use of StatisticsManager)
-        self.statistics.start_timing()
-        self.main_window.time_elapsed = 0
-        self.main_window.start_time = (
-            self.statistics.start_time
-        )  # Maintain compatibility
-        self.main_window.timer.start(100)  # Update every 100ms
-
-        # Start thread
-        self.processing_thread.start()
-
-        self._logger.info(
-            f"Processing thread started, output directory: {self.main_window.current_output_dir}"
-        )
+        # Add legacy-specific log message
         self.main_window.update_log("🚀 Processing started...")
 
     def handle_thread_progress(self, event_type: PipelineEvents, data: dict):
