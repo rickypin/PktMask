@@ -22,15 +22,12 @@ def main(ctx: typer.Context):
 
 
 # Import and register CLI commands (no nesting, keep simple)
-from pktmask.cli import cmd_batch, cmd_info, cmd_process
+from pktmask.cli import cmd_info, cmd_process
 
 # Register core commands
 app.command(
     "process", help="Unified processing with flexible operation combinations"
 )(cmd_process)
-app.command(
-    "batch", help="Batch process all PCAP files in a directory with full pipeline"
-)(cmd_batch)
 app.command("info", help="Display information about PCAP files or directories")(
     cmd_info
 )

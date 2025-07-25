@@ -2,14 +2,14 @@
 
 ## Overview
 
-PktMask CLI now features a completely redesigned command structure that addresses previous inconsistencies and limitations, providing:
+PktMask CLI features a simplified and unified interface that eliminates complexity and improves user experience:
 
-- ✅ **Unified Command Interface**: Single `process` command with flexible operation combinations
-- ✅ **Consistent Parameter Design**: Standardized `--dedup`, `--anon`, and `--mask` flags
-- ✅ **Flexible Operation Combinations**: Any combination of operations can be executed together
-- ✅ **Clean Command Structure**: Removed deprecated commands for simplified interface
-- ✅ **Enhanced Validation**: Comprehensive parameter validation and error handling
-- ✅ **GUI Consistency**: Identical functionality and results between CLI and GUI
+- ✅ **Unified Input Handling**: Automatically detects file vs directory input and processes accordingly
+- ✅ **Smart Output Defaults**: Auto-generates output paths when not specified
+- ✅ **Simplified Parameters**: Removed low-value parameters, system automatically optimizes settings
+- ✅ **Consistent Interface**: Same parameters work identically for files and directories
+- ✅ **Enhanced Validation**: Clear error messages with helpful guidance
+- ✅ **User-Friendly Design**: Pragmatic solutions that prioritize ease of use
 
 ## Installation and Basic Usage
 

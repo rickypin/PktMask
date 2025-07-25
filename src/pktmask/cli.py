@@ -34,30 +34,84 @@ app = typer.Typer(
 # ---------------------------------------------------------------------------
 
 
-def _validate_process_parameters(dedup: bool, anon: bool, mask: bool, protocol: str = "tls") -> tuple[bool, str | None]:
+def _validate_process_parameters(dedup: bool, anon: bool, mask: bool) -> tuple[bool, str | None]:
     """Validate that at least one operation is selected for process command"""
     if not any([dedup, anon, mask]):
         return False, "At least one operation must be specified: --dedup, --anon, or --mask"
 
-    # Validate protocol parameter when mask is enabled
-    if mask and protocol not in ["tls"]:
-        return False, f"Invalid protocol '{protocol}'. Currently supported protocols: tls"
-
     return True, None
+
+
+def _detect_input_type(input_path: Path) -> tuple[str, str | None]:
+    """
+    Detect input type and validate appropriateness.
+
+    Returns:
+        tuple: (input_type, error_message)
+        input_type: 'file', 'directory', or 'invalid'
+        error_message: None if valid, error string if invalid
+    """
+    if not input_path.exists():
+        return "invalid", f"Input path does not exist: {input_path}"
+
+    if input_path.is_file():
+        # Check if it's a PCAP file
+        if input_path.suffix.lower() in ['.pcap', '.pcapng']:
+            return "file", None
+        else:
+            return "invalid", f"Input file must be a PCAP or PCAPNG file (got: {input_path.suffix})"
+
+    elif input_path.is_dir():
+        # Check if directory contains PCAP files
+        pcap_files = list(input_path.glob("*.pcap")) + list(input_path.glob("*.pcapng"))
+        if pcap_files:
+            return "directory", None
+        else:
+            return "invalid", f"Directory contains no PCAP/PCAPNG files: {input_path}"
+
+    else:
+        return "invalid", f"Input path is neither a file nor a directory: {input_path}"
+
+
+def _generate_smart_output_path(input_path: Path, input_type: str) -> Path:
+    """
+    Generate smart output path when none is specified.
+
+    Args:
+        input_path: Input file or directory path
+        input_type: 'file' or 'directory'
+
+    Returns:
+        Generated output path
+    """
+    if input_type == "file":
+        # For files: same directory with _processed suffix
+        parent = input_path.parent
+        stem = input_path.stem
+        suffix = input_path.suffix
+        return parent / f"{stem}_processed{suffix}"
+
+    elif input_type == "directory":
+        # For directories: create sibling directory with _processed suffix
+        parent = input_path.parent
+        name = input_path.name
+        return parent / f"{name}_processed"
+
+    else:
+        raise ValueError(f"Invalid input type: {input_type}")
 
 
 def _build_config_from_unified_args(
     dedup: bool = False,
     anon: bool = False,
     mask: bool = False,
-    protocol: str = "tls"
 ) -> Dict[str, Any]:
-    """Build configuration from unified CLI arguments"""
+    """Build configuration from unified CLI arguments with TLS protocol"""
     return build_config_from_unified_args(
         dedup=dedup,
         anon=anon,
         mask=mask,
-        protocol=protocol
+        protocol="tls"  # Always use TLS protocol
     )
 
 
@@ -67,16 +121,10 @@ def _run_unified_pipeline(
     enable_dedup: bool = False,
     enable_anon: bool = False,
     enable_mask: bool = False,
-    mask_protocol: str = "tls",
     verbose: bool = False,
-    output_format: str = "text",
-    show_progress: bool = True,
-    file_pattern: str = "*.pcap,*.pcapng",
     save_report: bool = False,
-    report_format: str = "text",
-    report_detailed: bool = False,
 ) -> None:
-    """Unified pipeline execution for both files and directories."""
+    """Unified pipeline execution for both files and directories with smart defaults."""
 
     # 初始化报告服务
     report_service = get_report_service() if save_report else None
@@ -87,7 +135,7 @@ def _run_unified_pipeline(
             dedup=enable_dedup,
             anon=enable_anon,
             mask=enable_mask,
-            protocol=mask_protocol,
+            protocol="tls",  # Always use TLS protocol
         )
 
         # 验证配置
@@ -99,18 +147,18 @@ def _run_unified_pipeline(
         # 创建执行器
         executor = create_pipeline_executor(config)
 
-        # 创建输出服务
+        # 创建输出服务 (smart defaults: text format, auto-detect verbosity level)
         output_service = create_output_service(
-            format_str=output_format, level_str="verbose" if verbose else "normal"
+            format_str="text", level_str="verbose" if verbose else "normal"
         )
 
         # 开始报告
         if report_service:
             report_service.start_report(str(input_path), str(output_path))
 
-        # 创建进度回调（包含报告回调）
+        # 创建进度回调（包含报告回调）- always show progress for better UX
         progress_callback = None
-        if show_progress or report_service:
+        if True or report_service:  # Always show progress
             progress_callback = _create_enhanced_progress_callback(
                 verbose=verbose, show_stages=verbose, report_service=report_service
             )
@@ -129,7 +177,7 @@ def _run_unified_pipeline(
                 verbose=verbose,
             )
         elif input_path_obj.is_dir():
-            # 目录处理
+            # 目录处理 (smart default: auto-detect PCAP files)
             output_service.print_processing_start(str(input_path))
             result = process_directory_cli(
                 executor=executor,
@@ -137,7 +185,7 @@ def _run_unified_pipeline(
                 output_dir=str(output_path),
                 progress_callback=progress_callback,
                 verbose=verbose,
-                file_pattern=file_pattern,
+                file_pattern="*.pcap,*.pcapng",  # Smart default
             )
         else:
             typer.echo(f"❌ Input path does not exist: {input_path}", err=True)
@@ -169,39 +217,20 @@ def _run_unified_pipeline(
                 modified_packets=modified_packets,
             )
 
-            # 保存报告到文件
+            # 保存报告到文件 (smart default: text format)
             try:
-                if report_format.lower() == "gui":
-                    # 生成GUI风格的报告
-                    gui_report_content = generate_gui_style_report(result)
-
-                    # 手动保存GUI风格报告
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    filename = f"pktmask_gui_style_report_{timestamp}.txt"
-                    output_dir = (
-                        str(output_path)
-                        if Path(output_path).is_dir()
-                        else str(Path(output_path).parent)
-                    )
-                    report_path = Path(output_dir) / filename
-
-                    with open(report_path, "w", encoding="utf-8") as f:
-                        f.write(gui_report_content)
-
-                    typer.echo(f"📄 GUI-style report saved: {report_path}")
-                else:
-                    # 使用标准报告服务
-                    report_path = report_service.save_report_to_file(
-                        report=report,
-                        output_path=(
+                # 使用标准报告服务 (simplified - no format options)
+                report_path = report_service.save_report_to_file(
+                    report=report,
+                    output_path=(
                             str(output_path)
                             if Path(output_path).is_dir()
                             else str(Path(output_path).parent)
                         ),
-                        format_type=report_format,
-                        detailed=report_detailed,
+                        format_type="text",  # Smart default
+                        detailed=verbose,    # Use verbose flag for detail level
                     )
-                    typer.echo(f"📄 Report saved: {report_path}")
+                typer.echo(f"📄 Report saved: {report_path}")
             except Exception as e:
                 typer.echo(f"⚠️  Failed to save report: {e}", err=True)
 
@@ -246,62 +275,66 @@ def _create_enhanced_progress_callback(
 @app.command("process")
 def cmd_process(
     input_path: Path = typer.Argument(
-        ..., exists=True, help="Input PCAP/PCAPNG file or directory"
+        ..., help="Input PCAP/PCAPNG file or directory"
     ),
-    output_path: Path = typer.Option(
-        ..., "-o", "--output", help="Output file/directory path"
+    output_path: Optional[Path] = typer.Option(
+        None, "-o", "--output", help="Output file/directory path (auto-generated if not specified)"
     ),
     dedup: bool = typer.Option(False, "--dedup", help="Enable Remove Dupes processing"),
     anon: bool = typer.Option(False, "--anon", help="Enable Anonymize IPs processing"),
     mask: bool = typer.Option(False, "--mask", help="Enable Mask Payloads processing"),
-    protocol: str = typer.Option("tls", "--protocol", help="Protocol type: tls (http support planned)"),
     verbose: bool = typer.Option(
         False, "--verbose", "-v", help="Enable verbose progress output"
-    ),
-    output_format: str = typer.Option(
-        "text", "--format", help="Output format: text|json"
-    ),
-    no_progress: bool = typer.Option(
-        False, "--no-progress", help="Disable progress display"
-    ),
-    file_pattern: str = typer.Option(
-        "*.pcap,*.pcapng", "--pattern", help="File pattern for directory processing"
     ),
     save_report: bool = typer.Option(
         False, "--save-report", help="Save detailed processing report"
     ),
-    report_format: str = typer.Option(
-        "text", "--report-format", help="Report format: text|json"
-    ),
-    report_detailed: bool = typer.Option(
-        False, "--report-detailed", help="Include detailed statistics in report"
-    ),
 ):
-    """Unified processing command with flexible operation combinations.
+    """Unified processing command with intelligent operation defaults.
 
-    This is the recommended command for all PktMask operations. You can specify
-    any combination of dedup, anon, and mask operations.
+    Automatically detects input type and applies smart defaults:
+    - Directory input with no flags: auto-enables all operations (--dedup --anon --mask)
+    - File input with no flags: requires explicit operation specification
+    - Output path is auto-generated if not specified
 
     Examples:
-        # Single operations
-        pktmask process input.pcap -o output.pcap --dedup
-        pktmask process input.pcap -o output.pcap --anon
-        pktmask process input.pcap -o output.pcap --mask
+        # Single file processing (requires explicit operations)
+        pktmask process input.pcap --dedup
+        pktmask process input.pcap --anon --mask
 
-        # Combinations
-        pktmask process input.pcap -o output.pcap --dedup --anon
-        pktmask process input.pcap -o output.pcap --anon --mask --protocol tls
-        pktmask process input.pcap -o output.pcap --dedup --anon --mask --verbose
+        # Directory processing (auto-enables all operations)
+        pktmask process /data/pcaps                    # Auto: --dedup --anon --mask
+        pktmask process /data/pcaps --dedup --anon     # Explicit: only dedup + anon
 
-        # Directory processing
-        pktmask process /data/pcaps -o /data/output --dedup --anon --mask
+        # Custom output paths
+        pktmask process input.pcap -o custom_output.pcap --dedup
+        pktmask process /data/pcaps -o /custom/output --anon --mask
     """
 
-    # Validate that at least one operation is specified
-    is_valid, error_msg = _validate_process_parameters(dedup, anon, mask, protocol)
-    if not is_valid:
-        typer.echo(f"❌ {error_msg}", err=True)
+    # Detect and validate input type first
+    input_type, input_error = _detect_input_type(input_path)
+    if input_error:
+        typer.echo(f"❌ {input_error}", err=True)
         raise typer.Exit(1)
+
+    # Implement intelligent defaults based on input type
+    original_dedup, original_anon, original_mask = dedup, anon, mask
+
+    if not any([dedup, anon, mask]):
+        if input_type == "directory":
+            # Directory processing: auto-enable all operations
+            dedup = anon = mask = True
+            typer.echo("🔄 Directory processing detected: auto-enabled all operations (--dedup --anon --mask)")
+            typer.echo("   Use explicit flags to override this behavior (e.g., --dedup --anon)")
+        else:
+            # File processing: require explicit operation specification
+            typer.echo("❌ At least one operation must be specified: --dedup, --anon, or --mask", err=True)
+            raise typer.Exit(1)
+
+    # Generate output path if not specified
+    if output_path is None:
+        output_path = _generate_smart_output_path(input_path, input_type)
+        typer.echo(f"📁 Auto-generated output path: {output_path}")
 
     # Build configuration using unified arguments
     try:
@@ -309,7 +342,6 @@ def cmd_process(
             dedup=dedup,
             anon=anon,
             mask=mask,
-            protocol=protocol
         )
 
         # Validate configuration
@@ -318,21 +350,15 @@ def cmd_process(
             typer.echo(f"❌ Configuration error: {error_msg}", err=True)
             raise typer.Exit(1)
 
-        # Execute using existing unified pipeline
+        # Execute using simplified unified pipeline
         _run_unified_pipeline(
             input_path=input_path,
             output_path=output_path,
             enable_dedup=dedup,
             enable_anon=anon,
             enable_mask=mask,
-            mask_protocol=protocol,
             verbose=verbose,
-            output_format=output_format,
-            show_progress=not no_progress,
-            file_pattern=file_pattern,
             save_report=save_report,
-            report_format=report_format,
-            report_detailed=report_detailed,
         )
 
     except Exception as e:
@@ -344,81 +370,8 @@ def cmd_process(
 
 
 # ---------------------------------------------------------------------------
-# Batch processing commands
+# Information commands
 # ---------------------------------------------------------------------------
-
-
-@app.command("batch")
-def cmd_batch(
-    input_dir: Path = typer.Argument(
-        ..., exists=True, help="Input directory containing PCAP files"
-    ),
-    output_dir: Path = typer.Option(
-        ..., "-o", "--output", help="Output directory path"
-    ),
-    remove_dupes: bool = typer.Option(
-        True, "--remove-dupes/--no-remove-dupes", help="Enable/disable Remove Dupes processing"
-    ),
-    anonymize_ips: bool = typer.Option(
-        True, "--anonymize-ips/--no-anonymize-ips", help="Enable/disable Anonymize IPs processing"
-    ),
-    mask_payloads: bool = typer.Option(
-        True, "--mask-payloads/--no-mask-payloads", help="Enable/disable Mask Payloads processing"
-    ),
-    protocol: str = typer.Option("tls", "--protocol", help="Protocol type: tls|http"),
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="Enable verbose progress output"
-    ),
-    output_format: str = typer.Option(
-        "text", "--format", help="Output format: text|json"
-    ),
-    file_pattern: str = typer.Option(
-        "*.pcap,*.pcapng", "--pattern", help="File pattern to match"
-    ),
-    parallel: bool = typer.Option(
-        False, "--parallel", help="Enable parallel processing (experimental)"
-    ),
-):
-    """Batch process all PCAP files in a directory with full pipeline.
-
-    This command is optimized for processing large numbers of files with
-    all processing stages enabled by default.
-
-    Examples:
-        # Process all files with default settings
-        pktmask batch /path/to/pcaps -o /path/to/output
-
-        # Process with custom settings
-        pktmask batch /path/to/pcaps -o /path/to/output --no-remove-dupes
-
-        # Process with verbose output and JSON format
-        pktmask batch /path/to/pcaps -o /path/to/output --verbose --format json
-    """
-
-    if not input_dir.is_dir():
-        typer.echo(f"❌ Input path is not a directory: {input_dir}", err=True)
-        raise typer.Exit(1)
-
-    # 创建输出目录
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    if parallel:
-        typer.echo(
-            "⚠️  Parallel processing is experimental and may not be stable", err=True
-        )
-
-    _run_unified_pipeline(
-        input_path=input_dir,
-        output_path=output_dir,
-        enable_dedup=remove_dupes,
-        enable_anon=anonymize_ips,
-        enable_mask=mask_payloads,
-        mask_protocol=protocol,
-        verbose=verbose,
-        output_format=output_format,
-        show_progress=True,
-        file_pattern=file_pattern,
-    )
 
 
 @app.command("info")
