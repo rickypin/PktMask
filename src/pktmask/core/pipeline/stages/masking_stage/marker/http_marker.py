@@ -128,15 +128,29 @@ class HTTPProtocolMarker:
                         state_key = (stream_id, direction)
                         state = self.states.setdefault(state_key, _MessageState())
 
-                        # If not collecting, try to detect start line at payload[0:]
+                        # If not collecting, try to detect start line (lenient)
                         if not state.collecting:
+                            start_off = 0
                             if self._looks_like_http_start(payload):
-                                state.collecting = True
-                                state.start_seq = seg_start
-                                state.buffer = bytearray()
+                                start_off = 0
                             else:
-                                # Not starting exactly here; skip to avoid false positives
-                                continue
+                                # Find token anywhere in this segment
+                                idx = payload.find(b"HTTP/1.")
+                                if idx < 0:
+                                    # find earliest method occurrence
+                                    idxs = [i for i in [payload.find(m) for m in HTTP_METHODS] if i >= 0]
+                                    idx = min(idxs) if idxs else -1
+                                if idx >= 0:
+                                    start_off = idx
+                                else:
+                                    # No recognizable start in this segment
+                                    continue
+                            state.collecting = True
+                            state.start_seq = seg_start + start_off
+                            state.buffer = bytearray()
+                            # Skip bytes before detected start
+                            if start_off:
+                                payload = payload[start_off:]
 
                         # Append to buffer (cap)
                         if len(state.buffer) < state.max_scan_bytes:
@@ -212,11 +226,17 @@ class HTTPProtocolMarker:
         except Exception:
             pass
 
-        # Payload prefix heuristic
+        # Payload prefix heuristic (strict)
         if payload.startswith(b"HTTP/1."):
             return True
         for m in HTTP_METHODS:
             if payload.startswith(m):
+                return True
+        # Lenient: look for token anywhere to tolerate segmentation or dedup shifts
+        if b"HTTP/1." in payload:
+            return True
+        for m in HTTP_METHODS:
+            if m in payload:
                 return True
         return False
 
