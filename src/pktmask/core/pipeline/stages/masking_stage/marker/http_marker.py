@@ -117,6 +117,7 @@ class HTTPProtocolMarker:
                             continue
 
                         stream_id = self._build_stream_id(ip, tcp)
+                        tuple_key = self._build_tuple_key(ip, tcp)
                         direction = self._determine_flow_direction(ip, tcp, stream_id)
 
                         # Heuristic: is likely HTTP?
@@ -164,7 +165,7 @@ class HTTPProtocolMarker:
                             seq_start = state.start_seq
                             seq_end = state.start_seq + hdr_end_off
                             rule = self._make_header_rule(
-                                stream_id, direction, seq_start, seq_end
+                                stream_id, direction, seq_start, seq_end, tuple_key
                             )
                             ruleset.add_rule(rule)
                             # Reset for next message
@@ -178,7 +179,7 @@ class HTTPProtocolMarker:
                                     seq_start = state.start_seq
                                     seq_end = state.start_seq + first_line_end
                                     rule = self._make_header_rule(
-                                        stream_id, direction, seq_start, seq_end
+                                        stream_id, direction, seq_start, seq_end, tuple_key
                                     )
                                     ruleset.add_rule(rule)
                                     # Reset
@@ -217,6 +218,21 @@ class HTTPProtocolMarker:
         if pkt.haslayer(IPv6):
             return pkt[IPv6]
         return None
+
+    def _build_tuple_key(self, ip_layer, tcp_layer) -> str:
+        """Construct a stable tuple key string independent of encounter order."""
+        src_ip = str(getattr(ip_layer, "src", ""))
+        dst_ip = str(getattr(ip_layer, "dst", ""))
+        try:
+            src_port = int(tcp_layer.sport)
+            dst_port = int(tcp_layer.dport)
+        except Exception:
+            src_port = getattr(tcp_layer, "sport", 0)
+            dst_port = getattr(tcp_layer, "dport", 0)
+        if (src_ip, src_port) < (dst_ip, dst_port):
+            return f"{src_ip}:{src_port}-{dst_ip}:{dst_port}"
+        else:
+            return f"{dst_ip}:{dst_port}-{src_ip}:{src_port}"
 
     def _is_likely_http(self, ip, tcp, payload: bytes) -> bool:
         try:
@@ -262,15 +278,18 @@ class HTTPProtocolMarker:
         return None
 
     def _make_header_rule(
-        self, stream_id: str, direction: str, seq_start: int, seq_end: int
+        self, stream_id: str, direction: str, seq_start: int, seq_end: int, tuple_key: Optional[str] = None
     ) -> KeepRule:
+        meta = {"preserve_strategy": "header_only"}
+        if tuple_key:
+            meta["tuple_key"] = tuple_key
         return KeepRule(
             stream_id=stream_id,
             direction=direction,
             seq_start=seq_start,
             seq_end=seq_end,
             rule_type="http_header",
-            metadata={"preserve_strategy": "header_only"},
+            metadata=meta,
         )
 
     def _build_stream_id(self, ip_layer, tcp_layer) -> str:

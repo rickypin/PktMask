@@ -475,9 +475,18 @@ class PayloadMasker:
                 )
                 preserve_strategy = "full_preserve"
 
+            # Insert by stream_id
             rule_lookup[rule.stream_id][rule.direction][preserve_strategy].append(
                 (rule.seq_start, rule.seq_end)
             )
+            # Also insert by tuple_key (if provided) to tolerate stream_id numbering drift
+            tuple_key = None
+            meta = getattr(rule, "metadata", {}) or {}
+            tuple_key = meta.get("tuple_key")
+            if tuple_key:
+                rule_lookup[tuple_key][rule.direction][preserve_strategy].append(
+                    (rule.seq_start, rule.seq_end)
+                )
 
         # 为每个流方向构建优化的查找结构
         processed_lookup = {}
@@ -580,8 +589,9 @@ class PayloadMasker:
                 # Non-TCP packet, return as-is
                 return packet, False
 
-            # Build stream identifier
+            # Build stream identifier and tuple key (order-invariant)
             stream_id = self._build_stream_id(ip_layer, tcp_layer)
+            tuple_key = self._build_tuple_key(ip_layer, tcp_layer)
 
             # Determine flow direction
             direction = self._determine_flow_direction(ip_layer, tcp_layer, stream_id)
@@ -603,25 +613,24 @@ class PayloadMasker:
             seq_start = tcp_layer.seq
             seq_end = tcp_layer.seq + len(payload)
 
-            # Get matching rule data, use empty rule data if no matching rules
+            # Get matching rule data, with tuple-key fallback if stream_id mapping differs
+            rule_data = None
             if stream_id in rule_lookup and direction in rule_lookup[stream_id]:
                 rule_data = rule_lookup[stream_id][direction]
                 self.logger.debug(
-                    f"Found matching rule: stream_id={stream_id}, direction={direction}"
+                    f"Found matching rule by stream_id: {stream_id}, direction={direction}"
                 )
-            else:
+            elif tuple_key in rule_lookup and direction in rule_lookup[tuple_key]:
+                rule_data = rule_lookup[tuple_key][direction]
+                self.logger.debug(
+                    f"Found matching rule by tuple_key: {tuple_key}, direction={direction}"
+                )
+            if rule_data is None:
                 # No matching rules, use empty rule data (will result in full masking)
                 rule_data = {"header_only_ranges": [], "full_preserve_ranges": []}
-                available_streams = list(rule_lookup.keys())
-                available_directions = {}
-                for sid in available_streams:
-                    available_directions[sid] = list(rule_lookup[sid].keys())
-
                 self.logger.debug(
-                    f"No matching rule, performing full masking: stream_id={stream_id}, direction={direction}"
+                    f"No matching rule, performing full masking: stream_id={stream_id}, tuple_key={tuple_key}, direction={direction}"
                 )
-                self.logger.debug(f"Available streams: {available_streams}")
-                self.logger.debug(f"Available directions: {available_directions}")
 
             # Apply keep rules (for cases with no rules, full masking will be executed)
             new_payload = self._apply_keep_rules(payload, seq_start, seq_end, rule_data)
@@ -724,6 +733,21 @@ class PayloadMasker:
             )
 
         return (tcp_layer, ip_layer) if tcp_layer and ip_layer else (None, None)
+
+    def _build_tuple_key(self, ip_layer, tcp_layer) -> str:
+        """Construct a stable 4-tuple key independent of encounter order.
+
+        Returns:
+            A string key like "ip:port-ip:port" with lexical ordering applied.
+        """
+        src_ip = str(ip_layer.src)
+        dst_ip = str(ip_layer.dst)
+        src_port = int(tcp_layer.sport)
+        dst_port = int(tcp_layer.dport)
+        if (src_ip, src_port) < (dst_ip, dst_port):
+            return f"{src_ip}:{src_port}-{dst_ip}:{dst_port}"
+        else:
+            return f"{dst_ip}:{dst_port}-{src_ip}:{src_port}"
 
     def _build_stream_id(self, ip_layer, tcp_layer) -> str:
         """构建 TCP 流标识（与Marker模块保持一致）
