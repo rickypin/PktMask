@@ -33,6 +33,11 @@ def process_command(
     dedup: bool = typer.Option(False, "--dedup", help="Enable Remove Dupes processing"),
     anon: bool = typer.Option(False, "--anon", help="Enable Anonymize IPs processing"),
     mask: bool = typer.Option(False, "--mask", help="Enable Mask Payloads processing"),
+    mask_protocol: str = typer.Option(
+        "auto",
+        "--mask-protocol",
+        help="Masking protocol when --mask is enabled (tls|http|auto)",
+    ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output")
 ):
     """Process PCAP/PCAPNG files with unified core processing
@@ -54,6 +59,17 @@ def process_command(
     except ValueError as e:
         typer.echo(f"{StandardMessages.ERROR_ICON} {str(e)}", err=True)
         raise typer.Exit(1)
+
+    # Protocol validation (when mask enabled)
+    if mask:
+        allowed_protocols = {"tls", "http", "auto"}
+        if mask_protocol not in allowed_protocols:
+            typer.echo(
+                f"{StandardMessages.ERROR_ICON} Invalid --mask-protocol: {mask_protocol}. "
+                f"Allowed: tls|http|auto",
+                err=True,
+            )
+            raise typer.Exit(1)
     
     # Generate output path if needed
     if output_path is None:
@@ -63,22 +79,35 @@ def process_command(
     
     # Display configuration if verbose
     if verbose:
-        config_summary = ConsistentProcessor.get_configuration_summary(dedup, anon, mask)
+        config_summary = ConsistentProcessor.get_configuration_summary(
+            dedup, anon, mask, mask_protocol
+        )
         typer.echo(f"⚙️ Configuration: {config_summary}")
     
     # Process using unified core
     try:
         if input_path.is_file():
-            _process_single_file(input_path, output_path, dedup, anon, mask, verbose)
+            _process_single_file(
+                input_path, output_path, dedup, anon, mask, mask_protocol, verbose
+            )
         else:
-            _process_directory(input_path, output_path, dedup, anon, mask, verbose)
+            _process_directory(
+                input_path, output_path, dedup, anon, mask, mask_protocol, verbose
+            )
     except Exception as e:
         typer.echo(f"{StandardMessages.ERROR_ICON} {str(e)}", err=True)
         raise typer.Exit(1)
 
 
-def _process_single_file(input_path: Path, output_path: Path, 
-                        dedup: bool, anon: bool, mask: bool, verbose: bool):
+def _process_single_file(
+    input_path: Path,
+    output_path: Path,
+    dedup: bool,
+    anon: bool,
+    mask: bool,
+    mask_protocol: str,
+    verbose: bool,
+):
     """Process a single file using ConsistentProcessor"""
     
     typer.echo(f"{StandardMessages.START_ICON} {StandardMessages.PROCESSING_START}")
@@ -88,7 +117,9 @@ def _process_single_file(input_path: Path, output_path: Path,
         typer.echo(f"📁 Output: {output_path}")
     
     try:
-        result = ConsistentProcessor.process_file(input_path, output_path, dedup, anon, mask)
+        result = ConsistentProcessor.process_file(
+            input_path, output_path, dedup, anon, mask, mask_protocol
+        )
         format_result(result, verbose)
         
         if result.success:
@@ -102,8 +133,15 @@ def _process_single_file(input_path: Path, output_path: Path,
         raise typer.Exit(1)
 
 
-def _process_directory(input_path: Path, output_path: Path,
-                      dedup: bool, anon: bool, mask: bool, verbose: bool):
+def _process_directory(
+    input_path: Path,
+    output_path: Path,
+    dedup: bool,
+    anon: bool,
+    mask: bool,
+    mask_protocol: str,
+    verbose: bool,
+):
     """Process a directory of files using ConsistentProcessor"""
     
     # Find all PCAP/PCAPNG files
@@ -136,7 +174,9 @@ def _process_directory(input_path: Path, output_path: Path,
         output_file = output_path / pcap_file.name
         
         try:
-            result = ConsistentProcessor.process_file(pcap_file, output_file, dedup, anon, mask)
+            result = ConsistentProcessor.process_file(
+                pcap_file, output_file, dedup, anon, mask, mask_protocol
+            )
             
             if result.success:
                 processed_files += 1

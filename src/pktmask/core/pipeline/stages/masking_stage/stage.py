@@ -73,7 +73,7 @@ class MaskingStage(StageBase):
             if config:
                 self.config.update(config)
 
-            # Create Marker module
+            # Create Marker module (tls|http|auto)
             self.marker = self._create_marker()
             if not self.marker.initialize():
                 self.logger.error("Marker module initialization failed")
@@ -323,15 +323,16 @@ class MaskingStage(StageBase):
 
 
     def _create_marker(self):
-        """Create Marker module instance
-
-        Returns:
-            ProtocolMarker instance
-        """
+        """Create Marker module instance supporting tls|http|auto"""
         if self.protocol == "tls":
             from .marker.tls_marker import TLSProtocolMarker
-
             return TLSProtocolMarker(self.marker_config)
+        elif self.protocol == "http":
+            from .marker.http_marker import HTTPProtocolMarker
+            return HTTPProtocolMarker(self.marker_config)
+        elif self.protocol == "auto":
+            from .marker.auto_marker import AutoProtocolMarker
+            return AutoProtocolMarker(self.marker_config)
         else:
             raise ValueError(f"Unsupported protocol: {self.protocol}")
 
@@ -387,7 +388,7 @@ class MaskingStage(StageBase):
     def get_required_tools(self) -> list[str]:
         """Get required tools list"""
         tools = ["scapy"]
-        if self.protocol == "tls":
+        if self.protocol in ("tls", "auto"):
             tools.append("tshark")
         return tools
 

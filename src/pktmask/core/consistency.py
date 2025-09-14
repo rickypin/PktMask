@@ -30,7 +30,12 @@ class ConsistentProcessor:
     """
 
     @staticmethod
-    def create_executor(dedup: bool, anon: bool, mask: bool) -> PipelineExecutor:
+    def create_executor(
+        dedup: bool,
+        anon: bool,
+        mask: bool,
+        mask_protocol: str = "auto",
+    ) -> PipelineExecutor:
         """Create executor with standardized configuration
         
         Args:
@@ -63,7 +68,7 @@ class ConsistentProcessor:
         if mask:
             config["mask_payloads"] = {
                 "enabled": True,
-                "protocol": "tls",  # Default to TLS protocol masking
+                "protocol": mask_protocol or "auto",
                 "mode": "enhanced",  # Always use enhanced mode
                 "marker_config": {
                     "preserve": {
@@ -97,8 +102,14 @@ class ConsistentProcessor:
             raise ValueError(StandardMessages.NO_OPTIONS_SELECTED)
 
     @staticmethod
-    def process_file(input_path: Path, output_path: Path,
-                    dedup: bool, anon: bool, mask: bool) -> ProcessResult:
+    def process_file(
+        input_path: Path,
+        output_path: Path,
+        dedup: bool,
+        anon: bool,
+        mask: bool,
+        mask_protocol: str = "auto",
+    ) -> ProcessResult:
         """Unified file processing for both interfaces
         
         Args:
@@ -129,11 +140,13 @@ class ConsistentProcessor:
         ConsistentProcessor.validate_options(dedup, anon, mask)
         
         # Create executor and process
-        executor = ConsistentProcessor.create_executor(dedup, anon, mask)
+        executor = ConsistentProcessor.create_executor(dedup, anon, mask, mask_protocol)
         return executor.run(input_path, output_path)
 
     @staticmethod
-    def get_configuration_summary(dedup: bool, anon: bool, mask: bool) -> str:
+    def get_configuration_summary(
+        dedup: bool, anon: bool, mask: bool, mask_protocol: str = "auto"
+    ) -> str:
         """Get human-readable configuration summary
         
         Args:
@@ -151,7 +164,9 @@ class ConsistentProcessor:
         if anon:
             enabled_options.append("Anonymize IPs")
         if mask:
-            enabled_options.append("Mask Payloads")
+            enabled_options.append(
+                "Mask Payloads" + (f" (protocol: {mask_protocol})" if mask_protocol else "")
+            )
             
         if not enabled_options:
             return "No processing options enabled"
