@@ -165,8 +165,25 @@ class GUIServicePipelineThread(QThread):
             
             # Process using executor directly (same as CLI)
             result = self._executor.run(self._base_dir, self._output_dir)
-            
-            # Emit file end signal with result
+
+            # Emit stage summaries BEFORE file end (GUI expects this order)
+            for stage_stat in result.stage_stats:
+                payload = {
+                    "step_name": stage_stat.stage_name,
+                    "filename": os.path.basename(str(self._base_dir)),
+                    "path": str(self._base_dir),
+                    "packets_processed": stage_stat.packets_processed,
+                    "packets_modified": stage_stat.packets_modified,
+                    "duration_ms": stage_stat.duration_ms,
+                    "total_packets": stage_stat.packets_processed,
+                    "output_filename": str(self._output_dir)  # best-effort for single-file mode
+                }
+                # Attach extra metrics if present
+                if hasattr(stage_stat, "extra_metrics") and stage_stat.extra_metrics:
+                    payload["extra_metrics"] = stage_stat.extra_metrics
+                self.progress_signal.emit(PipelineEvents.STEP_SUMMARY, payload)
+
+            # Emit file end signal with result (after summaries)
             self.progress_signal.emit(PipelineEvents.FILE_END, {
                 "path": str(self._base_dir),
                 "result": result
@@ -228,25 +245,32 @@ class GUIServicePipelineThread(QThread):
                 
                 # Process file using executor directly
                 result = self._executor.run(pcap_file, output_file)
-                
+
                 if result.success:
                     processed_files += 1
                     total_duration += result.duration_ms
-                
-                # Emit file end signal with result
+
+                # Emit stage summaries BEFORE file end so summary manager sees them
+                for stage_stat in result.stage_stats:
+                    payload = {
+                        "step_name": stage_stat.stage_name,
+                        "filename": os.path.basename(str(pcap_file)),
+                        "path": str(pcap_file),
+                        "packets_processed": stage_stat.packets_processed,
+                        "packets_modified": stage_stat.packets_modified,
+                        "duration_ms": stage_stat.duration_ms,
+                        "total_packets": stage_stat.packets_processed,
+                        "output_filename": str(output_file)
+                    }
+                    if hasattr(stage_stat, "extra_metrics") and stage_stat.extra_metrics:
+                        payload["extra_metrics"] = stage_stat.extra_metrics
+                    self.progress_signal.emit(PipelineEvents.STEP_SUMMARY, payload)
+
+                # Emit file end signal with result (after summaries)
                 self.progress_signal.emit(PipelineEvents.FILE_END, {
                     "path": str(pcap_file),
                     "result": result
                 })
-                
-                # Emit stage summaries for GUI display
-                for stage_stat in result.stage_stats:
-                    self.progress_signal.emit(PipelineEvents.STEP_SUMMARY, {
-                        "step_name": stage_stat.stage_name,
-                        "packets_processed": stage_stat.packets_processed,
-                        "packets_modified": stage_stat.packets_modified,
-                        "duration_ms": stage_stat.duration_ms
-                    })
                 
             except Exception as e:
                 # Emit error for this specific file
