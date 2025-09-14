@@ -91,6 +91,12 @@ class HTTPProtocolMarker:
     # --- Public API ---
     def analyze_file(self, pcap_path: str, config: Dict[str, Any]) -> KeepRuleSet:
         ruleset = KeepRuleSet()
+        debug = False
+        try:
+            import os
+            debug = os.environ.get("PKTMASK_HTTP_DEBUG", "").lower() in ("1","true","yes","on")
+        except Exception:
+            debug = False
 
         if not SCAPY_AVAILABLE:
             self.logger.warning("Scapy unavailable, HTTP marker disabled")
@@ -103,6 +109,9 @@ class HTTPProtocolMarker:
             return ruleset
 
         try:
+            total_tcp = 0
+            total_with_payload = 0
+            found_candidates = 0
             with PcapReader(pcap_path) as reader:
                 for pkt in reader:
                     try:
@@ -113,8 +122,10 @@ class HTTPProtocolMarker:
                         ip = self._get_ip_layer(pkt)
                         tcp = pkt[TCP]
                         payload: bytes = bytes(tcp.payload) if tcp.payload else b""
+                        total_tcp += 1
                         if not payload:
                             continue
+                        total_with_payload += 1
 
                         stream_id = self._build_stream_id(ip, tcp)
                         tuple_key = self._build_tuple_key(ip, tcp)
@@ -123,6 +134,7 @@ class HTTPProtocolMarker:
                         # Heuristic: is likely HTTP?
                         if not self._is_likely_http(ip, tcp, payload):
                             continue
+                        found_candidates += 1
 
                         seg_start = int(tcp.seq)
                         seg_end = seg_start + len(payload)
@@ -197,7 +209,17 @@ class HTTPProtocolMarker:
             ruleset.metadata.update({
                 "analyzer": "HTTPProtocolMarker",
                 "pcap_path": pcap_path,
+                "stats": {
+                    "tcp_packets": total_tcp,
+                    "tcp_with_payload": total_with_payload,
+                    "http_candidates": found_candidates,
+                    "rules": len(ruleset.rules),
+                },
             })
+            if debug:
+                self.logger.info(
+                    f"HTTPMarker stats: tcp={total_tcp}, with_payload={total_with_payload}, candidates={found_candidates}, rules={len(ruleset.rules)}"
+                )
             return ruleset
 
         except Exception as e:

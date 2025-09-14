@@ -540,6 +540,16 @@ class PayloadMasker:
 
         return processed_lookup
 
+    def _debug_log_rule_miss(self, stream_id: str, tuple_key: str, direction: str, rule_lookup: Dict) -> None:
+        try:
+            available_streams = list(rule_lookup.keys())
+            self.logger.warning(
+                f"No rule for stream_id={stream_id}, tuple_key={tuple_key}, dir={direction}. "
+                f"Available keys={available_streams[:10]}{'...' if len(available_streams)>10 else ''}"
+            )
+        except Exception:
+            pass
+
     def _merge_overlapping_ranges(
         self, ranges: List[Tuple[int, int]]
     ) -> List[Tuple[int, int]]:
@@ -628,9 +638,7 @@ class PayloadMasker:
             if rule_data is None:
                 # No matching rules, use empty rule data (will result in full masking)
                 rule_data = {"header_only_ranges": [], "full_preserve_ranges": []}
-                self.logger.debug(
-                    f"No matching rule, performing full masking: stream_id={stream_id}, tuple_key={tuple_key}, direction={direction}"
-                )
+                self._debug_log_rule_miss(stream_id, tuple_key, direction, rule_lookup)
 
             # Apply keep rules (for cases with no rules, full masking will be executed)
             new_payload = self._apply_keep_rules(payload, seq_start, seq_end, rule_data)
