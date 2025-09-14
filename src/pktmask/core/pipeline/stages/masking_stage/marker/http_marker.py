@@ -91,6 +91,11 @@ class HTTPProtocolMarker:
     # --- Public API ---
     def analyze_file(self, pcap_path: str, config: Dict[str, Any]) -> KeepRuleSet:
         ruleset = KeepRuleSet()
+        # Reset per-file state to avoid cross-file contamination when marker instance is reused
+        self.states.clear()
+        self.flow_id_counter = 0
+        self.tuple_to_stream_id.clear()
+        self.flow_directions.clear()
         debug = False
         try:
             import os
@@ -112,6 +117,8 @@ class HTTPProtocolMarker:
             total_tcp = 0
             total_with_payload = 0
             found_candidates = 0
+            # Maintain small tails per (stream_id, direction) to detect tokens across segment boundaries
+            tails: Dict[Tuple[str, str], bytes] = {}
             with PcapReader(pcap_path) as reader:
                 for pkt in reader:
                     try:
@@ -141,29 +148,51 @@ class HTTPProtocolMarker:
                         state_key = (stream_id, direction)
                         state = self.states.setdefault(state_key, _MessageState())
 
-                        # If not collecting, try to detect start line (lenient)
+                        # If not collecting, try to detect start line (lenient + cross-segment tail)
                         if not state.collecting:
                             start_off = 0
+                            found = False
                             if self._looks_like_http_start(payload):
                                 start_off = 0
+                                found = True
                             else:
                                 # Find token anywhere in this segment
                                 idx = payload.find(b"HTTP/1.")
                                 if idx < 0:
-                                    # find earliest method occurrence
                                     idxs = [i for i in [payload.find(m) for m in HTTP_METHODS] if i >= 0]
                                     idx = min(idxs) if idxs else -1
                                 if idx >= 0:
                                     start_off = idx
+                                    found = True
                                 else:
-                                    # No recognizable start in this segment
-                                    continue
+                                    # Try cross-segment with small tail
+                                    tail = tails.get((stream_id, direction), b"")
+                                    if tail:
+                                        combo = tail + payload[:32]
+                                        j = combo.find(b"HTTP/1.")
+                                        if j < 0:
+                                            js = [i for i in [combo.find(m) for m in HTTP_METHODS] if i >= 0]
+                                            j = min(js) if js else -1
+                                        if j >= 0:
+                                            # If match starts in tail, adjust seq backwards by bytes in tail minus j
+                                            if j < len(tail):
+                                                back = len(tail) - j
+                                                start_off = -back
+                                            else:
+                                                start_off = j - len(tail)
+                                            found = True
+                            if not found:
+                                # No recognizable start in this segment
+                                tails[(stream_id, direction)] = payload[-8:]
+                                continue
                             state.collecting = True
                             state.start_seq = seg_start + start_off
                             state.buffer = bytearray()
                             # Skip bytes before detected start
                             if start_off:
                                 payload = payload[start_off:]
+                        # Update tail for next round
+                        tails[(stream_id, direction)] = payload[-8:] if payload else tails.get((stream_id, direction), b"")
 
                         # Append to buffer (cap)
                         if len(state.buffer) < state.max_scan_bytes:
