@@ -140,6 +140,25 @@ class PipelineManager:
         self.main_window.processed_files_count = 0  # Reset file count
         self.main_window.user_stopped = False  # Reset stop flag
 
+        # Insert rollout hint as the very first log line
+        try:
+            from ..core.feature_flags import GUIFeatureFlags as _FF
+            if _FF.is_legacy_mode_forced():
+                self.main_window.update_log(
+                    "ℹ️ Legacy mode (TLS only). Set PKTMASK_USE_CONSISTENT_PROCESSOR=true to enable auto (TLS+HTTP)."
+                )
+            elif _FF.should_use_consistent_processor():
+                self.main_window.update_log(
+                    "ℹ️ Using unified core (protocol=auto: TLS+HTTP). Set PKTMASK_FORCE_LEGACY_MODE=true to rollback."
+                )
+            else:
+                self.main_window.update_log(
+                    "ℹ️ Legacy mode active. Set PKTMASK_USE_CONSISTENT_PROCESSOR=true for auto (TLS+HTTP)."
+                )
+        except Exception:
+            # Best-effort hint; ignore failures
+            pass
+
         # Disable controls through event coordinator
         if hasattr(self.main_window, "event_coordinator"):
             self.main_window.event_coordinator.request_ui_update(
