@@ -163,8 +163,8 @@ class GUIServicePipelineThread(QThread):
                 "index": 0
             })
             
-            # Process using executor directly (same as CLI)
-            result = self._executor.run(self._base_dir, self._output_dir)
+            # Process using executor directly (same as CLI) with progress callback
+            result = self._executor.run(self._base_dir, self._output_dir, progress_cb=self._handle_stage_progress)
 
             # Emit stage summaries BEFORE file end (GUI expects this order)
             for stage_stat in result.stage_stats:
@@ -220,7 +220,16 @@ class GUIServicePipelineThread(QThread):
         self.progress_signal.emit(PipelineEvents.PIPELINE_START, {
             "total_files": len(pcap_files)
         })
-        
+
+        # CRITICAL FIX: Emit SUBDIR_START event to set total file count for progress bar
+        # This matches the behavior expected by PipelineManager for proper progress calculation
+        self.progress_signal.emit(PipelineEvents.SUBDIR_START, {
+            "name": str(self._base_dir.name if self._base_dir.is_dir() else self._base_dir.parent.name),
+            "current": 1,
+            "total": 1,
+            "file_count": len(pcap_files),
+        })
+
         processed_files = 0
         total_duration = 0.0
         
@@ -242,8 +251,8 @@ class GUIServicePipelineThread(QThread):
                 # Generate output file path
                 output_file = self._output_dir / pcap_file.name
                 
-                # Process file using executor directly
-                result = self._executor.run(pcap_file, output_file)
+                # Process file using executor directly with progress callback
+                result = self._executor.run(pcap_file, output_file, progress_cb=self._handle_stage_progress)
 
                 if result.success:
                     processed_files += 1
@@ -312,6 +321,53 @@ class GUIServicePipelineThread(QThread):
             self.progress_signal.emit(PipelineEvents.LOG, {
                 "message": f"[DEBUG] {message}"
             })
+
+    def _handle_stage_progress(self, stage, stats):
+        """Handle stage progress callback to emit detailed stage statistics
+
+        This replicates the functionality of pipeline_service._handle_stage_progress
+        to provide detailed stage-by-stage processing information in the GUI log.
+        """
+        # Get standardized display name for the stage
+        stage_display_name = self._get_stage_display_name(stage.name)
+
+        # Emit log with stage-specific action wording and correct statistics
+        if stage.name in ["DeduplicationStage", "UnifiedDeduplicationStage"]:
+            msg = f"- {stage_display_name}: processed {stats.packets_processed} pkts, removed {stats.packets_modified} pkts"
+        elif stage.name in ["AnonStage", "IPAnonymizationStage", "UnifiedIPAnonymizationStage", "AnonymizationStage"]:
+            # For IP anonymization, show IP statistics instead of packet statistics
+            original_ips = getattr(stats, "original_ips", 0) or stats.extra_metrics.get(
+                "original_ips", 0
+            )
+            anonymized_ips = getattr(stats, "anonymized_ips", 0) or stats.extra_metrics.get(
+                "anonymized_ips", 0
+            )
+            if original_ips > 0:
+                msg = f"- {stage_display_name}: processed {original_ips} IPs, anonymized {anonymized_ips} IPs"
+            else:
+                # Fallback to packet count if IP statistics are not available
+                msg = f"- {stage_display_name}: processed {stats.packets_processed} pkts, anonymized {stats.packets_modified} IPs"
+        else:
+            msg = f"- {stage_display_name}: processed {stats.packets_processed} pkts, masked {stats.packets_modified} pkts"
+
+        self.progress_signal.emit(PipelineEvents.LOG, {"message": msg})
+
+    def _get_stage_display_name(self, stage_name: str) -> str:
+        """Get standardized display name for stage based on naming consistency guide"""
+        stage_name_mapping = {
+            "DeduplicationStage": "Deduplication Stage",
+            "UnifiedDeduplicationStage": "Deduplication Stage",  # New Unified implementation
+            "AnonStage": "Anonymize IPs Stage",
+            "IPAnonymizationStage": "Anonymize IPs Stage",  # Old StageBase implementation
+            "UnifiedIPAnonymizationStage": "Anonymize IPs Stage",  # New Unified implementation
+            "AnonymizationStage": "Anonymize IPs Stage",  # Standardized naming
+            "NewMaskPayloadStage": "Mask Payloads Stage",
+            "MaskStage": "Mask Payloads Stage",
+            "MaskPayloadStage": "Mask Payloads Stage",
+            "MaskingStage": "Mask Payloads Stage",  # Standardized naming
+            "Mask Payloads (v2)": "Mask Payloads Stage",
+        }
+        return stage_name_mapping.get(stage_name, stage_name)
 
 
 class GUIThreadingHelper:

@@ -814,7 +814,9 @@ class PayloadMasker:
         return stream_id
 
     def _determine_flow_direction(self, ip_layer, tcp_layer, stream_id: str) -> str:
-        """确定流方向（与Marker模块保持一致）
+        """确定流方向，与TLS Marker保持一致的逻辑
+
+        使用字典序确定canonical方向，确保与TLS Marker的一致性。
 
         Args:
             ip_layer: IP 层
@@ -826,44 +828,53 @@ class PayloadMasker:
         """
         src_ip = str(ip_layer.src)
         dst_ip = str(ip_layer.dst)
-        src_port = tcp_layer.sport
-        dst_port = tcp_layer.dport
+        src_port = int(tcp_layer.sport)
+        dst_port = int(tcp_layer.dport)
 
-        # 检查是否已经建立了此流的方向信息
+        # 使用字典序逻辑确定canonical forward方向：字典序较小的端点作为源
+        if (src_ip, src_port) < (dst_ip, dst_port):
+            # 当前连接的字典序：src < dst，所以forward是src->dst
+            canonical_forward = {
+                "src_ip": src_ip,
+                "dst_ip": dst_ip,
+                "src_port": src_port,
+                "dst_port": dst_port,
+            }
+        else:
+            # 当前连接的字典序：src > dst，所以forward是dst->src
+            canonical_forward = {
+                "src_ip": dst_ip,
+                "dst_ip": src_ip,
+                "src_port": dst_port,
+                "dst_port": src_port,
+            }
+
+        # 存储canonical方向信息（如果还没有存储）
         if stream_id not in self.flow_directions:
-            # 第一次遇到此流，建立方向信息（模拟Marker模块的逻辑）
             self.flow_directions[stream_id] = {
-                "forward": {
-                    "src_ip": src_ip,
-                    "dst_ip": dst_ip,
-                    "src_port": src_port,
-                    "dst_port": dst_port,
-                },
+                "forward": canonical_forward,
                 "reverse": {
-                    "src_ip": dst_ip,
-                    "dst_ip": src_ip,
-                    "src_port": dst_port,
-                    "dst_port": src_port,
+                    "src_ip": canonical_forward["dst_ip"],
+                    "dst_ip": canonical_forward["src_ip"],
+                    "src_port": canonical_forward["dst_port"],
+                    "dst_port": canonical_forward["src_port"],
                 },
             }
 
             self.logger.debug(
-                f"Established flow direction info {stream_id}: forward={src_ip}:{src_port}->{dst_ip}:{dst_port}"
+                f"Established canonical flow direction info {stream_id}: forward={canonical_forward['src_ip']}:{canonical_forward['src_port']}->{canonical_forward['dst_ip']}:{canonical_forward['dst_port']}"
             )
-            return "forward"  # First packet defines forward direction
 
-        # 根据已建立的方向信息判断当前包的方向
-        forward_info = self.flow_directions[stream_id]["forward"]
-
+        # 判断当前包的方向
+        fwd = self.flow_directions[stream_id]["forward"]
         if (
-            src_ip == forward_info["src_ip"]
-            and src_port == forward_info["src_port"]
-            and dst_ip == forward_info["dst_ip"]
-            and dst_port == forward_info["dst_port"]
+            src_ip == fwd["src_ip"]
+            and src_port == fwd["src_port"]
+            and dst_ip == fwd["dst_ip"]
+            and dst_port == fwd["dst_port"]
         ):
             return "forward"
-        else:
-            return "reverse"
+        return "reverse"
 
     def _apply_keep_rules(
         self, payload: bytes, seg_start: int, seg_end: int, rule_data: Dict

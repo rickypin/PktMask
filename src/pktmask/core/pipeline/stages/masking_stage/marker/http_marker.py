@@ -335,28 +335,49 @@ class HTTPProtocolMarker:
         return stream_id
 
     def _determine_flow_direction(self, ip_layer, tcp_layer, stream_id: str) -> str:
+        """确定流方向，与TLS Marker保持一致的逻辑
+
+        使用字典序确定canonical方向，确保与TLS Marker的一致性。
+        """
         src_ip = str(getattr(ip_layer, "src", ""))
         dst_ip = str(getattr(ip_layer, "dst", ""))
         src_port = int(tcp_layer.sport)
         dst_port = int(tcp_layer.dport)
 
+        # 使用与_build_tuple_key完全相同的字典序逻辑
+        # 确定canonical forward方向：字典序较小的端点作为源
+        if (src_ip, src_port) < (dst_ip, dst_port):
+            # 当前连接的字典序：src < dst，所以forward是src->dst
+            canonical_forward = {
+                "src_ip": src_ip,
+                "dst_ip": dst_ip,
+                "src_port": src_port,
+                "dst_port": dst_port,
+            }
+            is_forward = True
+        else:
+            # 当前连接的字典序：src > dst，所以forward是dst->src
+            canonical_forward = {
+                "src_ip": dst_ip,
+                "dst_ip": src_ip,
+                "src_port": dst_port,
+                "dst_port": src_port,
+            }
+            is_forward = False
+
+        # 存储canonical方向信息（如果还没有存储）
         if stream_id not in self.flow_directions:
             self.flow_directions[stream_id] = {
-                "forward": {
-                    "src_ip": src_ip,
-                    "dst_ip": dst_ip,
-                    "src_port": src_port,
-                    "dst_port": dst_port,
-                },
+                "forward": canonical_forward,
                 "reverse": {
-                    "src_ip": dst_ip,
-                    "dst_ip": src_ip,
-                    "src_port": dst_port,
-                    "dst_port": src_port,
+                    "src_ip": canonical_forward["dst_ip"],
+                    "dst_ip": canonical_forward["src_ip"],
+                    "src_port": canonical_forward["dst_port"],
+                    "dst_port": canonical_forward["src_port"],
                 },
             }
-            return "forward"
 
+        # 判断当前包的方向
         fwd = self.flow_directions[stream_id]["forward"]
         if (
             src_ip == fwd["src_ip"]

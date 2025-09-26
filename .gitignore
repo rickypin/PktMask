@@ -61,6 +61,7 @@ output/reports/coverage/
 reports/coverage/
 
 # Temporary analysis and validation outputs (can be regenerated)
+output/
 output/tmp/
 output/maskstage_validation/
 output/monitoring/

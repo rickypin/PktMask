@@ -371,6 +371,10 @@ class MaskingStage(StageBase):
                 "success": masking_stats.success,
                 "errors": masking_stats.errors,
                 "warnings": masking_stats.warnings,
+                # 降级处理信息
+                "fallback_used": masking_stats.fallback_used,
+                "fallback_mode": masking_stats.fallback_mode,
+                "fallback_details": masking_stats.fallback_details,
             },
         )
 

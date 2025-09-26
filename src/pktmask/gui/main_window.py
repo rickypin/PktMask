@@ -608,6 +608,18 @@ class MainWindow(QMainWindow):
                         f"Updated packet count: file={current_file}, packets={packets_processed}, total={self.pipeline_manager.statistics.packets_processed}"
                     )
 
+            # 检查是否有降级处理信息
+            fallback_used = data.get("fallback_used", False)
+            if fallback_used:
+                fallback_mode = data.get("fallback_mode", "unknown")
+                fallback_details = data.get("fallback_details", {})
+                fallback_reason = fallback_details.get("fallback_reason", "Processing failed, using fallback mode")
+
+                self.update_log(f"⚠️  {step_name}: Fallback activated - {fallback_mode}")
+                self.update_log(f"   Reason: {fallback_reason}")
+                if fallback_details.get("file_size"):
+                    self.update_log(f"   File copied as-is ({fallback_details['file_size']} bytes)")
+
             self.collect_step_result(data)
 
         elif event_type == PipelineEvents.PIPELINE_END:
