@@ -635,6 +635,25 @@ class PayloadMasker:
                 self.logger.debug(
                     f"Found matching rule by tuple_key: {tuple_key}, direction={direction}"
                 )
+            if rule_data is None and tuple_key in rule_lookup:
+                # Combine all directions under tuple_key as a direction-agnostic fallback
+                combined_header = []
+                combined_full = []
+                try:
+                    for dkey, groups in rule_lookup[tuple_key].items():
+                        combined_header.extend(groups.get("header_only", []))
+                        combined_full.extend(groups.get("full_preserve", []))
+                except Exception:
+                    pass
+                if combined_header or combined_full:
+                    rule_data = {
+                        "header_only_ranges": combined_header,
+                        "full_preserve_ranges": combined_full,
+                    }
+                    self.logger.debug(
+                        f"Using direction-agnostic fallback rule set for tuple_key={tuple_key}"
+                    )
+
             if rule_data is None:
                 # No matching rules, use empty rule data (will result in full masking)
                 rule_data = {"header_only_ranges": [], "full_preserve_ranges": []}

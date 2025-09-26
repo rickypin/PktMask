@@ -200,16 +200,15 @@ class GUIServicePipelineThread(QThread):
     
     def _process_directory_with_progress(self):
         """Process directory while maintaining GUI progress events
-        
+
         CRITICAL: This method preserves the exact progress event emission
         pattern that the GUI expects for proper display updates.
         """
-        # Find all PCAP/PCAPNG files (same logic as CLI)
+        # Find all PCAP/PCAPNG files in current directory only (not recursive)
         pcap_files = []
-        for root, dirs, files in os.walk(self._base_dir):
-            for file in files:
-                if file.lower().endswith(('.pcap', '.pcapng')):
-                    pcap_files.append(Path(root) / file)
+        for file in os.scandir(self._base_dir):
+            if file.name.lower().endswith(('.pcap', '.pcapng')):
+                pcap_files.append(Path(file.path))
         
         if not pcap_files:
             self.progress_signal.emit(PipelineEvents.ERROR, {

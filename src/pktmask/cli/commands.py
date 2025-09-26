@@ -144,12 +144,11 @@ def _process_directory(
 ):
     """Process a directory of files using ConsistentProcessor"""
     
-    # Find all PCAP/PCAPNG files
+    # Find all PCAP/PCAPNG files in current directory only (not recursive)
     pcap_files = []
-    for root, dirs, files in os.walk(input_path):
-        for file in files:
-            if file.lower().endswith(('.pcap', '.pcapng')):
-                pcap_files.append(Path(root) / file)
+    for file in os.scandir(input_path):
+        if file.name.lower().endswith(('.pcap', '.pcapng')):
+            pcap_files.append(Path(file.path))
     
     if not pcap_files:
         typer.echo(f"{StandardMessages.WARNING_ICON} No PCAP/PCAPNG files found in directory")
@@ -226,12 +225,11 @@ def validate_command(
                 from ..core.messages import MessageFormatter
                 typer.echo(f"📊 File size: {MessageFormatter.format_file_size(file_size)}")
         else:
-            # Count files in directory
+            # Count files in directory (current directory only)
             pcap_files = []
-            for root, dirs, files in os.walk(input_path):
-                for file in files:
-                    if file.lower().endswith(('.pcap', '.pcapng')):
-                        pcap_files.append(Path(root) / file)
+            for file in os.scandir(input_path):
+                if file.name.lower().endswith(('.pcap', '.pcapng')):
+                    pcap_files.append(Path(file.path))
             
             typer.echo(f"{StandardMessages.SUCCESS_ICON} Valid directory with {len(pcap_files)} PCAP/PCAPNG files")
             
