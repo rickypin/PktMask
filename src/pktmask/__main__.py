@@ -10,6 +10,19 @@ app = typer.Typer(
 )
 
 
+
+# TEMP: force pktmask logger to DEBUG for troubleshooting
+try:
+    from pktmask.infrastructure.logging import get_logger  # ensure handlers initialized
+    import logging
+    pkt_logger = logging.getLogger("pktmask")
+    pkt_logger.setLevel(logging.DEBUG)
+    for _h in pkt_logger.handlers:
+        _h.setLevel(logging.DEBUG)
+    pkt_logger.debug("[TEMP] Logger level forced to DEBUG (will be reverted later)")
+except Exception:
+    pass
+
 @app.callback(invoke_without_command=True)
 def main(ctx: typer.Context):
     """Launch GUI by default unless CLI command is explicitly called"""

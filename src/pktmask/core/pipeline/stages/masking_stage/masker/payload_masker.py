@@ -625,15 +625,15 @@ class PayloadMasker:
 
             # Get matching rule data, with tuple-key fallback if stream_id mapping differs
             rule_data = None
-            if stream_id in rule_lookup and direction in rule_lookup[stream_id]:
-                rule_data = rule_lookup[stream_id][direction]
-                self.logger.debug(
-                    f"Found matching rule by stream_id: {stream_id}, direction={direction}"
-                )
-            elif tuple_key in rule_lookup and direction in rule_lookup[tuple_key]:
+            if tuple_key in rule_lookup and direction in rule_lookup[tuple_key]:
                 rule_data = rule_lookup[tuple_key][direction]
                 self.logger.debug(
                     f"Found matching rule by tuple_key: {tuple_key}, direction={direction}"
+                )
+            elif stream_id in rule_lookup and direction in rule_lookup[stream_id]:
+                rule_data = rule_lookup[stream_id][direction]
+                self.logger.debug(
+                    f"Found matching rule by stream_id: {stream_id}, direction={direction}"
                 )
             if rule_data is None and tuple_key in rule_lookup:
                 # Combine all directions under tuple_key as a direction-agnostic fallback
