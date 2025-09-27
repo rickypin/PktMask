@@ -47,6 +47,9 @@ HTTP_METHODS = (
 )
 
 
+SENSITIVE_HEADER_NAMES = {b"cookie", b"authorization", b"referer"}
+
+
 @dataclass
 class _MessageState:
     collecting: bool = False
@@ -79,6 +82,8 @@ class HTTPProtocolMarker:
         self.http_ports: Tuple[int, ...] = tuple(
             self.config.get("ports", [80, 8080, 8000, 8888])
         )
+
+        self._sensitive_header_names = SENSITIVE_HEADER_NAMES
 
     def initialize(self) -> bool:
         return True
@@ -173,13 +178,17 @@ class HTTPProtocolMarker:
                         # Search for CRLFCRLF
                         hdr_end_off = self._find_header_terminator(state.buffer)
                         if hdr_end_off is not None and state.start_seq is not None:
-                            # Found full header: keep [start, start + hdr_end_off)
+                            # Found full header: generate keep ranges excluding sensitive values
+                            header_bytes = bytes(state.buffer[:hdr_end_off])
                             seq_start = state.start_seq
-                            seq_end = state.start_seq + hdr_end_off
-                            rule = self._make_header_rule(
-                                stream_id, direction, seq_start, seq_end, tuple_key
+                            keep_ranges = self._compute_header_keep_ranges(
+                                header_bytes, seq_start
                             )
-                            ruleset.add_rule(rule)
+                            for rng_start, rng_end in keep_ranges:
+                                rule = self._make_header_rule(
+                                    stream_id, direction, rng_start, rng_end, tuple_key
+                                )
+                                ruleset.add_rule(rule)
                             # Reset for next message
                             self.states[state_key] = _MessageState()
                         else:
@@ -188,12 +197,20 @@ class HTTPProtocolMarker:
                             if len(state.buffer) >= min(1024, state.max_scan_bytes // 2) and state.start_seq is not None:
                                 first_line_end = self._find_first_crlf(state.buffer)
                                 if first_line_end is not None and first_line_end > 0:
+                                    header_bytes = bytes(state.buffer[:first_line_end])
                                     seq_start = state.start_seq
-                                    seq_end = state.start_seq + first_line_end
-                                    rule = self._make_header_rule(
-                                        stream_id, direction, seq_start, seq_end, tuple_key
+                                    keep_ranges = self._compute_header_keep_ranges(
+                                        header_bytes, seq_start
                                     )
-                                    ruleset.add_rule(rule)
+                                    for rng_start, rng_end in keep_ranges:
+                                        rule = self._make_header_rule(
+                                            stream_id,
+                                            direction,
+                                            rng_start,
+                                            rng_end,
+                                            tuple_key,
+                                        )
+                                        ruleset.add_rule(rule)
                                     # Reset
                                     self.states[state_key] = _MessageState()
 
@@ -313,6 +330,78 @@ class HTTPProtocolMarker:
             rule_type="http_header",
             metadata=meta,
         )
+
+    def _compute_header_keep_ranges(
+        self, header_bytes: bytes, base_seq: int
+    ) -> List[Tuple[int, int]]:
+        """Split header into keep ranges while stripping sensitive values."""
+
+        keep_ranges: List[Tuple[int, int]] = []
+        length = len(header_bytes)
+        pos = 0
+        continuation_sensitive = False
+
+        while pos <= length:
+            eol = header_bytes.find(b"\r\n", pos)
+            if eol < 0:
+                eol = length
+                crlf_len = 0
+                next_pos = length + 1  # exit loop
+            else:
+                crlf_len = 2
+                next_pos = eol + crlf_len
+
+            line = header_bytes[pos:eol]
+            is_blank_line = len(line) == 0
+            is_continuation = len(line) > 0 and line[:1] in (b" ", b"\t")
+
+            sensitive = False
+            prefix_len = len(line)
+
+            if is_blank_line:
+                continuation_sensitive = False
+            elif is_continuation:
+                sensitive = continuation_sensitive
+                if sensitive:
+                    prefix_len = 0
+                else:
+                    prefix_len = len(line)
+            else:
+                colon_idx = line.find(b":")
+                if colon_idx >= 0:
+                    header_name = line[:colon_idx].strip().lower()
+                    if header_name in self._sensitive_header_names:
+                        sensitive = True
+                        prefix_len = colon_idx + 1
+                        while (
+                            prefix_len < len(line)
+                            and line[prefix_len:prefix_len + 1] in (b" ", b"\t")
+                        ):
+                            prefix_len += 1
+                    else:
+                        prefix_len = len(line)
+                else:
+                    prefix_len = len(line)
+
+                continuation_sensitive = sensitive
+
+            if prefix_len > 0:
+                rng_start = base_seq + pos
+                rng_end = base_seq + pos + prefix_len
+                if rng_start < rng_end:
+                    keep_ranges.append((rng_start, rng_end))
+
+            if crlf_len:
+                rng_start = base_seq + eol
+                rng_end = base_seq + eol + crlf_len
+                if rng_start < rng_end:
+                    keep_ranges.append((rng_start, rng_end))
+
+            pos = next_pos
+            if pos > length:
+                break
+
+        return keep_ranges
 
     def _build_stream_id(self, ip_layer, tcp_layer) -> str:
         # Keep consistent with Masker
