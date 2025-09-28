@@ -148,7 +148,7 @@ class HTTPProtocolMarker:
                         found_candidates += 1
 
                         seg_start = int(tcp.seq)
-                        seg_end = seg_start + len(payload)
+                        seg_start + len(payload)
                         state_key = (stream_id, direction)
                         state = self.states.setdefault(state_key, _MessageState())
 
@@ -463,7 +463,6 @@ class HTTPProtocolMarker:
                 "src_port": src_port,
                 "dst_port": dst_port,
             }
-            is_forward = True
         else:
             # 当前连接的字典序：src > dst，所以forward是dst->src
             canonical_forward = {
@@ -472,7 +471,6 @@ class HTTPProtocolMarker:
                 "src_port": dst_port,
                 "dst_port": src_port,
             }
-            is_forward = False
 
         # 存储canonical方向信息（如果还没有存储）
         if stream_id not in self.flow_directions:

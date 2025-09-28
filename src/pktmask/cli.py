@@ -1,4 +1,3 @@
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
@@ -13,11 +12,9 @@ from pktmask.services.pipeline_service import (
     PipelineServiceError,
     create_gui_compatible_report_data,
     create_pipeline_executor,
-    generate_gui_style_report,
     process_directory_cli,
     process_single_file,
 )
-from pktmask.services.progress_service import create_cli_progress_callback
 from pktmask.services.report_service import get_report_service
 
 # ---------------------------------------------------------------------------

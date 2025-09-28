@@ -17,13 +17,12 @@ CRITICAL: This module ensures 100% GUI functionality preservation by:
 
 import os
 from pathlib import Path
-from typing import Callable, Optional, Union
+from typing import Union
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from ...core.consistency import ConsistentProcessor
 from ...core.events import PipelineEvents
-from ...core.messages import StandardMessages
 from ...utils.file_ops import generate_output_filename
 from .feature_flags import GUIFeatureFlags
 

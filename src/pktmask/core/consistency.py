@@ -16,7 +16,6 @@ Key Features:
 """
 
 from pathlib import Path
-from typing import Optional
 
 from .pipeline.executor import PipelineExecutor
 from .pipeline.models import ProcessResult
@@ -218,10 +217,6 @@ class ConsistentProcessor:
 class ConfigurationError(Exception):
     """Exception raised for configuration-related errors"""
 
-    pass
-
 
 class ProcessingError(Exception):
     """Exception raised for processing-related errors"""
-
-    pass

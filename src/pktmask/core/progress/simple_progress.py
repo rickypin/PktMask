@@ -10,8 +10,6 @@
 总代码量: ~100行，重构时间: 1-2天
 """
 
-from abc import ABC, abstractmethod
-from enum import Enum
 from typing import Any, Dict, List, Optional, Protocol
 
 from pktmask.core.events import PipelineEvents
