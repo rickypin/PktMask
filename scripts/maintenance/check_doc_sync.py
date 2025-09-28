@@ -9,7 +9,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Set, Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 # Project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent

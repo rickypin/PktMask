@@ -4,31 +4,32 @@
 验证基于 TCP_MARKER_REFERENCE.md 实现的核心掩码算法功能。
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from pathlib import Path
-import tempfile
 import os
+import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
-from pktmask.core.pipeline.stages.masking_stage.masker.payload_masker import (
-    PayloadMasker,
-)
-from pktmask.core.pipeline.stages.masking_stage.masker.error_handler import (
-    ErrorRecoveryHandler,
-    ErrorSeverity,
-    ErrorCategory,
+import pytest
+
+from pktmask.core.pipeline.stages.masking_stage.marker.types import (
+    FlowInfo,
+    KeepRule,
+    KeepRuleSet,
 )
 from pktmask.core.pipeline.stages.masking_stage.masker.data_validator import (
     DataValidator,
+)
+from pktmask.core.pipeline.stages.masking_stage.masker.error_handler import (
+    ErrorCategory,
+    ErrorRecoveryHandler,
+    ErrorSeverity,
 )
 from pktmask.core.pipeline.stages.masking_stage.masker.fallback_handler import (
     FallbackHandler,
     FallbackMode,
 )
-from pktmask.core.pipeline.stages.masking_stage.marker.types import (
-    KeepRule,
-    KeepRuleSet,
-    FlowInfo,
+from pktmask.core.pipeline.stages.masking_stage.masker.payload_masker import (
+    PayloadMasker,
 )
 
 
@@ -376,9 +377,6 @@ class TestPayloadMasker:
 
         # 结果应该一致
         assert result_optimized == result_simple
-
-
-
 
     def test_optimization_report(self):
         """测试优化报告"""

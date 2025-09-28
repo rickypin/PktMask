@@ -4,12 +4,13 @@ Next-Generation MaskPayload Stage Main Class Tests
 Tests MaskingStage basic functionality and interface compatibility.
 """
 
-import pytest
-from unittest.mock import Mock, patch
 from pathlib import Path
+from unittest.mock import Mock, patch
 
-from pktmask.core.pipeline.stages.masking_stage.stage import MaskingStage
+import pytest
+
 from pktmask.core.pipeline.models import StageStats
+from pktmask.core.pipeline.stages.masking_stage.stage import MaskingStage
 
 
 class TestMaskingStage:

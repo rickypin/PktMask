@@ -8,17 +8,18 @@ Tests for proper temporary file creation, usage, and cleanup across PktMask comp
 Validates that temporary files are correctly managed in both normal and exceptional scenarios.
 """
 
-import pytest
-import tempfile
 import os
 import shutil
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+import tempfile
 import time
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from pktmask.core.pipeline.executor import PipelineExecutor
-from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage
 from pktmask.core.pipeline.resource_manager import ResourceManager
+from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage
 
 
 class TestTemporaryFileManagement:

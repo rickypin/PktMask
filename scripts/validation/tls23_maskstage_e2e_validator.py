@@ -29,7 +29,7 @@ import subprocess
 import sys
 from glob import glob
 from pathlib import Path
-from typing import List, Dict, Any, Tuple
+from typing import Any, Dict, List, Tuple
 
 # Add src directory to Python path for module imports
 script_dir = Path(__file__).parent.absolute()

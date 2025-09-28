@@ -4,14 +4,15 @@
 测试新架构的基础组件和数据结构。
 """
 
-import pytest
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+
+import pytest
 
 from pktmask.core.pipeline.stages.masking_stage.marker.types import (
+    FlowInfo,
     KeepRule,
     KeepRuleSet,
-    FlowInfo,
 )
 
 

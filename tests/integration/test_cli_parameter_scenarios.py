@@ -6,11 +6,12 @@ from tests/data/tls directory to ensure the simplified CLI works correctly.
 """
 
 import os
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
-from typer.testing import CliRunner
+
 import pytest
+from typer.testing import CliRunner
 
 from pktmask.__main__ import app
 
@@ -23,16 +24,16 @@ class TestCLIParameterScenarios:
         """Set up test class with real PCAP data."""
         cls.runner = CliRunner()
         cls.test_data_dir = Path("tests/data/tls")
-        
+
         # Verify test data exists
         if not cls.test_data_dir.exists():
             pytest.skip("TLS test data directory not found")
-        
+
         # Get available PCAP files
         cls.pcap_files = list(cls.test_data_dir.glob("*.pcap"))
         if not cls.pcap_files:
             pytest.skip("No PCAP files found in test data directory")
-        
+
         # Select test files of different sizes for comprehensive testing
         cls.small_pcap = cls._find_pcap_by_size("small")  # < 10KB
         cls.medium_pcap = cls._find_pcap_by_size("medium")  # 10KB - 100KB
@@ -71,7 +72,7 @@ class TestCLIParameterScenarios:
         success_indicators = [
             "🚀 Processing file:",
             "✅ Completed:",
-            "✅ Processing completed successfully!"
+            "✅ Processing completed successfully!",
         ]
         assert any(indicator in result.stdout for indicator in success_indicators)
 
@@ -93,12 +94,17 @@ class TestCLIParameterScenarios:
             pytest.skip("No small PCAP file available")
 
         # Use a simpler approach to avoid I/O issues
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.small_pcap),
-            "-o", str(self.output_dir / "dedup_output.pcap"),
-            "--dedup"
-        ], catch_exceptions=False)
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.small_pcap),
+                "-o",
+                str(self.output_dir / "dedup_output.pcap"),
+                "--dedup",
+            ],
+            catch_exceptions=False,
+        )
 
         # Basic success check
         assert result.exit_code == 0
@@ -109,12 +115,16 @@ class TestCLIParameterScenarios:
         if not self.medium_pcap:
             pytest.skip("No medium PCAP file available")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.medium_pcap),
-            "-o", str(self.output_dir / "anon_output.pcap"),
-            "--anon"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.medium_pcap),
+                "-o",
+                str(self.output_dir / "anon_output.pcap"),
+                "--anon",
+            ],
+        )
 
         self._assert_processing_success(result, self.output_dir / "anon_output.pcap")
 
@@ -123,12 +133,16 @@ class TestCLIParameterScenarios:
         if not self.large_pcap:
             pytest.skip("No large PCAP file available")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.large_pcap),
-            "-o", str(self.output_dir / "mask_output.pcap"),
-            "--mask"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.large_pcap),
+                "-o",
+                str(self.output_dir / "mask_output.pcap"),
+                "--mask",
+            ],
+        )
 
         self._assert_processing_success(result, self.output_dir / "mask_output.pcap")
         self._assert_tls_protocol_used(result)
@@ -138,12 +152,17 @@ class TestCLIParameterScenarios:
         if not self.small_pcap:
             pytest.skip("No small PCAP file available")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.small_pcap),
-            "-o", str(self.output_dir / "dedup_anon_output.pcap"),
-            "--dedup", "--anon"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.small_pcap),
+                "-o",
+                str(self.output_dir / "dedup_anon_output.pcap"),
+                "--dedup",
+                "--anon",
+            ],
+        )
 
         assert result.exit_code == 0
         assert "🚀 Processing file:" in result.stdout
@@ -155,18 +174,23 @@ class TestCLIParameterScenarios:
         if not self.medium_pcap:
             pytest.skip("No medium PCAP file available")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.medium_pcap),
-            "-o", str(self.output_dir / "anon_mask_output.pcap"),
-            "--anon", "--mask"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.medium_pcap),
+                "-o",
+                str(self.output_dir / "anon_mask_output.pcap"),
+                "--anon",
+                "--mask",
+            ],
+        )
 
         assert result.exit_code == 0
         assert "🚀 Processing file:" in result.stdout
         assert "✅ Processing completed successfully!" in result.stdout
         assert (self.output_dir / "anon_mask_output.pcap").exists()
-        
+
         # Verify TLS protocol is used for masking
         assert "MaskingStage created: protocol=tls" in result.stdout
 
@@ -175,18 +199,24 @@ class TestCLIParameterScenarios:
         if not self.large_pcap:
             pytest.skip("No large PCAP file available")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.large_pcap),
-            "-o", str(self.output_dir / "all_ops_output.pcap"),
-            "--dedup", "--anon", "--mask"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.large_pcap),
+                "-o",
+                str(self.output_dir / "all_ops_output.pcap"),
+                "--dedup",
+                "--anon",
+                "--mask",
+            ],
+        )
 
         assert result.exit_code == 0
         assert "🚀 Processing file:" in result.stdout
         assert "✅ Processing completed successfully!" in result.stdout
         assert (self.output_dir / "all_ops_output.pcap").exists()
-        
+
         # Verify all stages are created
         assert "DeduplicationStage created" in result.stdout
         assert "AnonymizationStage created" in result.stdout
@@ -197,18 +227,23 @@ class TestCLIParameterScenarios:
         if not self.small_pcap:
             pytest.skip("No small PCAP file available")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.small_pcap),
-            "-o", str(self.output_dir / "verbose_output.pcap"),
-            "--dedup", "--verbose"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.small_pcap),
+                "-o",
+                str(self.output_dir / "verbose_output.pcap"),
+                "--dedup",
+                "--verbose",
+            ],
+        )
 
         assert result.exit_code == 0
         assert "🚀 Processing file:" in result.stdout
         assert "✅ Processing completed successfully!" in result.stdout
         assert (self.output_dir / "verbose_output.pcap").exists()
-        
+
         # Verbose mode should show more detailed information
         assert "DeduplicationStage created" in result.stdout
 
@@ -217,18 +252,23 @@ class TestCLIParameterScenarios:
         if not self.medium_pcap:
             pytest.skip("No medium PCAP file available")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.medium_pcap),
-            "-o", str(self.output_dir / "report_output.pcap"),
-            "--anon", "--save-report"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.medium_pcap),
+                "-o",
+                str(self.output_dir / "report_output.pcap"),
+                "--anon",
+                "--save-report",
+            ],
+        )
 
         assert result.exit_code == 0
         assert "🚀 Processing file:" in result.stdout
         assert "✅ Processing completed successfully!" in result.stdout
         assert (self.output_dir / "report_output.pcap").exists()
-        
+
         # Should generate a report file
         assert "📄 Report saved:" in result.stdout
 
@@ -245,11 +285,7 @@ class TestCLIParameterScenarios:
         test_file = self.temp_dir / "test_input.pcap"
         shutil.copy2(self.small_pcap, test_file)
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(test_file),
-            "--dedup"
-        ])
+        result = self.runner.invoke(app, ["process", str(test_file), "--dedup"])
 
         assert result.exit_code == 0
         assert "📁 Auto-generated output path:" in result.stdout
@@ -270,13 +306,13 @@ class TestCLIParameterScenarios:
         for i, pcap_file in enumerate(self.pcap_files[:3]):
             shutil.copy2(pcap_file, test_dir / f"test_{i}.pcap")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(test_dir)
-        ])
+        result = self.runner.invoke(app, ["process", str(test_dir)])
 
         assert result.exit_code == 0
-        assert "🔄 Directory processing detected: auto-enabled all operations (--dedup --anon --mask)" in result.stdout
+        assert (
+            "🔄 Directory processing detected: auto-enabled all operations (--dedup --anon --mask)"
+            in result.stdout
+        )
         assert "📁 Auto-generated output path:" in result.stdout
         assert "test_pcaps_processed" in result.stdout
 
@@ -299,18 +335,19 @@ class TestCLIParameterScenarios:
         for i, pcap_file in enumerate(self.pcap_files[:2]):
             shutil.copy2(pcap_file, test_dir / f"test_{i}.pcap")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(test_dir),
-            "-o", str(self.output_dir),
-            "--dedup", "--anon"
-        ])
+        result = self.runner.invoke(
+            app,
+            ["process", str(test_dir), "-o", str(self.output_dir), "--dedup", "--anon"],
+        )
 
         assert result.exit_code == 0
         assert "🚀 Processing file:" in result.stdout
 
         # Should NOT show intelligent defaults message since operations are explicit
-        assert "Directory processing detected: auto-enabled all operations" not in result.stdout
+        assert (
+            "Directory processing detected: auto-enabled all operations"
+            not in result.stdout
+        )
 
         # Should only show selected stages
         assert "DeduplicationStage created" in result.stdout
@@ -329,12 +366,9 @@ class TestCLIParameterScenarios:
 
         custom_output = self.temp_dir / "custom_output"
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(test_dir),
-            "-o", str(custom_output),
-            "--mask"
-        ])
+        result = self.runner.invoke(
+            app, ["process", str(test_dir), "-o", str(custom_output), "--mask"]
+        )
 
         assert result.exit_code == 0
         assert "🚀 Processing file:" in result.stdout
@@ -353,12 +387,17 @@ class TestCLIParameterScenarios:
         for i, pcap_file in enumerate(self.pcap_files[:2]):
             shutil.copy2(pcap_file, test_dir / f"test_{i}.pcap")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(test_dir),
-            "--anon", "--mask",
-            "--verbose", "--save-report"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(test_dir),
+                "--anon",
+                "--mask",
+                "--verbose",
+                "--save-report",
+            ],
+        )
 
         assert result.exit_code == 0
         assert "🚀 Processing file:" in result.stdout
@@ -377,14 +416,21 @@ class TestCLIParameterScenarios:
         if not self.small_pcap:
             pytest.skip("No small PCAP file available")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.small_pcap),
-            "-o", str(self.output_dir / "output.pcap")
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.small_pcap),
+                "-o",
+                str(self.output_dir / "output.pcap"),
+            ],
+        )
 
         assert result.exit_code == 1
-        assert "At least one operation must be specified: --dedup, --anon, or --mask" in (result.stdout + result.stderr)
+        assert (
+            "At least one operation must be specified: --dedup, --anon, or --mask"
+            in (result.stdout + result.stderr)
+        )
 
     def test_invalid_input_file_extension(self):
         """Test error handling for invalid file extension."""
@@ -392,24 +438,18 @@ class TestCLIParameterScenarios:
         invalid_file = self.temp_dir / "test.txt"
         invalid_file.write_text("not a pcap file")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(invalid_file),
-            "--dedup"
-        ])
+        result = self.runner.invoke(app, ["process", str(invalid_file), "--dedup"])
 
         assert result.exit_code == 1
-        assert "Input file must be a PCAP or PCAPNG file" in (result.stdout + result.stderr)
+        assert "Input file must be a PCAP or PCAPNG file" in (
+            result.stdout + result.stderr
+        )
 
     def test_nonexistent_input_path(self):
         """Test error handling for nonexistent input path."""
         nonexistent_path = self.temp_dir / "nonexistent.pcap"
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(nonexistent_path),
-            "--dedup"
-        ])
+        result = self.runner.invoke(app, ["process", str(nonexistent_path), "--dedup"])
 
         assert result.exit_code == 1
         assert "Input path does not exist" in (result.stdout + result.stderr)
@@ -419,24 +459,21 @@ class TestCLIParameterScenarios:
         empty_dir = self.temp_dir / "empty_dir"
         empty_dir.mkdir()
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(empty_dir)
-        ])
+        result = self.runner.invoke(app, ["process", str(empty_dir)])
 
         assert result.exit_code == 1
-        assert "Directory contains no PCAP/PCAPNG files" in (result.stdout + result.stderr)
+        assert "Directory contains no PCAP/PCAPNG files" in (
+            result.stdout + result.stderr
+        )
 
     def test_protocol_parameter_removed(self):
         """Test that --protocol parameter is no longer accepted."""
         if not self.small_pcap:
             pytest.skip("No small PCAP file available")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.small_pcap),
-            "--mask", "--protocol", "tls"
-        ])
+        result = self.runner.invoke(
+            app, ["process", str(self.small_pcap), "--mask", "--protocol", "tls"]
+        )
 
         assert result.exit_code != 0
         assert "No such option: --protocol" in (result.stdout + result.stderr)
@@ -451,12 +488,19 @@ class TestCLIParameterScenarios:
             pytest.skip("No medium PCAP file available")
 
         # Test existing pattern: explicit operations with output path
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.medium_pcap),
-            "-o", str(self.output_dir / "backward_compat.pcap"),
-            "--dedup", "--anon", "--mask", "--verbose"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.medium_pcap),
+                "-o",
+                str(self.output_dir / "backward_compat.pcap"),
+                "--dedup",
+                "--anon",
+                "--mask",
+                "--verbose",
+            ],
+        )
 
         assert result.exit_code == 0
         assert "🚀 Processing file:" in result.stdout
@@ -487,12 +531,17 @@ class TestCLIParameterScenarios:
         if not self.large_pcap:
             pytest.skip("No large PCAP file available")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.large_pcap),
-            "-o", str(self.output_dir / "tls_auto.pcap"),
-            "--mask", "--verbose"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.large_pcap),
+                "-o",
+                str(self.output_dir / "tls_auto.pcap"),
+                "--mask",
+                "--verbose",
+            ],
+        )
 
         assert result.exit_code == 0
 
@@ -512,12 +561,16 @@ class TestCLIParameterScenarios:
             pytest.skip("Not enough TLS files for version testing")
 
         for i, tls_file in enumerate(tls_files[:3]):  # Test first 3 files
-            result = self.runner.invoke(app, [
-                "process",
-                str(tls_file),
-                "-o", str(self.output_dir / f"tls_version_{i}.pcap"),
-                "--mask"
-            ])
+            result = self.runner.invoke(
+                app,
+                [
+                    "process",
+                    str(tls_file),
+                    "-o",
+                    str(self.output_dir / f"tls_version_{i}.pcap"),
+                    "--mask",
+                ],
+            )
 
             assert result.exit_code == 0
             assert "MaskingStage created: protocol=tls" in result.stdout
@@ -532,11 +585,9 @@ class TestCLIParameterScenarios:
         if not self.small_pcap:
             pytest.skip("No small PCAP file available")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.small_pcap),
-            "--mask", "--verbose"
-        ])
+        result = self.runner.invoke(
+            app, ["process", str(self.small_pcap), "--mask", "--verbose"]
+        )
 
         # Should complete successfully even if file is very small
         assert result.exit_code == 0
@@ -547,11 +598,17 @@ class TestCLIParameterScenarios:
         if not self.large_pcap:
             pytest.skip("No large PCAP file available")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.large_pcap),
-            "--dedup", "--anon", "--mask", "--verbose"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.large_pcap),
+                "--dedup",
+                "--anon",
+                "--mask",
+                "--verbose",
+            ],
+        )
 
         assert result.exit_code == 0
         assert "🚀 Processing file:" in result.stdout
@@ -575,11 +632,7 @@ class TestCLIParameterScenarios:
         (test_dir / "readme.txt").write_text("This is not a PCAP file")
         (test_dir / "data.json").write_text('{"not": "pcap"}')
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(test_dir),
-            "--dedup"
-        ])
+        result = self.runner.invoke(app, ["process", str(test_dir), "--dedup"])
 
         assert result.exit_code == 0
         # Should process only the PCAP file
@@ -592,11 +645,7 @@ class TestCLIParameterScenarios:
         test_pcapng = self.temp_dir / "test.pcapng"
         shutil.copy2(self.pcap_files[0], test_pcapng)
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(test_pcapng),
-            "--anon"
-        ])
+        result = self.runner.invoke(app, ["process", str(test_pcapng), "--anon"])
 
         assert result.exit_code == 0
         assert "📁 Auto-generated output path:" in result.stdout
@@ -611,11 +660,7 @@ class TestCLIParameterScenarios:
         if not self.medium_pcap:
             pytest.skip("No medium PCAP file available")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.medium_pcap),
-            "--dedup"
-        ])
+        result = self.runner.invoke(app, ["process", str(self.medium_pcap), "--dedup"])
 
         assert result.exit_code == 0
         assert "⏱️  Duration:" in result.stdout
@@ -631,11 +676,7 @@ class TestCLIParameterScenarios:
         for i, pcap_file in enumerate(self.pcap_files[:3]):
             shutil.copy2(pcap_file, test_dir / f"file_{i}.pcap")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(test_dir),
-            "--anon"
-        ])
+        result = self.runner.invoke(app, ["process", str(test_dir), "--anon"])
 
         assert result.exit_code == 0
         assert "📊 Files:" in result.stdout
@@ -648,12 +689,9 @@ class TestCLIParameterScenarios:
 
         output_file = self.output_dir / "validation_test.pcap"
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.small_pcap),
-            "-o", str(output_file),
-            "--dedup"
-        ])
+        result = self.runner.invoke(
+            app, ["process", str(self.small_pcap), "-o", str(output_file), "--dedup"]
+        )
 
         assert result.exit_code == 0
         assert output_file.exists()
@@ -670,12 +708,18 @@ class TestCLIParameterScenarios:
         if not self.large_pcap:
             pytest.skip("No large PCAP file available")
 
-        result = self.runner.invoke(app, [
-            "process",
-            str(self.large_pcap),
-            "--dedup", "--anon", "--mask",
-            "--verbose", "--save-report"
-        ])
+        result = self.runner.invoke(
+            app,
+            [
+                "process",
+                str(self.large_pcap),
+                "--dedup",
+                "--anon",
+                "--mask",
+                "--verbose",
+                "--save-report",
+            ],
+        )
 
         assert result.exit_code == 0
 

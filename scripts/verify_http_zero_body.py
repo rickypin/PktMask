@@ -18,11 +18,18 @@ import argparse
 import os
 from pathlib import Path
 
-from scapy.all import PcapReader, TCP, IP
-
+from scapy.all import IP, TCP, PcapReader
 
 HTTP_METHODS = (
-    b"GET ", b"POST ", b"PUT ", b"DELETE ", b"HEAD ", b"OPTIONS ", b"PATCH ", b"TRACE ", b"CONNECT ",
+    b"GET ",
+    b"POST ",
+    b"PUT ",
+    b"DELETE ",
+    b"HEAD ",
+    b"OPTIONS ",
+    b"PATCH ",
+    b"TRACE ",
+    b"CONNECT ",
 )
 
 
@@ -62,7 +69,9 @@ def check_file(pcap_path: Path) -> dict:
             if any(b != 0 for b in body):
                 violations += 1
                 if len(first_violations) < 5:
-                    first_violations.append({"packet_index": idx, "body_sample": body[:32].hex()})
+                    first_violations.append(
+                        {"packet_index": idx, "body_sample": body[:32].hex()}
+                    )
 
     return {
         "file": str(pcap_path.name),
@@ -79,7 +88,9 @@ def main():
     args = ap.parse_args()
 
     base = Path(args.input)
-    files = [base / f for f in os.listdir(base) if f.lower().endswith((".pcap", ".pcapng"))]
+    files = [
+        base / f for f in os.listdir(base) if f.lower().endswith((".pcap", ".pcapng"))
+    ]
     files.sort()
 
     summary = []
@@ -107,4 +118,3 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

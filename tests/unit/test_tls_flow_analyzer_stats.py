@@ -8,8 +8,10 @@ TLS流分析器统计功能的单元测试
 3. 不同类型的TLS记录在同一帧中正确处理
 """
 
-import pytest
 from collections import defaultdict
+
+import pytest
+
 from pktmask.tools.tls_flow_analyzer import TLSFlowAnalyzer
 
 

@@ -3,15 +3,17 @@
 测试Utils模块的实际功能实现，提升测试覆盖率
 """
 
-import pytest
-import tempfile
 import os
 import shutil
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from pktmask.utils import file_ops, string_ops, math_ops, time as time_ops
+import pytest
+
 from pktmask.common.exceptions import FileError, ValidationError
+from pktmask.utils import file_ops, math_ops, string_ops
+from pktmask.utils import time as time_ops
 
 
 class TestFileOpsComprehensive:

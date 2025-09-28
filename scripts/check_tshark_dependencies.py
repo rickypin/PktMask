@@ -92,7 +92,9 @@ def check_tshark_version(tshark_path: str) -> Dict[str, any]:
         )
 
         if proc.returncode != 0:
-            result["error"] = f"tshark -v returned non-zero exit code: {proc.returncode}"
+            result["error"] = (
+                f"tshark -v returned non-zero exit code: {proc.returncode}"
+            )
             return result
 
         output = proc.stdout + proc.stderr
@@ -165,7 +167,9 @@ def check_field_support(tshark_path: str) -> Dict[str, any]:
         )
 
         if proc.returncode != 0:
-            result["error"] = f"tshark -G fields returned non-zero exit code: {proc.returncode}"
+            result["error"] = (
+                f"tshark -G fields returned non-zero exit code: {proc.returncode}"
+            )
             return result
 
         fields = proc.stdout
@@ -300,8 +304,12 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("--tshark-path", help="Custom tshark executable path")
-    parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed information")
-    parser.add_argument("--json-output", action="store_true", help="Output results in JSON format")
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Show detailed information"
+    )
+    parser.add_argument(
+        "--json-output", action="store_true", help="Output results in JSON format"
+    )
 
     args = parser.parse_args()
 

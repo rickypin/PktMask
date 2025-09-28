@@ -10,20 +10,21 @@
 """
 
 import json
-import pytest
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from pktmask.tools.tls_flow_analyzer import (
+    TLS_CONTENT_TYPES,
+    TLS_PROCESSING_STRATEGIES,
     TLSFlowAnalyzer,
-    _build_arg_parser,
     _apply_type_filter,
+    _build_arg_parser,
     _generate_detailed_message_analysis,
     _get_tls_version_string,
     main,
-    TLS_CONTENT_TYPES,
-    TLS_PROCESSING_STRATEGIES,
 )
 
 

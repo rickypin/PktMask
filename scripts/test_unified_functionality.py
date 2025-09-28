@@ -3,23 +3,23 @@
 PktMask 统一功能测试脚本
 验证 GUI 与 CLI 功能的一致性
 """
+import json
 import os
+import shutil
+import subprocess
 import sys
 import tempfile
-import shutil
-import json
-import subprocess
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 # 添加项目根目录到 Python 路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
 from pktmask.services.config_service import (
-    get_config_service,
     build_config_from_cli_args,
     build_config_from_gui,
+    get_config_service,
 )
 from pktmask.services.pipeline_service import create_pipeline_executor
 
@@ -65,7 +65,9 @@ class UnifiedFunctionalityTester:
         try:
             # GUI 配置
             gui_options = self.config_service.create_options_from_gui(
-                remove_dupes_checked=True, anonymize_ips_checked=True, mask_payloads_checked=True
+                remove_dupes_checked=True,
+                anonymize_ips_checked=True,
+                mask_payloads_checked=True,
             )
             gui_config = self.config_service.build_pipeline_config(gui_options)
 
@@ -202,9 +204,10 @@ class UnifiedFunctionalityTester:
         print("\n📄 Testing output formats...")
 
         try:
+            import io
+
             from pktmask.services.output_service import create_output_service
             from pktmask.services.report_service import get_report_service
-            import io
 
             # 测试文本输出
             text_output = io.StringIO()

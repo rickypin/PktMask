@@ -5,8 +5,8 @@ Test Anonymize IPs Fix
 This script tests the fix for missing Anonymize IPs entries in individual file reports.
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add project root to path

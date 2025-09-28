@@ -13,10 +13,7 @@ from ...common.enums import ErrorSeverity
 from ...common.exceptions import PktMaskError, create_error_from_exception
 from ...infrastructure.logging import get_logger, log_exception
 from .context import ErrorContext, create_error_context, get_context_manager
-from .recovery import (
-    RecoveryResult,
-    get_recovery_manager,
-)
+from .recovery import RecoveryResult, get_recovery_manager
 from .reporter import get_error_reporter
 
 logger = get_logger(__name__)

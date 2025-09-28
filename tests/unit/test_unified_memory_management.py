@@ -5,20 +5,21 @@ Tests the ResourceManager, BufferManager, MemoryMonitor components
 and their integration with StageBase architecture.
 """
 
-import pytest
 import tempfile
 import time
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
-from src.pktmask.core.pipeline.resource_manager import (
-    ResourceManager,
-    MemoryMonitor,
-    BufferManager,
-    ResourceStats,
-)
+import pytest
+
 from src.pktmask.core.pipeline.base_stage import StageBase
 from src.pktmask.core.pipeline.models import StageStats
+from src.pktmask.core.pipeline.resource_manager import (
+    BufferManager,
+    MemoryMonitor,
+    ResourceManager,
+    ResourceStats,
+)
 
 
 class TestMemoryMonitor:

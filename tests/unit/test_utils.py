@@ -3,13 +3,14 @@
 测试文件操作、字符串操作、数学操作等工具函数
 """
 
-import pytest
-import tempfile
 import os
+import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import Mock, mock_open, patch
 
-from pktmask.utils import file_ops, string_ops, math_ops, time
+import pytest
+
+from pktmask.utils import file_ops, math_ops, string_ops, time
 
 
 class TestFileOps:

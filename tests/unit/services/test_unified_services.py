@@ -3,23 +3,24 @@
 验证各服务组件的功能正确性
 """
 
-import pytest
-import tempfile
 import json
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+import tempfile
 from datetime import datetime
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from pktmask.services.config_service import (
     ConfigService,
     ProcessingOptions,
-    get_config_service,
     build_config_from_cli_args,
     build_config_from_gui,
+    get_config_service,
 )
-from pktmask.services.output_service import OutputService, OutputFormat, OutputLevel
+from pktmask.services.output_service import OutputFormat, OutputLevel, OutputService
 from pktmask.services.progress_service import ProgressService, ProgressStyle
-from pktmask.services.report_service import ReportService, ProcessingReport
+from pktmask.services.report_service import ProcessingReport, ReportService
 
 
 class TestConfigService:
@@ -46,7 +47,9 @@ class TestConfigService:
         """Test pipeline configuration building"""
         service = ConfigService()
         options = ProcessingOptions(
-            enable_remove_dupes=True, enable_anonymize_ips=True, enable_mask_payloads=True
+            enable_remove_dupes=True,
+            enable_anonymize_ips=True,
+            enable_mask_payloads=True,
         )
 
         config = service.build_pipeline_config(options)
@@ -92,7 +95,9 @@ class TestConfigService:
         """Test GUI state to options conversion"""
         service = ConfigService()
         options = service.create_options_from_gui(
-            remove_dupes_checked=True, anonymize_ips_checked=True, mask_payloads_checked=False
+            remove_dupes_checked=True,
+            anonymize_ips_checked=True,
+            mask_payloads_checked=False,
         )
 
         assert options.enable_remove_dupes is True
@@ -107,7 +112,9 @@ class TestConfigService:
         assert "anonymize_ips" in cli_config
 
         # Test GUI configuration building
-        gui_config = build_config_from_gui(remove_dupes=True, anonymize_ips=True, mask_payloads=False)
+        gui_config = build_config_from_gui(
+            remove_dupes=True, anonymize_ips=True, mask_payloads=False
+        )
         assert "remove_dupes" in gui_config
         assert "anonymize_ips" in gui_config
         assert "mask_payloads" not in gui_config

@@ -4,13 +4,16 @@
 对比新旧实现的处理速度、内存使用、CPU占用等性能指标。
 """
 
-import pytest
+import os
 import tempfile
 import time
-import os
 from pathlib import Path
 
-from pktmask.core.pipeline.stages.masking_stage.stage import MaskingStage as NewMaskPayloadStage
+import pytest
+
+from pktmask.core.pipeline.stages.masking_stage.stage import (
+    MaskingStage as NewMaskPayloadStage,
+)
 
 
 class TestMaskPayloadV2Performance:
@@ -215,8 +218,8 @@ class TestMaskPayloadV2Performance:
         self, test_files, temp_output_dir, performance_config
     ):
         """测试并发处理安全性（模拟）"""
-        import threading
         import queue
+        import threading
 
         input_file = test_files[0]
         results_queue = queue.Queue()

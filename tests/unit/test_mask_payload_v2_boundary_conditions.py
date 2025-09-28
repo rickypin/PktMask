@@ -5,15 +5,16 @@
 根据架构文档第4.1节的边界条件测试设计实现。
 """
 
-import pytest
-from unittest.mock import Mock, patch
 from pathlib import Path
 from typing import List, Tuple
+from unittest.mock import Mock, patch
+
+import pytest
 
 from pktmask.core.pipeline.stages.masking_stage.marker.types import (
+    FlowInfo,
     KeepRule,
     KeepRuleSet,
-    FlowInfo,
 )
 
 

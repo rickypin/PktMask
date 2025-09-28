@@ -3,13 +3,14 @@ CLI统一功能集成测试
 验证CLI与GUI功能的一致性
 """
 
-import pytest
-import tempfile
-import shutil
 import json
+import shutil
+import tempfile
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
 from typer.testing import CliRunner
-from unittest.mock import patch, MagicMock
 
 from pktmask.cli import app
 from pktmask.services.config_service import get_config_service
@@ -53,7 +54,9 @@ class TestCLIUnified:
 
         # 测试GUI配置
         gui_options = config_service.create_options_from_gui(
-            remove_dupes_checked=True, anonymize_ips_checked=True, mask_payloads_checked=True
+            remove_dupes_checked=True,
+            anonymize_ips_checked=True,
+            mask_payloads_checked=True,
         )
         gui_config = config_service.build_pipeline_config(gui_options)
 
@@ -144,23 +147,25 @@ class TestCLIUnified:
             test_pcap = test_dir / "test.pcap"
             test_pcap.write_text("fake pcap content")
 
-            result = self.runner.invoke(
-                app, ["process", str(test_dir)]
-            )
+            result = self.runner.invoke(app, ["process", str(test_dir)])
 
             # 应该显示自动启用所有操作的消息
-            assert "Directory processing detected: auto-enabled all operations" in result.stdout
+            assert (
+                "Directory processing detected: auto-enabled all operations"
+                in result.stdout
+            )
             assert "--dedup --anon --mask" in result.stdout
             assert "Auto-generated output path:" in result.stdout
 
     def test_intelligent_defaults_file_processing_requires_flags(self):
         """测试文件处理需要明确指定操作标志"""
-        result = self.runner.invoke(
-            app, ["process", str(self.test_file)]
-        )
+        result = self.runner.invoke(app, ["process", str(self.test_file)])
 
         assert result.exit_code == 1
-        assert "At least one operation must be specified: --dedup, --anon, or --mask" in (result.stdout + result.stderr)
+        assert (
+            "At least one operation must be specified: --dedup, --anon, or --mask"
+            in (result.stdout + result.stderr)
+        )
 
     def test_explicit_flags_override_intelligent_defaults(self):
         """测试明确指定的标志会覆盖智能默认值"""
@@ -176,7 +181,10 @@ class TestCLIUnified:
             )
 
             # 不应该显示自动启用消息，因为用户明确指定了操作
-            assert "Directory processing detected: auto-enabled all operations" not in result.stdout
+            assert (
+                "Directory processing detected: auto-enabled all operations"
+                not in result.stdout
+            )
             assert "Auto-generated output path:" in result.stdout
 
     def test_info_command_file(self):
@@ -342,10 +350,7 @@ class TestCLIUnified:
         # Test that mask functionality works without protocol parameter
         result = self.runner.invoke(
             app,
-            [
-                "process",
-                "--help"
-            ],
+            ["process", "--help"],
         )
 
         # Should not show protocol parameter in help
@@ -377,9 +382,9 @@ class TestCLIUnified:
 
         assert result.exit_code == 1
         # Error messages go to stderr in typer
-        assert "At least one operation must be specified" in (result.stdout + result.stderr)
-
-
+        assert "At least one operation must be specified" in (
+            result.stdout + result.stderr
+        )
 
     def test_main_help_shows_process_command(self):
         """测试主帮助显示process命令"""
@@ -421,15 +426,18 @@ class TestCLIUnified:
         assert mask_config["mask_payloads"]["enabled"] is True
 
         # 测试新的灵活组合：dedup + anon（不包含mask）
-        dedup_anon_config = build_config_from_unified_args(dedup=True, anon=True, mask=False)
+        dedup_anon_config = build_config_from_unified_args(
+            dedup=True, anon=True, mask=False
+        )
         assert "remove_dupes" in dedup_anon_config
         assert "anonymize_ips" in dedup_anon_config
         assert "mask_payloads" not in dedup_anon_config
 
     def test_smart_output_path_generation(self):
         """测试智能输出路径生成"""
-        from pktmask.cli import _generate_smart_output_path
         from pathlib import Path
+
+        from pktmask.cli import _generate_smart_output_path
 
         # 测试文件输入
         input_file = Path("/tmp/test.pcap")
@@ -443,10 +451,11 @@ class TestCLIUnified:
 
     def test_input_type_detection(self):
         """测试输入类型检测"""
-        from pktmask.cli import _detect_input_type
-        from pathlib import Path
-        import tempfile
         import os
+        import tempfile
+        from pathlib import Path
+
+        from pktmask.cli import _detect_input_type
 
         # 测试不存在的路径
         non_existent = Path("/non/existent/path")
@@ -511,8 +520,6 @@ class TestCLIBackwardCompatibility:
         shutil.rmtree(self.temp_dir)
 
 
-
-
 class TestGUICLIConsistency:
     """GUI与CLI一致性测试"""
 
@@ -532,7 +539,9 @@ class TestGUICLIConsistency:
 
         # GUI配置
         gui_options = service.create_options_from_gui(
-            remove_dupes_checked=True, anonymize_ips_checked=True, mask_payloads_checked=True
+            remove_dupes_checked=True,
+            anonymize_ips_checked=True,
+            mask_payloads_checked=True,
         )
         gui_config = service.build_pipeline_config(gui_options)
 
@@ -551,7 +560,3 @@ class TestGUICLIConsistency:
             gui_config["anonymize_ips"]["enabled"]
             == cli_config["anonymize_ips"]["enabled"]
         )
-
-
-
-

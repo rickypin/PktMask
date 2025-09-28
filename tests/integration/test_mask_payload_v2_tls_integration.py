@@ -4,8 +4,9 @@ TLS Protocol Marker Integration Tests
 Uses real TLS test files to validate TLS protocol marker functionality.
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from pktmask.core.pipeline.stages.masking_stage.marker.tls_marker import (
     TLSProtocolMarker,

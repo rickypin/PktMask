@@ -5,15 +5,16 @@ Tests complete file processing workflow: input pcap file -> Marker module analys
 Validates dual-module architecture complete functionality and performance.
 """
 
-import pytest
+import os
 import tempfile
 import time
-import os
 from pathlib import Path
 from unittest.mock import patch
 
-from pktmask.core.pipeline.stages.masking_stage.stage import MaskingStage
+import pytest
+
 from pktmask.core.pipeline.models import StageStats
+from pktmask.core.pipeline.stages.masking_stage.stage import MaskingStage
 
 
 class TestMaskPayloadV2EndToEnd:

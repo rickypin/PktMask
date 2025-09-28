@@ -3,17 +3,18 @@
 测试AppConfig配置加载、验证、默认值等功能
 """
 
-import pytest
-import tempfile
 import json
+import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import pytest
+
 from pktmask.config.settings import (
     AppConfig,
-    UISettings,
-    ProcessingSettings,
     LoggingSettings,
+    ProcessingSettings,
+    UISettings,
 )
 
 

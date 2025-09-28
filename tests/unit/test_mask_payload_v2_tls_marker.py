@@ -4,10 +4,11 @@ TLS协议标记器测试
 测试TLS协议标记器的核心功能，包括TLS消息识别、流方向分析和保留规则生成。
 """
 
-import pytest
 import subprocess
-from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from pktmask.core.pipeline.stages.masking_stage.marker.tls_marker import (
     TLSProtocolMarker,
