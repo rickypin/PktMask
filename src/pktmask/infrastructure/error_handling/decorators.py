@@ -134,7 +134,7 @@ def handle_gui_errors(
                 logger.error(f"GUI error in {component}.{func.__name__}: {e}")
 
                 # 处理GUI错误
-                recovery_result = error_handler.handle_gui_error(
+                error_handler.handle_gui_error(
                     e, component=component, user_action=func.__name__
                 )
 

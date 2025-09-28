@@ -71,14 +71,14 @@ class DialogManager:
             <h2>PktMask</h2>
             <p><b>Network Packet Processing Tool</b></p>
             <p>Version: 1.0.0</p>
-            
+
             <p>PktMask is a powerful network packet processing tool designed for:</p>
             <ul>
                 <li>🔄 <b>Remove Dupes</b> - Eliminate duplicate packets</li>
                 <li>🛡️ <b>Anonymize IPs</b> - Advanced hierarchical IP masking</li>
                 <li>✂️ <b>Smart Trimming</b> - Intelligent payload reduction</li>
             </ul>
-            
+
             <p><b>Features:</b></p>
             <ul>
                 <li>Preserves network topology and relationships</li>
@@ -86,7 +86,7 @@ class DialogManager:
                 <li>Optimized for security research and compliance</li>
                 <li>Safe data sharing capabilities</li>
             </ul>
-            
+
             <p><b>Use Cases:</b></p>
             <ul>
                 <li>Security research and analysis</li>
@@ -94,7 +94,7 @@ class DialogManager:
                 <li>Compliance reporting</li>
                 <li>Data anonymization for sharing</li>
             </ul>
-            
+
             <hr>
             <p><small>Built with Python and PyQt6</small></p>
             """

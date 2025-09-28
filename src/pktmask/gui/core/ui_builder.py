@@ -330,16 +330,16 @@ class UIBuilder:
         guide_text = """
         PktMask User Guide
         ==================
-        
+
         1. Directory Selection:
            - Click on input directory button to select folder containing pcap files
            - Output directory will be auto-generated or you can customize it
-        
+
         2. Processing Options:
            - Anonymize IPs: Replace IP addresses with anonymized versions
            - Remove Dupes: Remove duplicate packets
            - Mask Payloads: Mask sensitive payload data
-        
+
         3. Processing:
            - Click 'Start Processing' to begin
            - Monitor progress in the log and summary areas
@@ -366,15 +366,15 @@ class UIBuilder:
         """Show about dialog"""
         about_text = """
         PktMask v1.0
-        
+
         A desktop application for batch processing pcap/pcapng files.
-        
+
         Features:
         - Anonymize IPs
         - Remove Dupes
         - Mask Payloads
         - Batch Processing
-        
+
         © 2024 PktMask Team
         """
         QMessageBox.about(self.main_window, "About PktMask", about_text)

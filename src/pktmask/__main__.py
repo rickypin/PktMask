@@ -3,6 +3,9 @@
 
 import typer
 
+# Import and register simplified CLI commands
+from pktmask.cli.commands import config_command, process_command, validate_command
+
 # Delayed import to avoid loading GUI dependencies for CLI users
 app = typer.Typer(
     help="PktMask - PCAP/PCAPNG File Processing Tool",
@@ -35,9 +38,6 @@ def main(ctx: typer.Context):
         gui_main()
     # When there are subcommands, Typer handles automatically
 
-
-# Import and register simplified CLI commands
-from pktmask.cli.commands import config_command, process_command, validate_command
 
 # Register core commands using new simplified interface
 app.command("process", help="Process PCAP/PCAPNG files with unified core processing")(

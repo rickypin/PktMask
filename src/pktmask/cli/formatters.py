@@ -55,7 +55,7 @@ def _format_detailed_stats(result: ProcessResult):
     if not result.stage_stats:
         return
 
-    typer.echo(f"\n📊 Processing Statistics:")
+    typer.echo("\n📊 Processing Statistics:")
 
     # Overall timing
     duration_str = MessageFormatter.format_duration(result.duration_ms)
@@ -63,7 +63,7 @@ def _format_detailed_stats(result: ProcessResult):
     typer.echo(f"  🔧 Stages executed: {len(result.stage_stats)}")
 
     # Stage-by-stage breakdown
-    typer.echo(f"\n📋 Stage Details:")
+    typer.echo("\n📋 Stage Details:")
     for i, stage_stat in enumerate(result.stage_stats, 1):
         _format_stage_stats(stage_stat, i)
 
@@ -143,7 +143,7 @@ def format_directory_summary(
     total_files = processed_files + failed_files
     duration_str = MessageFormatter.format_duration(total_duration)
 
-    typer.echo(f"\n📊 Directory Processing Summary:")
+    typer.echo("\n📊 Directory Processing Summary:")
     typer.echo(f"  📁 Total files: {total_files}")
     typer.echo(f"  {StandardMessages.SUCCESS_ICON} Processed: {processed_files}")
 

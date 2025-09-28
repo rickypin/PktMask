@@ -246,7 +246,7 @@ class PipelineManager:
         if GUIFeatureFlags.is_gui_debug_mode():
             status = GUIFeatureFlags.get_status_summary()
             self._logger.info(f"Feature flags: {status}")
-            self.main_window.update_log(f"🔧 Using new unified processing core")
+            self.main_window.update_log("🔧 Using new unified processing core")
 
         # Get checkbox states using exact same logic as legacy implementation
         remove_dupes_checked = self.main_window.remove_dupes_cb.isChecked()

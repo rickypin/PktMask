@@ -547,7 +547,7 @@ class ProtocolStackParser:
             try:
                 if transport_layer.payload.haslayer(TLS):
                     is_encrypted = True
-            except:
+            except Exception:
                 # 简单的TLS检测 - 检查载荷是否以TLS记录头开始
                 if len(payload_data) >= 5:
                     # TLS记录头格式: [类型(1字节)][版本(2字节)][长度(2字节)]

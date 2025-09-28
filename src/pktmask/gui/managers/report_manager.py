@@ -86,7 +86,7 @@ class ReportManager:
                     stop_report += "   • Average Speed: N/A\n\n"
             else:
                 stop_report += "   • Average Speed: N/A\n\n"
-        except:
+        except Exception:
             stop_report += "   • Average Speed: N/A\n\n"
 
         # Display enabled processing steps
@@ -140,9 +140,9 @@ class ReportManager:
             "   • All files will be reprocessed (no partial resume capability)\n"
         )
         restart_hint += (
-            f"   • Any existing output files will be skipped to avoid overwriting\n"
+            "   • Any existing output files will be skipped to avoid overwriting\n"
         )
-        restart_hint += f"   • Processing will be performed completely for each file\n"
+        restart_hint += "   • Processing will be performed completely for each file\n"
         self.main_window.summary_text.append(restart_hint)
 
     def _generate_files_status_report(self, separator_length: int) -> str:
@@ -181,8 +181,8 @@ class ReportManager:
                 )
 
         if completed_files == 0 and partial_files > 0:
-            files_status_report += f"\n⚠️ All files were only partially processed.\n"
-            files_status_report += f"   No final output files were created.\n"
+            files_status_report += "\n⚠️ All files were only partially processed.\n"
+            files_status_report += "   No final output files were created.\n"
         elif completed_files > 0:
             files_status_report += (
                 f"\n📈 Summary: {completed_files} completed, {partial_files} partial\n"
@@ -194,7 +194,7 @@ class ReportManager:
     def _generate_completed_file_report(self, filename: str, steps_data: Dict) -> str:
         """Generate report for completed file"""
         report = f"\n✅ {filename}\n"
-        report += f"   Status: FULLY COMPLETED\n"
+        report += "   Status: FULLY COMPLETED\n"
 
         # Get final output filename
         step_order = ["Deduplication", "Anonymize IPs", "Mask Payloads"]
@@ -281,11 +281,11 @@ class ReportManager:
     ) -> str:
         """Generate report for partially completed file"""
         report = f"\n🔄 {filename}\n"
-        report += f"   Status: PARTIALLY PROCESSED (Interrupted)\n"
+        report += "   Status: PARTIALLY PROCESSED (Interrupted)\n"
         report += f"   Completed Steps: {', '.join(completed_steps)}\n"
         report += f"   Missing Steps: {', '.join(expected_steps - completed_steps)}\n"
-        report += f"   ❌ No final output file generated\n"
-        report += f"   🗑️ Temporary files cleaned up automatically\n"
+        report += "   ❌ No final output file generated\n"
+        report += "   🗑️ Temporary files cleaned up automatically\n"
         return report
 
     def _generate_global_ip_mappings_report(
@@ -367,10 +367,10 @@ class ReportManager:
 
         if is_partial:
             global_partial_report += (
-                f"\n✅ All unique IP addresses across files have been\n"
+                "\n✅ All unique IP addresses across files have been\n"
             )
             global_partial_report += (
-                f"   successfully anonymized with consistent mappings.\n"
+                "   successfully anonymized with consistent mappings.\n"
             )
         else:
             # Safe access to processed_files_count with fallback
@@ -383,7 +383,7 @@ class ReportManager:
                 f"\n✅ All unique IP addresses across {files_count} files have been\n"
             )
             global_partial_report += (
-                f"   successfully anonymized with consistent mappings.\n"
+                "   successfully anonymized with consistent mappings.\n"
             )
 
         global_partial_report += f"{'='*separator_length}\n"
@@ -594,9 +594,9 @@ class ReportManager:
         if self.main_window.current_output_dir:
             completion_report += f"📁 Output Location: {os.path.basename(self.main_window.current_output_dir)}\n"
         else:
-            completion_report += f"📁 Output Location: Not specified\n"
+            completion_report += "📁 Output Location: Not specified\n"
 
-        completion_report += f"📝 All processed files saved to output directory.\n"
+        completion_report += "📝 All processed files saved to output directory.\n"
         completion_report += f"{'='*separator_length}\n"
 
         self.main_window.summary_text.append(completion_report)
@@ -629,20 +629,20 @@ class ReportManager:
         # Add IP mapping summary information, including detailed mapping table
         text = f"\n{'='*separator_length}\n📋 DIRECTORY PROCESSING SUMMARY\n{'='*separator_length}\n"
         text += f"📂 Directory: {subdir}\n\n"
-        text += f"🔒 Anonymize IPs Summary:\n"
+        text += "🔒 Anonymize IPs Summary:\n"
         text += f"   • Total Unique IPs Discovered: {stats.get('total_unique_ips', 'N/A')}\n"
         text += f"   • Total IPs Anonymized: {stats.get('total_mapped_ips', 'N/A')}\n\n"
 
         if total_mapping:
-            text += f"📝 Complete IP Mapping Table (All Files):\n"
+            text += "📝 Complete IP Mapping Table (All Files):\n"
             # Display mappings sorted by original IP
             sorted_mappings = sorted(total_mapping.items())
             for i, (orig_ip, new_ip) in enumerate(sorted_mappings, 1):
                 text += f"   {i:2d}. {orig_ip:<16} → {new_ip}\n"
             text += "\n"
 
-        text += f"✅ All IP addresses have been successfully anonymized while\n"
-        text += f"   preserving network structure and subnet relationships.\n"
+        text += "✅ All IP addresses have been successfully anonymized while\n"
+        text += "   preserving network structure and subnet relationships.\n"
         text += f"{'='*separator_length}\n"
 
         self.main_window.summary_text.append(text)
@@ -755,7 +755,7 @@ class ReportManager:
         # 输出目录信息
         output_dir = data.get("output_directory")
         if output_dir:
-            summary_parts.append(f"\n📁 Output Directory:")
+            summary_parts.append("\n📁 Output Directory:")
             summary_parts.append(f"  {output_dir}")
 
         # 时间戳
@@ -821,7 +821,7 @@ class ReportManager:
         # 输出信息
         output_dir = data.get("output_directory")
         if output_dir:
-            summary_parts.append(f"\n📂 Output Location:")
+            summary_parts.append("\n📂 Output Location:")
             summary_parts.append(f"  {output_dir}")
 
         # 生成时间
@@ -1157,8 +1157,8 @@ class ReportManager:
         report = f"\n{'='*separator_length}\n{title}\n{'='*separator_length}\n"
 
         # 处理模式和增强信息
-        report += f"🎯 Processing Mode: Intelligent Auto-Detection\n"
-        report += f"⚡ Enhancement Level: 4x accuracy improvement over simple masking\n"
+        report += "🎯 Processing Mode: Intelligent Auto-Detection\n"
+        report += "⚡ Enhancement Level: 4x accuracy improvement over simple masking\n"
         report += f"📁 Enhanced Files: {total_enhanced_stats['files_processed']}/{len(self.main_window.file_processing_results)}\n\n"
 
         # 协议检测统计（移除HTTP）
@@ -1167,7 +1167,7 @@ class ReportManager:
             tls_rate = (total_enhanced_stats["tls_packets"] / total_packets) * 100
             other_rate = (total_enhanced_stats["other_packets"] / total_packets) * 100
 
-            report += f"📊 Protocol Detection Results:\n"
+            report += "📊 Protocol Detection Results:\n"
             report += f"   • TLS packets: {total_enhanced_stats['tls_packets']:,} ({tls_rate:.1f}%) - Intelligent TLS strategy\n"
             report += f"   • Other packets: {total_enhanced_stats['other_packets']:,} ({other_rate:.1f}%) - General strategy\n"
             report += f"   • Total processed: {total_packets:,} packets in 4 stages\n\n"
@@ -1175,17 +1175,17 @@ class ReportManager:
         # 策略应用统计
         strategies_list = list(total_enhanced_stats["strategies_applied"])
         if strategies_list:
-            report += f"🔧 Applied Strategies:\n"
+            report += "🔧 Applied Strategies:\n"
             for strategy in sorted(strategies_list):
                 report += f"   • {strategy}\n"
             report += "\n"
 
         # 智能处理优势说明（移除HTTP）
-        report += f"🚀 Enhanced Processing Benefits:\n"
-        report += f"   • Automatic protocol detection and strategy selection\n"
-        report += f"   • TLS handshake preserved, ApplicationData masked\n"
+        report += "🚀 Enhanced Processing Benefits:\n"
+        report += "   • Automatic protocol detection and strategy selection\n"
+        report += "   • TLS handshake preserved, ApplicationData masked\n"
         report += (
-            f"   • Improved accuracy while maintaining network analysis capability\n"
+            "   • Improved accuracy while maintaining network analysis capability\n"
         )
 
         report += f"{'='*separator_length}\n"
@@ -1212,7 +1212,7 @@ class ReportManager:
         protocol_stats = data.get("protocol_stats", {})
 
         report = f"\n🧠 Enhanced Masking Details for {filename}:\n"
-        report += f"   📊 Protocol Analysis:\n"
+        report += "   📊 Protocol Analysis:\n"
 
         total_packets = data.get("total_packets", 0)
         if total_packets > 0:

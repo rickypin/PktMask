@@ -317,7 +317,6 @@ def cmd_process(
         raise typer.Exit(1)
 
     # Implement intelligent defaults based on input type
-    original_dedup, original_anon, original_mask = dedup, anon, mask
 
     if not any([dedup, anon, mask]):
         if input_type == "directory":

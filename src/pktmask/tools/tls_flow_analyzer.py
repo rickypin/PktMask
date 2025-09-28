@@ -1399,13 +1399,13 @@ def _generate_summary_html_report(
     """Generate summary HTML report"""
     if not JINJA2_AVAILABLE:
         print(
-            f"[tls-flow-analyzer] ⚠️  Jinja2 not installed, skipping summary HTML output"
+            "[tls-flow-analyzer] ⚠️  Jinja2 not installed, skipping summary HTML output"
         )
         return
 
     if not batch_results:
         print(
-            f"[tls-flow-analyzer] ⚠️  No successfully analyzed files, skipping summary HTML output"
+            "[tls-flow-analyzer] ⚠️  No successfully analyzed files, skipping summary HTML output"
         )
         return
 
@@ -1949,7 +1949,7 @@ def _output_html_report(
 ) -> None:
     """Generate HTML format analysis report"""
     if not JINJA2_AVAILABLE:
-        print(f"[tls-flow-analyzer] ⚠️  Jinja2 not installed, skipping HTML output")
+        print("[tls-flow-analyzer] ⚠️  Jinja2 not installed, skipping HTML output")
         return
 
     try:
@@ -2042,14 +2042,14 @@ def _print_summary(analysis_result: Dict[str, Any], detailed: bool) -> None:
     global_stats = analysis_result["global_statistics"]
     protocol_stats = analysis_result["protocol_type_statistics"]
 
-    print(f"[tls-flow-analyzer] ✅ TLS traffic analysis completed")
+    print("[tls-flow-analyzer] ✅ TLS traffic analysis completed")
     print(
         f"  Total frames containing TLS messages: {global_stats['frames_containing_tls']}"
     )
     print(f"  Total TLS records: {global_stats['tls_records_total']}")
     print(f"  Total TCP streams analyzed: {global_stats['tcp_streams_analyzed']}")
 
-    print(f"\n  Statistics by TLS message type:")
+    print("\n  Statistics by TLS message type:")
     for content_type in sorted(protocol_stats.keys()):
         type_name = TLS_CONTENT_TYPES[content_type]
         strategy = TLS_PROCESSING_STRATEGIES[content_type]
@@ -2060,7 +2060,7 @@ def _print_summary(analysis_result: Dict[str, Any], detailed: bool) -> None:
         )
 
     if detailed:
-        print(f"\n  TCP flow analysis details:")
+        print("\n  TCP flow analysis details:")
         tcp_flow_analysis = analysis_result["tcp_flow_analysis"]
         for stream_id, flow_info in tcp_flow_analysis.items():
             print(f"    TCP stream {stream_id}: {flow_info['packet_count']} packets")
@@ -2115,7 +2115,7 @@ def _print_summary(analysis_result: Dict[str, Any], detailed: bool) -> None:
                     f"    ... {len(reassembled_messages) - 10} more messages (see output files for details)"
                 )
         else:
-            print(f"\n  No reassembled TLS messages")
+            print("\n  No reassembled TLS messages")
 
 
 def _print_batch_summary(
@@ -2124,7 +2124,7 @@ def _print_batch_summary(
     """Print batch processing summary"""
     total_files = len(batch_results)
     if total_files == 0:
-        print(f"[tls-flow-analyzer] ❌ No successfully analyzed files")
+        print("[tls-flow-analyzer] ❌ No successfully analyzed files")
         return
 
     # Summary statistics
@@ -2145,13 +2145,13 @@ def _print_batch_summary(
             global_protocol_stats[content_type]["frames"] += stats["frames"]
             global_protocol_stats[content_type]["records"] += stats["records"]
 
-    print(f"[tls-flow-analyzer] ✅ Batch TLS traffic analysis completed")
+    print("[tls-flow-analyzer] ✅ Batch TLS traffic analysis completed")
     print(f"  Successfully analyzed files: {total_files}")
     print(f"  Total frames containing TLS messages: {total_frames}")
     print(f"  Total TLS records: {total_records}")
     print(f"  Total TCP streams analyzed: {total_streams}")
 
-    print(f"\n  Global TLS message type statistics:")
+    print("\n  Global TLS message type statistics:")
     for content_type in sorted(global_protocol_stats.keys()):
         type_name = TLS_CONTENT_TYPES[content_type]
         strategy = TLS_PROCESSING_STRATEGIES[content_type]
@@ -2162,7 +2162,7 @@ def _print_batch_summary(
         )
 
     if detailed:
-        print(f"\n  Detailed statistics by file:")
+        print("\n  Detailed statistics by file:")
         for pcap_path, result in batch_results.items():
             pcap_name = Path(pcap_path).name
             global_stats = result["global_statistics"]

@@ -114,7 +114,7 @@ def generate_stylesheet(mode: str) -> str:
             background-color: {palette['SECONDARY_BUTTON_BG']};
             color: {palette['PRIMARY_TEXT']};
         }}
-        
+
         QPushButton#ResetButton:hover {{
             background-color: {palette['SECONDARY_BUTTON_HOVER_BG']};
         }}

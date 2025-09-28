@@ -389,7 +389,7 @@ class PayloadMasker:
 
         except Exception as e:
             # Handle top-level exception
-            error_info = self.error_handler.handle_error(
+            self.error_handler.handle_error(
                 e,
                 ErrorSeverity.HIGH,
                 ErrorCategory.PROCESSING_ERROR,
