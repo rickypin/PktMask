@@ -12,17 +12,16 @@ Key Components:
 - feature_flags.py: Feature flags for safe rollout
 """
 
+from .feature_flags import GUIFeatureFlags
 from .gui_consistent_processor import (
     GUIConsistentProcessor,
     GUIServicePipelineThread,
-    GUIThreadingHelper
+    GUIThreadingHelper,
 )
-
-from .feature_flags import GUIFeatureFlags
 
 __all__ = [
     "GUIConsistentProcessor",
-    "GUIServicePipelineThread", 
+    "GUIServicePipelineThread",
     "GUIThreadingHelper",
-    "GUIFeatureFlags"
+    "GUIFeatureFlags",
 ]

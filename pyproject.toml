@@ -62,7 +62,8 @@ dev = [
     "mypy>=0.950",
     "pytest-mock>=3.0.0",
     "pytest-env",
-    "isort>=5.0.0"  # 从子包合并
+    "isort>=5.0.0",  # 从子包合并
+    "pre-commit>=3.5.0"
 ]
 build = [
     "pyinstaller",

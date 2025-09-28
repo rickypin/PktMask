@@ -167,7 +167,10 @@ class ConfigService:
         )
 
     def create_options_from_gui(
-        self, remove_dupes_checked: bool, anonymize_ips_checked: bool, mask_payloads_checked: bool
+        self,
+        remove_dupes_checked: bool,
+        anonymize_ips_checked: bool,
+        mask_payloads_checked: bool,
     ) -> ProcessingOptions:
         """
         Create processing options from GUI state
@@ -254,10 +257,14 @@ def build_config_from_cli_args(**kwargs) -> Dict[str, Any]:
     return service.build_pipeline_config(options)
 
 
-def build_config_from_gui(remove_dupes: bool, anonymize_ips: bool, mask_payloads: bool) -> Dict[str, Any]:
+def build_config_from_gui(
+    remove_dupes: bool, anonymize_ips: bool, mask_payloads: bool
+) -> Dict[str, Any]:
     """Build configuration from GUI state"""
     service = get_config_service()
-    options = service.create_options_from_gui(remove_dupes, anonymize_ips, mask_payloads)
+    options = service.create_options_from_gui(
+        remove_dupes, anonymize_ips, mask_payloads
+    )
     return service.build_pipeline_config(options)
 
 

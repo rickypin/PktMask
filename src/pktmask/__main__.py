@@ -10,11 +10,12 @@ app = typer.Typer(
 )
 
 
-
 # TEMP: force pktmask logger to DEBUG for troubleshooting
 try:
-    from pktmask.infrastructure.logging import get_logger  # ensure handlers initialized
     import logging
+
+    from pktmask.infrastructure.logging import get_logger  # ensure handlers initialized
+
     pkt_logger = logging.getLogger("pktmask")
     pkt_logger.setLevel(logging.DEBUG)
     for _h in pkt_logger.handlers:
@@ -22,6 +23,7 @@ try:
     pkt_logger.debug("[TEMP] Logger level forced to DEBUG (will be reverted later)")
 except Exception:
     pass
+
 
 @app.callback(invoke_without_command=True)
 def main(ctx: typer.Context):
@@ -35,18 +37,18 @@ def main(ctx: typer.Context):
 
 
 # Import and register simplified CLI commands
-from pktmask.cli.commands import process_command, validate_command, config_command
+from pktmask.cli.commands import config_command, process_command, validate_command
 
 # Register core commands using new simplified interface
-app.command(
-    "process", help="Process PCAP/PCAPNG files with unified core processing"
-)(process_command)
-app.command(
-    "validate", help="Validate PCAP/PCAPNG files without processing"
-)(validate_command)
-app.command(
-    "config", help="Display configuration summary for given options"
-)(config_command)
+app.command("process", help="Process PCAP/PCAPNG files with unified core processing")(
+    process_command
+)
+app.command("validate", help="Validate PCAP/PCAPNG files without processing")(
+    validate_command
+)
+app.command("config", help="Display configuration summary for given options")(
+    config_command
+)
 
 if __name__ == "__main__":
     app()

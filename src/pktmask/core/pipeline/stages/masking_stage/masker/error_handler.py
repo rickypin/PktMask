@@ -190,7 +190,9 @@ class ErrorRecoveryHandler:
             try:
                 result = operation()
                 if attempt > 0:
-                    self.logger.info(f"Operation succeeded after {attempt + 1} attempts")
+                    self.logger.info(
+                        f"Operation succeeded after {attempt + 1} attempts"
+                    )
                 return result
             except Exception as e:
                 last_exception = e
@@ -208,7 +210,9 @@ class ErrorRecoveryHandler:
                     if delay > 0:
                         time.sleep(delay)
                 else:
-                    self.logger.error(f"Operation failed after {max_attempts} attempts: {e}")
+                    self.logger.error(
+                        f"Operation failed after {max_attempts} attempts: {e}"
+                    )
                     self.handle_error(
                         e,
                         ErrorSeverity.HIGH,

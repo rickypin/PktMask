@@ -312,6 +312,3 @@ class AnonymizationStage(StageBase):
         self._stats.clear()
 
         self.logger.debug("AnonymizationStage specific cleanup completed")
-
-
-

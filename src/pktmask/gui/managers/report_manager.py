@@ -424,17 +424,13 @@ class ReportManager:
             original_packets = steps_data["Anonymize IPs"]["data"].get(
                 "total_packets", 0
             )
-            output_filename = steps_data["Anonymize IPs"]["data"].get(
-                "output_filename"
-            )
+            output_filename = steps_data["Anonymize IPs"]["data"].get("output_filename")
         elif "Mask Payloads" in steps_data:
             # Finally get from payload masking step
             original_packets = steps_data["Mask Payloads"]["data"].get(
                 "total_packets", 0
             )
-            output_filename = steps_data["Mask Payloads"]["data"].get(
-                "output_filename"
-            )
+            output_filename = steps_data["Mask Payloads"]["data"].get("output_filename")
 
         # Get final output filename from the last processing step
         step_order = ["Deduplication", "Anonymize IPs", "Mask Payloads"]
@@ -513,7 +509,10 @@ class ReportManager:
                     rate = (removed / total_before * 100) if total_before > 0 else 0
                     line = f"  🔄 {step_name:<18} | Unique Pkts: {unique:>4} | Removed Pkts: {removed:>4} | Rate: {rate:5.1f}%"
 
-                elif step_type in ["mask_payloads", "mask payloads"]:  # Use standard naming
+                elif step_type in [
+                    "mask_payloads",
+                    "mask payloads",
+                ]:  # Use standard naming
                     # Fix: MaskStage returns different field names
                     total = data.get("total_packets", data.get("packets_processed", 0))
                     masked = data.get("masked_packets", data.get("packets_modified", 0))
@@ -957,7 +956,10 @@ class ReportManager:
                 "AnonymizationStage",  # Add standardized stage name
             ]:  # Support both old and new stage names
                 step_type = "anonymize_ips"  # Use standard naming
-            elif step_name_raw in ["DeduplicationStage", "UnifiedDeduplicationStage"]:  # Add new Unified stage name
+            elif step_name_raw in [
+                "DeduplicationStage",
+                "UnifiedDeduplicationStage",
+            ]:  # Add new Unified stage name
                 step_type = "remove_dupes"
             elif step_name_raw in [
                 "MaskStage",

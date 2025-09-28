@@ -513,9 +513,16 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
             f"multi-IP={self._ip_stats['multi_ip_packets']}"
         )
         if self._ip_stats["total_packets_scanned"] > 0:
-            ipv4_ratio = self._ip_stats["ipv4_packets"] / self._ip_stats["total_packets_scanned"]
-            ipv6_ratio = self._ip_stats["ipv6_packets"] / self._ip_stats["total_packets_scanned"]
-            multi_ip_ratio = self._ip_stats["multi_ip_packets"] / self._ip_stats["total_packets_scanned"]
+            ipv4_ratio = (
+                self._ip_stats["ipv4_packets"] / self._ip_stats["total_packets_scanned"]
+            )
+            ipv6_ratio = (
+                self._ip_stats["ipv6_packets"] / self._ip_stats["total_packets_scanned"]
+            )
+            multi_ip_ratio = (
+                self._ip_stats["multi_ip_packets"]
+                / self._ip_stats["total_packets_scanned"]
+            )
             logger.info(
                 f"IP distribution: IPv4={ipv4_ratio:.1%}, IPv6={ipv6_ratio:.1%}, multi-IP={multi_ip_ratio:.1%}"
             )

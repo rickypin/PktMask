@@ -24,14 +24,14 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 try:
-    from scapy.all import IP, IPv6, TCP, PcapReader
+    from scapy.all import IP, TCP, IPv6, PcapReader
+
     SCAPY_AVAILABLE = True
 except Exception:  # pragma: no cover - scapy may be unavailable in some envs
     IP = IPv6 = TCP = PcapReader = None
     SCAPY_AVAILABLE = False
 
 from .types import KeepRule, KeepRuleSet
-
 
 # Common HTTP method tokens and response prefix for quick heuristics
 HTTP_METHODS = (
@@ -99,7 +99,13 @@ class HTTPProtocolMarker:
         debug = False
         try:
             import os
-            debug = os.environ.get("PKTMASK_HTTP_DEBUG", "").lower() in ("1","true","yes","on")
+
+            debug = os.environ.get("PKTMASK_HTTP_DEBUG", "").lower() in (
+                "1",
+                "true",
+                "yes",
+                "on",
+            )
         except Exception:
             debug = False
 
@@ -156,7 +162,11 @@ class HTTPProtocolMarker:
                                 idx = payload.find(b"HTTP/1.")
                                 if idx < 0:
                                     # find earliest method occurrence
-                                    idxs = [i for i in [payload.find(m) for m in HTTP_METHODS] if i >= 0]
+                                    idxs = [
+                                        i
+                                        for i in [payload.find(m) for m in HTTP_METHODS]
+                                        if i >= 0
+                                    ]
                                     idx = min(idxs) if idxs else -1
                                 if idx >= 0:
                                     start_off = idx
@@ -194,7 +204,11 @@ class HTTPProtocolMarker:
                         else:
                             # Fallback: if buffer nearly full with start-line detected but no terminator,
                             # try to at least keep the start line up to first CRLF
-                            if len(state.buffer) >= min(1024, state.max_scan_bytes // 2) and state.start_seq is not None:
+                            if (
+                                len(state.buffer)
+                                >= min(1024, state.max_scan_bytes // 2)
+                                and state.start_seq is not None
+                            ):
                                 first_line_end = self._find_first_crlf(state.buffer)
                                 if first_line_end is not None and first_line_end > 0:
                                     header_bytes = bytes(state.buffer[:first_line_end])
@@ -215,24 +229,26 @@ class HTTPProtocolMarker:
                                     self.states[state_key] = _MessageState()
 
                         # Record simple tcp_flow metadata (optional)
-                        ruleset.tcp_flows.setdefault(stream_id, {
-                            "directions": {"forward": {}, "reverse": {}}
-                        })
+                        ruleset.tcp_flows.setdefault(
+                            stream_id, {"directions": {"forward": {}, "reverse": {}}}
+                        )
 
                     except Exception as e:  # per-packet resilience
                         self.logger.debug(f"HTTP marker packet error: {e}")
                         continue
 
-            ruleset.metadata.update({
-                "analyzer": "HTTPProtocolMarker",
-                "pcap_path": pcap_path,
-                "stats": {
-                    "tcp_packets": total_tcp,
-                    "tcp_with_payload": total_with_payload,
-                    "http_candidates": found_candidates,
-                    "rules": len(ruleset.rules),
-                },
-            })
+            ruleset.metadata.update(
+                {
+                    "analyzer": "HTTPProtocolMarker",
+                    "pcap_path": pcap_path,
+                    "stats": {
+                        "tcp_packets": total_tcp,
+                        "tcp_with_payload": total_with_payload,
+                        "http_candidates": found_candidates,
+                        "rules": len(ruleset.rules),
+                    },
+                }
+            )
             if debug:
                 self.logger.info(
                     f"HTTPMarker stats: tcp={total_tcp}, with_payload={total_with_payload}, candidates={found_candidates}, rules={len(ruleset.rules)}"
@@ -317,7 +333,12 @@ class HTTPProtocolMarker:
         return None
 
     def _make_header_rule(
-        self, stream_id: str, direction: str, seq_start: int, seq_end: int, tuple_key: Optional[str] = None
+        self,
+        stream_id: str,
+        direction: str,
+        seq_start: int,
+        seq_end: int,
+        tuple_key: Optional[str] = None,
     ) -> KeepRule:
         meta = {"preserve_strategy": "header_only"}
         if tuple_key:
@@ -373,10 +394,9 @@ class HTTPProtocolMarker:
                     if header_name in self._sensitive_header_names:
                         sensitive = True
                         prefix_len = colon_idx + 1
-                        while (
-                            prefix_len < len(line)
-                            and line[prefix_len:prefix_len + 1] in (b" ", b"\t")
-                        ):
+                        while prefix_len < len(line) and line[
+                            prefix_len : prefix_len + 1
+                        ] in (b" ", b"\t"):
                             prefix_len += 1
                     else:
                         prefix_len = len(line)

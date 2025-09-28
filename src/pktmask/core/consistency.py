@@ -15,15 +15,16 @@ Key Features:
 - Direct PipelineExecutor integration
 """
 
-from typing import Optional
 from pathlib import Path
+from typing import Optional
+
 from .pipeline.executor import PipelineExecutor
 from .pipeline.models import ProcessResult
 
 
 class ConsistentProcessor:
     """Unified processor ensuring GUI-CLI consistency
-    
+
     This class provides the core interface that both GUI and CLI use to ensure
     identical processing logic and results. It eliminates the service layer
     abstraction and provides direct access to PipelineExecutor functionality.
@@ -37,25 +38,25 @@ class ConsistentProcessor:
         mask_protocol: str = "auto",
     ) -> PipelineExecutor:
         """Create executor with standardized configuration
-        
+
         Args:
             dedup: Enable Remove Dupes processing
-            anon: Enable Anonymize IPs processing  
+            anon: Enable Anonymize IPs processing
             mask: Enable Mask Payloads processing
-            
+
         Returns:
             PipelineExecutor configured with specified options
-            
+
         Raises:
             ValueError: If no processing options are enabled
         """
         # Import here to avoid circular imports
         from .messages import StandardMessages
-        
+
         # Validate that at least one option is enabled
         if not any([dedup, anon, mask]):
             raise ValueError(StandardMessages.NO_OPTIONS_SELECTED)
-        
+
         # Build configuration using PipelineExecutor expected keys
         config = {}
 
@@ -81,23 +82,23 @@ class ConsistentProcessor:
                 },
                 "masker_config": {"chunk_size": 1000, "verify_checksums": True},
             }
-        
+
         return PipelineExecutor(config)
 
     @staticmethod
     def validate_options(dedup: bool, anon: bool, mask: bool) -> None:
         """Unified validation for both GUI and CLI
-        
+
         Args:
             dedup: Enable Remove Dupes processing
             anon: Enable Anonymize IPs processing
             mask: Enable Mask Payloads processing
-            
+
         Raises:
             ValueError: If validation fails
         """
         from .messages import StandardMessages
-        
+
         if not any([dedup, anon, mask]):
             raise ValueError(StandardMessages.NO_OPTIONS_SELECTED)
 
@@ -111,34 +112,34 @@ class ConsistentProcessor:
         mask_protocol: str = "auto",
     ) -> ProcessResult:
         """Unified file processing for both interfaces
-        
+
         Args:
             input_path: Input PCAP/PCAPNG file path
             output_path: Output file path
             dedup: Enable Remove Dupes processing
             anon: Enable Anonymize IPs processing
             mask: Enable Mask Payloads processing
-            
+
         Returns:
             ProcessResult with processing outcome and statistics
-            
+
         Raises:
             ValueError: If validation fails
             FileNotFoundError: If input file doesn't exist
         """
         from .messages import StandardMessages
-        
+
         # Validate input exists
         if not input_path.exists():
             raise FileNotFoundError(StandardMessages.INPUT_NOT_FOUND)
-            
+
         # Validate file type
-        if not input_path.suffix.lower() in ['.pcap', '.pcapng']:
+        if not input_path.suffix.lower() in [".pcap", ".pcapng"]:
             raise ValueError(StandardMessages.INVALID_FILE_TYPE)
-        
+
         # Validate options
         ConsistentProcessor.validate_options(dedup, anon, mask)
-        
+
         # Create executor and process
         executor = ConsistentProcessor.create_executor(dedup, anon, mask, mask_protocol)
         return executor.run(input_path, output_path)
@@ -148,49 +149,50 @@ class ConsistentProcessor:
         dedup: bool, anon: bool, mask: bool, mask_protocol: str = "auto"
     ) -> str:
         """Get human-readable configuration summary
-        
+
         Args:
             dedup: Enable Remove Dupes processing
             anon: Enable Anonymize IPs processing
             mask: Enable Mask Payloads processing
-            
+
         Returns:
             String describing enabled processing options
         """
         enabled_options = []
-        
+
         if dedup:
             enabled_options.append("Remove Dupes")
         if anon:
             enabled_options.append("Anonymize IPs")
         if mask:
             enabled_options.append(
-                "Mask Payloads" + (f" (protocol: {mask_protocol})" if mask_protocol else "")
+                "Mask Payloads"
+                + (f" (protocol: {mask_protocol})" if mask_protocol else "")
             )
-            
+
         if not enabled_options:
             return "No processing options enabled"
-            
+
         return f"Enabled: {', '.join(enabled_options)}"
 
     @staticmethod
     def validate_input_path(input_path: Path) -> None:
         """Validate input path for processing
-        
+
         Args:
             input_path: Path to validate
-            
+
         Raises:
             FileNotFoundError: If path doesn't exist
             ValueError: If path is not a valid PCAP/PCAPNG file
         """
         from .messages import StandardMessages
-        
+
         if not input_path.exists():
             raise FileNotFoundError(StandardMessages.INPUT_NOT_FOUND)
-            
+
         if input_path.is_file():
-            if not input_path.suffix.lower() in ['.pcap', '.pcapng']:
+            if not input_path.suffix.lower() in [".pcap", ".pcapng"]:
                 raise ValueError(StandardMessages.INVALID_FILE_TYPE)
         elif not input_path.is_dir():
             raise ValueError("Input path must be a file or directory")
@@ -215,9 +217,11 @@ class ConsistentProcessor:
 
 class ConfigurationError(Exception):
     """Exception raised for configuration-related errors"""
+
     pass
 
 
 class ProcessingError(Exception):
     """Exception raised for processing-related errors"""
+
     pass

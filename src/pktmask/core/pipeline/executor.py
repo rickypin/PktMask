@@ -274,8 +274,6 @@ class PipelineExecutor:
             # For unknown errors, provide generic but helpful message
             return f"Unexpected error occurred ({error_type})"
 
-
-
     def _build_pipeline(self, config: Dict) -> List[StageBase]:
         """根据配置动态装配 Pipeline。"""
 
@@ -286,7 +284,9 @@ class PipelineExecutor:
         # ------------------------------------------------------------------
         dedup_cfg = config.get("remove_dupes", {})
         if dedup_cfg.get("enabled", False):
-            from pktmask.core.pipeline.stages.deduplication_stage import DeduplicationStage
+            from pktmask.core.pipeline.stages.deduplication_stage import (
+                DeduplicationStage,
+            )
 
             stage = DeduplicationStage(dedup_cfg)
             stage.initialize()
@@ -311,9 +311,7 @@ class PipelineExecutor:
         mask_cfg = config.get("mask_payloads", {})
         if mask_cfg.get("enabled", False):
             # 直接使用新一代双模块架构
-            from pktmask.core.pipeline.stages.masking_stage.stage import (
-                MaskingStage,
-            )
+            from pktmask.core.pipeline.stages.masking_stage.stage import MaskingStage
 
             # 创建 MaskStage 实例
             stage = MaskingStage(mask_cfg)

@@ -115,7 +115,9 @@ class PayloadMasker:
         # Register custom error recovery handlers
         self._register_custom_recovery_handlers()
 
-        memory_limit_mb = resource_config.get("memory_monitor", {}).get("max_memory_mb", 2048)
+        memory_limit_mb = resource_config.get("memory_monitor", {}).get(
+            "max_memory_mb", 2048
+        )
         self.logger.info(
             f"PayloadMasker initialized: chunk_size={self.chunk_size}, "
             f"verify_checksums={self.verify_checksums}, "
@@ -540,7 +542,9 @@ class PayloadMasker:
 
         return processed_lookup
 
-    def _debug_log_rule_miss(self, stream_id: str, tuple_key: str, direction: str, rule_lookup: Dict) -> None:
+    def _debug_log_rule_miss(
+        self, stream_id: str, tuple_key: str, direction: str, rule_lookup: Dict
+    ) -> None:
         try:
             available_streams = list(rule_lookup.keys())
             self.logger.warning(
@@ -1215,8 +1219,6 @@ class PayloadMasker:
     #     state["last"] = seq32
     #     return (state["epoch"] << 32) | seq32
 
-
-
     def get_performance_stats(self) -> Dict[str, Any]:
         """获取性能统计信息
 
@@ -1238,7 +1240,9 @@ class PayloadMasker:
         else:
             return {
                 "memory_monitor_available": False,
-                "flow_directions_count": len(self.flow_directions) if hasattr(self, "flow_directions") else 0,
+                "flow_directions_count": (
+                    len(self.flow_directions) if hasattr(self, "flow_directions") else 0
+                ),
             }
 
     def _flush_packet_buffer(self, packet_buffer: list, writer):
@@ -1301,15 +1305,15 @@ class PayloadMasker:
         try:
             # Use simple component list to avoid hasattr checks
             cleanup_components = [
-                getattr(self, 'resource_manager', None),
-                getattr(self, 'error_handler', None),
-                getattr(self, 'data_validator', None),
-                getattr(self, 'fallback_handler', None)
+                getattr(self, "resource_manager", None),
+                getattr(self, "error_handler", None),
+                getattr(self, "data_validator", None),
+                getattr(self, "fallback_handler", None),
             ]
 
             cleanup_errors = []
             for component in cleanup_components:
-                if component and hasattr(component, 'cleanup'):
+                if component and hasattr(component, "cleanup"):
                     try:
                         component.cleanup()
                     except Exception as e:
@@ -1319,7 +1323,9 @@ class PayloadMasker:
             self._reset_processing_state()
 
             if cleanup_errors:
-                self.logger.warning(f"PayloadMasker cleanup completed with errors: {'; '.join(cleanup_errors)}")
+                self.logger.warning(
+                    f"PayloadMasker cleanup completed with errors: {'; '.join(cleanup_errors)}"
+                )
             else:
                 self.logger.debug("PayloadMasker cleanup completed successfully")
 

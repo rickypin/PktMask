@@ -336,7 +336,9 @@ class ResourceManager:
 
         # Log results
         if cleanup_errors:
-            self.logger.warning(f"Resource cleanup completed with errors: {'; '.join(cleanup_errors)}")
+            self.logger.warning(
+                f"Resource cleanup completed with errors: {'; '.join(cleanup_errors)}"
+            )
         else:
             self.logger.debug("Resource cleanup completed successfully")
 

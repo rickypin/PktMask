@@ -30,15 +30,9 @@ class ProcessorRegistry:
 
         try:
             # Import all StageBase implementations
-            from ..pipeline.stages.deduplication_stage import (
-                DeduplicationStage,
-            )
-            from ..pipeline.stages.anonymization_stage import (
-                AnonymizationStage,
-            )
-            from ..pipeline.stages.masking_stage.stage import (
-                MaskingStage,
-            )
+            from ..pipeline.stages.anonymization_stage import AnonymizationStage
+            from ..pipeline.stages.deduplication_stage import DeduplicationStage
+            from ..pipeline.stages.masking_stage.stage import MaskingStage
 
             # Register processors with standard naming only
             cls._processors.update(

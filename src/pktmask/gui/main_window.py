@@ -30,19 +30,13 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
-from pktmask.common.constants import (
-    UIConstants,
-)
+from pktmask.common.constants import UIConstants
 from pktmask.config.settings import get_app_config
 
 # Refactored imports
 from pktmask.core.events import PipelineEvents
 from pktmask.infrastructure.logging import get_logger
-from pktmask.utils import (
-    current_time,
-    current_timestamp,
-    format_milliseconds_to_time,
-)
+from pktmask.utils import current_time, current_timestamp, format_milliseconds_to_time
 
 # PROCESS_DISPLAY_NAMES moved to common.constants
 
@@ -64,7 +58,6 @@ class GuideDialog(QDialog):
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(self.accept)
         layout.addWidget(close_btn)
-
 
 
 class ServicePipelineThread(QThread):
@@ -485,7 +478,9 @@ class MainWindow(QMainWindow):
             self.timer.stop()
 
         # Reset button and display state
-        self.start_proc_btn.setEnabled(False)  # Keep disabled until directory is selected
+        self.start_proc_btn.setEnabled(
+            False
+        )  # Keep disabled until directory is selected
         self.start_proc_btn.setText("Start")
         self.show_initial_guides()
 
@@ -592,7 +587,9 @@ class MainWindow(QMainWindow):
 
             # 只从去重阶段计算包数（它总是第一个运行的Stage）
             # **修复**: 支持新旧两种Stage名称，并且只要有包数就计算（不要求>0）
-            if (step_name in ["DeduplicationStage", "UnifiedDeduplicationStage"]) and packets_processed >= 0:
+            if (
+                step_name in ["DeduplicationStage", "UnifiedDeduplicationStage"]
+            ) and packets_processed >= 0:
                 # 检查这个文件是否已经计算过包数
                 if not hasattr(self, "_counted_files"):
                     self._counted_files = set()
@@ -613,12 +610,16 @@ class MainWindow(QMainWindow):
             if fallback_used:
                 fallback_mode = data.get("fallback_mode", "unknown")
                 fallback_details = data.get("fallback_details", {})
-                fallback_reason = fallback_details.get("fallback_reason", "Processing failed, using fallback mode")
+                fallback_reason = fallback_details.get(
+                    "fallback_reason", "Processing failed, using fallback mode"
+                )
 
                 self.update_log(f"⚠️  {step_name}: Fallback activated - {fallback_mode}")
                 self.update_log(f"   Reason: {fallback_reason}")
                 if fallback_details.get("file_size"):
-                    self.update_log(f"   File copied as-is ({fallback_details['file_size']} bytes)")
+                    self.update_log(
+                        f"   File copied as-is ({fallback_details['file_size']} bytes)"
+                    )
 
             self.collect_step_result(data)
 

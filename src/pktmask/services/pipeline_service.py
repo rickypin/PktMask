@@ -54,7 +54,7 @@ def _process_files_common(
     progress_callback: Optional[Callable[[PipelineEvents, Dict], None]] = None,
     is_running_check: Optional[Callable[[], bool]] = None,
     verbose: bool = False,
-    interface_type: str = "gui"
+    interface_type: str = "gui",
 ) -> Dict[str, Any]:
     """
     Common file processing logic shared between GUI and CLI interfaces
@@ -110,6 +110,7 @@ def _process_files_common(
                 single_result = process_single_file(
                     executor, input_path, output_path, progress_callback, verbose
                 )
+
                 # 转换为executor.run的结果格式以保持一致性
                 class MockResult:
                     def __init__(self, single_result):
@@ -127,7 +128,7 @@ def _process_files_common(
                 failed_files += 1
                 all_errors.extend(result.errors)
 
-            total_duration += getattr(result, 'duration_ms', 0.0)
+            total_duration += getattr(result, "duration_ms", 0.0)
 
             # GUI特定的错误和步骤处理
             if interface_type == "gui":
@@ -144,7 +145,10 @@ def _process_files_common(
 
                     # Send user-friendly error messages from stage statistics
                     for stage_stats in result.stage_stats:
-                        if hasattr(stage_stats, 'extra_metrics') and "user_message" in stage_stats.extra_metrics:
+                        if (
+                            hasattr(stage_stats, "extra_metrics")
+                            and "user_message" in stage_stats.extra_metrics
+                        ):
                             progress_callback(
                                 PipelineEvents.ERROR,
                                 {
@@ -154,21 +158,29 @@ def _process_files_common(
 
                 # 发送步骤摘要事件 (for both successful and failed stages)
                 for stage_stats in result.stage_stats:
-                    if hasattr(stage_stats, 'stage_name'):
+                    if hasattr(stage_stats, "stage_name"):
                         progress_callback(
                             PipelineEvents.STEP_SUMMARY,
                             {
                                 "step_name": stage_stats.stage_name,
                                 "filename": os.path.basename(input_path),
-                                "packets_processed": getattr(stage_stats, 'packets_processed', 0),
-                                "packets_modified": getattr(stage_stats, 'packets_modified', 0),
-                                "duration_ms": getattr(stage_stats, 'duration_ms', 0.0),
-                                **(stage_stats.extra_metrics if hasattr(stage_stats, 'extra_metrics') else {}),
+                                "packets_processed": getattr(
+                                    stage_stats, "packets_processed", 0
+                                ),
+                                "packets_modified": getattr(
+                                    stage_stats, "packets_modified", 0
+                                ),
+                                "duration_ms": getattr(stage_stats, "duration_ms", 0.0),
+                                **(
+                                    stage_stats.extra_metrics
+                                    if hasattr(stage_stats, "extra_metrics")
+                                    else {}
+                                ),
                             },
                         )
 
             # 收集stage统计信息
-            if hasattr(result, 'stage_stats'):
+            if hasattr(result, "stage_stats"):
                 all_stage_stats.extend(result.stage_stats)
 
         except Exception as e:
@@ -177,7 +189,10 @@ def _process_files_common(
             all_errors.append(error_msg)
 
             # Log the exception with full context
-            logger.error(f"[Service] Unexpected error processing file {input_path}: {e}", exc_info=True)
+            logger.error(
+                f"[Service] Unexpected error processing file {input_path}: {e}",
+                exc_info=True,
+            )
 
             # Send user-friendly error message
             if progress_callback:
@@ -201,7 +216,7 @@ def _process_files_common(
         "errors": all_errors,
         "total_duration": total_duration,
         "stage_stats": all_stage_stats,
-        "total_files": len(pcap_files)
+        "total_files": len(pcap_files),
     }
 
 
@@ -263,7 +278,7 @@ def process_directory(
             progress_callback=progress_callback,
             is_running_check=is_running_check,
             verbose=True,  # GUI always wants detailed progress
-            interface_type="gui"
+            interface_type="gui",
         )
 
         # 发送子目录结束事件 (GUI-specific)
@@ -287,7 +302,12 @@ def _handle_stage_progress(stage, stats, progress_callback):
     # Emit log with stage-specific action wording and correct statistics
     if stage.name in ["DeduplicationStage", "UnifiedDeduplicationStage"]:
         msg = f"- {stage_display_name}: processed {stats.packets_processed} pkts, removed {stats.packets_modified} pkts"
-    elif stage.name in ["AnonStage", "IPAnonymizationStage", "UnifiedIPAnonymizationStage", "AnonymizationStage"]:
+    elif stage.name in [
+        "AnonStage",
+        "IPAnonymizationStage",
+        "UnifiedIPAnonymizationStage",
+        "AnonymizationStage",
+    ]:
         # For IP anonymization, show IP statistics instead of packet statistics
         original_ips = getattr(stats, "original_ips", 0) or stats.extra_metrics.get(
             "original_ips", 0
@@ -374,7 +394,9 @@ def build_pipeline_config(
 
     service = get_config_service()
     options = service.create_options_from_gui(
-        remove_dupes_checked=remove_dupes, anonymize_ips_checked=anonymize_ips, mask_payloads_checked=mask_payloads
+        remove_dupes_checked=remove_dupes,
+        anonymize_ips_checked=anonymize_ips,
+        mask_payloads_checked=mask_payloads,
     )
 
     return service.build_pipeline_config(options)
@@ -546,7 +568,7 @@ def process_directory_cli(
             progress_callback=progress_callback,
             is_running_check=None,  # CLI doesn't support interruption
             verbose=verbose,
-            interface_type="cli"
+            interface_type="cli",
         )
 
         # 发送处理完成事件

@@ -20,8 +20,8 @@ class AutoProtocolMarker:
 
     def initialize(self) -> bool:
         try:
-            from .tls_marker import TLSProtocolMarker
             from .http_marker import HTTPProtocolMarker
+            from .tls_marker import TLSProtocolMarker
 
             self.tls_marker = TLSProtocolMarker(self.marker_config)
             self.http_marker = HTTPProtocolMarker(self.marker_config)
@@ -59,4 +59,3 @@ class AutoProtocolMarker:
             "pcap_path": pcap_path,
         }
         return ruleset
-

@@ -22,11 +22,7 @@ from pktmask.services import (
 
 # Import GUI protection layer for safe rollout
 from ..core.feature_flags import GUIFeatureFlags
-from ..core.gui_consistent_processor import (
-    GUIConsistentProcessor,
-    GUIThreadingHelper
-)
-
+from ..core.gui_consistent_processor import GUIConsistentProcessor, GUIThreadingHelper
 from .statistics_manager import StatisticsManager
 
 
@@ -143,6 +139,7 @@ class PipelineManager:
         # Insert rollout hint as the very first log line
         try:
             from ..core.feature_flags import GUIFeatureFlags as _FF
+
             if _FF.is_legacy_mode_forced():
                 self.main_window.update_log(
                     "ℹ️ Legacy mode (TLS only). Set PKTMASK_USE_CONSISTENT_PROCESSOR=true to enable auto (TLS+HTTP)."
@@ -273,7 +270,7 @@ class PipelineManager:
                 anonymize_ips_checked=anonymize_ips_checked,
                 mask_payloads_checked=mask_payloads_checked,
                 base_dir=self.main_window.base_dir,
-                output_dir=self.main_window.current_output_dir
+                output_dir=self.main_window.current_output_dir,
             )
         except Exception as e:
             self._logger.error(f"Configuration error: {str(e)}")

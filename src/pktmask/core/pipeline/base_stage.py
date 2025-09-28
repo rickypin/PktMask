@@ -129,7 +129,9 @@ class StageBase(metaclass=abc.ABCMeta):
         self._temp_files.clear()
 
         if cleanup_errors:
-            self.logger.warning(f"Temp file cleanup completed with errors: {'; '.join(cleanup_errors)}")
+            self.logger.warning(
+                f"Temp file cleanup completed with errors: {'; '.join(cleanup_errors)}"
+            )
         else:
             self.logger.debug("All temporary files cleaned successfully")
 
@@ -199,7 +201,9 @@ class StageBase(metaclass=abc.ABCMeta):
             self.logger.warning(error_msg)
             # Don't raise exception for cleanup errors, just log them
         else:
-            self.logger.debug(f"Cleanup completed successfully for {self.__class__.__name__}")
+            self.logger.debug(
+                f"Cleanup completed successfully for {self.__class__.__name__}"
+            )
 
     def _cleanup_stage_specific(self) -> None:
         """Stage-specific cleanup logic.

@@ -448,16 +448,15 @@ class TLSProtocolMarker(ProtocolMarker):
                 merged_packets[str(frame_number)] = packet
 
                 _dbg_reassembled_added += 1
-                if layers.get("tls.record.content_type") or layers.get("tls.record.opaque_type"):
+                if layers.get("tls.record.content_type") or layers.get(
+                    "tls.record.opaque_type"
+                ):
                     _dbg_ct_present_count += 1
-
 
         # 第二阶段：添加包含TLS段数据的包（跨分段情况）
         for packet in packets_segments:
             layers = packet.get("_source", {}).get("layers", {})
             frame_number = self._get_first_value(layers.get("frame.number"))
-
-
 
             if frame_number and self._has_tls_segment_data(layers):
                 # 如果已经存在，优先使用重组后的版本（包含更完整的TLS信息）
@@ -465,13 +464,14 @@ class TLSProtocolMarker(ProtocolMarker):
                     merged_packets[str(frame_number)] = packet
 
                     _dbg_segments_added += 1
-                    if not (layers.get("tls.record.content_type") or layers.get("tls.record.opaque_type")) and self._has_tls_segment_data(layers):
+                    if not (
+                        layers.get("tls.record.content_type")
+                        or layers.get("tls.record.opaque_type")
+                    ) and self._has_tls_segment_data(layers):
                         _dbg_seg_only_count += 1
-
 
         # 转换为列表并按frame.number排序
         result_packets = list(merged_packets.values())
-
 
         result_packets.sort(
             key=lambda p: int(
@@ -487,10 +487,12 @@ class TLSProtocolMarker(ProtocolMarker):
             f"{len(result_packets)} after merge"
         )
 
-
         self.logger.debug(
-            "TLS scan merge summary: reassembled_added=%s, segments_added=%s, frames_with_content_type=%s, seg_only_without_content_type=%s"
-            , _dbg_reassembled_added, _dbg_segments_added, _dbg_ct_present_count, _dbg_seg_only_count
+            "TLS scan merge summary: reassembled_added=%s, segments_added=%s, frames_with_content_type=%s, seg_only_without_content_type=%s",
+            _dbg_reassembled_added,
+            _dbg_segments_added,
+            _dbg_ct_present_count,
+            _dbg_seg_only_count,
         )
 
         return result_packets
@@ -674,24 +676,40 @@ class TLSProtocolMarker(ProtocolMarker):
             return value[0] if value else None
         return value
 
-    def _build_tuple_key_from_values(self, src_ip: str, src_port: int, dst_ip: str, dst_port: int) -> str:
+    def _build_tuple_key_from_values(
+        self, src_ip: str, src_port: int, dst_ip: str, dst_port: int
+    ) -> str:
         """生成与Masker一致的规范化tuple_key（较小(ip,port)在前）。"""
         if (str(src_ip), int(src_port)) < (str(dst_ip), int(dst_port)):
             return f"{src_ip}:{int(src_port)}-{dst_ip}:{int(dst_port)}"
         else:
             return f"{dst_ip}:{int(dst_port)}-{src_ip}:{int(src_port)}"
 
-    def _get_endpoints_from_layers(self, layers: Dict[str, Any]) -> Tuple[str, int, str, int]:
+    def _get_endpoints_from_layers(
+        self, layers: Dict[str, Any]
+    ) -> Tuple[str, int, str, int]:
         """从tshark JSON layers提取四元组端点。"""
-        src_ip = self._get_first_value(layers.get("ip.src")) or self._get_first_value(layers.get("ipv6.src")) or ""
-        dst_ip = self._get_first_value(layers.get("ip.dst")) or self._get_first_value(layers.get("ipv6.dst")) or ""
+        src_ip = (
+            self._get_first_value(layers.get("ip.src"))
+            or self._get_first_value(layers.get("ipv6.src"))
+            or ""
+        )
+        dst_ip = (
+            self._get_first_value(layers.get("ip.dst"))
+            or self._get_first_value(layers.get("ipv6.dst"))
+            or ""
+        )
         src_port = int(self._get_first_value(layers.get("tcp.srcport")) or 0)
         dst_port = int(self._get_first_value(layers.get("tcp.dstport")) or 0)
         return str(src_ip), src_port, str(dst_ip), dst_port
 
-    def _get_local_stream_id_from_values(self, src_ip: str, src_port: int, dst_ip: str, dst_port: int) -> str:
+    def _get_local_stream_id_from_values(
+        self, src_ip: str, src_port: int, dst_ip: str, dst_port: int
+    ) -> str:
         """依据tuple_key返回/分配本地stream_id（与Masker一致）。"""
-        tuple_key = self._build_tuple_key_from_values(src_ip, src_port, dst_ip, dst_port)
+        tuple_key = self._build_tuple_key_from_values(
+            src_ip, src_port, dst_ip, dst_port
+        )
         sid = self.tuple_to_stream_id.get(tuple_key)
         if sid is None:
             sid = str(self.flow_id_counter)
@@ -699,13 +717,25 @@ class TLSProtocolMarker(ProtocolMarker):
             self.flow_id_counter += 1
         return sid
 
-    def _determine_direction_from_values(self, stream_id: str, src_ip: str, src_port: int, dst_ip: str, dst_port: int) -> str:
+    def _determine_direction_from_values(
+        self, stream_id: str, src_ip: str, src_port: int, dst_ip: str, dst_port: int
+    ) -> str:
         """与Masker一致的方向判定：字典序canonical forward，按stream_id缓存。"""
         # 计算canonical forward端点
         if (str(src_ip), int(src_port)) < (str(dst_ip), int(dst_port)):
-            canonical_forward = {"src_ip": str(src_ip), "dst_ip": str(dst_ip), "src_port": int(src_port), "dst_port": int(dst_port)}
+            canonical_forward = {
+                "src_ip": str(src_ip),
+                "dst_ip": str(dst_ip),
+                "src_port": int(src_port),
+                "dst_port": int(dst_port),
+            }
         else:
-            canonical_forward = {"src_ip": str(dst_ip), "dst_ip": str(src_ip), "src_port": int(dst_port), "dst_port": int(src_port)}
+            canonical_forward = {
+                "src_ip": str(dst_ip),
+                "dst_ip": str(src_ip),
+                "src_port": int(dst_port),
+                "dst_port": int(src_port),
+            }
         # 缓存该流的canonical方向
         if stream_id not in self.flow_directions:
             self.flow_directions[stream_id] = {
@@ -721,7 +751,12 @@ class TLSProtocolMarker(ProtocolMarker):
         return (
             "forward"
             if (str(src_ip), int(src_port), str(dst_ip), int(dst_port))
-            == (fwd["src_ip"], int(fwd["src_port"]), fwd["dst_ip"], int(fwd["dst_port"]))
+            == (
+                fwd["src_ip"],
+                int(fwd["src_port"]),
+                fwd["dst_ip"],
+                int(fwd["dst_port"]),
+            )
             else "reverse"
         )
 
@@ -730,8 +765,20 @@ class TLSProtocolMarker(ProtocolMarker):
     ) -> Dict[str, Any]:
         """识别TCP流的两个方向（与Masker一致：基于字典序的canonical方向）"""
         directions = {
-            "forward": {"src_ip": None, "dst_ip": None, "src_port": None, "dst_port": None, "packets": []},
-            "reverse": {"src_ip": None, "dst_ip": None, "src_port": None, "dst_port": None, "packets": []},
+            "forward": {
+                "src_ip": None,
+                "dst_ip": None,
+                "src_port": None,
+                "dst_port": None,
+                "packets": [],
+            },
+            "reverse": {
+                "src_ip": None,
+                "dst_ip": None,
+                "src_port": None,
+                "dst_port": None,
+                "packets": [],
+            },
         }
 
         if not packets:
@@ -739,8 +786,12 @@ class TLSProtocolMarker(ProtocolMarker):
 
         # 读取第一个包的端点，计算 canonical forward（字典序较小端点作为源）
         first_layers = packets[0].get("_source", {}).get("layers", {})
-        a_ip = self._get_first_value(first_layers.get("ip.src")) or self._get_first_value(first_layers.get("ipv6.src"))
-        b_ip = self._get_first_value(first_layers.get("ip.dst")) or self._get_first_value(first_layers.get("ipv6.dst"))
+        a_ip = self._get_first_value(
+            first_layers.get("ip.src")
+        ) or self._get_first_value(first_layers.get("ipv6.src"))
+        b_ip = self._get_first_value(
+            first_layers.get("ip.dst")
+        ) or self._get_first_value(first_layers.get("ipv6.dst"))
         a_port = self._get_first_value(first_layers.get("tcp.srcport"))
         b_port = self._get_first_value(first_layers.get("tcp.dstport"))
 
@@ -754,14 +805,32 @@ class TLSProtocolMarker(ProtocolMarker):
             f_src_ip, f_src_port = str(b_ip), b_port_i
             f_dst_ip, f_dst_port = str(a_ip), a_port_i
 
-        directions["forward"].update({"src_ip": f_src_ip, "dst_ip": f_dst_ip, "src_port": f_src_port, "dst_port": f_dst_port})
-        directions["reverse"].update({"src_ip": f_dst_ip, "dst_ip": f_src_ip, "src_port": f_dst_port, "dst_port": f_src_port})
+        directions["forward"].update(
+            {
+                "src_ip": f_src_ip,
+                "dst_ip": f_dst_ip,
+                "src_port": f_src_port,
+                "dst_port": f_dst_port,
+            }
+        )
+        directions["reverse"].update(
+            {
+                "src_ip": f_dst_ip,
+                "dst_ip": f_src_ip,
+                "src_port": f_dst_port,
+                "dst_port": f_src_port,
+            }
+        )
 
         # 按 canonical forward 划分所有数据包
         for packet in packets:
             layers = packet.get("_source", {}).get("layers", {})
-            src_ip = self._get_first_value(layers.get("ip.src")) or self._get_first_value(layers.get("ipv6.src"))
-            dst_ip = self._get_first_value(layers.get("ip.dst")) or self._get_first_value(layers.get("ipv6.dst"))
+            src_ip = self._get_first_value(
+                layers.get("ip.src")
+            ) or self._get_first_value(layers.get("ipv6.src"))
+            dst_ip = self._get_first_value(
+                layers.get("ip.dst")
+            ) or self._get_first_value(layers.get("ipv6.dst"))
             src_port = int(self._get_first_value(layers.get("tcp.srcport")) or 0)
             dst_port = int(self._get_first_value(layers.get("tcp.dstport")) or 0)
 
@@ -1018,8 +1087,10 @@ class TLSProtocolMarker(ProtocolMarker):
         # 添加流信息（对齐本地 stream_id）
         for tshark_stream_id, flow_info in tcp_flows.items():
             fwd = flow_info.get("directions", {}).get("forward", {})
-            src_ip = str(fwd.get("src_ip", "")); dst_ip = str(fwd.get("dst_ip", ""))
-            src_port = int(fwd.get("src_port", 0) or 0); dst_port = int(fwd.get("dst_port", 0) or 0)
+            src_ip = str(fwd.get("src_ip", ""))
+            dst_ip = str(fwd.get("dst_ip", ""))
+            src_port = int(fwd.get("src_port", 0) or 0)
+            dst_port = int(fwd.get("dst_port", 0) or 0)
             if (src_ip, src_port) < (dst_ip, dst_port):
                 tuple_key = f"{src_ip}:{src_port}-{dst_ip}:{dst_port}"
             else:
@@ -1107,8 +1178,12 @@ class TLSProtocolMarker(ProtocolMarker):
 
             # 提取基础信息（对齐Masker 的本地stream_id与canonical方向）
             src_ip, src_port, dst_ip, dst_port = self._get_endpoints_from_layers(layers)
-            local_stream_id = self._get_local_stream_id_from_values(src_ip, src_port, dst_ip, dst_port)
-            direction = self._determine_direction_from_values(local_stream_id, src_ip, src_port, dst_ip, dst_port)
+            local_stream_id = self._get_local_stream_id_from_values(
+                src_ip, src_port, dst_ip, dst_port
+            )
+            direction = self._determine_direction_from_values(
+                local_stream_id, src_ip, src_port, dst_ip, dst_port
+            )
 
             frame_number = self._get_first_value(layers.get("frame.number"))
             tcp_seq_raw = self._get_first_value(layers.get("tcp.seq_raw"))
@@ -1144,7 +1219,12 @@ class TLSProtocolMarker(ProtocolMarker):
                     payload_hex = self._get_tcp_payload_hex(packet)
                     self.logger.warning(
                         "FallbackTLS: ApplicationData fragment -> skip keep rule: frame=%s, sid=%s, dir=%s, ct=%s, seg_present=%s, payload_prefix=%s",
-                        frame_number, local_stream_id, direction, ct, bool(layers.get("tls.segment.data")), (payload_hex[:10] if payload_hex else "")
+                        frame_number,
+                        local_stream_id,
+                        direction,
+                        ct,
+                        bool(layers.get("tls.segment.data")),
+                        (payload_hex[:10] if payload_hex else ""),
                     )
                     continue
                 else:
@@ -1157,7 +1237,6 @@ class TLSProtocolMarker(ProtocolMarker):
                             f"seq {rule.seq_start}-{rule.seq_end}"
                         )
                     continue
-
 
             elif self._is_tls_record_start(packet, tcp_payload):
                 # TLS记录开始：按正常逻辑处理
@@ -1224,9 +1303,15 @@ class TLSProtocolMarker(ProtocolMarker):
 
             # 基于端点 -> 本地 stream_id + canonical 方向/tuple_key
             src_ip, src_port, dst_ip, dst_port = self._get_endpoints_from_layers(layers)
-            stream_id = self._get_local_stream_id_from_values(src_ip, src_port, dst_ip, dst_port)
-            direction = self._determine_direction_from_values(stream_id, src_ip, src_port, dst_ip, dst_port)
-            tuple_key = self._build_tuple_key_from_values(src_ip, src_port, dst_ip, dst_port)
+            stream_id = self._get_local_stream_id_from_values(
+                src_ip, src_port, dst_ip, dst_port
+            )
+            direction = self._determine_direction_from_values(
+                stream_id, src_ip, src_port, dst_ip, dst_port
+            )
+            tuple_key = self._build_tuple_key_from_values(
+                src_ip, src_port, dst_ip, dst_port
+            )
 
             frame_number = self._get_first_value(layers.get("frame.number"))
             tcp_seq_raw = self._get_first_value(layers.get("tcp.seq_raw"))
@@ -1788,9 +1873,15 @@ class TLSProtocolMarker(ProtocolMarker):
 
             # 基于端点 -> 本地 stream_id + canonical 方向/tuple_key
             src_ip, src_port, dst_ip, dst_port = self._get_endpoints_from_layers(layers)
-            local_stream_id = self._get_local_stream_id_from_values(src_ip, src_port, dst_ip, dst_port)
-            direction = self._determine_direction_from_values(local_stream_id, src_ip, src_port, dst_ip, dst_port)
-            tuple_key = self._build_tuple_key_from_values(src_ip, src_port, dst_ip, dst_port)
+            local_stream_id = self._get_local_stream_id_from_values(
+                src_ip, src_port, dst_ip, dst_port
+            )
+            direction = self._determine_direction_from_values(
+                local_stream_id, src_ip, src_port, dst_ip, dst_port
+            )
+            tuple_key = self._build_tuple_key_from_values(
+                src_ip, src_port, dst_ip, dst_port
+            )
 
             frame_number = self._get_first_value(layers.get("frame.number"))
             tcp_seq_raw = self._get_first_value(layers.get("tcp.seq_raw"))

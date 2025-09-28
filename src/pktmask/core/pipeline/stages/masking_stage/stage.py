@@ -50,9 +50,7 @@ class MaskingStage(StageBase):
         # Optional configuration validator
         self.config_validator = None
 
-        self.logger.info(
-            f"MaskingStage created: protocol={self.protocol}"
-        )
+        self.logger.info(f"MaskingStage created: protocol={self.protocol}")
 
     def initialize(self, config: Optional[Dict] = None) -> bool:
         """Initialize the stage.
@@ -320,18 +318,19 @@ class MaskingStage(StageBase):
                         f"Temporary file already cleaned up: {working_path}"
                     )
 
-
-
     def _create_marker(self):
         """Create Marker module instance supporting tls|http|auto"""
         if self.protocol == "tls":
             from .marker.tls_marker import TLSProtocolMarker
+
             return TLSProtocolMarker(self.marker_config)
         elif self.protocol == "http":
             from .marker.http_marker import HTTPProtocolMarker
+
             return HTTPProtocolMarker(self.marker_config)
         elif self.protocol == "auto":
             from .marker.auto_marker import AutoProtocolMarker
+
             return AutoProtocolMarker(self.marker_config)
         else:
             raise ValueError(f"Unsupported protocol: {self.protocol}")

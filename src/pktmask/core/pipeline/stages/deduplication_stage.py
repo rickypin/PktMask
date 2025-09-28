@@ -54,9 +54,7 @@ class DeduplicationStage(StageBase):
         # Statistics
         self._stats = {}
 
-        self.logger.info(
-            f"DeduplicationStage created: algorithm={self.algorithm}"
-        )
+        self.logger.info(f"DeduplicationStage created: algorithm={self.algorithm}")
 
     def initialize(self, config: Optional[Dict] = None) -> bool:
         """Initialize deduplication components.

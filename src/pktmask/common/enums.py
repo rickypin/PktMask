@@ -240,6 +240,4 @@ class UIStrings(Enum):
     TOOLTIP_MASK_PAYLOADS = (
         "Intelligently trims packet payloads while preserving TLS handshake data."
     )
-    TOOLTIP_WEB_FOCUSED = (
-        "HTTP protocol processing feature has been removed from this version. Only supports TLS, IP anonymization and deduplication features."
-    )
+    TOOLTIP_WEB_FOCUSED = "HTTP protocol processing feature has been removed from this version. Only supports TLS, IP anonymization and deduplication features."
