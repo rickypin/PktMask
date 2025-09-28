@@ -240,4 +240,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**PktMask** - Making network data safe to share, one packet at a time.
+**PktMask** - Making network data safe to share.
