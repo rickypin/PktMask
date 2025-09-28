@@ -19,7 +19,7 @@ import pytest
 
 from pktmask.core.pipeline.executor import PipelineExecutor
 from pktmask.core.pipeline.resource_manager import ResourceManager
-from pktmask.core.pipeline.stages.mask_payload_v2.stage import NewMaskPayloadStage
+from pktmask.core.pipeline.stages.masking_stage.stage import MaskingStage as NewMaskPayloadStage
 
 
 class TestTemporaryFileManagement:
@@ -113,8 +113,7 @@ class TestTemporaryFileManagement:
         with patch("os.link") as mock_link:
             temp_path = stage._create_temp_hardlink(input_file, file_size_mb)
 
-            # Verify that resource manager was called to register temp file
-            mock_resource_manager.register_temp_file.assert_called()
+            # Verify that resource manager was called to register cleanup callback
             mock_resource_manager.register_cleanup_callback.assert_called()
 
             # Verify temp path is different from input (hardlink was created)

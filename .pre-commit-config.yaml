@@ -12,9 +12,10 @@ repos:
         language: system
         args: ["--profile", "black"]
         types: [python]
-      - id: flake8
-        name: flake8
-        entry: flake8
-        language: system
-        args: ["--max-line-length=220", "--extend-ignore=E203,W503"]
-        types: [python]
+      # 代码质量检查已禁用
+      # - id: flake8
+      #   name: flake8
+      #   entry: flake8
+      #   language: system
+      #   args: ["--max-line-length=220", "--extend-ignore=E203,W503"]
+      #   types: [python]

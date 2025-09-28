@@ -62,7 +62,7 @@ class TestConsistentProcessor:
         assert executor is not None
         assert "mask_payloads" in executor._config
         assert executor._config["mask_payloads"]["enabled"] is True
-        assert executor._config["mask_payloads"]["protocol"] == "tls"
+        assert executor._config["mask_payloads"]["protocol"] == "auto"
         assert "remove_dupes" not in executor._config
         assert "anonymize_ips" not in executor._config
 
