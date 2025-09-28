@@ -309,10 +309,7 @@ class TestCLIParameterScenarios:
         result = self.runner.invoke(app, ["process", str(test_dir)])
 
         assert result.exit_code == 0
-        assert (
-            "🔄 Directory processing detected: auto-enabled all operations (--dedup --anon --mask)"
-            in result.stdout
-        )
+        assert "🔄 Directory processing detected: auto-enabled all operations (--dedup --anon --mask)" in result.stdout
         assert "📁 Auto-generated output path:" in result.stdout
         assert "test_pcaps_processed" in result.stdout
 
@@ -344,10 +341,7 @@ class TestCLIParameterScenarios:
         assert "🚀 Processing file:" in result.stdout
 
         # Should NOT show intelligent defaults message since operations are explicit
-        assert (
-            "Directory processing detected: auto-enabled all operations"
-            not in result.stdout
-        )
+        assert "Directory processing detected: auto-enabled all operations" not in result.stdout
 
         # Should only show selected stages
         assert "DeduplicationStage created" in result.stdout
@@ -366,9 +360,7 @@ class TestCLIParameterScenarios:
 
         custom_output = self.temp_dir / "custom_output"
 
-        result = self.runner.invoke(
-            app, ["process", str(test_dir), "-o", str(custom_output), "--mask"]
-        )
+        result = self.runner.invoke(app, ["process", str(test_dir), "-o", str(custom_output), "--mask"])
 
         assert result.exit_code == 0
         assert "🚀 Processing file:" in result.stdout
@@ -427,10 +419,7 @@ class TestCLIParameterScenarios:
         )
 
         assert result.exit_code == 1
-        assert (
-            "At least one operation must be specified: --dedup, --anon, or --mask"
-            in (result.stdout + result.stderr)
-        )
+        assert "At least one operation must be specified: --dedup, --anon, or --mask" in (result.stdout + result.stderr)
 
     def test_invalid_input_file_extension(self):
         """Test error handling for invalid file extension."""
@@ -441,9 +430,7 @@ class TestCLIParameterScenarios:
         result = self.runner.invoke(app, ["process", str(invalid_file), "--dedup"])
 
         assert result.exit_code == 1
-        assert "Input file must be a PCAP or PCAPNG file" in (
-            result.stdout + result.stderr
-        )
+        assert "Input file must be a PCAP or PCAPNG file" in (result.stdout + result.stderr)
 
     def test_nonexistent_input_path(self):
         """Test error handling for nonexistent input path."""
@@ -462,18 +449,14 @@ class TestCLIParameterScenarios:
         result = self.runner.invoke(app, ["process", str(empty_dir)])
 
         assert result.exit_code == 1
-        assert "Directory contains no PCAP/PCAPNG files" in (
-            result.stdout + result.stderr
-        )
+        assert "Directory contains no PCAP/PCAPNG files" in (result.stdout + result.stderr)
 
     def test_protocol_parameter_removed(self):
         """Test that --protocol parameter is no longer accepted."""
         if not self.small_pcap:
             pytest.skip("No small PCAP file available")
 
-        result = self.runner.invoke(
-            app, ["process", str(self.small_pcap), "--mask", "--protocol", "tls"]
-        )
+        result = self.runner.invoke(app, ["process", str(self.small_pcap), "--mask", "--protocol", "tls"])
 
         assert result.exit_code != 0
         assert "No such option: --protocol" in (result.stdout + result.stderr)
@@ -585,9 +568,7 @@ class TestCLIParameterScenarios:
         if not self.small_pcap:
             pytest.skip("No small PCAP file available")
 
-        result = self.runner.invoke(
-            app, ["process", str(self.small_pcap), "--mask", "--verbose"]
-        )
+        result = self.runner.invoke(app, ["process", str(self.small_pcap), "--mask", "--verbose"])
 
         # Should complete successfully even if file is very small
         assert result.exit_code == 0
@@ -689,9 +670,7 @@ class TestCLIParameterScenarios:
 
         output_file = self.output_dir / "validation_test.pcap"
 
-        result = self.runner.invoke(
-            app, ["process", str(self.small_pcap), "-o", str(output_file), "--dedup"]
-        )
+        result = self.runner.invoke(app, ["process", str(self.small_pcap), "-o", str(output_file), "--dedup"])
 
         assert result.exit_code == 0
         assert output_file.exists()

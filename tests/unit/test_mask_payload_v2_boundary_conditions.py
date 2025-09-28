@@ -79,9 +79,7 @@ class TestSequenceWrapAround:
         ]
 
         # 这里创建测试框架，具体的逻辑序号转换在Masker模块实现
-        for i, (seq32, expected_seq64) in enumerate(
-            zip(test_sequences, expected_logical)
-        ):
+        for i, (seq32, expected_seq64) in enumerate(zip(test_sequences, expected_logical)):
             # 验证逻辑序号的连续性
             assert expected_seq64 >= 0, f"逻辑序号不能为负: {expected_seq64}"
             if i > 0:
@@ -231,9 +229,7 @@ class TestCrossSegmentTLS:
         for i in range(len(segments) - 1):
             current_end = segments[i]["seq_end"]
             next_start = segments[i + 1]["seq_start"]
-            assert (
-                current_end == next_start
-            ), f"分片不连续: {current_end} != {next_start}"
+            assert current_end == next_start, f"分片不连续: {current_end} != {next_start}"
 
         # 创建跨段规则
         total_start = segments[0]["seq_start"]

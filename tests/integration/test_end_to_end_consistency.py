@@ -93,22 +93,12 @@ class TestEndToEndConsistency:
 
             # Both should have same validation result
             if should_be_valid:
-                assert (
-                    cli_exception is None
-                ), f"CLI validation should pass for {dedup}, {anon}, {mask}"
-                assert (
-                    gui_exception is None
-                ), f"GUI validation should pass for {dedup}, {anon}, {mask}"
+                assert cli_exception is None, f"CLI validation should pass for {dedup}, {anon}, {mask}"
+                assert gui_exception is None, f"GUI validation should pass for {dedup}, {anon}, {mask}"
             else:
-                assert (
-                    cli_exception is not None
-                ), f"CLI validation should fail for {dedup}, {anon}, {mask}"
-                assert (
-                    gui_exception is not None
-                ), f"GUI validation should fail for {dedup}, {anon}, {mask}"
-                assert type(cli_exception) == type(
-                    gui_exception
-                ), "Exception types should match"
+                assert cli_exception is not None, f"CLI validation should fail for {dedup}, {anon}, {mask}"
+                assert gui_exception is not None, f"GUI validation should fail for {dedup}, {anon}, {mask}"
+                assert type(cli_exception) == type(gui_exception), "Exception types should match"
 
     def test_cli_gui_identical_configuration_summaries(self):
         """Test that CLI and GUI produce identical configuration summaries"""
@@ -123,20 +113,14 @@ class TestEndToEndConsistency:
         ]
 
         for dedup, anon, mask in test_cases:
-            cli_summary = ConsistentProcessor.get_configuration_summary(
-                dedup, anon, mask
-            )
+            cli_summary = ConsistentProcessor.get_configuration_summary(dedup, anon, mask)
 
             from pktmask.gui.core.gui_consistent_processor import GUIConsistentProcessor
 
-            gui_summary = GUIConsistentProcessor.get_gui_configuration_summary(
-                dedup, anon, mask
-            )
+            gui_summary = GUIConsistentProcessor.get_gui_configuration_summary(dedup, anon, mask)
 
             # Summaries should be identical
-            assert (
-                cli_summary == gui_summary
-            ), f"Summary mismatch for options: dedup={dedup}, anon={anon}, mask={mask}"
+            assert cli_summary == gui_summary, f"Summary mismatch for options: dedup={dedup}, anon={anon}, mask={mask}"
 
     @pytest.mark.skipif(
         not Path("tests/samples/tls-single/tls_sample.pcap").exists(),
@@ -154,14 +138,10 @@ class TestEndToEndConsistency:
             gui_output = temp_path / "gui_output.pcap"
 
             # Process with CLI approach
-            cli_result = ConsistentProcessor.process_file(
-                input_file, cli_output, dedup=True, anon=False, mask=False
-            )
+            cli_result = ConsistentProcessor.process_file(input_file, cli_output, dedup=True, anon=False, mask=False)
 
             # Process with GUI approach (using same core)
-            gui_executor = ConsistentProcessor.create_executor(
-                dedup=True, anon=False, mask=False
-            )
+            gui_executor = ConsistentProcessor.create_executor(dedup=True, anon=False, mask=False)
             gui_result = gui_executor.run(input_file, gui_output)
 
             # Results should be identical
@@ -206,9 +186,7 @@ class TestEndToEndConsistency:
         assert hasattr(thread, "is_running")
 
         # Thread should use same executor configuration as CLI
-        cli_executor = ConsistentProcessor.create_executor(
-            dedup=True, anon=False, mask=False
-        )
+        cli_executor = ConsistentProcessor.create_executor(dedup=True, anon=False, mask=False)
 
         # Both should have same configuration
         assert thread._executor._config == cli_executor._config
@@ -279,9 +257,7 @@ class TestConsistencyRegression:
         from pktmask.services import build_pipeline_config, create_pipeline_executor
 
         # Test that legacy service layer still works
-        config = build_pipeline_config(
-            anonymize_ips=True, remove_dupes=False, mask_payloads=False
-        )
+        config = build_pipeline_config(anonymize_ips=True, remove_dupes=False, mask_payloads=False)
 
         assert config is not None
         assert "anonymize_ips" in config
@@ -317,9 +293,7 @@ class TestConsistencyRegression:
             "mask_payloads_checked": True,
         }
 
-        unified_config = BackwardCompatibilityAdapter.adapt_legacy_gui_config(
-            legacy_gui_config
-        )
+        unified_config = BackwardCompatibilityAdapter.adapt_legacy_gui_config(legacy_gui_config)
         assert unified_config.dedup is True
         assert unified_config.anon is False
         assert unified_config.mask is True

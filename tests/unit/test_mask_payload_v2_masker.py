@@ -186,12 +186,8 @@ class TestPayloadMasker:
         # 后6字节应该保留 (120-126，部分重叠)
         assert result[20:26] == payload[20:26]
 
-    @patch(
-        "pktmask.core.pipeline.stages.masking_stage.masker.payload_masker.PcapReader"
-    )
-    @patch(
-        "pktmask.core.pipeline.stages.masking_stage.masker.payload_masker.PcapWriter"
-    )
+    @patch("pktmask.core.pipeline.stages.masking_stage.masker.payload_masker.PcapReader")
+    @patch("pktmask.core.pipeline.stages.masking_stage.masker.payload_masker.PcapWriter")
     def test_apply_masking_no_scapy(self, mock_writer, mock_reader):
         """测试没有scapy时的错误处理和降级处理"""
         # 模拟scapy不可用
@@ -208,9 +204,7 @@ class TestPayloadMasker:
                 tempfile.NamedTemporaryFile(suffix=".pcap") as output_file,
             ):
 
-                stats = masker.apply_masking(
-                    input_file.name, output_file.name, keep_rules
-                )
+                stats = masker.apply_masking(input_file.name, output_file.name, keep_rules)
 
                 # 现在有了降级处理，所以可能成功（通过降级处理）
                 if stats.success:
@@ -260,9 +254,7 @@ class TestPayloadMasker:
         stream_id = "10.0.0.1:1234-10.0.0.2:80"
 
         # 正向流
-        direction = self.masker._determine_flow_direction(
-            ip_layer, tcp_layer, stream_id
-        )
+        direction = self.masker._determine_flow_direction(ip_layer, tcp_layer, stream_id)
         assert direction == "forward"
 
         # 反向流
@@ -271,9 +263,7 @@ class TestPayloadMasker:
         tcp_layer.sport = 80
         tcp_layer.dport = 1234
 
-        direction = self.masker._determine_flow_direction(
-            ip_layer, tcp_layer, stream_id
-        )
+        direction = self.masker._determine_flow_direction(ip_layer, tcp_layer, stream_id)
         assert direction == "reverse"
 
     def test_find_innermost_tcp_none_packet(self):
@@ -368,9 +358,7 @@ class TestPayloadMasker:
         }
 
         # 测试优化算法
-        result_optimized = self.masker._apply_keep_rules_optimized(
-            payload, 0, 260, rule_data
-        )
+        result_optimized = self.masker._apply_keep_rules_optimized(payload, 0, 260, rule_data)
 
         # 测试简单算法
         result_simple = self.masker._apply_keep_rules_simple(payload, 0, 260, rule_data)
@@ -407,9 +395,7 @@ class TestErrorRecoveryHandler:
 
     def test_handle_error(self):
         """测试错误处理"""
-        error_info = self.handler.handle_error(
-            "测试错误", ErrorSeverity.MEDIUM, ErrorCategory.PROCESSING_ERROR
-        )
+        error_info = self.handler.handle_error("测试错误", ErrorSeverity.MEDIUM, ErrorCategory.PROCESSING_ERROR)
 
         assert error_info.severity == ErrorSeverity.MEDIUM
         assert error_info.category == ErrorCategory.PROCESSING_ERROR
@@ -494,21 +480,15 @@ class TestFallbackHandler:
     def test_get_recommended_fallback_mode(self):
         """测试推荐降级模式"""
         # 内存错误
-        mode = self.handler.get_recommended_fallback_mode(
-            {"error_category": "memory_error"}
-        )
+        mode = self.handler.get_recommended_fallback_mode({"error_category": "memory_error"})
         assert mode == FallbackMode.MINIMAL_MASKING
 
         # 输入错误
-        mode = self.handler.get_recommended_fallback_mode(
-            {"error_category": "input_error"}
-        )
+        mode = self.handler.get_recommended_fallback_mode({"error_category": "input_error"})
         assert mode == FallbackMode.SKIP_PROCESSING
 
         # 严重错误
-        mode = self.handler.get_recommended_fallback_mode(
-            {"error_severity": "critical"}
-        )
+        mode = self.handler.get_recommended_fallback_mode({"error_severity": "critical"})
         assert mode == FallbackMode.SAFE_MODE
 
     def test_fallback_disabled(self):

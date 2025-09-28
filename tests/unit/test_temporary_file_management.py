@@ -52,9 +52,7 @@ class TestTemporaryFileManagement:
         assert len(temp_dirs_created) > 0, "No temporary directories were created"
 
         for temp_dir_path in temp_dirs_created:
-            assert not Path(
-                temp_dir_path
-            ).exists(), f"Temporary directory not cleaned up: {temp_dir_path}"
+            assert not Path(temp_dir_path).exists(), f"Temporary directory not cleaned up: {temp_dir_path}"
 
     def test_pipeline_executor_temp_cleanup_on_exception(self, tmp_path):
         """Test that temporary directories are cleaned up even when exceptions occur"""
@@ -91,9 +89,7 @@ class TestTemporaryFileManagement:
         for temp_dir_path in temp_dirs_created:
             assert not Path(
                 temp_dir_path
-            ).exists(), (
-                f"Temporary directory not cleaned up after exception: {temp_dir_path}"
-            )
+            ).exists(), f"Temporary directory not cleaned up after exception: {temp_dir_path}"
 
     def test_mask_stage_hardlink_cleanup(self, tmp_path):
         """Test that MaskStage properly cleans up temporary hardlinks"""
@@ -237,9 +233,7 @@ class TestTemporaryFileManagement:
         # Directory should still exist (because it's not empty)
         assert temp_dir.exists()
 
-    @pytest.mark.parametrize(
-        "prefix", ["pktmask_pipeline_", "pktmask_stage_", "pktmask_test_"]
-    )
+    @pytest.mark.parametrize("prefix", ["pktmask_pipeline_", "pktmask_stage_", "pktmask_test_"])
     def test_temp_directory_prefixes(self, prefix):
         """Test that temporary directories use consistent prefixes"""
         with tempfile.TemporaryDirectory(prefix=prefix) as temp_dir:

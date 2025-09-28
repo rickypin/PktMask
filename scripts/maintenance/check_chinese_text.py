@@ -9,7 +9,7 @@ documentation, and configuration files to enforce the English-Only Coding Policy
 
 Usage:
     python scripts/maintenance/check_chinese_text.py [--fix] [--report]
-    
+
 Options:
     --fix     Attempt to auto-fix simple cases (interactive mode)
     --report  Generate detailed compliance report
@@ -191,9 +191,7 @@ class ChineseTextDetector:
             return "critical"
 
         # High: GUI components, infrastructure modules
-        if any(
-            component in str(file_path) for component in ["gui/", "infrastructure/"]
-        ):
+        if any(component in str(file_path) for component in ["gui/", "infrastructure/"]):
             return "high"
 
         # Medium: Documentation, configuration
@@ -210,26 +208,16 @@ class ChineseTextDetector:
 
         return "low"
 
-    def _generate_report(
-        self, total_files: int, files_with_issues: int
-    ) -> ComplianceReport:
+    def _generate_report(self, total_files: int, files_with_issues: int) -> ComplianceReport:
         """Generate compliance report"""
         issues_by_type = {}
         issues_by_severity = {}
 
         for issue in self.issues:
-            issues_by_type[issue.issue_type] = (
-                issues_by_type.get(issue.issue_type, 0) + 1
-            )
-            issues_by_severity[issue.severity] = (
-                issues_by_severity.get(issue.severity, 0) + 1
-            )
+            issues_by_type[issue.issue_type] = issues_by_type.get(issue.issue_type, 0) + 1
+            issues_by_severity[issue.severity] = issues_by_severity.get(issue.severity, 0) + 1
 
-        compliance_rate = (
-            ((total_files - files_with_issues) / total_files * 100)
-            if total_files > 0
-            else 100.0
-        )
+        compliance_rate = ((total_files - files_with_issues) / total_files * 100) if total_files > 0 else 100.0
 
         return ComplianceReport(
             scan_date=datetime.now().isoformat(),
@@ -258,9 +246,7 @@ def print_console_report(report: ComplianceReport):
     if report.issues_by_severity:
         print("\n📈 Issues by Severity:")
         for severity, count in sorted(report.issues_by_severity.items()):
-            emoji = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}.get(
-                severity, "⚪"
-            )
+            emoji = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}.get(severity, "⚪")
             print(f"  {emoji} {severity.title()}: {count}")
 
     if report.issues_by_type:
@@ -269,7 +255,7 @@ def print_console_report(report: ComplianceReport):
             print(f"  • {issue_type.replace('_', ' ').title()}: {count}")
 
     if report.issues:
-        print(f"\n🔍 Detailed Issues (showing first 20):")
+        print("\n🔍 Detailed Issues (showing first 20):")
         print("-" * 80)
 
         for i, issue in enumerate(report.issues[:20]):
@@ -281,9 +267,7 @@ def print_console_report(report: ComplianceReport):
             }.get(issue.severity, "⚪")
             print(f"{severity_emoji} {issue.file_path}:{issue.line_number}")
             print(f"   Type: {issue.issue_type} | Chinese: {issue.chinese_text}")
-            print(
-                f"   Line: {issue.line_content[:100]}{'...' if len(issue.line_content) > 100 else ''}"
-            )
+            print(f"   Line: {issue.line_content[:100]}{'...' if len(issue.line_content) > 100 else ''}")
             print()
 
         if len(report.issues) > 20:
@@ -312,12 +296,8 @@ Examples:
         """,
     )
 
-    parser.add_argument(
-        "--report", action="store_true", help="Generate detailed JSON report"
-    )
-    parser.add_argument(
-        "--ci", action="store_true", help="CI mode - exit with error if issues found"
-    )
+    parser.add_argument("--report", action="store_true", help="Generate detailed JSON report")
+    parser.add_argument("--ci", action="store_true", help="CI mode - exit with error if issues found")
     parser.add_argument(
         "--output",
         type=Path,

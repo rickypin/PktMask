@@ -36,15 +36,11 @@ def run_cmd(cmd: List[str], verbose: bool = False) -> None:
     env = os.environ.copy()
     env["PYTHONPATH"] = str(src_path)
 
-    result = subprocess.run(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env
-    )
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
     if verbose and result.stdout:
         print(result.stdout)
     if result.returncode != 0:
-        raise RuntimeError(
-            f"Command failed ({result.returncode}): {' '.join(cmd)}\n{result.stdout}"
-        )
+        raise RuntimeError(f"Command failed ({result.returncode}): {' '.join(cmd)}\n{result.stdout}")
 
 
 def discover_files(input_dir: Path, pattern: str) -> List[Path]:
@@ -91,11 +87,7 @@ def is_zero_payload(frame: Dict[str, Any]) -> bool:
     # --- 新版 numeric 判断 ---
     if "zero_bytes" in frame:
         zb = frame.get("zero_bytes", 0)
-        if (
-            "lengths" in frame
-            and isinstance(frame["lengths"], list)
-            and frame["lengths"]
-        ):
+        if "lengths" in frame and isinstance(frame["lengths"], list) and frame["lengths"]:
             total_len = sum(frame["lengths"])
             return zb >= total_len  # 若置零字节数>=总长度，则认为已全部置零
         # 没有 lengths 字段时，若 zero_bytes>0 则视为已置零（保守假设）
@@ -193,9 +185,7 @@ def validate_file(original_json: Path, masked_json: Path) -> Dict[str, Any]:
 # ---------------------- 后端处理函数 --------------------------
 
 
-def run_pktmask_trim_internal(
-    input_path: Path, output_path: Path, verbose: bool = False
-) -> None:
+def run_pktmask_trim_internal(input_path: Path, output_path: Path, verbose: bool = False) -> None:
     """使用双模块架构处理文件，避免启动 GUI。"""
     if verbose:
         logger.info("使用双模块架构处理: %s -> %s", input_path, output_path)
@@ -217,12 +207,8 @@ def run_pktmask_trim_internal(
         # 优先尝试从处理详情中提取批量掩码统计
         stats = result.stats or {}
         try:
-            details = (
-                result.data.get("details", {}) if isinstance(result.data, dict) else {}
-            )
-            perf = details.get("stage_performance", {}).get(
-                "TcpPayloadMaskerAdapter", {}
-            )
+            details = result.data.get("details", {}) if isinstance(result.data, dict) else {}
+            perf = details.get("stage_performance", {}).get("TcpPayloadMaskerAdapter", {})
             stage_stats = perf.get("stats", {}) if isinstance(perf, dict) else {}
             if stage_stats:
                 stats.update(stage_stats)
@@ -239,18 +225,10 @@ def main() -> None:
         description="TLS23 端到端掩码验证脚本 (基于 tls23_marker + PktMask)",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument(
-        "--input-dir", type=Path, required=True, help="递归扫描 PCAP/PCAPNG 的目录"
-    )
-    parser.add_argument(
-        "--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="结果输出目录"
-    )
-    parser.add_argument(
-        "--pktmask-mode", default="trim", help="调用 PktMask 主程序的模式"
-    )
-    parser.add_argument(
-        "--glob", dest="glob_pattern", default=DEFAULT_GLOB, help="文件匹配 glob 表达式"
-    )
+    parser.add_argument("--input-dir", type=Path, required=True, help="递归扫描 PCAP/PCAPNG 的目录")
+    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="结果输出目录")
+    parser.add_argument("--pktmask-mode", default="trim", help="调用 PktMask 主程序的模式")
+    parser.add_argument("--glob", dest="glob_pattern", default=DEFAULT_GLOB, help="文件匹配 glob 表达式")
     parser.add_argument("--verbose", action="store_true", help="输出详细调试信息")
 
     args = parser.parse_args()
@@ -406,14 +384,8 @@ def write_html_report(summary: Dict[str, Any], output_path: Path) -> None:
                 detail_lines.append(
                     f"<li>帧 <code>{frame}</code> | path=<code>{path}</code> | lengths={lens} | zero_bytes={zero} | payload_preview=<code>{preview}</code></li>"
                 )
-            details_html = (
-                "<details><summary>失败帧详情</summary><ul>"
-                + "\n".join(detail_lines)
-                + "</ul></details>"
-            )
-            rows_html.append(
-                f"<tr class='{cls}'><td colspan='5'>" + details_html + "</td></tr>"
-            )
+            details_html = "<details><summary>失败帧详情</summary><ul>" + "\n".join(detail_lines) + "</ul></details>"
+            rows_html.append(f"<tr class='{cls}'><td colspan='5'>" + details_html + "</td></tr>")
 
     html = (
         "<!DOCTYPE html><html><head><meta charset='utf-8'>"

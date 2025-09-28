@@ -5,11 +5,10 @@ Documentation synchronization check script
 Checks if components referenced in documentation exist in the code, helping identify outdated documentation.
 """
 
-import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import List, Set, Tuple
 
 # Project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -75,9 +74,7 @@ def find_components_in_code(src_path: Path) -> Set[str]:
     return components
 
 
-def check_doc_sync(
-    doc_path: Path, code_components: Set[str]
-) -> Tuple[List[str], List[str]]:
+def check_doc_sync(doc_path: Path, code_components: Set[str]) -> Tuple[List[str], List[str]]:
     """Check synchronization status of a single document"""
     doc_components = find_components_in_docs(doc_path)
 
@@ -126,9 +123,7 @@ def main():
             print(f"📄 {problem['path']}")
             print(f"   ❌ Non-existent components: {', '.join(problem['missing'])}")
             if problem["found"]:
-                print(
-                    f"   ✅ Existing components: {', '.join(problem['found'][:3])}..."
-                )
+                print(f"   ✅ Existing components: {', '.join(problem['found'][:3])}...")
             print()
 
         # Category statistics
@@ -136,18 +131,12 @@ def main():
         archive_problems = [p for p in problems if "archive/" in str(p["path"])]
 
         print("\n📊 Statistics:")
-        print(
-            f"   - current/ directory: {len(current_problems)} documents need updating"
-        )
+        print(f"   - current/ directory: {len(current_problems)} documents need updating")
         print(f"   - archive/ directory: {len(archive_problems)} documents archived")
-        print(
-            f"   - Other directories: {len(problems) - len(current_problems) - len(archive_problems)} documents"
-        )
+        print(f"   - Other directories: {len(problems) - len(current_problems) - len(archive_problems)} documents")
 
         if current_problems:
-            print(
-                "\n❗ Recommend prioritizing updates to documents in current/ directory"
-            )
+            print("\n❗ Recommend prioritizing updates to documents in current/ directory")
 
     else:
         print("✅ All documents are synchronized with code!")

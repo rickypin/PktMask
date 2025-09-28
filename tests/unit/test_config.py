@@ -272,9 +272,7 @@ class TestConfigurationEdgeCases:
         config = AppConfig.default()
 
         # 更新目录
-        config.update_last_directories(
-            input_dir="/test/input", output_dir="/test/output"
-        )
+        config.update_last_directories(input_dir="/test/input", output_dir="/test/output")
 
         assert config.ui.last_input_dir == "/test/input"
         assert config.ui.last_output_dir == "/test/output"

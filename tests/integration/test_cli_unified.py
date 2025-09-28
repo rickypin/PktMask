@@ -7,14 +7,13 @@ import json
 import shutil
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from typer.testing import CliRunner
 
 from pktmask.cli import app
 from pktmask.services.config_service import get_config_service
-from pktmask.services.pipeline_service import create_pipeline_executor
 
 
 class TestCLIUnified:
@@ -62,18 +61,9 @@ class TestCLIUnified:
 
         # 验证配置结构一致性
         assert set(cli_config.keys()) == set(gui_config.keys())
-        assert (
-            cli_config["remove_dupes"]["enabled"]
-            == gui_config["remove_dupes"]["enabled"]
-        )
-        assert (
-            cli_config["anonymize_ips"]["enabled"]
-            == gui_config["anonymize_ips"]["enabled"]
-        )
-        assert (
-            cli_config["mask_payloads"]["enabled"]
-            == gui_config["mask_payloads"]["enabled"]
-        )
+        assert cli_config["remove_dupes"]["enabled"] == gui_config["remove_dupes"]["enabled"]
+        assert cli_config["anonymize_ips"]["enabled"] == gui_config["anonymize_ips"]["enabled"]
+        assert cli_config["mask_payloads"]["enabled"] == gui_config["mask_payloads"]["enabled"]
 
     @patch("pktmask.services.pipeline_service.process_single_file")
     def test_single_file_processing(self, mock_process):
@@ -150,10 +140,7 @@ class TestCLIUnified:
             result = self.runner.invoke(app, ["process", str(test_dir)])
 
             # 应该显示自动启用所有操作的消息
-            assert (
-                "Directory processing detected: auto-enabled all operations"
-                in result.stdout
-            )
+            assert "Directory processing detected: auto-enabled all operations" in result.stdout
             assert "--dedup --anon --mask" in result.stdout
             assert "Auto-generated output path:" in result.stdout
 
@@ -162,10 +149,7 @@ class TestCLIUnified:
         result = self.runner.invoke(app, ["process", str(self.test_file)])
 
         assert result.exit_code == 1
-        assert (
-            "At least one operation must be specified: --dedup, --anon, or --mask"
-            in (result.stdout + result.stderr)
-        )
+        assert "At least one operation must be specified: --dedup, --anon, or --mask" in (result.stdout + result.stderr)
 
     def test_explicit_flags_override_intelligent_defaults(self):
         """测试明确指定的标志会覆盖智能默认值"""
@@ -176,15 +160,10 @@ class TestCLIUnified:
             test_pcap = test_dir / "test.pcap"
             test_pcap.write_text("fake pcap content")
 
-            result = self.runner.invoke(
-                app, ["process", str(test_dir), "--dedup", "--anon"]
-            )
+            result = self.runner.invoke(app, ["process", str(test_dir), "--dedup", "--anon"])
 
             # 不应该显示自动启用消息，因为用户明确指定了操作
-            assert (
-                "Directory processing detected: auto-enabled all operations"
-                not in result.stdout
-            )
+            assert "Directory processing detected: auto-enabled all operations" not in result.stdout
             assert "Auto-generated output path:" in result.stdout
 
     def test_info_command_file(self):
@@ -205,9 +184,7 @@ class TestCLIUnified:
 
     def test_info_command_json_output(self):
         """测试info命令 - JSON输出"""
-        result = self.runner.invoke(
-            app, ["info", str(self.input_dir), "--format", "json"]
-        )
+        result = self.runner.invoke(app, ["info", str(self.input_dir), "--format", "json"])
 
         assert result.exit_code == 0
 
@@ -318,9 +295,7 @@ class TestCLIUnified:
     def test_output_format_options(self):
         """测试输出格式选项"""
         # 测试JSON格式输出
-        result = self.runner.invoke(
-            app, ["info", str(self.test_file), "--format", "json"]
-        )
+        result = self.runner.invoke(app, ["info", str(self.test_file), "--format", "json"])
 
         assert result.exit_code == 0
 
@@ -329,21 +304,6 @@ class TestCLIUnified:
             json.loads(result.stdout)
         except json.JSONDecodeError:
             pytest.fail("JSON format output is invalid")
-
-    def test_process_command_validation_no_operations(self):
-        """测试process命令验证 - 没有指定操作"""
-        result = self.runner.invoke(
-            app,
-            [
-                "process",
-                str(self.test_file),
-                "-o",
-                str(self.output_dir / "output.pcap"),
-            ],
-        )
-
-        assert result.exit_code == 1
-        assert "At least one operation must be specified" in result.stdout
 
     def test_process_command_mask_uses_tls_protocol(self):
         """测试process命令掩码功能使用TLS协议"""
@@ -382,9 +342,7 @@ class TestCLIUnified:
 
         assert result.exit_code == 1
         # Error messages go to stderr in typer
-        assert "At least one operation must be specified" in (
-            result.stdout + result.stderr
-        )
+        assert "At least one operation must be specified" in (result.stdout + result.stderr)
 
     def test_main_help_shows_process_command(self):
         """测试主帮助显示process命令"""
@@ -426,9 +384,7 @@ class TestCLIUnified:
         assert mask_config["mask_payloads"]["enabled"] is True
 
         # 测试新的灵活组合：dedup + anon（不包含mask）
-        dedup_anon_config = build_config_from_unified_args(
-            dedup=True, anon=True, mask=False
-        )
+        dedup_anon_config = build_config_from_unified_args(dedup=True, anon=True, mask=False)
         assert "remove_dupes" in dedup_anon_config
         assert "anonymize_ips" in dedup_anon_config
         assert "mask_payloads" not in dedup_anon_config
@@ -546,17 +502,9 @@ class TestGUICLIConsistency:
         gui_config = service.build_pipeline_config(gui_options)
 
         # CLI配置
-        cli_options = service.create_options_from_cli_args(
-            remove_dupes=True, anonymize_ips=True, mask_payloads=True
-        )
+        cli_options = service.create_options_from_cli_args(remove_dupes=True, anonymize_ips=True, mask_payloads=True)
         cli_config = service.build_pipeline_config(cli_options)
 
         # 验证核心配置一致性
-        assert (
-            gui_config["remove_dupes"]["enabled"]
-            == cli_config["remove_dupes"]["enabled"]
-        )
-        assert (
-            gui_config["anonymize_ips"]["enabled"]
-            == cli_config["anonymize_ips"]["enabled"]
-        )
+        assert gui_config["remove_dupes"]["enabled"] == cli_config["remove_dupes"]["enabled"]
+        assert gui_config["anonymize_ips"]["enabled"] == cli_config["anonymize_ips"]["enabled"]

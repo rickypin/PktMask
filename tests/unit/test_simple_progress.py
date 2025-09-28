@@ -155,9 +155,7 @@ class TestCLIProgressHandler:
         handler = CLIProgressHandler()
 
         with patch("builtins.print") as mock_print:
-            handler.handle_progress(
-                PipelineEvents.FILE_END, {"path": "test.pcap", "success": True}
-            )
+            handler.handle_progress(PipelineEvents.FILE_END, {"path": "test.pcap", "success": True})
 
             assert handler.processed_files == 1
             mock_print.assert_called_once_with("✅ Completed: test.pcap")
@@ -167,9 +165,7 @@ class TestCLIProgressHandler:
         handler = CLIProgressHandler()
 
         with patch("builtins.print") as mock_print:
-            handler.handle_progress(
-                PipelineEvents.FILE_END, {"path": "test.pcap", "success": False}
-            )
+            handler.handle_progress(PipelineEvents.FILE_END, {"path": "test.pcap", "success": False})
 
             assert handler.processed_files == 1
             mock_print.assert_called_once_with("❌ Failed: test.pcap")
@@ -239,9 +235,7 @@ class TestGUIProgressHandler:
         test_data = {"test": "data"}
         handler.handle_progress(PipelineEvents.FILE_START, test_data)
 
-        mock_coordinator.emit_pipeline_event.assert_called_once_with(
-            PipelineEvents.FILE_START, test_data
-        )
+        mock_coordinator.emit_pipeline_event.assert_called_once_with(PipelineEvents.FILE_START, test_data)
 
 
 class TestCallbackCreation:
@@ -250,9 +244,7 @@ class TestCallbackCreation:
     def test_create_simple_progress_callback(self):
         """测试创建简单进度回调"""
         mock_service = Mock()
-        callback = create_simple_progress_callback(
-            verbose=True, show_stages=True, report_service=mock_service
-        )
+        callback = create_simple_progress_callback(verbose=True, show_stages=True, report_service=mock_service)
 
         # 测试回调函数
         with patch("builtins.print"):
@@ -272,9 +264,7 @@ class TestCallbackCreation:
         test_data = {"test": "data"}
         callback(PipelineEvents.FILE_START, test_data)
 
-        mock_coordinator.emit_pipeline_event.assert_called_once_with(
-            PipelineEvents.FILE_START, test_data
-        )
+        mock_coordinator.emit_pipeline_event.assert_called_once_with(PipelineEvents.FILE_START, test_data)
 
     def test_create_test_progress_callback(self):
         """测试创建测试进度回调"""

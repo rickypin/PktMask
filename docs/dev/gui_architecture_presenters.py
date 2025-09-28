@@ -94,12 +94,8 @@ class MainPresenter(IMainPresenter):
             return
 
         # 订阅内部事件
-        self._event_bus.subscribe(
-            AppEvent.INPUT_DIRECTORY_SELECTED, self._on_input_directory_selected
-        )
-        self._event_bus.subscribe(
-            AppEvent.OUTPUT_DIRECTORY_SELECTED, self._on_output_directory_selected
-        )
+        self._event_bus.subscribe(AppEvent.INPUT_DIRECTORY_SELECTED, self._on_input_directory_selected)
+        self._event_bus.subscribe(AppEvent.OUTPUT_DIRECTORY_SELECTED, self._on_output_directory_selected)
         self._event_bus.subscribe(AppEvent.OPTIONS_CHANGED, self._on_options_changed)
 
     # ========================================================================
@@ -221,9 +217,7 @@ class MainPresenter(IMainPresenter):
         # 检查是否选择了处理选项
         if not any(self._app_state.processing_options.values()):
             if self._view:
-                self._view.show_warning(
-                    "Warning", "Please select at least one processing option"
-                )
+                self._view.show_warning("Warning", "Please select at least one processing option")
             return
 
         # 更新状态
@@ -311,9 +305,7 @@ class MainPresenter(IMainPresenter):
         """运行处理逻辑 (在后台线程中)"""
         try:
             # 构建配置
-            config = self._config_service.build_pipeline_config(
-                self._app_state.processing_options
-            )
+            config = self._config_service.build_pipeline_config(self._app_state.processing_options)
 
             # 创建执行器
             executor = create_pipeline_executor(config)

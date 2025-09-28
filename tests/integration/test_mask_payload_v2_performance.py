@@ -11,9 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from pktmask.core.pipeline.stages.masking_stage.stage import (
-    MaskingStage as NewMaskPayloadStage,
-)
+from pktmask.core.pipeline.stages.masking_stage.stage import MaskingStage as NewMaskPayloadStage
 
 
 class TestMaskPayloadV2Performance:
@@ -26,9 +24,7 @@ class TestMaskPayloadV2Performance:
         if not test_data_dir.exists():
             pytest.skip("TLS测试数据目录不存在")
 
-        pcap_files = list(test_data_dir.glob("*.pcap")) + list(
-            test_data_dir.glob("*.pcapng")
-        )
+        pcap_files = list(test_data_dir.glob("*.pcap")) + list(test_data_dir.glob("*.pcapng"))
         if not pcap_files:
             pytest.skip("没有找到TLS测试文件")
 
@@ -61,9 +57,7 @@ class TestMaskPayloadV2Performance:
             },
         }
 
-    def test_processing_speed_benchmark(
-        self, test_files, temp_output_dir, performance_config
-    ):
+    def test_processing_speed_benchmark(self, test_files, temp_output_dir, performance_config):
         """测试处理速度基准"""
         stage = NewMaskPayloadStage(performance_config)
         stage.initialize()
@@ -107,9 +101,7 @@ class TestMaskPayloadV2Performance:
 
         stage.cleanup()
 
-    def test_memory_usage_monitoring(
-        self, test_files, temp_output_dir, performance_config
-    ):
+    def test_memory_usage_monitoring(self, test_files, temp_output_dir, performance_config):
         """测试内存使用监控"""
         # 启用详细的内存监控
         performance_config["masker_config"]["enable_performance_monitoring"] = True
@@ -143,12 +135,8 @@ class TestMaskPayloadV2Performance:
         print(f"  - 峰值增长: {memory_peak_delta / 1024 / 1024:.1f}MB")
 
         # 验证内存使用合理性
-        assert (
-            memory_peak_delta < 500 * 1024 * 1024
-        ), f"峰值内存增长过大: {memory_peak_delta / 1024 / 1024:.1f}MB"
-        assert (
-            abs(memory_increase) < 100 * 1024 * 1024
-        ), f"内存泄漏可能: {memory_increase / 1024 / 1024:.1f}MB"
+        assert memory_peak_delta < 500 * 1024 * 1024, f"峰值内存增长过大: {memory_peak_delta / 1024 / 1024:.1f}MB"
+        assert abs(memory_increase) < 100 * 1024 * 1024, f"内存泄漏可能: {memory_increase / 1024 / 1024:.1f}MB"
 
         stage.cleanup()
 
@@ -185,38 +173,24 @@ class TestMaskPayloadV2Performance:
                 "chunk_size": chunk_size,
                 "processing_time": processing_time,
                 "packets_processed": stats.packets_processed,
-                "throughput": (
-                    stats.packets_processed / processing_time
-                    if processing_time > 0
-                    else 0
-                ),
+                "throughput": (stats.packets_processed / processing_time if processing_time > 0 else 0),
             }
             results.append(result)
 
-            print(
-                f"块大小 {chunk_size}: {processing_time:.3f}s, {result['throughput']:.1f} 包/秒"
-            )
+            print(f"块大小 {chunk_size}: {processing_time:.3f}s, {result['throughput']:.1f} 包/秒")
 
             stage.cleanup()
 
         print(f"\n可扩展性测试结果:")
         for result in results:
-            print(
-                f"  - 块大小 {result['chunk_size']}: {result['throughput']:.1f} 包/秒"
-            )
+            print(f"  - 块大小 {result['chunk_size']}: {result['throughput']:.1f} 包/秒")
 
         # 验证不同块大小都能正常工作
         for result in results:
-            assert (
-                result["packets_processed"] > 0
-            ), f"块大小 {result['chunk_size']} 处理失败"
-            assert (
-                result["processing_time"] < 10.0
-            ), f"块大小 {result['chunk_size']} 处理时间过长"
+            assert result["packets_processed"] > 0, f"块大小 {result['chunk_size']} 处理失败"
+            assert result["processing_time"] < 10.0, f"块大小 {result['chunk_size']} 处理时间过长"
 
-    def test_concurrent_processing_safety(
-        self, test_files, temp_output_dir, performance_config
-    ):
+    def test_concurrent_processing_safety(self, test_files, temp_output_dir, performance_config):
         """测试并发处理安全性（模拟）"""
         import queue
         import threading
@@ -230,9 +204,7 @@ class TestMaskPayloadV2Performance:
                 stage = NewMaskPayloadStage(performance_config)
                 stage.initialize()
 
-                output_file = (
-                    temp_output_dir / f"concurrent_{worker_id}_{input_file.name}"
-                )
+                output_file = temp_output_dir / f"concurrent_{worker_id}_{input_file.name}"
 
                 start_time = time.time()
                 stats = stage.process_file(str(input_file), str(output_file))
@@ -279,9 +251,7 @@ class TestMaskPayloadV2Performance:
         print(f"  - 错误数量: {len(errors)}")
 
         for result in results:
-            print(
-                f"  - 工作线程 {result['worker_id']}: {result['processing_time']:.3f}s"
-            )
+            print(f"  - 工作线程 {result['worker_id']}: {result['processing_time']:.3f}s")
 
         for error in errors:
             print(f"  - 工作线程 {error['worker_id']} 错误: {error['error']}")
@@ -294,6 +264,4 @@ class TestMaskPayloadV2Performance:
         if len(results) > 1:
             first_result = results[0]
             for result in results[1:]:
-                assert (
-                    result["packets_processed"] == first_result["packets_processed"]
-                ), "并发处理的包数量应该一致"
+                assert result["packets_processed"] == first_result["packets_processed"], "并发处理的包数量应该一致"

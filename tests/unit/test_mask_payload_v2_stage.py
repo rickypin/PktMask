@@ -21,9 +21,7 @@ class TestMaskingStage:
         config = {
             "protocol": "tls",
             "mode": "enhanced",
-            "marker_config": {
-                "preserve": {"handshake": True, "application_data": False}
-            },
+            "marker_config": {"preserve": {"handshake": True, "application_data": False}},
             "masker_config": {"chunk_size": 1000, "verify_checksums": True},
         }
 
@@ -89,12 +87,8 @@ class TestMaskingStage:
         stage.cleanup()
         assert not stage._initialized
 
-    @patch(
-        "pktmask.core.pipeline.stages.masking_stage.marker.tls_marker.TLSProtocolMarker"
-    )
-    @patch(
-        "pktmask.core.pipeline.stages.masking_stage.masker.payload_masker.PayloadMasker"
-    )
+    @patch("pktmask.core.pipeline.stages.masking_stage.marker.tls_marker.TLSProtocolMarker")
+    @patch("pktmask.core.pipeline.stages.masking_stage.masker.payload_masker.PayloadMasker")
     def test_process_file_integration(self, mock_masker_class, mock_marker_class):
         """测试文件处理集成"""
         # 设置模拟对象

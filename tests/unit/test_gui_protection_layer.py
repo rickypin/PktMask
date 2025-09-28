@@ -155,9 +155,7 @@ class TestGUIFeatureFlagValidator:
         results = GUIFeatureFlagValidator.validate_environment()
 
         assert len(results["warnings"]) > 0
-        assert any(
-            "Debug mode is enabled" in warning for warning in results["warnings"]
-        )
+        assert any("Debug mode is enabled" in warning for warning in results["warnings"])
 
 
 class TestGUIConsistentProcessor:
@@ -254,9 +252,7 @@ class TestGUIServicePipelineThread:
     def test_directory_processing_file_discovery(self, mock_walk):
         """Test directory processing file discovery"""
         # Mock os.walk to return test files
-        mock_walk.return_value = [
-            ("/test/dir", [], ["file1.pcap", "file2.pcapng", "file3.txt"])
-        ]
+        mock_walk.return_value = [("/test/dir", [], ["file1.pcap", "file2.pcapng", "file3.txt"])]
 
         mock_executor = Mock()
         thread = GUIServicePipelineThread(mock_executor, "/test/dir", "/test/output")
@@ -280,9 +276,7 @@ class TestGUIServicePipelineThread:
 
         # Check for pipeline start signal
         start_calls = [
-            call
-            for call in thread.progress_signal.emit.call_args_list
-            if call[0][0] == PipelineEvents.PIPELINE_START
+            call for call in thread.progress_signal.emit.call_args_list if call[0][0] == PipelineEvents.PIPELINE_START
         ]
         assert len(start_calls) > 0
         assert start_calls[0][0][1]["total_files"] == 2

@@ -63,27 +63,17 @@ class TkinterMainView(tk.Tk):  # 实际应该继承 IMainView
 
         # 更新选项
         if state.processing_options:
-            self.remove_dupes_var.set(
-                state.processing_options.get("remove_dupes", False)
-            )
-            self.anonymize_ips_var.set(
-                state.processing_options.get("anonymize_ips", False)
-            )
-            self.mask_payloads_var.set(
-                state.processing_options.get("mask_payloads", False)
-            )
+            self.remove_dupes_var.set(state.processing_options.get("remove_dupes", False))
+            self.anonymize_ips_var.set(state.processing_options.get("anonymize_ips", False))
+            self.mask_payloads_var.set(state.processing_options.get("mask_payloads", False))
 
     def update_progress(self, progress) -> None:  # progress: ProcessingProgress
         """更新处理进度显示"""
         self.progress_var.set(progress.percentage)
-        self.current_file_var.set(
-            f"Processing: {os.path.basename(progress.current_file)}"
-        )
+        self.current_file_var.set(f"Processing: {os.path.basename(progress.current_file)}")
 
         # 更新日志
-        log_message = (
-            f"[{progress.stage_name}] {os.path.basename(progress.current_file)}"
-        )
+        log_message = f"[{progress.stage_name}] {os.path.basename(progress.current_file)}"
         self.log_text.insert(tk.END, log_message + "\n")
         self.log_text.see(tk.END)
 
@@ -99,9 +89,7 @@ class TkinterMainView(tk.Tk):  # 实际应该继承 IMainView
         """显示信息提示"""
         messagebox.showinfo(title, message)
 
-    def prompt_directory_selection(
-        self, title: str, initial_dir: str = ""
-    ) -> Optional[str]:
+    def prompt_directory_selection(self, title: str, initial_dir: str = "") -> Optional[str]:
         """提示用户选择目录"""
         directory = filedialog.askdirectory(title=title, initialdir=initial_dir)
         return directory if directory else None
@@ -157,34 +145,22 @@ class TkinterMainView(tk.Tk):  # 实际应该继承 IMainView
     def _create_directory_section(self, parent, start_row) -> None:
         """创建目录选择区域"""
         # 输入目录
-        ttk.Label(parent, text="Input Directory:").grid(
-            row=start_row, column=0, sticky=tk.W, pady=2
-        )
+        ttk.Label(parent, text="Input Directory:").grid(row=start_row, column=0, sticky=tk.W, pady=2)
         input_frame = ttk.Frame(parent)
         input_frame.grid(row=start_row, column=1, sticky=(tk.W, tk.E), pady=2)
         input_frame.columnconfigure(0, weight=1)
 
-        ttk.Button(input_frame, text="Browse", command=self._on_input_dir_clicked).grid(
-            row=0, column=1, padx=(5, 0)
-        )
-        ttk.Label(input_frame, textvariable=self.input_dir_var).grid(
-            row=0, column=0, sticky=(tk.W, tk.E)
-        )
+        ttk.Button(input_frame, text="Browse", command=self._on_input_dir_clicked).grid(row=0, column=1, padx=(5, 0))
+        ttk.Label(input_frame, textvariable=self.input_dir_var).grid(row=0, column=0, sticky=(tk.W, tk.E))
 
         # 输出目录
-        ttk.Label(parent, text="Output Directory:").grid(
-            row=start_row + 1, column=0, sticky=tk.W, pady=2
-        )
+        ttk.Label(parent, text="Output Directory:").grid(row=start_row + 1, column=0, sticky=tk.W, pady=2)
         output_frame = ttk.Frame(parent)
         output_frame.grid(row=start_row + 1, column=1, sticky=(tk.W, tk.E), pady=2)
         output_frame.columnconfigure(0, weight=1)
 
-        ttk.Button(
-            output_frame, text="Browse", command=self._on_output_dir_clicked
-        ).grid(row=0, column=1, padx=(5, 0))
-        ttk.Label(output_frame, textvariable=self.output_dir_var).grid(
-            row=0, column=0, sticky=(tk.W, tk.E)
-        )
+        ttk.Button(output_frame, text="Browse", command=self._on_output_dir_clicked).grid(row=0, column=1, padx=(5, 0))
+        ttk.Label(output_frame, textvariable=self.output_dir_var).grid(row=0, column=0, sticky=(tk.W, tk.E))
 
     def _create_options_section(self, parent, row) -> None:
         """创建选项区域"""
@@ -213,26 +189,18 @@ class TkinterMainView(tk.Tk):  # 实际应该继承 IMainView
     def _create_progress_section(self, parent, start_row) -> None:
         """创建进度区域"""
         progress_frame = ttk.LabelFrame(parent, text="Progress", padding="5")
-        progress_frame.grid(
-            row=start_row, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5
-        )
+        progress_frame.grid(row=start_row, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
         progress_frame.columnconfigure(0, weight=1)
 
-        self.progress_bar = ttk.Progressbar(
-            progress_frame, variable=self.progress_var, maximum=100
-        )
+        self.progress_bar = ttk.Progressbar(progress_frame, variable=self.progress_var, maximum=100)
         self.progress_bar.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=2)
 
-        ttk.Label(progress_frame, textvariable=self.current_file_var).grid(
-            row=1, column=0, sticky=tk.W, pady=2
-        )
+        ttk.Label(progress_frame, textvariable=self.current_file_var).grid(row=1, column=0, sticky=tk.W, pady=2)
 
     def _create_log_section(self, parent, row) -> None:
         """创建日志区域"""
         log_frame = ttk.LabelFrame(parent, text="Log", padding="5")
-        log_frame.grid(
-            row=row, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5
-        )
+        log_frame.grid(row=row, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
         log_frame.columnconfigure(0, weight=1)
         log_frame.rowconfigure(0, weight=1)
 
@@ -243,9 +211,7 @@ class TkinterMainView(tk.Tk):  # 实际应该继承 IMainView
         text_frame.rowconfigure(0, weight=1)
 
         self.log_text = tk.Text(text_frame, height=8, wrap=tk.WORD)
-        scrollbar = ttk.Scrollbar(
-            text_frame, orient=tk.VERTICAL, command=self.log_text.yview
-        )
+        scrollbar = ttk.Scrollbar(text_frame, orient=tk.VERTICAL, command=self.log_text.yview)
         self.log_text.configure(yscrollcommand=scrollbar.set)
 
         self.log_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
@@ -254,18 +220,12 @@ class TkinterMainView(tk.Tk):  # 实际应该继承 IMainView
     def _create_control_section(self, parent, row) -> None:
         """创建控制区域"""
         control_frame = ttk.Frame(parent)
-        control_frame.grid(
-            row=row, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=10
-        )
+        control_frame.grid(row=row, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=10)
 
-        self.start_button = ttk.Button(
-            control_frame, text="Start Processing", command=self._on_start_clicked
-        )
+        self.start_button = ttk.Button(control_frame, text="Start Processing", command=self._on_start_clicked)
         self.start_button.pack(side=tk.RIGHT, padx=5)
 
-        ttk.Button(control_frame, text="Clear Log", command=self._clear_log).pack(
-            side=tk.RIGHT, padx=5
-        )
+        ttk.Button(control_frame, text="Clear Log", command=self._clear_log).pack(side=tk.RIGHT, padx=5)
 
     def _connect_events(self) -> None:
         """连接事件"""

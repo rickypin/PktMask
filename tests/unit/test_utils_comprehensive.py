@@ -165,9 +165,7 @@ class TestFileOpsComprehensive:
 
         pcap_files = file_ops.find_pcap_files(clean_dir)
         assert len(pcap_files) == 2
-        assert all(
-            any(f.endswith(ext) for ext in [".pcap", ".pcapng"]) for f in pcap_files
-        )
+        assert all(any(f.endswith(ext) for ext in [".pcap", ".pcapng"]) for f in pcap_files)
 
     def test_copy_file_safely(self, temp_dir):
         """测试安全文件复制"""
@@ -230,9 +228,7 @@ class TestFileOpsComprehensive:
         result = file_ops.generate_output_filename("input.pcap", "_processed")
         assert result == "input_processed.pcap"
 
-        result = file_ops.generate_output_filename(
-            "input.pcap", "_processed", "/output/dir"
-        )
+        result = file_ops.generate_output_filename("input.pcap", "_processed", "/output/dir")
         expected = str(Path("/output/dir") / "input_processed.pcap")
         assert result == expected
 
@@ -250,9 +246,7 @@ class TestFileOpsComprehensive:
         assert size > 0
 
         # 计算预期大小
-        expected_size = len("content1".encode()) + len(
-            "longer content for file2".encode()
-        )
+        expected_size = len("content1".encode()) + len("longer content for file2".encode())
         assert size == expected_size
 
 
@@ -287,9 +281,7 @@ class TestStringOpsComprehensive:
 
     def test_format_deduplication_summary(self):
         """测试去重摘要格式化"""
-        result = string_ops.format_deduplication_summary(
-            "Deduplication", 800, 200, 20.0
-        )
+        result = string_ops.format_deduplication_summary("Deduplication", 800, 200, 20.0)
 
         assert "Deduplication" in result
         assert "800" in result
@@ -364,9 +356,7 @@ class TestStringOpsComprehensive:
 
     def test_format_file_status(self):
         """测试文件状态格式化"""
-        result = string_ops.format_file_status(
-            "test.pcap", "Processed", ["Detail 1", "Detail 2"]
-        )
+        result = string_ops.format_file_status("test.pcap", "Processed", ["Detail 1", "Detail 2"])
 
         assert "test.pcap" in result
         assert "Processed" in result
@@ -527,9 +517,7 @@ class TestMathOpsComprehensive:
 
     def test_format_processing_summary(self):
         """测试处理摘要格式化"""
-        result = math_ops.format_processing_summary(
-            1000, 800, "Deduplication", "packets"
-        )
+        result = math_ops.format_processing_summary(1000, 800, "Deduplication", "packets")
 
         assert "1,000" in result  # 适配千位分隔符格式
         assert "800" in result
@@ -663,9 +651,7 @@ class TestUtilsIntegrationComprehensive:
         rate = math_ops.calculate_percentage(processed_count, original_count)
 
         # Format summary
-        summary = string_ops.format_step_summary(
-            "Test Step", original_count, processed_count, rate
-        )
+        summary = string_ops.format_step_summary("Test Step", original_count, processed_count, rate)
 
         assert "1000" in summary
         assert "850" in summary
@@ -686,9 +672,7 @@ class TestUtilsIntegrationComprehensive:
         # 2. Find PCAP files
         found_files = file_ops.find_pcap_files(temp_dir)
         # Filter to keep only our created test files
-        our_test_files = [
-            f for f in found_files if any(f"test_file_{i}" in f for i in range(5))
-        ]
+        our_test_files = [f for f in found_files if any(f"test_file_{i}" in f for i in range(5))]
 
         # Verify all our created files were found
         assert len(our_test_files) >= 5

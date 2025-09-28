@@ -109,9 +109,7 @@ def test_collect_step_result_fix():
     if "Anonymize IPs" in stored_steps:
         step_data = stored_steps["Anonymize IPs"]
         if step_data.get("type") == "anonymize_ips":
-            print(
-                "✅ Test PASSED: IPAnonymizationStage correctly stored as 'anonymize_ips' type"
-            )
+            print("✅ Test PASSED: IPAnonymizationStage correctly stored as 'anonymize_ips' type")
             return True
         else:
             print(f"❌ Test FAILED: Wrong type stored: {step_data.get('type')}")
@@ -155,9 +153,7 @@ def test_step_type_inference():
             else:
                 step_type = step_name_raw.lower()
 
-        print(
-            f"Step: {step_name_raw}, Initial: {initial_type}, Inferred: {step_type}, Expected: {expected_type}"
-        )
+        print(f"Step: {step_name_raw}, Initial: {initial_type}, Inferred: {step_type}, Expected: {expected_type}")
 
         if step_type == expected_type:
             print("  ✅ PASS")

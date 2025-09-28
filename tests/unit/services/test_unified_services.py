@@ -83,9 +83,7 @@ class TestConfigService:
     def test_cli_args_to_options(self):
         """Test CLI arguments to options conversion"""
         service = ConfigService()
-        options = service.create_options_from_cli_args(
-            remove_dupes=True, anonymize_ips=False, mask_payloads=True
-        )
+        options = service.create_options_from_cli_args(remove_dupes=True, anonymize_ips=False, mask_payloads=True)
 
         assert options.enable_remove_dupes is True
         assert options.enable_anonymize_ips is False
@@ -112,9 +110,7 @@ class TestConfigService:
         assert "anonymize_ips" in cli_config
 
         # Test GUI configuration building
-        gui_config = build_config_from_gui(
-            remove_dupes=True, anonymize_ips=True, mask_payloads=False
-        )
+        gui_config = build_config_from_gui(remove_dupes=True, anonymize_ips=True, mask_payloads=False)
         assert "remove_dupes" in gui_config
         assert "anonymize_ips" in gui_config
         assert "mask_payloads" not in gui_config
@@ -125,9 +121,7 @@ class TestOutputService:
 
     def test_output_service_initialization(self):
         """测试输出服务初始化"""
-        service = OutputService(
-            output_format=OutputFormat.TEXT, output_level=OutputLevel.VERBOSE
-        )
+        service = OutputService(output_format=OutputFormat.TEXT, output_level=OutputLevel.VERBOSE)
 
         assert service.format == OutputFormat.TEXT
         assert service.level == OutputLevel.VERBOSE
@@ -341,17 +335,13 @@ class TestReportService:
             )
 
             # 保存文本报告
-            file_path = service.save_report_to_file(
-                report=report, output_path=temp_dir, format_type="text"
-            )
+            file_path = service.save_report_to_file(report=report, output_path=temp_dir, format_type="text")
 
             assert Path(file_path).exists()
             assert file_path.endswith(".txt")
 
             # 保存JSON报告
-            json_file_path = service.save_report_to_file(
-                report=report, output_path=temp_dir, format_type="json"
-            )
+            json_file_path = service.save_report_to_file(report=report, output_path=temp_dir, format_type="json")
 
             assert Path(json_file_path).exists()
             assert json_file_path.endswith(".json")

@@ -18,9 +18,7 @@ class TestMemoryManagementIntegration(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures"""
-        self.test_config = {
-            "resource_manager": {"max_memory_mb": 512, "pressure_threshold": 0.8}
-        }
+        self.test_config = {"resource_manager": {"max_memory_mb": 512, "pressure_threshold": 0.8}}
 
     def test_deduplication_stage_lifecycle(self):
         """Test DeduplicationStage with improved memory management"""
@@ -136,12 +134,8 @@ class TestMemoryManagementIntegration(unittest.TestCase):
         self.assertIsNotNone(stage.resource_manager)
         # Note: Configuration may use defaults, so just verify reasonable values
         self.assertGreater(stage.resource_manager.memory_monitor.max_memory_mb, 0)
-        self.assertGreater(
-            stage.resource_manager.memory_monitor.pressure_threshold, 0.0
-        )
-        self.assertLessEqual(
-            stage.resource_manager.memory_monitor.pressure_threshold, 1.0
-        )
+        self.assertGreater(stage.resource_manager.memory_monitor.pressure_threshold, 0.0)
+        self.assertLessEqual(stage.resource_manager.memory_monitor.pressure_threshold, 1.0)
 
         # Test memory pressure check
         pressure = stage.resource_manager.get_memory_pressure()

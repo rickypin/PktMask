@@ -58,15 +58,11 @@ def run_cmd(cmd: List[str], verbose: bool = False) -> None:
     env = os.environ.copy()
     env["PYTHONPATH"] = str(src_path)
 
-    result = subprocess.run(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env
-    )
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
     if verbose and result.stdout:
         print(result.stdout)
     if result.returncode != 0:
-        raise RuntimeError(
-            f"Command failed ({result.returncode}): {' '.join(cmd)}\n{result.stdout}"
-        )
+        raise RuntimeError(f"Command failed ({result.returncode}): {' '.join(cmd)}\n{result.stdout}")
 
 
 def run_enhanced_tls_marker(
@@ -154,11 +150,7 @@ def is_zero_payload(frame: Dict[str, Any]) -> bool:
     # --- 新版 numeric 判断 ---
     if "zero_bytes" in frame:
         zb = frame.get("zero_bytes", 0)
-        if (
-            "lengths" in frame
-            and isinstance(frame["lengths"], list)
-            and frame["lengths"]
-        ):
+        if "lengths" in frame and isinstance(frame["lengths"], list) and frame["lengths"]:
             total_len = sum(frame["lengths"])
             return zb >= total_len  # 若置零字节数>=总长度，则认为已全部置零
         # 没有 lengths 字段时，若 zero_bytes>0 则视为已置零（保守假设）
@@ -326,9 +318,7 @@ def validate_complete_preservation(
         # 检查掩码后是否存在
         masked_frame = masked_by_frame.get(frame_no)
         if not masked_frame:
-            preservation_results.append(
-                {"frame": frame_no, "status": "missing", "reason": "掩码后帧丢失"}
-            )
+            preservation_results.append({"frame": frame_no, "status": "missing", "reason": "掩码后帧丢失"})
             continue
 
         # 比较关键属性
@@ -362,9 +352,7 @@ def validate_complete_preservation(
 
         if preserved:
             preserved_records += 1
-            preservation_results.append(
-                {"frame": frame_no, "status": "preserved", "protocol_types": orig_types}
-            )
+            preservation_results.append({"frame": frame_no, "status": "preserved", "protocol_types": orig_types})
         else:
             preservation_results.append(
                 {
@@ -375,11 +363,7 @@ def validate_complete_preservation(
                 }
             )
 
-    preservation_rate = (
-        (preserved_records / total_target_records * 100)
-        if total_target_records > 0
-        else 0
-    )
+    preservation_rate = (preserved_records / total_target_records * 100) if total_target_records > 0 else 0
 
     return {
         "total_target_records": total_target_records,
@@ -394,9 +378,7 @@ def validate_smart_masking(
     original_json: Path, masked_json: Path, target_type: int = 23, header_bytes: int = 5
 ) -> Dict[str, Any]:
     """验证TLS-23智能掩码（保留指定字节头部，掩码其余载荷）"""
-    logger.info(
-        "验证智能掩码策略 (TLS-%d, 头部保留: %d字节)", target_type, header_bytes
-    )
+    logger.info("验证智能掩码策略 (TLS-%d, 头部保留: %d字节)", target_type, header_bytes)
 
     original_data = read_json(original_json)
     masked_data = read_json(masked_json)
@@ -436,11 +418,7 @@ def validate_smart_masking(
                     payload_part = cleaned[header_bytes * 2 :]
                     # 头部不应全为零，载荷部分应大部分为零
                     header_not_all_zero = set(header_part) != {"0"}
-                    payload_mostly_zero = (
-                        payload_part.count("0") / len(payload_part) > 0.8
-                        if payload_part
-                        else True
-                    )
+                    payload_mostly_zero = payload_part.count("0") / len(payload_part) > 0.8 if payload_part else True
                     return header_not_all_zero and payload_mostly_zero
 
         return False
@@ -469,9 +447,7 @@ def validate_smart_masking(
         # 检查掩码后是否存在
         masked_frame = masked_by_frame.get(frame_no)
         if not masked_frame:
-            masking_results.append(
-                {"frame": frame_no, "status": "missing", "reason": "掩码后帧丢失"}
-            )
+            masking_results.append({"frame": frame_no, "status": "missing", "reason": "掩码后帧丢失"})
             continue
 
         # 检查是否正确应用了智能掩码（头部保留，载荷大部分置零）
@@ -496,11 +472,7 @@ def validate_smart_masking(
                 }
             )
 
-    masking_rate = (
-        (correctly_masked_records / total_target_records * 100)
-        if total_target_records > 0
-        else 0
-    )
+    masking_rate = (correctly_masked_records / total_target_records * 100) if total_target_records > 0 else 0
 
     return {
         "total_target_records": total_target_records,
@@ -511,9 +483,7 @@ def validate_smart_masking(
     }
 
 
-def validate_cross_segment_handling(
-    original_json: Path, masked_json: Path
-) -> Dict[str, Any]:
+def validate_cross_segment_handling(original_json: Path, masked_json: Path) -> Dict[str, Any]:
     """验证跨TCP段处理正确性 - 检查流级别的处理一致性"""
     logger.info("验证跨TCP段处理正确性")
 
@@ -568,9 +538,7 @@ def validate_cross_segment_handling(
 
         # 检查帧序列一致性
         frame_consistency = True
-        for (orig_no, orig_frame), (masked_no, masked_frame) in zip(
-            original_frames, masked_frames
-        ):
+        for (orig_no, orig_frame), (masked_no, masked_frame) in zip(original_frames, masked_frames):
             if orig_no != masked_no:
                 frame_consistency = False
                 break
@@ -593,9 +561,7 @@ def validate_cross_segment_handling(
                 }
             )
 
-    consistency_rate = (
-        (consistent_streams / total_streams * 100) if total_streams > 0 else 0
-    )
+    consistency_rate = (consistent_streams / total_streams * 100) if total_streams > 0 else 0
 
     return {
         "total_streams": total_streams,
@@ -632,15 +598,11 @@ def validate_protocol_type_detection(
                 type_counts[ptype] = type_counts.get(ptype, 0) + 1
 
         if protocol_types:
-            frame_type_details.append(
-                {"frame": frame_no, "detected_types": protocol_types}
-            )
+            frame_type_details.append({"frame": frame_no, "detected_types": protocol_types})
 
     # 计算检测完整性
     missing_types = set(target_types) - detected_types
-    detection_completeness = (
-        (len(detected_types) / len(target_types) * 100) if target_types else 0
-    )
+    detection_completeness = (len(detected_types) / len(target_types) * 100) if target_types else 0
 
     return {
         "target_types": target_types,
@@ -750,31 +712,23 @@ def validate_boundary_safety(original_json: Path, masked_json: Path) -> Dict[str
     }
 
 
-def validate_enhanced_tls_processing(
-    original_json: Path, masked_json: Path
-) -> Dict[str, Any]:
+def validate_enhanced_tls_processing(original_json: Path, masked_json: Path) -> Dict[str, Any]:
     """综合验证增强TLS处理结果 - 集成所有验证功能"""
     logger.info("开始综合验证增强TLS处理结果")
 
     results = {}
 
     # 1. 验证TLS-20/21/22/24完全保留
-    results["complete_preservation"] = validate_complete_preservation(
-        original_json, masked_json, [20, 21, 22, 24]
-    )
+    results["complete_preservation"] = validate_complete_preservation(original_json, masked_json, [20, 21, 22, 24])
 
     # 2. 验证TLS-23智能掩码（5字节头部保留）
     results["smart_masking"] = validate_smart_masking(original_json, masked_json, 23, 5)
 
     # 3. 验证跨TCP段处理正确性
-    results["cross_segment_handling"] = validate_cross_segment_handling(
-        original_json, masked_json
-    )
+    results["cross_segment_handling"] = validate_cross_segment_handling(original_json, masked_json)
 
     # 4. 验证协议类型识别准确性
-    results["protocol_type_detection"] = validate_protocol_type_detection(
-        original_json, [20, 21, 22, 23, 24]
-    )
+    results["protocol_type_detection"] = validate_protocol_type_detection(original_json, [20, 21, 22, 23, 24])
 
     # 5. 验证边界安全处理
     results["boundary_safety"] = validate_boundary_safety(original_json, masked_json)
@@ -808,18 +762,13 @@ def validate_enhanced_tls_processing(
 # ---------------------- MaskStage 处理函数 --------------------------
 
 
-def run_maskstage_internal(
-    input_path: Path, output_path: Path, verbose: bool = False
-) -> None:
+def run_maskstage_internal(input_path: Path, output_path: Path, verbose: bool = False) -> None:
     """使用Enhanced MaskStage处理文件（通过PipelineExecutor）"""
     if verbose:
         logger.info("使用 Enhanced MaskStage 处理: %s -> %s", input_path, output_path)
 
     try:
         from pktmask.core.pipeline.executor import PipelineExecutor
-        from pktmask.core.pipeline.stages.masking_stage.stage import (
-            MaskingStage as MaskStage,
-        )
     except ImportError as imp_err:
         raise RuntimeError(f"无法导入 Enhanced MaskStage: {imp_err}")
 
@@ -831,9 +780,7 @@ def run_maskstage_internal(
             "enabled": True,
             "protocol": "tls",  # 协议类型
             "mode": "enhanced",  # 使用增强模式
-            "marker_config": {
-                "tls": {"preserve_handshake": True, "preserve_application_data": False}
-            },
+            "marker_config": {"tls": {"preserve_handshake": True, "preserve_application_data": False}},
             "masker_config": {"chunk_size": 1000, "verify_checksums": True},
         },
     }
@@ -855,19 +802,13 @@ def run_maskstage_internal(
         raise RuntimeError(f"Enhanced MaskStage 处理失败: {e}")
 
 
-def run_maskstage_direct(
-    input_path: Path, output_path: Path, verbose: bool = False
-) -> None:
+def run_maskstage_direct(input_path: Path, output_path: Path, verbose: bool = False) -> None:
     """直接使用Enhanced MaskStage处理文件（不通过PipelineExecutor）"""
     if verbose:
-        logger.info(
-            "直接使用 Enhanced MaskStage 处理: %s -> %s", input_path, output_path
-        )
+        logger.info("直接使用 Enhanced MaskStage 处理: %s -> %s", input_path, output_path)
 
     try:
-        from pktmask.core.pipeline.stages.masking_stage.stage import (
-            MaskingStage as MaskStage,
-        )
+        from pktmask.core.pipeline.stages.masking_stage.stage import MaskingStage as MaskStage
     except ImportError as imp_err:
         raise RuntimeError(f"无法导入 Enhanced MaskStage: {imp_err}")
 
@@ -875,9 +816,7 @@ def run_maskstage_direct(
     config = {
         "protocol": "tls",  # 协议类型
         "mode": "enhanced",  # 使用增强模式
-        "marker_config": {
-            "tls": {"preserve_handshake": True, "preserve_application_data": False}
-        },
+        "marker_config": {"tls": {"preserve_handshake": True, "preserve_application_data": False}},
         "masker_config": {"chunk_size": 1000, "verify_checksums": True},
     }
 
@@ -907,21 +846,15 @@ def main() -> None:
         description="TLS23 MaskStage 端到端掩码验证脚本 (基于 tls23_marker + Enhanced MaskStage)",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument(
-        "--input-dir", type=Path, required=True, help="递归扫描 PCAP/PCAPNG 的目录"
-    )
-    parser.add_argument(
-        "--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="结果输出目录"
-    )
+    parser.add_argument("--input-dir", type=Path, required=True, help="递归扫描 PCAP/PCAPNG 的目录")
+    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="结果输出目录")
     parser.add_argument(
         "--maskstage-mode",
         default="pipeline",
         choices=["pipeline", "direct"],
         help="MaskStage调用模式：pipeline(通过PipelineExecutor) 或 direct(直接调用)",
     )
-    parser.add_argument(
-        "--glob", dest="glob_pattern", default=DEFAULT_GLOB, help="文件匹配 glob 表达式"
-    )
+    parser.add_argument("--glob", dest="glob_pattern", default=DEFAULT_GLOB, help="文件匹配 glob 表达式")
     parser.add_argument("--verbose", action="store_true", help="输出详细调试信息")
 
     args = parser.parse_args()
@@ -1015,13 +948,9 @@ def main() -> None:
 
             if file_result["status"] == "pass":
                 passed_files += 1
-                logger.info(
-                    "✅ %s - 通过 (MaskStage %s)", pcap_path.name, maskstage_mode
-                )
+                logger.info("✅ %s - 通过 (MaskStage %s)", pcap_path.name, maskstage_mode)
             else:
-                logger.warning(
-                    "❌ %s - 失败 (MaskStage %s)", pcap_path.name, maskstage_mode
-                )
+                logger.warning("❌ %s - 失败 (MaskStage %s)", pcap_path.name, maskstage_mode)
 
         except Exception as e:
             logger.error("处理文件 %s 时出错: %s", pcap_path, e)
@@ -1045,9 +974,7 @@ def main() -> None:
     # 生成 HTML 报告
     write_html_report(summary, output_dir / "validation_summary.html")
 
-    logger.info(
-        "📊 MaskStage (%s) Overall Pass Rate: %.2f%%", maskstage_mode, overall_pass_rate
-    )
+    logger.info("📊 MaskStage (%s) Overall Pass Rate: %.2f%%", maskstage_mode, overall_pass_rate)
 
     # 退出码
     if passed_files == len(files):
@@ -1099,13 +1026,9 @@ def write_html_report(summary: Dict[str, Any], output_path: Path) -> None:
                     f"<li>帧 <code>{frame}</code> | path=<code>{path}</code> | lengths={lens} | zero_bytes={zero} | types={protocol_types}</li>"
                 )
             success_html = (
-                "<details><summary>✅ 成功帧详情</summary><ul>"
-                + "\n".join(success_lines)
-                + "</ul></details>"
+                "<details><summary>✅ 成功帧详情</summary><ul>" + "\n".join(success_lines) + "</ul></details>"
             )
-            rows_html.append(
-                f"<tr class='{cls}'><td colspan='7'>" + success_html + "</td></tr>"
-            )
+            rows_html.append(f"<tr class='{cls}'><td colspan='7'>" + success_html + "</td></tr>")
 
         # 若失败则添加详情行，可折叠 <details>
         if status != "pass" and f.get("failed_frame_details"):
@@ -1119,14 +1042,8 @@ def write_html_report(summary: Dict[str, Any], output_path: Path) -> None:
                 detail_lines.append(
                     f"<li>帧 <code>{frame}</code> | path=<code>{path}</code> | lengths={lens} | zero_bytes={zero} | payload_preview=<code>{preview}</code></li>"
                 )
-            details_html = (
-                "<details><summary>❌ 失败帧详情</summary><ul>"
-                + "\n".join(detail_lines)
-                + "</ul></details>"
-            )
-            rows_html.append(
-                f"<tr class='{cls}'><td colspan='7'>" + details_html + "</td></tr>"
-            )
+            details_html = "<details><summary>❌ 失败帧详情</summary><ul>" + "\n".join(detail_lines) + "</ul></details>"
+            rows_html.append(f"<tr class='{cls}'><td colspan='7'>" + details_html + "</td></tr>")
 
     html = (
         "<!DOCTYPE html><html><head><meta charset='utf-8'>"

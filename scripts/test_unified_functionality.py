@@ -44,7 +44,7 @@ class UnifiedFunctionalityTester:
         """清理测试环境"""
         if self.temp_dir and self.temp_dir.exists():
             shutil.rmtree(self.temp_dir)
-            print(f"🧹 Cleaned up test directory")
+            print("🧹 Cleaned up test directory")
 
     def create_test_files(self):
         """创建测试用的 PCAP 文件"""
@@ -81,30 +81,21 @@ class UnifiedFunctionalityTester:
 
             # 验证一致性
             consistency_checks = [
-                gui_config["remove_dupes"]["enabled"]
-                == cli_config["remove_dupes"]["enabled"],
-                gui_config["anonymize_ips"]["enabled"]
-                == cli_config["anonymize_ips"]["enabled"],
-                gui_config["mask_payloads"]["enabled"]
-                == cli_config["mask_payloads"]["enabled"],
-                gui_config["mask_payloads"]["mode"]
-                == cli_config["mask_payloads"]["mode"],
-                gui_config["mask_payloads"]["protocol"]
-                == cli_config["mask_payloads"]["protocol"],
+                gui_config["remove_dupes"]["enabled"] == cli_config["remove_dupes"]["enabled"],
+                gui_config["anonymize_ips"]["enabled"] == cli_config["anonymize_ips"]["enabled"],
+                gui_config["mask_payloads"]["enabled"] == cli_config["mask_payloads"]["enabled"],
+                gui_config["mask_payloads"]["mode"] == cli_config["mask_payloads"]["mode"],
+                gui_config["mask_payloads"]["protocol"] == cli_config["mask_payloads"]["protocol"],
             ]
 
             all_consistent = all(consistency_checks)
 
             if all_consistent:
                 print("✅ Configuration consistency: PASSED")
-                self.test_results.append(
-                    ("Config Consistency", True, "All configurations match")
-                )
+                self.test_results.append(("Config Consistency", True, "All configurations match"))
             else:
                 print("❌ Configuration consistency: FAILED")
-                self.test_results.append(
-                    ("Config Consistency", False, "Configuration mismatch")
-                )
+                self.test_results.append(("Config Consistency", False, "Configuration mismatch"))
 
             return all_consistent
 
@@ -137,15 +128,11 @@ class UnifiedFunctionalityTester:
 
         for cmd in commands_to_test:
             try:
-                result = subprocess.run(
-                    cmd, cwd=project_root, capture_output=True, text=True, timeout=30
-                )
+                result = subprocess.run(cmd, cwd=project_root, capture_output=True, text=True, timeout=30)
 
                 if result.returncode == 0:
                     print(f"✅ Command '{' '.join(cmd[-2:])}': PASSED")
-                    self.test_results.append(
-                        (f"CLI {cmd[-2]}", True, "Command executed successfully")
-                    )
+                    self.test_results.append((f"CLI {cmd[-2]}", True, "Command executed successfully"))
                 else:
                     print(f"❌ Command '{' '.join(cmd[-2:])}': FAILED")
                     print(f"   Error: {result.stderr}")
@@ -174,24 +161,18 @@ class UnifiedFunctionalityTester:
 
             if not is_valid:
                 print(f"❌ Config validation failed: {error}")
-                self.test_results.append(
-                    ("Service Layer", False, f"Config validation: {error}")
-                )
+                self.test_results.append(("Service Layer", False, f"Config validation: {error}"))
                 return False
 
             # 测试执行器创建
             executor = create_pipeline_executor(config)
             if executor is None:
                 print("❌ Executor creation failed")
-                self.test_results.append(
-                    ("Service Layer", False, "Executor creation failed")
-                )
+                self.test_results.append(("Service Layer", False, "Executor creation failed"))
                 return False
 
             print("✅ Service layer: PASSED")
-            self.test_results.append(
-                ("Service Layer", True, "All service components working")
-            )
+            self.test_results.append(("Service Layer", True, "All service components working"))
             return True
 
         except Exception as e:
@@ -251,9 +232,7 @@ class UnifiedFunctionalityTester:
 
             if not text_report or not json_report:
                 print("❌ Report generation: FAILED")
-                self.test_results.append(
-                    ("Report Generation", False, "Report generation failed")
-                )
+                self.test_results.append(("Report Generation", False, "Report generation failed"))
                 return False
 
             print("✅ Output formats: PASSED")
@@ -276,28 +255,20 @@ class UnifiedFunctionalityTester:
 
             if is_valid:
                 print("❌ Error handling: FAILED - Invalid config accepted")
-                self.test_results.append(
-                    ("Error Handling", False, "Invalid config accepted")
-                )
+                self.test_results.append(("Error Handling", False, "Invalid config accepted"))
                 return False
 
             # 测试不存在的文件
             cmd = ["python", "-m", "pktmask", "info", "/nonexistent/file.pcap"]
-            result = subprocess.run(
-                cmd, cwd=project_root, capture_output=True, text=True, timeout=10
-            )
+            result = subprocess.run(cmd, cwd=project_root, capture_output=True, text=True, timeout=10)
 
             if result.returncode == 0:
                 print("❌ Error handling: FAILED - Nonexistent file not handled")
-                self.test_results.append(
-                    ("Error Handling", False, "Nonexistent file not handled")
-                )
+                self.test_results.append(("Error Handling", False, "Nonexistent file not handled"))
                 return False
 
             print("✅ Error handling: PASSED")
-            self.test_results.append(
-                ("Error Handling", True, "Errors properly handled")
-            )
+            self.test_results.append(("Error Handling", True, "Errors properly handled"))
             return True
 
         except Exception as e:
@@ -336,8 +307,7 @@ class UnifiedFunctionalityTester:
             "failed_tests": failed_tests,
             "success_rate": (passed_tests / total_tests) * 100,
             "results": [
-                {"test_name": name, "passed": passed, "message": message}
-                for name, passed, message in self.test_results
+                {"test_name": name, "passed": passed, "message": message} for name, passed, message in self.test_results
             ],
         }
 
@@ -382,9 +352,7 @@ def main():
     success = tester.run_all_tests()
 
     if success:
-        print(
-            "\n🎉 All tests passed! PktMask unified functionality is working correctly."
-        )
+        print("\n🎉 All tests passed! PktMask unified functionality is working correctly.")
         sys.exit(0)
     else:
         print("\n💥 Some tests failed. Please check the detailed report above.")

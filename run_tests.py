@@ -64,9 +64,7 @@ class TestRunner:
 
         # 添加HTML报告
         if html_report:
-            cmd.extend(
-                ["--html=output/reports/test_report.html", "--self-contained-html"]
-            )
+            cmd.extend(["--html=output/reports/test_report.html", "--self-contained-html"])
 
         # 并行执行
         if parallel:
@@ -97,16 +95,12 @@ class TestRunner:
     def quick_test(self) -> int:
         """Quick test - only run unit tests, no coverage"""
         print("⚡ Quick test mode - unit tests only")
-        return self.run_tests(
-            test_type="unit", coverage=False, verbose=False, fail_fast=True
-        )
+        return self.run_tests(test_type="unit", coverage=False, verbose=False, fail_fast=True)
 
     def full_test(self) -> int:
         """Full test - all test types, including reports"""
         print("🔥 Full test mode - all tests + complete reports")
-        return self.run_tests(
-            test_type="all", coverage=True, html_report=True, parallel=True
-        )
+        return self.run_tests(test_type="all", coverage=True, html_report=True, parallel=True)
 
     def performance_test(self) -> int:
         """Performance test"""
@@ -116,9 +110,7 @@ class TestRunner:
     def real_data_test(self) -> int:
         """Real data validation test"""
         print("🔍 Real data validation test mode")
-        return self.run_tests(
-            test_type="real_data", coverage=False, verbose=True, html_report=True
-        )
+        return self.run_tests(test_type="real_data", coverage=False, verbose=True, html_report=True)
 
     def samples_validation(self) -> int:
         """Sample validation test - specifically for all samples directories"""
@@ -163,23 +155,15 @@ def main():
     setup_test_environment()
 
     parser = argparse.ArgumentParser(description="PktMask test runner")
-    parser.add_argument(
-        "--quick", action="store_true", help="Quick test mode (no coverage)"
-    )
-    parser.add_argument(
-        "--full", action="store_true", help="Full test mode (coverage + HTML report)"
-    )
+    parser.add_argument("--quick", action="store_true", help="Quick test mode (no coverage)")
+    parser.add_argument("--full", action="store_true", help="Full test mode (coverage + HTML report)")
     parser.add_argument(
         "--type",
         choices=["unit", "integration", "e2e", "real_data", "performance"],
         help="Run specific type of tests",
     )
-    parser.add_argument(
-        "--samples", action="store_true", help="Run real data sample validation tests"
-    )
-    parser.add_argument(
-        "--parallel", action="store_true", help="Execute tests in parallel"
-    )
+    parser.add_argument("--samples", action="store_true", help="Run real data sample validation tests")
+    parser.add_argument("--parallel", action="store_true", help="Execute tests in parallel")
     parser.add_argument("--html", action="store_true", help="Generate HTML test report")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
@@ -233,9 +217,7 @@ def main():
 
     # Other options
     if args.html and not args.full:
-        pytest_args.extend(
-            ["--html=output/reports/test_report.html", "--self-contained-html"]
-        )
+        pytest_args.extend(["--html=output/reports/test_report.html", "--self-contained-html"])
 
     if args.verbose:
         pytest_args.append("-v")

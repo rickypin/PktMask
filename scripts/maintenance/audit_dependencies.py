@@ -6,7 +6,7 @@
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 try:
     import toml
@@ -67,9 +67,7 @@ def read_setup_py_deps(filepath: Path) -> Dict[str, str]:
         content = f.read()
 
     # 查找 install_requires
-    install_requires_match = re.search(
-        r"install_requires\s*=\s*\[(.*?)\]", content, re.DOTALL
-    )
+    install_requires_match = re.search(r"install_requires\s*=\s*\[(.*?)\]", content, re.DOTALL)
 
     if install_requires_match:
         requires_content = install_requires_match.group(1)
@@ -130,9 +128,7 @@ def main():
         if pkg in main_deps:
             main_version = main_deps[pkg]
             if compare_versions(main_version, sub_version):
-                conflicts.append(
-                    {"package": pkg, "main": main_version, "sub": sub_version}
-                )
+                conflicts.append({"package": pkg, "main": main_version, "sub": sub_version})
 
     if conflicts:
         print("⚠️  发现版本冲突:\n")

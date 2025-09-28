@@ -79,17 +79,12 @@ class TestGUICliConsistency:
             mask_payloads_checked=False,
         )
 
-        cli_executor = ConsistentProcessor.create_executor(
-            dedup=True, anon=False, mask=False
-        )
+        cli_executor = ConsistentProcessor.create_executor(dedup=True, anon=False, mask=False)
 
         # Both should have same configuration structure
         assert "remove_dupes" in gui_executor._config
         assert "remove_dupes" in cli_executor._config
-        assert (
-            gui_executor._config["remove_dupes"]["enabled"]
-            == cli_executor._config["remove_dupes"]["enabled"]
-        )
+        assert gui_executor._config["remove_dupes"]["enabled"] == cli_executor._config["remove_dupes"]["enabled"]
 
         # Test with all options
         gui_executor_all = GUIConsistentProcessor.create_executor_from_gui(
@@ -98,9 +93,7 @@ class TestGUICliConsistency:
             mask_payloads_checked=True,
         )
 
-        cli_executor_all = ConsistentProcessor.create_executor(
-            dedup=True, anon=True, mask=True
-        )
+        cli_executor_all = ConsistentProcessor.create_executor(dedup=True, anon=True, mask=True)
 
         # Should have same stages enabled
         gui_stages = set(gui_executor_all._config.keys())
@@ -132,9 +125,7 @@ class TestGUICliConsistency:
             mask_payloads_checked=False,
         )
 
-        cli_summary = ConsistentProcessor.get_configuration_summary(
-            dedup=True, anon=True, mask=False
-        )
+        cli_summary = ConsistentProcessor.get_configuration_summary(dedup=True, anon=True, mask=False)
 
         # Should contain same enabled options
         assert "Remove Dupes" in gui_summary
@@ -206,9 +197,7 @@ class TestGUICliConsistency:
         assert thread.progress_signal.emit.called
 
         # Check for required signal types
-        emitted_events = [
-            call[0][0] for call in thread.progress_signal.emit.call_args_list
-        ]
+        emitted_events = [call[0][0] for call in thread.progress_signal.emit.call_args_list]
         from pktmask.core.events import PipelineEvents
 
         assert PipelineEvents.PIPELINE_START in emitted_events
@@ -237,11 +226,7 @@ class TestGUICliConsistency:
         calls = thread.progress_signal.emit.call_args_list
         stop_messages = []
         for call in calls:
-            if (
-                len(call[0]) > 1
-                and isinstance(call[0][1], dict)
-                and "message" in call[0][1]
-            ):
+            if len(call[0]) > 1 and isinstance(call[0][1], dict) and "message" in call[0][1]:
                 if "Stopped by User" in call[0][1]["message"]:
                     stop_messages.append(call)
 

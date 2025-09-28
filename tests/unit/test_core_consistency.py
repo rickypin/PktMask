@@ -10,7 +10,6 @@ to ensure proper functionality and consistency across GUI and CLI interfaces.
 
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -86,15 +85,9 @@ class TestConsistentProcessor:
     def test_get_configuration_summary(self):
         """Test configuration summary generation"""
         # Test individual options
-        assert "Remove Dupes" in ConsistentProcessor.get_configuration_summary(
-            True, False, False
-        )
-        assert "Anonymize IPs" in ConsistentProcessor.get_configuration_summary(
-            False, True, False
-        )
-        assert "Mask Payloads" in ConsistentProcessor.get_configuration_summary(
-            False, False, True
-        )
+        assert "Remove Dupes" in ConsistentProcessor.get_configuration_summary(True, False, False)
+        assert "Anonymize IPs" in ConsistentProcessor.get_configuration_summary(False, True, False)
+        assert "Mask Payloads" in ConsistentProcessor.get_configuration_summary(False, False, True)
 
         # Test multiple options
         summary = ConsistentProcessor.get_configuration_summary(True, True, False)
@@ -203,9 +196,7 @@ class TestStandardMessages:
         assert any("Mask Payloads: Enabled" in line for line in config_lines)
 
         # Test all disabled
-        config_lines = StandardMessages.format_configuration_summary(
-            False, False, False
-        )
+        config_lines = StandardMessages.format_configuration_summary(False, False, False)
         assert len(config_lines) == 3
         assert any("Remove Dupes: Disabled" in line for line in config_lines)
         assert any("Anonymize IPs: Disabled" in line for line in config_lines)
@@ -213,9 +204,7 @@ class TestStandardMessages:
 
     def test_format_error_with_context(self):
         """Test error formatting with context"""
-        result = StandardMessages.format_error_with_context(
-            "Test error", "Test context"
-        )
+        result = StandardMessages.format_error_with_context("Test error", "Test context")
         assert StandardMessages.ERROR_ICON in result
         assert "Test error" in result
         assert "Test context" in result
@@ -350,9 +339,7 @@ class TestConfigConverter:
     def test_from_cli_args(self):
         """Test conversion from CLI args"""
         input_path = Path("/test/input.pcap")
-        config = ConfigConverter.from_cli_args(
-            dedup=True, anon=True, mask=False, input_path=input_path, verbose=True
-        )
+        config = ConfigConverter.from_cli_args(dedup=True, anon=True, mask=False, input_path=input_path, verbose=True)
         assert config.dedup is True
         assert config.anon is True
         assert config.mask is False

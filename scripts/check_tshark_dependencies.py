@@ -18,7 +18,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 # PktMask要求的最低tshark版本
 MIN_TSHARK_VERSION = (4, 2, 0)
@@ -87,14 +87,10 @@ def check_tshark_version(tshark_path: str) -> Dict[str, any]:
     }
 
     try:
-        proc = subprocess.run(
-            [tshark_path, "-v"], capture_output=True, text=True, timeout=10
-        )
+        proc = subprocess.run([tshark_path, "-v"], capture_output=True, text=True, timeout=10)
 
         if proc.returncode != 0:
-            result["error"] = (
-                f"tshark -v returned non-zero exit code: {proc.returncode}"
-            )
+            result["error"] = f"tshark -v returned non-zero exit code: {proc.returncode}"
             return result
 
         output = proc.stdout + proc.stderr
@@ -126,9 +122,7 @@ def check_protocol_support(tshark_path: str) -> Dict[str, any]:
     }
 
     try:
-        proc = subprocess.run(
-            [tshark_path, "-G", "protocols"], capture_output=True, text=True, timeout=30
-        )
+        proc = subprocess.run([tshark_path, "-G", "protocols"], capture_output=True, text=True, timeout=30)
 
         if proc.returncode != 0:
             result["error"] = f"tshark -G protocols 返回非零退出码: {proc.returncode}"
@@ -162,14 +156,10 @@ def check_field_support(tshark_path: str) -> Dict[str, any]:
     }
 
     try:
-        proc = subprocess.run(
-            [tshark_path, "-G", "fields"], capture_output=True, text=True, timeout=30
-        )
+        proc = subprocess.run([tshark_path, "-G", "fields"], capture_output=True, text=True, timeout=30)
 
         if proc.returncode != 0:
-            result["error"] = (
-                f"tshark -G fields returned non-zero exit code: {proc.returncode}"
-            )
+            result["error"] = f"tshark -G fields returned non-zero exit code: {proc.returncode}"
             return result
 
         fields = proc.stdout
@@ -248,22 +238,22 @@ def print_results(results: Dict[str, any], verbose: bool = False):
     # 协议支持检查
     protocol_result = results["protocols"]
     if protocol_result["success"]:
-        print(f"✅ 协议支持: 所有必需协议都支持")
+        print("✅ 协议支持: 所有必需协议都支持")
         if verbose:
             print(f"   支持的协议: {', '.join(protocol_result['supported_protocols'])}")
     else:
-        print(f"❌ 协议支持: 缺少必需协议")
+        print("❌ 协议支持: 缺少必需协议")
         if protocol_result["missing_protocols"]:
             print(f"   缺少的协议: {', '.join(protocol_result['missing_protocols'])}")
 
     # 字段支持检查
     field_result = results["fields"]
     if field_result["success"]:
-        print(f"✅ 字段支持: 所有必需字段都支持")
+        print("✅ 字段支持: 所有必需字段都支持")
         if verbose:
             print(f"   支持的字段数: {len(field_result['supported_fields'])}")
     else:
-        print(f"❌ 字段支持: 缺少必需字段")
+        print("❌ 字段支持: 缺少必需字段")
         if field_result["missing_fields"]:
             print(f"   缺少的字段: {', '.join(field_result['missing_fields'][:5])}")
             if len(field_result["missing_fields"]) > 5:
@@ -304,12 +294,8 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("--tshark-path", help="Custom tshark executable path")
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Show detailed information"
-    )
-    parser.add_argument(
-        "--json-output", action="store_true", help="Output results in JSON format"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed information")
+    parser.add_argument("--json-output", action="store_true", help="Output results in JSON format")
 
     args = parser.parse_args()
 

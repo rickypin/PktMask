@@ -57,11 +57,7 @@ def find_files_to_check() -> List[Path]:
 
     for root, dirs, files in os.walk(PROJECT_ROOT):
         # Remove excluded directories
-        dirs[:] = [
-            d
-            for d in dirs
-            if not any(d.startswith(excl.rstrip("*")) for excl in EXCLUDE_DIRS)
-        ]
+        dirs[:] = [d for d in dirs if not any(d.startswith(excl.rstrip("*")) for excl in EXCLUDE_DIRS)]
 
         for file in files:
             file_path = Path(root) / file
@@ -186,7 +182,7 @@ def print_report(report: Dict):
     print("=" * 80)
 
     summary = report["summary"]
-    print(f"\n📊 Summary:")
+    print("\n📊 Summary:")
     print(f"   Total files checked: {report['total_files_checked']}")
     print(f"   Files with deprecated terms: {summary['files_with_deprecated_terms']}")
     print(f"   Files with Chinese text: {summary['files_with_chinese_text']}")
@@ -197,21 +193,21 @@ def print_report(report: Dict):
 
     # Detailed reports
     if report["deprecated_terms"]:
-        print(f"\n🚫 Deprecated Terms Found:")
+        print("\n🚫 Deprecated Terms Found:")
         for file_path, issues in report["deprecated_terms"].items():
             print(f"\n   📄 {file_path}:")
             for line_num, deprecated, standard in issues:
                 print(f"      Line {line_num}: '{deprecated}' → should be '{standard}'")
 
     if report["chinese_text"]:
-        print(f"\n🈶 Chinese Text Found:")
+        print("\n🈶 Chinese Text Found:")
         for file_path, issues in report["chinese_text"].items():
             print(f"\n   📄 {file_path}:")
             for line_num, chinese_text in issues:
                 print(f"      Line {line_num}: Contains Chinese text: {chinese_text}")
 
     if report["gui_inconsistencies"]:
-        print(f"\n🖥️ GUI Text Inconsistencies:")
+        print("\n🖥️ GUI Text Inconsistencies:")
         for file_path, issues in report["gui_inconsistencies"].items():
             print(f"\n   📄 {file_path}:")
             for line_num, message in issues:
@@ -219,9 +215,7 @@ def print_report(report: Dict):
 
     # Overall status
     total_issues = (
-        summary["total_deprecated_instances"]
-        + summary["total_chinese_instances"]
-        + summary["total_gui_issues"]
+        summary["total_deprecated_instances"] + summary["total_chinese_instances"] + summary["total_gui_issues"]
     )
 
     print(f"\n{'='*80}")

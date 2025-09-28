@@ -81,15 +81,9 @@ class PyQt6MainView(QMainWindow):  # 实际应该继承 IMainView
 
         # 更新处理选项
         if state.processing_options:
-            self.remove_dupes_cb.setChecked(
-                state.processing_options.get("remove_dupes", False)
-            )
-            self.anonymize_ips_cb.setChecked(
-                state.processing_options.get("anonymize_ips", False)
-            )
-            self.mask_payloads_cb.setChecked(
-                state.processing_options.get("mask_payloads", False)
-            )
+            self.remove_dupes_cb.setChecked(state.processing_options.get("remove_dupes", False))
+            self.anonymize_ips_cb.setChecked(state.processing_options.get("anonymize_ips", False))
+            self.mask_payloads_cb.setChecked(state.processing_options.get("mask_payloads", False))
 
         # 更新处理状态
         self.update_processing_button_state(state.is_processing)
@@ -101,9 +95,7 @@ class PyQt6MainView(QMainWindow):  # 实际应该继承 IMainView
 
         # 更新当前文件显示
         if progress.current_file:
-            self.current_file_label.setText(
-                f"Processing: {os.path.basename(progress.current_file)}"
-            )
+            self.current_file_label.setText(f"Processing: {os.path.basename(progress.current_file)}")
 
         # 更新统计信息
         stats_text = f"Processed: {progress.processed_files}/{progress.total_files}"
@@ -112,9 +104,7 @@ class PyQt6MainView(QMainWindow):  # 实际应该继承 IMainView
         self.stats_label.setText(stats_text)
 
         # 更新日志
-        log_message = (
-            f"[{progress.stage_name}] {os.path.basename(progress.current_file)}"
-        )
+        log_message = f"[{progress.stage_name}] {os.path.basename(progress.current_file)}"
         self.update_log_display(log_message)
 
     def show_processing_result(self, result) -> None:  # result: ProcessingResult
@@ -149,9 +139,7 @@ class PyQt6MainView(QMainWindow):  # 实际应该继承 IMainView
         QMessageBox.information(self, title, message)
         self.update_log_display(f"INFO: {message}")
 
-    def prompt_directory_selection(
-        self, title: str, initial_dir: str = ""
-    ) -> Optional[str]:
+    def prompt_directory_selection(self, title: str, initial_dir: str = "") -> Optional[str]:
         """提示用户选择目录"""
         directory = QFileDialog.getExistingDirectory(self, title, initial_dir)
         return directory if directory else None

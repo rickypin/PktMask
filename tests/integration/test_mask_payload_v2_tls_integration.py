@@ -42,9 +42,7 @@ class TestTLSMarkerIntegration:
         if not test_data_dir.exists():
             pytest.skip("TLS测试数据目录不存在")
 
-        pcap_files = list(test_data_dir.glob("*.pcap")) + list(
-            test_data_dir.glob("*.pcapng")
-        )
+        pcap_files = list(test_data_dir.glob("*.pcap")) + list(test_data_dir.glob("*.pcapng"))
         if not pcap_files:
             pytest.skip("没有找到TLS测试文件")
 

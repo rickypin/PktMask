@@ -38,9 +38,7 @@ class TestMemoryManagementImprovements(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures"""
-        self.test_config = {
-            "resource_manager": {"max_memory_mb": 100, "pressure_threshold": 0.8}
-        }
+        self.test_config = {"resource_manager": {"max_memory_mb": 100, "pressure_threshold": 0.8}}
         self.stage = TestStageBase(self.test_config)
 
     def test_temp_file_registration_and_cleanup(self):
@@ -103,9 +101,7 @@ class TestMemoryManagementImprovements(unittest.TestCase):
 
     def test_memory_monitor_callback_system(self):
         """Test memory pressure callback system"""
-        monitor = MemoryMonitor(
-            {"max_memory_mb": 1, "pressure_threshold": 0.1}
-        )  # Very low threshold
+        monitor = MemoryMonitor({"max_memory_mb": 1, "pressure_threshold": 0.1})  # Very low threshold
 
         callback_called = False
         callback_pressure = None
@@ -141,9 +137,7 @@ class TestMemoryManagementImprovements(unittest.TestCase):
         except Exception as e:
             self.fail(f"ResourceManager cleanup raised exception: {e}")
 
-    @patch(
-        "pktmask.core.pipeline.stages.masking_stage.masker.payload_masker.PayloadMasker._reset_processing_state"
-    )
+    @patch("pktmask.core.pipeline.stages.masking_stage.masker.payload_masker.PayloadMasker._reset_processing_state")
     def test_payload_masker_simplified_cleanup(self, mock_reset):
         """Test PayloadMasker's simplified cleanup logic"""
         # Create a mock PayloadMasker with some components
@@ -195,9 +189,7 @@ class TestMemoryManagementImprovements(unittest.TestCase):
 
         # Mock resource manager cleanup
         stage = OrderTestStage(self.test_config)
-        stage.resource_manager.cleanup = lambda: cleanup_order.append(
-            "resource_manager"
-        )
+        stage.resource_manager.cleanup = lambda: cleanup_order.append("resource_manager")
 
         stage.cleanup()
 

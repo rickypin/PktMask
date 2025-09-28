@@ -27,9 +27,7 @@ class TestMaskPayloadV2EndToEnd:
         if not test_data_dir.exists():
             pytest.skip("TLS test data directory does not exist")
 
-        pcap_files = list(test_data_dir.glob("*.pcap")) + list(
-            test_data_dir.glob("*.pcapng")
-        )
+        pcap_files = list(test_data_dir.glob("*.pcap")) + list(test_data_dir.glob("*.pcapng"))
         if not pcap_files:
             pytest.skip("No TLS test files found")
 
@@ -62,9 +60,7 @@ class TestMaskPayloadV2EndToEnd:
             },
         }
 
-    def test_end_to_end_file_processing(
-        self, test_files, temp_output_dir, stage_config
-    ):
+    def test_end_to_end_file_processing(self, test_files, temp_output_dir, stage_config):
         """测试端到端文件处理流程"""
         stage = MaskingStage(stage_config)
 
@@ -114,13 +110,9 @@ class TestMaskPayloadV2EndToEnd:
                 }
                 results.append(result)
 
-                print(
-                    f"  - 处理成功: {stats.packets_processed} 包处理, {stats.packets_modified} 包修改"
-                )
+                print(f"  - 处理成功: {stats.packets_processed} 包处理, {stats.packets_modified} 包修改")
                 print(f"  - 处理时间: {processing_time:.3f}s")
-                print(
-                    f"  - 文件大小: {input_file.stat().st_size} -> {output_file.stat().st_size}"
-                )
+                print(f"  - 文件大小: {input_file.stat().st_size} -> {output_file.stat().st_size}")
 
             except Exception as e:
                 result = {
@@ -151,17 +143,11 @@ class TestMaskPayloadV2EndToEnd:
             print(f"  - 总包数: {total_packets}")
             print(f"  - 修改包数: {total_modified}")
             print(f"  - 总处理时间: {total_time:.3f}s")
-            print(
-                f"  - 平均速度: {total_packets/total_time:.1f} 包/秒"
-                if total_time > 0
-                else "  - 平均速度: N/A"
-            )
+            print(f"  - 平均速度: {total_packets/total_time:.1f} 包/秒" if total_time > 0 else "  - 平均速度: N/A")
 
         return results
 
-    def test_dual_module_architecture_verification(
-        self, test_files, temp_output_dir, stage_config
-    ):
+    def test_dual_module_architecture_verification(self, test_files, temp_output_dir, stage_config):
         """验证双模块架构的正确工作"""
         stage = MaskingStage(stage_config)
         stage.initialize()
@@ -171,12 +157,8 @@ class TestMaskPayloadV2EndToEnd:
 
         # 使用 patch 来监控模块调用
         with (
-            patch.object(
-                stage.marker, "analyze_file", wraps=stage.marker.analyze_file
-            ) as mock_marker,
-            patch.object(
-                stage.masker, "apply_masking", wraps=stage.masker.apply_masking
-            ) as mock_masker,
+            patch.object(stage.marker, "analyze_file", wraps=stage.marker.analyze_file) as mock_marker,
+            patch.object(stage.masker, "apply_masking", wraps=stage.masker.apply_masking) as mock_masker,
         ):
 
             stats = stage.process_file(str(input_file), str(output_file))

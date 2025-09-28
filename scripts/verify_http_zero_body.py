@@ -69,9 +69,7 @@ def check_file(pcap_path: Path) -> dict:
             if any(b != 0 for b in body):
                 violations += 1
                 if len(first_violations) < 5:
-                    first_violations.append(
-                        {"packet_index": idx, "body_sample": body[:32].hex()}
-                    )
+                    first_violations.append({"packet_index": idx, "body_sample": body[:32].hex()})
 
     return {
         "file": str(pcap_path.name),
@@ -88,9 +86,7 @@ def main():
     args = ap.parse_args()
 
     base = Path(args.input)
-    files = [
-        base / f for f in os.listdir(base) if f.lower().endswith((".pcap", ".pcapng"))
-    ]
+    files = [base / f for f in os.listdir(base) if f.lower().endswith((".pcap", ".pcapng"))]
     files.sort()
 
     summary = []
@@ -102,9 +98,7 @@ def main():
 
     print("HTTP zero-body spot check summary")
     for res in summary:
-        print(
-            f"- {res['file']}: checked_segments={res['checked_segments']}, violations={res['violations']}"
-        )
+        print(f"- {res['file']}: checked_segments={res['checked_segments']}, violations={res['violations']}")
         if res["violations"] and res["examples"]:
             print(f"  examples: {res['examples']}")
 

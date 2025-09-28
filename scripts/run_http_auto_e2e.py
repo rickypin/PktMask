@@ -41,7 +41,6 @@ def main():
     processed = 0
     failed = 0
     total_ms = 0.0
-    http_header_rules = 0
 
     for i, fpath in enumerate(files, 1):
         out = output_dir / fpath.name
@@ -55,9 +54,6 @@ def main():
             if result.success:
                 processed += 1
                 # Count http_header rules if present
-                for st in result.stage_stats:
-                    em = getattr(st, "extra_metrics", {})
-                    # no explicit metric; skip
                 # We cannot expose rule count directly from ProcessResult, keep placeholder
             else:
                 failed += 1

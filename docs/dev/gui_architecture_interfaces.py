@@ -137,9 +137,7 @@ class IView(ABC):
         pass
 
     @abstractmethod
-    def prompt_directory_selection(
-        self, title: str, initial_dir: str = ""
-    ) -> Optional[str]:
+    def prompt_directory_selection(self, title: str, initial_dir: str = "") -> Optional[str]:
         """提示用户选择目录"""
         pass
 
@@ -327,9 +325,7 @@ class IMainView(IView, IFileView, IPipelineView, IReportView):
     pass
 
 
-class IMainPresenter(
-    IAppPresenter, IFilePresenter, IPipelinePresenter, IReportPresenter
-):
+class IMainPresenter(IAppPresenter, IFilePresenter, IPipelinePresenter, IReportPresenter):
     """主Presenter接口 - 组合所有Presenter接口"""
 
     @abstractmethod
