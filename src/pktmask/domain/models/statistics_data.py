@@ -101,12 +101,8 @@ class FileProcessingResults(BaseModel):
 class IPMappingData(BaseModel):
     """IP映射数据"""
 
-    global_mappings: Dict[str, str] = Field(
-        default_factory=dict, description="全局IP映射"
-    )
-    reports_by_subdir: Dict[str, Any] = Field(
-        default_factory=dict, description="按子目录的报告"
-    )
+    global_mappings: Dict[str, str] = Field(default_factory=dict, description="全局IP映射")
+    reports_by_subdir: Dict[str, Any] = Field(default_factory=dict, description="按子目录的报告")
 
     def get_mapping_count(self) -> int:
         """获取映射数量"""
@@ -124,18 +120,10 @@ class IPMappingData(BaseModel):
 class ProcessingState(BaseModel):
     """处理状态数据"""
 
-    current_processing_file: Optional[str] = Field(
-        default=None, description="当前处理文件"
-    )
-    subdirs_files_counted: Set[str] = Field(
-        default_factory=set, description="已计数文件的子目录"
-    )
-    subdirs_packets_counted: Set[str] = Field(
-        default_factory=set, description="已计数包的子目录"
-    )
-    printed_summary_headers: Set[str] = Field(
-        default_factory=set, description="已打印摘要头的集合"
-    )
+    current_processing_file: Optional[str] = Field(default=None, description="当前处理文件")
+    subdirs_files_counted: Set[str] = Field(default_factory=set, description="已计数文件的子目录")
+    subdirs_packets_counted: Set[str] = Field(default_factory=set, description="已计数包的子目录")
+    printed_summary_headers: Set[str] = Field(default_factory=set, description="已打印摘要头的集合")
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -143,22 +131,12 @@ class ProcessingState(BaseModel):
 class StatisticsData(BaseModel):
     """完整的统计数据模型"""
 
-    metrics: ProcessingMetrics = Field(
-        default_factory=ProcessingMetrics, description="处理指标"
-    )
+    metrics: ProcessingMetrics = Field(default_factory=ProcessingMetrics, description="处理指标")
     timing: TimingData = Field(default_factory=TimingData, description="时间统计")
-    file_results: Dict[str, FileProcessingResults] = Field(
-        default_factory=dict, description="文件结果"
-    )
-    step_results: Dict[str, Dict[str, Any]] = Field(
-        default_factory=dict, description="步骤结果"
-    )
-    ip_mapping: IPMappingData = Field(
-        default_factory=IPMappingData, description="IP映射数据"
-    )
-    state: ProcessingState = Field(
-        default_factory=ProcessingState, description="处理状态"
-    )
+    file_results: Dict[str, FileProcessingResults] = Field(default_factory=dict, description="文件结果")
+    step_results: Dict[str, Dict[str, Any]] = Field(default_factory=dict, description="步骤结果")
+    ip_mapping: IPMappingData = Field(default_factory=IPMappingData, description="IP映射数据")
+    state: ProcessingState = Field(default_factory=ProcessingState, description="处理状态")
 
     def get_dashboard_summary(self) -> Dict[str, Any]:
         """获取仪表盘摘要数据"""
@@ -168,9 +146,7 @@ class StatisticsData(BaseModel):
             "packets_processed": self.metrics.packets_processed,
             "elapsed_time": self.timing.get_elapsed_time_string(),
             "completion_rate": self.metrics.get_completion_rate(),
-            "processing_speed": self.timing.get_processing_speed(
-                self.metrics.packets_processed
-            ),
+            "processing_speed": self.timing.get_processing_speed(self.metrics.packets_processed),
             "ip_mappings_count": self.ip_mapping.get_mapping_count(),
         }
 
@@ -183,8 +159,7 @@ class StatisticsData(BaseModel):
             "processing_time": self.timing.get_elapsed_time_string(),
             "step_results": self.step_results.copy(),
             "file_processing_results": {
-                filename: result.model_dump()
-                for filename, result in self.file_results.items()
+                filename: result.model_dump() for filename, result in self.file_results.items()
             },
             "global_ip_mappings": self.ip_mapping.global_mappings.copy(),
             "all_ip_reports": self.ip_mapping.reports_by_subdir.copy(),

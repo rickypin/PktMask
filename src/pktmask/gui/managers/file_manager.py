@@ -33,9 +33,7 @@ class FileManager:
         )
         if dir_path:
             self.main_window.base_dir = dir_path
-            self.main_window.last_opened_dir = (
-                dir_path  # Record currently selected directory
-            )
+            self.main_window.last_opened_dir = dir_path  # Record currently selected directory
             self.main_window.dir_path_label.setText(os.path.basename(dir_path))
 
             # Auto-generate default output path
@@ -46,9 +44,7 @@ class FileManager:
 
     def handle_output_click(self):
         """Handle output path button click - open directory if processing is complete, otherwise select custom output directory"""
-        if self.main_window.current_output_dir and os.path.exists(
-            self.main_window.current_output_dir
-        ):
+        if self.main_window.current_output_dir and os.path.exists(self.main_window.current_output_dir):
             # If output directory exists, open it
             self.open_output_directory()
         else:
@@ -94,9 +90,7 @@ class FileManager:
         else:
             # Default output directory
             if self.config.ui.default_output_dir:
-                actual_path = os.path.join(
-                    self.config.ui.default_output_dir, output_name
-                )
+                actual_path = os.path.join(self.config.ui.default_output_dir, output_name)
             else:
                 # Use subdirectory of input directory
                 actual_path = os.path.join(self.main_window.base_dir, output_name)
@@ -106,12 +100,8 @@ class FileManager:
 
     def open_output_directory(self):
         """Open output directory"""
-        if not self.main_window.current_output_dir or not os.path.exists(
-            self.main_window.current_output_dir
-        ):
-            QMessageBox.warning(
-                self.main_window, "Warning", "Output directory not found."
-            )
+        if not self.main_window.current_output_dir or not os.path.exists(self.main_window.current_output_dir):
+            QMessageBox.warning(self.main_window, "Warning", "Output directory not found.")
             return
 
         try:
@@ -120,34 +110,24 @@ class FileManager:
                 self.main_window.update_log(
                     f"Opened output directory: {os.path.basename(self.main_window.current_output_dir)}"
                 )
-                self._logger.info(
-                    f"Opened output directory: {self.main_window.current_output_dir}"
-                )
+                self._logger.info(f"Opened output directory: {self.main_window.current_output_dir}")
             else:
                 self._logger.error("Failed to open output directory")
-                QMessageBox.critical(
-                    self.main_window, "Error", "Could not open output directory."
-                )
+                QMessageBox.critical(self.main_window, "Error", "Could not open output directory.")
         except Exception as e:
             self._logger.error(f"Error occurred while opening output directory: {e}")
-            QMessageBox.critical(
-                self.main_window, "Error", f"Error opening directory: {str(e)}"
-            )
+            QMessageBox.critical(self.main_window, "Error", f"Error opening directory: {str(e)}")
 
     def save_summary_report_to_output_dir(self) -> bool:
         """Save summary report to output directory"""
         if not self.main_window.current_output_dir:
-            self._logger.warning(
-                "Output directory path is empty, cannot save summary report"
-            )
+            self._logger.warning("Output directory path is empty, cannot save summary report")
             return False
 
         try:
             # Ensure output directory exists
             if not os.path.exists(self.main_window.current_output_dir):
-                self._logger.info(
-                    f"Creating output directory: {self.main_window.current_output_dir}"
-                )
+                self._logger.info(f"Creating output directory: {self.main_window.current_output_dir}")
                 os.makedirs(self.main_window.current_output_dir, exist_ok=True)
 
             filename = self.generate_summary_report_filename()
@@ -174,20 +154,11 @@ class FileManager:
 
         # Generate processing options identifier
         enabled_steps = []
-        if (
-            hasattr(self.main_window, "anonymize_ips_cb")
-            and self.main_window.anonymize_ips_cb.isChecked()
-        ):
+        if hasattr(self.main_window, "anonymize_ips_cb") and self.main_window.anonymize_ips_cb.isChecked():
             enabled_steps.append("MaskIP")
-        if (
-            hasattr(self.main_window, "remove_dupes_cb")
-            and self.main_window.remove_dupes_cb.isChecked()
-        ):
+        if hasattr(self.main_window, "remove_dupes_cb") and self.main_window.remove_dupes_cb.isChecked():
             enabled_steps.append("Dedup")
-        if (
-            hasattr(self.main_window, "mask_payloads_cb")
-            and self.main_window.mask_payloads_cb.isChecked()
-        ):
+        if hasattr(self.main_window, "mask_payloads_cb") and self.main_window.mask_payloads_cb.isChecked():
             enabled_steps.append("Trim")
 
         steps_suffix = "_".join(enabled_steps) if enabled_steps else "NoSteps"
@@ -197,9 +168,7 @@ class FileManager:
 
     def find_existing_summary_reports(self) -> list[str]:
         """Find existing summary report files"""
-        if not self.main_window.current_output_dir or not os.path.exists(
-            self.main_window.current_output_dir
-        ):
+        if not self.main_window.current_output_dir or not os.path.exists(self.main_window.current_output_dir):
             return []
 
         try:
@@ -214,9 +183,7 @@ class FileManager:
             return reports
 
         except Exception as e:
-            self._logger.error(
-                f"Error occurred while finding summary report files: {e}"
-            )
+            self._logger.error(f"Error occurred while finding summary report files: {e}")
             return []
 
     def load_latest_summary_report(self) -> Optional[str]:
@@ -291,8 +258,6 @@ class FileManager:
                         info["pcap_files"].append(file)
 
         except Exception as e:
-            self._logger.error(
-                f"Error occurred while getting directory information: {e}"
-            )
+            self._logger.error(f"Error occurred while getting directory information: {e}")
 
         return info

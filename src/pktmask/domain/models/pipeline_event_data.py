@@ -28,9 +28,7 @@ class BaseEventData(BaseModel):
 
     event_type: PipelineEvents = Field(..., description="事件类型")
     timestamp: datetime = Field(default_factory=datetime.now, description="事件时间戳")
-    severity: EventSeverity = Field(
-        default=EventSeverity.INFO, description="事件严重程度"
-    )
+    severity: EventSeverity = Field(default=EventSeverity.INFO, description="事件严重程度")
     message: Optional[str] = Field(default=None, description="事件消息")
 
     model_config = {"use_enum_values": True}
@@ -178,9 +176,7 @@ class ErrorEventData(BaseEventData):
     context: Dict[str, Any] = Field(default_factory=dict, description="错误上下文")
 
     def __init__(self, **data):
-        super().__init__(
-            event_type=PipelineEvents.ERROR, severity=EventSeverity.ERROR, **data
-        )
+        super().__init__(event_type=PipelineEvents.ERROR, severity=EventSeverity.ERROR, **data)
         if "message" not in data and "error_message" in data:
             self.message = data["error_message"]
 
@@ -246,17 +242,11 @@ class PipelineEventData(BaseModel):
     def to_legacy_dict(self) -> dict:
         """转换为遗留的字典格式，用于向后兼容"""
         result = self.data.model_dump()
-        result["type"] = (
-            self.event_type.name
-            if hasattr(self.event_type, "name")
-            else str(self.event_type)
-        )
+        result["type"] = self.event_type.name if hasattr(self.event_type, "name") else str(self.event_type)
         return result
 
     @classmethod
-    def from_legacy_dict(
-        cls, event_type: PipelineEvents, data: dict
-    ) -> "PipelineEventData":
+    def from_legacy_dict(cls, event_type: PipelineEvents, data: dict) -> "PipelineEventData":
         """从遗留的字典格式创建事件数据"""
         data_class = EVENT_DATA_MAPPING.get(event_type, BaseEventData)
         event_data = data_class(event_type=event_type, **data)

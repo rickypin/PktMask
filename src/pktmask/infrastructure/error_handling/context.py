@@ -269,9 +269,7 @@ def clear_operation() -> None:
 class ErrorContextDecorator:
     """错误上下文装饰器"""
 
-    def __init__(
-        self, operation: Optional[str] = None, component: Optional[str] = None
-    ):
+    def __init__(self, operation: Optional[str] = None, component: Optional[str] = None):
         self.operation = operation
         self.component = component
 

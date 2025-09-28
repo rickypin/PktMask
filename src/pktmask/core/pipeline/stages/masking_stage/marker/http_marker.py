@@ -67,9 +67,7 @@ class HTTPProtocolMarker:
 
     def __init__(self, config: Dict[str, Any]):
         self.config = config or {}
-        self.logger = logging.getLogger(
-            f"{self.__class__.__module__}.{self.__class__.__name__}"
-        )
+        self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
 
         # Flow bookkeeping (must mirror Masker to align stream_id + direction)
         self.flow_id_counter = 0
@@ -79,9 +77,7 @@ class HTTPProtocolMarker:
         self.states: Dict[Tuple[str, str], _MessageState] = {}
 
         # Ports heuristic (common HTTP ports)
-        self.http_ports: Tuple[int, ...] = tuple(
-            self.config.get("ports", [80, 8080, 8000, 8888])
-        )
+        self.http_ports: Tuple[int, ...] = tuple(self.config.get("ports", [80, 8080, 8000, 8888]))
 
         self._sensitive_header_names = SENSITIVE_HEADER_NAMES
 
@@ -162,11 +158,7 @@ class HTTPProtocolMarker:
                                 idx = payload.find(b"HTTP/1.")
                                 if idx < 0:
                                     # find earliest method occurrence
-                                    idxs = [
-                                        i
-                                        for i in [payload.find(m) for m in HTTP_METHODS]
-                                        if i >= 0
-                                    ]
+                                    idxs = [i for i in [payload.find(m) for m in HTTP_METHODS] if i >= 0]
                                     idx = min(idxs) if idxs else -1
                                 if idx >= 0:
                                     start_off = idx
@@ -191,13 +183,9 @@ class HTTPProtocolMarker:
                             # Found full header: generate keep ranges excluding sensitive values
                             header_bytes = bytes(state.buffer[:hdr_end_off])
                             seq_start = state.start_seq
-                            keep_ranges = self._compute_header_keep_ranges(
-                                header_bytes, seq_start
-                            )
+                            keep_ranges = self._compute_header_keep_ranges(header_bytes, seq_start)
                             for rng_start, rng_end in keep_ranges:
-                                rule = self._make_header_rule(
-                                    stream_id, direction, rng_start, rng_end, tuple_key
-                                )
+                                rule = self._make_header_rule(stream_id, direction, rng_start, rng_end, tuple_key)
                                 ruleset.add_rule(rule)
                             # Reset for next message
                             self.states[state_key] = _MessageState()
@@ -205,17 +193,14 @@ class HTTPProtocolMarker:
                             # Fallback: if buffer nearly full with start-line detected but no terminator,
                             # try to at least keep the start line up to first CRLF
                             if (
-                                len(state.buffer)
-                                >= min(1024, state.max_scan_bytes // 2)
+                                len(state.buffer) >= min(1024, state.max_scan_bytes // 2)
                                 and state.start_seq is not None
                             ):
                                 first_line_end = self._find_first_crlf(state.buffer)
                                 if first_line_end is not None and first_line_end > 0:
                                     header_bytes = bytes(state.buffer[:first_line_end])
                                     seq_start = state.start_seq
-                                    keep_ranges = self._compute_header_keep_ranges(
-                                        header_bytes, seq_start
-                                    )
+                                    keep_ranges = self._compute_header_keep_ranges(header_bytes, seq_start)
                                     for rng_start, rng_end in keep_ranges:
                                         rule = self._make_header_rule(
                                             stream_id,
@@ -229,9 +214,7 @@ class HTTPProtocolMarker:
                                     self.states[state_key] = _MessageState()
 
                         # Record simple tcp_flow metadata (optional)
-                        ruleset.tcp_flows.setdefault(
-                            stream_id, {"directions": {"forward": {}, "reverse": {}}}
-                        )
+                        ruleset.tcp_flows.setdefault(stream_id, {"directions": {"forward": {}, "reverse": {}}})
 
                     except Exception as e:  # per-packet resilience
                         self.logger.debug(f"HTTP marker packet error: {e}")
@@ -352,9 +335,7 @@ class HTTPProtocolMarker:
             metadata=meta,
         )
 
-    def _compute_header_keep_ranges(
-        self, header_bytes: bytes, base_seq: int
-    ) -> List[Tuple[int, int]]:
+    def _compute_header_keep_ranges(self, header_bytes: bytes, base_seq: int) -> List[Tuple[int, int]]:
         """Split header into keep ranges while stripping sensitive values."""
 
         keep_ranges: List[Tuple[int, int]] = []
@@ -394,9 +375,7 @@ class HTTPProtocolMarker:
                     if header_name in self._sensitive_header_names:
                         sensitive = True
                         prefix_len = colon_idx + 1
-                        while prefix_len < len(line) and line[
-                            prefix_len : prefix_len + 1
-                        ] in (b" ", b"\t"):
+                        while prefix_len < len(line) and line[prefix_len : prefix_len + 1] in (b" ", b"\t"):
                             prefix_len += 1
                     else:
                         prefix_len = len(line)

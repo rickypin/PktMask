@@ -22,7 +22,5 @@ def resource_path(filename: str) -> str:
             return templates_path
 
         # 回退到原来的逻辑（兼容性）
-        base_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "resources")
-        )
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "resources"))
         return os.path.join(base_path, filename)

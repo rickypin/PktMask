@@ -44,9 +44,7 @@ class PipelineExecutor:
     # ---------------------------------------------------------------------
     def __init__(self, config: Optional[Dict] | None = None):
         self._config: Dict = config or {}
-        self._logger = logging.getLogger(
-            f"{self.__class__.__module__}.{self.__class__.__name__}"
-        )
+        self._logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
         self.stages: List[StageBase] = self._build_pipeline(self._config)
 
     # ------------------------------------------------------------------
@@ -109,11 +107,7 @@ class PipelineExecutor:
                 for idx, stage in enumerate(self.stages):
                     try:
                         is_last = idx == len(self.stages) - 1
-                        stage_output = (
-                            output_path
-                            if is_last
-                            else temp_dir / f"stage_{idx}_{output_path.name}"
-                        )
+                        stage_output = output_path if is_last else temp_dir / f"stage_{idx}_{output_path.name}"
 
                         stats = stage.process_file(current_input, stage_output)  # type: ignore[arg-type]
                         if stats is None:
@@ -151,17 +145,15 @@ class PipelineExecutor:
                                 "stage_index": idx,
                                 "total_stages": len(self.stages),
                                 "input_file": str(current_input),
-                                "output_file": (
-                                    str(stage_output)
-                                    if "stage_output" in locals()
-                                    else None
-                                ),
+                                "output_file": (str(stage_output) if "stage_output" in locals() else None),
                                 "pipeline_config": self._config,
                             },
                         )
 
                         # Create user-friendly error message for GUI display
-                        user_friendly_msg = f"Processing failed at stage '{stage.name}': {self._get_user_friendly_error_message(e)}"
+                        user_friendly_msg = (
+                            f"Processing failed at stage '{stage.name}': {self._get_user_friendly_error_message(e)}"
+                        )
                         error_msg = f"Stage {stage.name} execution failed: {str(e)}"
                         errors.append(error_msg)
 
@@ -284,9 +276,7 @@ class PipelineExecutor:
         # ------------------------------------------------------------------
         dedup_cfg = config.get("remove_dupes", {})
         if dedup_cfg.get("enabled", False):
-            from pktmask.core.pipeline.stages.deduplication_stage import (
-                DeduplicationStage,
-            )
+            from pktmask.core.pipeline.stages.deduplication_stage import DeduplicationStage
 
             stage = DeduplicationStage(dedup_cfg)
             stage.initialize()
@@ -297,9 +287,7 @@ class PipelineExecutor:
         # ------------------------------------------------------------------
         anon_cfg = config.get("anonymize_ips", {})
         if anon_cfg.get("enabled", False):
-            from pktmask.core.pipeline.stages.anonymization_stage import (
-                AnonymizationStage,
-            )
+            from pktmask.core.pipeline.stages.anonymization_stage import AnonymizationStage
 
             stage = AnonymizationStage(anon_cfg)
             stage.initialize()

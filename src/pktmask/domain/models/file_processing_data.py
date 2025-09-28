@@ -38,9 +38,7 @@ class FileInfo(BaseModel):
     file_type: FileType = Field(..., description="文件类型")
     size_bytes: int = Field(default=0, ge=0, description="文件大小(字节)")
     creation_time: Optional[datetime] = Field(default=None, description="文件创建时间")
-    modification_time: Optional[datetime] = Field(
-        default=None, description="文件修改时间"
-    )
+    modification_time: Optional[datetime] = Field(default=None, description="文件修改时间")
 
     @field_validator("file_type", mode="before")
     @classmethod
@@ -115,9 +113,7 @@ class ProcessingProgress(BaseModel):
         """获取包处理进度百分比"""
         if self.estimated_total_packets == 0:
             return 0.0
-        return min(
-            (self.packets_processed / self.estimated_total_packets) * 100.0, 100.0
-        )
+        return min((self.packets_processed / self.estimated_total_packets) * 100.0, 100.0)
 
 
 class ProcessingContext(BaseModel):
@@ -125,9 +121,7 @@ class ProcessingContext(BaseModel):
 
     input_directory: str = Field(..., description="输入目录")
     output_directory: str = Field(..., description="输出目录")
-    selected_steps: List[str] = Field(
-        default_factory=list, description="选择的处理步骤"
-    )
+    selected_steps: List[str] = Field(default_factory=list, description="选择的处理步骤")
     configuration: Dict[str, Any] = Field(default_factory=dict, description="处理配置")
     worker_id: Optional[str] = Field(default=None, description="工作线程ID")
 
@@ -146,9 +140,7 @@ class OutputInfo(BaseModel):
     output_filename: Optional[str] = Field(default=None, description="输出文件名")
     output_path: Optional[str] = Field(default=None, description="输出文件路径")
     output_size_bytes: int = Field(default=0, ge=0, description="输出文件大小")
-    intermediate_files: List[str] = Field(
-        default_factory=list, description="中间文件列表"
-    )
+    intermediate_files: List[str] = Field(default_factory=list, description="中间文件列表")
 
     def add_intermediate_file(self, file_path: str):
         """添加中间文件"""
@@ -168,9 +160,7 @@ class ProcessingError(BaseModel):
     error_message: str = Field(..., description="错误消息")
     error_code: Optional[str] = Field(default=None, description="错误代码")
     error_step: Optional[str] = Field(default=None, description="出错的步骤")
-    error_time: datetime = Field(
-        default_factory=datetime.now, description="错误发生时间"
-    )
+    error_time: datetime = Field(default_factory=datetime.now, description="错误发生时间")
     traceback: Optional[str] = Field(default=None, description="错误堆栈")
     is_recoverable: bool = Field(default=False, description="是否可恢复")
 
@@ -181,9 +171,7 @@ class FileProcessingData(BaseModel):
     file_info: FileInfo = Field(..., description="文件信息")
     status: FileStatus = Field(default=FileStatus.PENDING, description="处理状态")
     context: ProcessingContext = Field(..., description="处理上下文")
-    progress: ProcessingProgress = Field(
-        default_factory=ProcessingProgress, description="处理进度"
-    )
+    progress: ProcessingProgress = Field(default_factory=ProcessingProgress, description="处理进度")
     output_info: OutputInfo = Field(default_factory=OutputInfo, description="输出信息")
 
     # 时间信息
@@ -192,9 +180,7 @@ class FileProcessingData(BaseModel):
     duration_ms: int = Field(default=0, ge=0, description="处理耗时(毫秒)")
 
     # 错误信息
-    errors: List[ProcessingError] = Field(
-        default_factory=list, description="处理错误列表"
-    )
+    errors: List[ProcessingError] = Field(default_factory=list, description="处理错误列表")
 
     # 元数据
     metadata: Dict[str, Any] = Field(default_factory=dict, description="附加元数据")
@@ -267,9 +253,7 @@ class FileProcessingData(BaseModel):
             "duration": self.get_duration_string(),
             "file_size": self.file_info.get_size_string(),
             "output_size": self.output_info.output_size_bytes,
-            "size_reduction": self.output_info.get_size_reduction_ratio(
-                self.file_info.size_bytes
-            ),
+            "size_reduction": self.output_info.get_size_reduction_ratio(self.file_info.size_bytes),
             "steps_completed": self.progress.steps_completed,
             "total_steps": self.progress.total_steps,
             "packets_processed": self.progress.packets_processed,

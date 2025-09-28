@@ -54,7 +54,7 @@ jobs:
 
       - name: 代码风格检查
         run: |
-          flake8 src/ --count --max-line-length=88 --statistics
+          flake8 src/ --count --statistics
 
       - name: 类型检查
         run: |

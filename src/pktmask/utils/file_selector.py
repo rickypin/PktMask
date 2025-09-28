@@ -2,9 +2,7 @@ import os
 from typing import List, Tuple
 
 
-def select_files(
-    subdir_path: str, current_suffix: str, all_suffixes: List[str]
-) -> Tuple[List[str], str]:
+def select_files(subdir_path: str, current_suffix: str, all_suffixes: List[str]) -> Tuple[List[str], str]:
     """
     根据处理后缀选择要处理的文件。
 
@@ -18,9 +16,7 @@ def select_files(
         - list[str]: The list of file names to process.
         - str: A message describing the selection logic.
     """
-    all_files = [
-        f for f in os.listdir(subdir_path) if f.lower().endswith((".pcap", ".pcapng"))
-    ]
+    all_files = [f for f in os.listdir(subdir_path) if f.lower().endswith((".pcap", ".pcapng"))]
 
     # 1. 检查是否存在当前处理类型的产物文件
     # 文件名示例: capture.pcap -> capture-Deduped.pcap

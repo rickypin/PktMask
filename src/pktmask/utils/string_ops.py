@@ -28,9 +28,7 @@ def create_separator(
     return char * length
 
 
-def format_ip_mapping(
-    original_ip: str, masked_ip: str, ip_width: int = FormatConstants.IP_DISPLAY_WIDTH
-) -> str:
+def format_ip_mapping(original_ip: str, masked_ip: str, ip_width: int = FormatConstants.IP_DISPLAY_WIDTH) -> str:
     """
     Format IP mapping display
 
@@ -80,9 +78,7 @@ def format_step_summary(
     )
 
 
-def format_deduplication_summary(
-    step_name: str, unique_count: int, removed_count: int, rate: float
-) -> str:
+def format_deduplication_summary(step_name: str, unique_count: int, removed_count: int, rate: float) -> str:
     """
     Format deduplication step summary
 
@@ -109,9 +105,7 @@ def format_deduplication_summary(
     )
 
 
-def format_trimming_summary(
-    step_name: str, full_packets: int, trimmed_packets: int, rate: float
-) -> str:
+def format_trimming_summary(step_name: str, full_packets: int, trimmed_packets: int, rate: float) -> str:
     """
     Format trimming step summary
 
@@ -134,8 +128,7 @@ def format_trimming_summary(
     rate_display = f"{rate:5.{FormatConstants.RATE_DECIMAL_PLACES}f}%"
 
     return (
-        f"  ✂️  {step_display} | Full Pkts: {full_display} | "
-        f"Trimmed Pkts: {trimmed_display} | Rate: {rate_display}"
+        f"  ✂️  {step_display} | Full Pkts: {full_display} | " f"Trimmed Pkts: {trimmed_display} | Rate: {rate_display}"
     )
 
 
@@ -226,9 +219,7 @@ def format_summary_section(title: str, items: List[str], emoji: str = "📈") ->
     return "\n".join(lines)
 
 
-def format_file_status(
-    filename: str, status: str, details: Optional[List[str]] = None
-) -> str:
+def format_file_status(filename: str, status: str, details: Optional[List[str]] = None) -> str:
     """
     Format file status display
 
@@ -271,9 +262,7 @@ def truncate_string(text: str, max_length: int, ellipsis: str = "...") -> str:
     return text[: max_length - len(ellipsis)] + ellipsis
 
 
-def pad_string(
-    text: str, width: int, align: str = FormatConstants.LEFT_ALIGN, fill_char: str = " "
-) -> str:
+def pad_string(text: str, width: int, align: str = FormatConstants.LEFT_ALIGN, fill_char: str = " ") -> str:
     """
     Pad string to specified width
 
@@ -294,9 +283,7 @@ def pad_string(
         return text.ljust(width, fill_char)
 
 
-def join_with_separator(
-    items: List[str], separator: str = ", ", empty_text: str = "None"
-) -> str:
+def join_with_separator(items: List[str], separator: str = ", ", empty_text: str = "None") -> str:
     """
     Join string list with separator
 
@@ -320,9 +307,7 @@ def join_with_separator(
     return separator.join(filtered_items)
 
 
-def format_key_value_pairs(
-    data: Dict[str, Any], separator: str = ": ", line_prefix: str = "   "
-) -> str:
+def format_key_value_pairs(data: Dict[str, Any], separator: str = ": ", line_prefix: str = "   ") -> str:
     """
     Format key-value pair data
 

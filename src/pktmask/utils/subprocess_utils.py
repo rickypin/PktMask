@@ -99,9 +99,7 @@ def run_tshark_command(
         CompletedProcess instance
     """
     cmd = [tshark_path] + args
-    return run_hidden_subprocess(
-        cmd=cmd, timeout=timeout, check=True, capture_output=True, text=True, **kwargs
-    )
+    return run_hidden_subprocess(cmd=cmd, timeout=timeout, check=True, capture_output=True, text=True, **kwargs)
 
 
 def run_editcap_command(

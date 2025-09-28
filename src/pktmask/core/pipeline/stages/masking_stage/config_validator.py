@@ -29,9 +29,7 @@ class ConfigValidator:
     """
 
     def __init__(self):
-        self.logger = logging.getLogger(
-            f"{self.__class__.__module__}.{self.__class__.__name__}"
-        )
+        self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
         self.validation_rules = {
             "protocol": self._validate_protocol,
             "marker_config": self._validate_marker_config,
@@ -112,9 +110,7 @@ class ConfigValidator:
                     "preserve_alert",
                 ]
                 for key in tls_keys:
-                    if key in protocol_config and not isinstance(
-                        protocol_config[key], bool
-                    ):
+                    if key in protocol_config and not isinstance(protocol_config[key], bool):
                         errors.append(f"TLS配置项{key}必须是布尔值")
 
         return {"errors": errors, "warnings": warnings}
@@ -174,8 +170,6 @@ class ConfigValidator:
         normalized.setdefault("protocol", "tls")
         normalized.setdefault("mode", "enhanced")
         normalized.setdefault("marker_config", {})
-        normalized.setdefault(
-            "masker_config", {"chunk_size": 1000, "verify_checksums": True}
-        )
+        normalized.setdefault("masker_config", {"chunk_size": 1000, "verify_checksums": True})
 
         return normalized

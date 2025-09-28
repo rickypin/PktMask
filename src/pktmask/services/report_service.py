@@ -84,16 +84,12 @@ class ReportService:
 
     def add_error(self, error_message: str):
         """添加错误信息"""
-        self._errors.append(
-            {"timestamp": datetime.now().isoformat(), "message": error_message}
-        )
+        self._errors.append({"timestamp": datetime.now().isoformat(), "message": error_message})
         logger.error(f"Added error: {error_message}")
 
     def add_warning(self, warning_message: str):
         """添加警告信息"""
-        self._warnings.append(
-            {"timestamp": datetime.now().isoformat(), "message": warning_message}
-        )
+        self._warnings.append({"timestamp": datetime.now().isoformat(), "message": warning_message})
         logger.warning(f"Added warning: {warning_message}")
 
     def finalize_report(
@@ -125,14 +121,10 @@ class ReportService:
             warnings=[w["message"] for w in self._warnings],
         )
 
-        logger.info(
-            f"Finalized report: {processed_files}/{total_files} files processed"
-        )
+        logger.info(f"Finalized report: {processed_files}/{total_files} files processed")
         return self._current_report
 
-    def generate_text_report(
-        self, report: ProcessingReport, detailed: bool = False
-    ) -> str:
+    def generate_text_report(self, report: ProcessingReport, detailed: bool = False) -> str:
         """生成文本格式报告"""
         lines = []
 
@@ -147,18 +139,10 @@ class ReportService:
         lines.append("-" * 30)
         lines.append(f"Input Path:      {report.input_path}")
         lines.append(f"Output Path:     {report.output_path}")
-        lines.append(
-            f"Start Time:      {report.start_time.strftime('%Y-%m-%d %H:%M:%S')}"
-        )
-        lines.append(
-            f"End Time:        {report.end_time.strftime('%Y-%m-%d %H:%M:%S')}"
-        )
-        lines.append(
-            f"Duration:        {self._format_duration(report.duration_seconds)}"
-        )
-        lines.append(
-            f"Status:          {'✅ Success' if report.success else '❌ Failed'}"
-        )
+        lines.append(f"Start Time:      {report.start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        lines.append(f"End Time:        {report.end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        lines.append(f"Duration:        {self._format_duration(report.duration_seconds)}")
+        lines.append(f"Status:          {'✅ Success' if report.success else '❌ Failed'}")
         lines.append("")
 
         # 文件统计
@@ -213,9 +197,7 @@ class ReportService:
 
         # 结尾
         lines.append("=" * 70)
-        lines.append(
-            f"Report generated at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        )
+        lines.append(f"Report generated at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         lines.append("=" * 70)
 
         return "\n".join(lines)

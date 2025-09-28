@@ -53,9 +53,7 @@ def calculate_rate(
     return calculate_percentage(processed, total, decimal_places)
 
 
-def calculate_speed(
-    items: Union[int, float], duration_seconds: float, decimal_places: int = 1
-) -> float:
+def calculate_speed(items: Union[int, float], duration_seconds: float, decimal_places: int = 1) -> float:
     """
     Calculate processing speed (items/second)
 
@@ -95,9 +93,7 @@ def safe_divide(
     return numerator / denominator
 
 
-def format_number(
-    number: Union[int, float], decimal_places: int = 0, thousands_separator: bool = True
-) -> str:
+def format_number(number: Union[int, float], decimal_places: int = 0, thousands_separator: bool = True) -> str:
     """
     Format number display
 
@@ -207,14 +203,11 @@ def format_processing_summary(
     """
     rate = calculate_percentage(processed_count, original_count)
     return (
-        f"{step_name}: {format_number(processed_count)} / "
-        f"{format_number(original_count)} {unit_name} ({rate:.1f}%)"
+        f"{step_name}: {format_number(processed_count)} / " f"{format_number(original_count)} {unit_name} ({rate:.1f}%)"
     )
 
 
-def clamp(
-    value: Union[int, float], min_value: Union[int, float], max_value: Union[int, float]
-) -> Union[int, float]:
+def clamp(value: Union[int, float], min_value: Union[int, float], max_value: Union[int, float]) -> Union[int, float]:
     """
     Clamp value within specified range
 
@@ -229,9 +222,7 @@ def clamp(
     return max(min_value, min(value, max_value))
 
 
-def normalize_value(
-    value: Union[int, float], min_value: Union[int, float], max_value: Union[int, float]
-) -> float:
+def normalize_value(value: Union[int, float], min_value: Union[int, float], max_value: Union[int, float]) -> float:
     """
     Normalize value to 0-1 range
 
@@ -272,9 +263,7 @@ def moving_average(values: list, window_size: int) -> list:
     return averages
 
 
-def calculate_growth_rate(
-    old_value: Union[int, float], new_value: Union[int, float], decimal_places: int = 2
-) -> float:
+def calculate_growth_rate(old_value: Union[int, float], new_value: Union[int, float], decimal_places: int = 2) -> float:
     """
     Calculate growth rate
 

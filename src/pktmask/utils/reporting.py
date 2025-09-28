@@ -19,9 +19,7 @@ class Reporter(ABC):
         """Interface method for generating reports."""
 
     @abstractmethod
-    def finalize_report_for_directory(
-        self, subdir_name: str, stats: Dict[str, Any], final_mapping: Dict[str, str]
-    ):
+    def finalize_report_for_directory(self, subdir_name: str, stats: Dict[str, Any], final_mapping: Dict[str, str]):
         """Generate final report after directory processing is complete."""
 
     def set_output_directory(self, path: str):
@@ -39,9 +37,7 @@ try:
     logger.info("HTML template loaded successfully")
 except Exception as e:
     HTML_TEMPLATE = None
-    logger.warning(
-        f"Could not load HTML template. HTML reports will be disabled. Error: {e}"
-    )
+    logger.warning(f"Could not load HTML template. HTML reports will be disabled. Error: {e}")
 
 
 class FileReporter(Reporter):
@@ -80,9 +76,7 @@ class FileReporter(Reporter):
             self._logger.error(f"Failed to generate JSON report: {error}")
             # 不抛出异常，因为报告生成失败不应该中断主流程
 
-    def finalize_report_for_directory(
-        self, subdir_name: str, stats: Dict[str, Any], final_mapping: Dict[str, str]
-    ):
+    def finalize_report_for_directory(self, subdir_name: str, stats: Dict[str, Any], final_mapping: Dict[str, str]):
         """为整个目录生成并保存一个最终的JSON和HTML报告。"""
 
         report_name = f"final_report_for_{subdir_name.replace('/', '_')}"
@@ -121,9 +115,7 @@ class FileReporter(Reporter):
                 )
                 self._logger.error(f"Failed to generate HTML report: {error}")
         else:
-            self._logger.debug(
-                "HTML template not available, skipping HTML report generation"
-            )
+            self._logger.debug("HTML template not available, skipping HTML report generation")
 
         return report_data
 

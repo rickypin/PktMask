@@ -122,9 +122,7 @@ class StandardMessages:
             return f"{StandardMessages.ERROR_ICON} Processing failed: {errors}"
 
     @staticmethod
-    def format_stage_progress(
-        stage_name: str, packets_processed: int, packets_modified: int
-    ) -> str:
+    def format_stage_progress(stage_name: str, packets_processed: int, packets_modified: int) -> str:
         """Unified stage progress format
 
         Args:
@@ -165,28 +163,14 @@ class StandardMessages:
         """
         config_lines = []
 
-        config_lines.append(
-            StandardMessages.CONFIG_DEDUP_ENABLED
-            if dedup
-            else StandardMessages.CONFIG_DEDUP_DISABLED
-        )
-        config_lines.append(
-            StandardMessages.CONFIG_ANON_ENABLED
-            if anon
-            else StandardMessages.CONFIG_ANON_DISABLED
-        )
-        config_lines.append(
-            StandardMessages.CONFIG_MASK_ENABLED
-            if mask
-            else StandardMessages.CONFIG_MASK_DISABLED
-        )
+        config_lines.append(StandardMessages.CONFIG_DEDUP_ENABLED if dedup else StandardMessages.CONFIG_DEDUP_DISABLED)
+        config_lines.append(StandardMessages.CONFIG_ANON_ENABLED if anon else StandardMessages.CONFIG_ANON_DISABLED)
+        config_lines.append(StandardMessages.CONFIG_MASK_ENABLED if mask else StandardMessages.CONFIG_MASK_DISABLED)
 
         return config_lines
 
     @staticmethod
-    def format_error_with_context(
-        error_message: str, context: Optional[str] = None
-    ) -> str:
+    def format_error_with_context(error_message: str, context: Optional[str] = None) -> str:
         """Format error message with optional context
 
         Args:
@@ -202,9 +186,7 @@ class StandardMessages:
             return f"{StandardMessages.ERROR_ICON} {error_message}"
 
     @staticmethod
-    def format_warning_with_context(
-        warning_message: str, context: Optional[str] = None
-    ) -> str:
+    def format_warning_with_context(warning_message: str, context: Optional[str] = None) -> str:
         """Format warning message with optional context
 
         Args:
@@ -220,9 +202,7 @@ class StandardMessages:
             return f"{StandardMessages.WARNING_ICON} {warning_message}"
 
     @staticmethod
-    def format_info_with_context(
-        info_message: str, context: Optional[str] = None
-    ) -> str:
+    def format_info_with_context(info_message: str, context: Optional[str] = None) -> str:
         """Format info message with optional context
 
         Args:

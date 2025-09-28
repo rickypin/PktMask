@@ -126,22 +126,16 @@ class DeduplicationStage(StageBase):
             try:
                 from scapy.all import rdpcap, wrpcap
             except ImportError as e:
-                raise ProcessingError(
-                    "Scapy library not available for deduplication"
-                ) from e
+                raise ProcessingError("Scapy library not available for deduplication") from e
 
             # 读取数据包 with retry mechanism and memory monitoring
             def load_packets():
                 # Check memory pressure before loading
                 if self.resource_manager.get_memory_pressure() > 0.8:
-                    self.logger.warning(
-                        "High memory pressure detected before loading packets"
-                    )
+                    self.logger.warning("High memory pressure detected before loading packets")
                 return rdpcap(str(input_path))
 
-            packets = self.retry_operation(
-                load_packets, f"loading packets from {input_path}"
-            )
+            packets = self.retry_operation(load_packets, f"loading packets from {input_path}")
             total_packets = len(packets)
 
             self.logger.info(f"Loaded {total_packets} packets from {input_path}")
@@ -154,10 +148,7 @@ class DeduplicationStage(StageBase):
                 for i, packet in enumerate(packets):
                     try:
                         # Monitor memory pressure during processing
-                        if (
-                            i % 1000 == 0
-                            and self.resource_manager.get_memory_pressure() > 0.9
-                        ):
+                        if i % 1000 == 0 and self.resource_manager.get_memory_pressure() > 0.9:
                             self.logger.warning(
                                 f"High memory pressure during deduplication at packet {i}/{total_packets}"
                             )
@@ -176,35 +167,25 @@ class DeduplicationStage(StageBase):
                             f"Failed to process packet {i+1}/{total_packets} during deduplication: {e}. "
                             f"Treating as unique packet."
                         )
-                        unique_packets.append(
-                            packet
-                        )  # Keep packet to maintain file integrity
+                        unique_packets.append(packet)  # Keep packet to maintain file integrity
 
             # 保存去重后的数据包 with error handling
             def save_unique_packets():
                 if unique_packets:
                     wrpcap(str(output_path), unique_packets)
-                    self.logger.info(
-                        f"Saved {len(unique_packets)} unique packets to {output_path}"
-                    )
+                    self.logger.info(f"Saved {len(unique_packets)} unique packets to {output_path}")
                 else:
                     # 如果没有唯一数据包，创建空文件
                     output_path.touch()
-                    self.logger.warning(
-                        "No unique packets found, created empty output file"
-                    )
+                    self.logger.warning("No unique packets found, created empty output file")
 
-            self.retry_operation(
-                save_unique_packets, f"saving deduplicated packets to {output_path}"
-            )
+            self.retry_operation(save_unique_packets, f"saving deduplicated packets to {output_path}")
 
             processing_time = time.time() - start_time
             duration_ms = processing_time * 1000
 
             # 计算去重率
-            deduplication_rate = (
-                (removed_count / total_packets * 100.0) if total_packets > 0 else 0.0
-            )
+            deduplication_rate = (removed_count / total_packets * 100.0) if total_packets > 0 else 0.0
 
             # 计算空间节省
             space_saved = self._calculate_space_saved(input_path, output_path)
@@ -250,9 +231,7 @@ class DeduplicationStage(StageBase):
             self.handle_file_operation_error(e, input_path, "deduplication")
 
         except ImportError as e:
-            raise ProcessingError(
-                f"Required dependency not available for deduplication: {e}"
-            ) from e
+            raise ProcessingError(f"Required dependency not available for deduplication: {e}") from e
 
         except MemoryError as e:
             # Clear hash set to free memory
@@ -320,9 +299,7 @@ class DeduplicationStage(StageBase):
             input_size = input_path.stat().st_size
             output_size = output_path.stat().st_size
             saved_bytes = input_size - output_size
-            saved_percentage = (
-                (saved_bytes / input_size * 100.0) if input_size > 0 else 0.0
-            )
+            saved_percentage = (saved_bytes / input_size * 100.0) if input_size > 0 else 0.0
 
             return {
                 "input_size": input_size,

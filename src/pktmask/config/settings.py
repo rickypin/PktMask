@@ -166,9 +166,7 @@ class ToolsSettings:
     """外部工具设置"""
 
     tshark: TSharkSettings = field(default_factory=TSharkSettings)
-    tshark_enhanced: TSharkEnhancedSettings = field(
-        default_factory=TSharkEnhancedSettings
-    )
+    tshark_enhanced: TSharkEnhancedSettings = field(default_factory=TSharkEnhancedSettings)
 
 
 @dataclass
@@ -243,22 +241,12 @@ class AppConfig:
                         fallback_config = FallbackConfig(**fallback_data)
                         tshark_enhanced_data["fallback_config"] = fallback_config
 
-                    tools_settings.tshark_enhanced = TSharkEnhancedSettings(
-                        **tshark_enhanced_data
-                    )
+                    tools_settings.tshark_enhanced = TSharkEnhancedSettings(**tshark_enhanced_data)
 
             return cls(
                 ui=UISettings(**ui_data) if ui_data else UISettings(),
-                processing=(
-                    ProcessingSettings(**processing_data)
-                    if processing_data
-                    else ProcessingSettings()
-                ),
-                logging=(
-                    LoggingSettings(**logging_data)
-                    if logging_data
-                    else LoggingSettings()
-                ),
+                processing=(ProcessingSettings(**processing_data) if processing_data else ProcessingSettings()),
+                logging=(LoggingSettings(**logging_data) if logging_data else LoggingSettings()),
                 tools=tools_settings,
                 config_version=data.get("config_version", "2.0"),
                 created_at=data.get("created_at"),
@@ -291,9 +279,7 @@ class AppConfig:
                 if config_path.suffix.lower() == ".json":
                     json.dump(data, f, indent=2, ensure_ascii=False)
                 else:
-                    yaml.dump(
-                        data, f, default_flow_style=False, allow_unicode=True, indent=2
-                    )
+                    yaml.dump(data, f, default_flow_style=False, allow_unicode=True, indent=2)
 
             return True
 
@@ -434,9 +420,7 @@ class AppConfig:
             "fallback_preferred_fallback_order": enhanced.fallback_config.preferred_fallback_order,
         }
 
-    def update_last_directories(
-        self, input_dir: Optional[str] = None, output_dir: Optional[str] = None
-    ):
+    def update_last_directories(self, input_dir: Optional[str] = None, output_dir: Optional[str] = None):
         """更新最后使用的目录"""
         if input_dir and self.ui.remember_last_dir:
             self.ui.last_input_dir = str(Path(input_dir).resolve())

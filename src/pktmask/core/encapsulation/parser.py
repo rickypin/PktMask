@@ -28,14 +28,7 @@ from scapy.layers.tls.record import TLS
 
 from ...config.settings import get_app_config
 from .detector import EncapsulationDetector
-from .types import (
-    EncapsulationResult,
-    EncapsulationType,
-    IPLayerInfo,
-    LayerInfo,
-    PayloadInfo,
-    VLANInfo,
-)
+from .types import EncapsulationResult, EncapsulationType, IPLayerInfo, LayerInfo, PayloadInfo, VLANInfo
 
 
 class ProtocolStackParser:
@@ -60,9 +53,7 @@ class ProtocolStackParser:
             self.enable_parsing_logs = self.config.logging.enable_protocol_parsing_logs
         except Exception as e:
             # 如果配置获取失败，默认关闭详细日志
-            self.logger.warning(
-                f"Failed to get configuration, using default log settings: {e}"
-            )
+            self.logger.warning(f"Failed to get configuration, using default log settings: {e}")
             self.enable_parsing_logs = False
 
         # 协议层解析器映射
@@ -115,9 +106,7 @@ class ProtocolStackParser:
 
                     # 收集IP层信息
                     if layer_name in ["IP", "IPv6"]:
-                        ip_info = self._extract_ip_info(
-                            current_layer, depth, encap_type
-                        )
+                        ip_info = self._extract_ip_info(current_layer, depth, encap_type)
                         if ip_info:
                             ip_layers.append(ip_info)
 
@@ -154,9 +143,7 @@ class ProtocolStackParser:
 
             # 根据配置决定是否输出详细日志
             if self.enable_parsing_logs:
-                self.logger.info(
-                    f"Protocol stack parsing completed: {len(layers)} layers, {len(ip_layers)} IP layers"
-                )
+                self.logger.info(f"Protocol stack parsing completed: {len(layers)} layers, {len(ip_layers)} IP layers")
             return result
 
         except Exception as e:
@@ -211,9 +198,7 @@ class ProtocolStackParser:
 
     # === 单层解析方法 ===
 
-    def _parse_single_layer(
-        self, layer: Packet, depth: int, encap_type: EncapsulationType
-    ) -> Optional[LayerInfo]:
+    def _parse_single_layer(self, layer: Packet, depth: int, encap_type: EncapsulationType) -> Optional[LayerInfo]:
         """解析单个协议层"""
         try:
             layer_name = layer.__class__.__name__
@@ -232,14 +217,10 @@ class ProtocolStackParser:
                 )
 
         except Exception as e:
-            self.logger.warning(
-                f"Failed to parse layer {layer.__class__.__name__}: {str(e)}"
-            )
+            self.logger.warning(f"Failed to parse layer {layer.__class__.__name__}: {str(e)}")
             return None
 
-    def _parse_ethernet(
-        self, layer: Ether, depth: int, encap_type: EncapsulationType
-    ) -> LayerInfo:
+    def _parse_ethernet(self, layer: Ether, depth: int, encap_type: EncapsulationType) -> LayerInfo:
         """解析以太网层"""
         properties = {
             "src_mac": layer.src,
@@ -255,9 +236,7 @@ class ProtocolStackParser:
             properties=properties,
         )
 
-    def _parse_vlan(
-        self, layer: Dot1Q, depth: int, encap_type: EncapsulationType
-    ) -> LayerInfo:
+    def _parse_vlan(self, layer: Dot1Q, depth: int, encap_type: EncapsulationType) -> LayerInfo:
         """解析VLAN层 (802.1Q)"""
         properties = {
             "vlan_id": layer.vlan,
@@ -274,9 +253,7 @@ class ProtocolStackParser:
             properties=properties,
         )
 
-    def _parse_double_vlan(
-        self, layer, depth: int, encap_type: EncapsulationType
-    ) -> LayerInfo:
+    def _parse_double_vlan(self, layer, depth: int, encap_type: EncapsulationType) -> LayerInfo:
         """解析双层VLAN层 (802.1ad)"""
         if Dot1AD and isinstance(layer, Dot1AD):
             properties = {
@@ -305,9 +282,7 @@ class ProtocolStackParser:
             properties=properties,
         )
 
-    def _parse_mpls(
-        self, layer: MPLS, depth: int, encap_type: EncapsulationType
-    ) -> LayerInfo:
+    def _parse_mpls(self, layer: MPLS, depth: int, encap_type: EncapsulationType) -> LayerInfo:
         """解析MPLS层"""
         properties = {
             "label": layer.label,
@@ -324,9 +299,7 @@ class ProtocolStackParser:
             properties=properties,
         )
 
-    def _parse_vxlan(
-        self, layer, depth: int, encap_type: EncapsulationType
-    ) -> LayerInfo:
+    def _parse_vxlan(self, layer, depth: int, encap_type: EncapsulationType) -> LayerInfo:
         """解析VXLAN层"""
         if VXLAN and isinstance(layer, VXLAN):
             properties = {
@@ -345,9 +318,7 @@ class ProtocolStackParser:
             properties=properties,
         )
 
-    def _parse_gre(
-        self, layer: GRE, depth: int, encap_type: EncapsulationType
-    ) -> LayerInfo:
+    def _parse_gre(self, layer: GRE, depth: int, encap_type: EncapsulationType) -> LayerInfo:
         """解析GRE层"""
         properties = {
             "proto": hex(layer.proto) if hasattr(layer, "proto") else None,
@@ -367,9 +338,7 @@ class ProtocolStackParser:
             properties=properties,
         )
 
-    def _parse_ipv4(
-        self, layer: IP, depth: int, encap_type: EncapsulationType
-    ) -> LayerInfo:
+    def _parse_ipv4(self, layer: IP, depth: int, encap_type: EncapsulationType) -> LayerInfo:
         """解析IPv4层"""
         properties = {
             "src_ip": layer.src,
@@ -393,9 +362,7 @@ class ProtocolStackParser:
             properties=properties,
         )
 
-    def _parse_ipv6(
-        self, layer: IPv6, depth: int, encap_type: EncapsulationType
-    ) -> LayerInfo:
+    def _parse_ipv6(self, layer: IPv6, depth: int, encap_type: EncapsulationType) -> LayerInfo:
         """解析IPv6层"""
         properties = {
             "src_ip": layer.src,
@@ -416,9 +383,7 @@ class ProtocolStackParser:
             properties=properties,
         )
 
-    def _parse_tcp(
-        self, layer: TCP, depth: int, encap_type: EncapsulationType
-    ) -> LayerInfo:
+    def _parse_tcp(self, layer: TCP, depth: int, encap_type: EncapsulationType) -> LayerInfo:
         """解析TCP层"""
         properties = {
             "sport": layer.sport,
@@ -440,9 +405,7 @@ class ProtocolStackParser:
             properties=properties,
         )
 
-    def _parse_udp(
-        self, layer: UDP, depth: int, encap_type: EncapsulationType
-    ) -> LayerInfo:
+    def _parse_udp(self, layer: UDP, depth: int, encap_type: EncapsulationType) -> LayerInfo:
         """解析UDP层"""
         properties = {
             "sport": layer.sport,
@@ -461,9 +424,7 @@ class ProtocolStackParser:
 
     # === 信息提取方法 ===
 
-    def _extract_ip_info(
-        self, ip_layer: Packet, depth: int, encap_type: EncapsulationType
-    ) -> Optional[IPLayerInfo]:
+    def _extract_ip_info(self, ip_layer: Packet, depth: int, encap_type: EncapsulationType) -> Optional[IPLayerInfo]:
         """提取IP层信息"""
         try:
             if isinstance(ip_layer, IP):
@@ -517,15 +478,11 @@ class ProtocolStackParser:
             self.logger.warning(f"Failed to extract VLAN information: {str(e)}")
             return None
 
-    def _find_innermost_payload(
-        self, packet: Packet, layers: List[LayerInfo]
-    ) -> Optional[PayloadInfo]:
+    def _find_innermost_payload(self, packet: Packet, layers: List[LayerInfo]) -> Optional[PayloadInfo]:
         """查找最内层载荷"""
         try:
             # 查找最深层的TCP或UDP
-            tcp_udp_layers = [
-                layer for layer in layers if layer.layer_type in ["TCP", "UDP"]
-            ]
+            tcp_udp_layers = [layer for layer in layers if layer.layer_type in ["TCP", "UDP"]]
 
             if not tcp_udp_layers:
                 return None

@@ -51,9 +51,7 @@ class ReportManager:
             self.main_window.timer.stop()
 
         # Stop statistics manager timing
-        if hasattr(self.main_window, "pipeline_manager") and hasattr(
-            self.main_window.pipeline_manager, "statistics"
-        ):
+        if hasattr(self.main_window, "pipeline_manager") and hasattr(self.main_window.pipeline_manager, "statistics"):
             self.main_window.pipeline_manager.statistics.stop_timing()
 
         self.main_window.update_time_elapsed()
@@ -79,9 +77,7 @@ class ReportManager:
                 total_seconds = minutes * 60 + seconds
                 if total_seconds > 0 and partial_packets > 0:
                     speed = partial_packets / total_seconds
-                    stop_report += (
-                        f"   • Average Speed: {speed:,.0f} packets/second\n\n"
-                    )
+                    stop_report += f"   • Average Speed: {speed:,.0f} packets/second\n\n"
                 else:
                     stop_report += "   • Average Speed: N/A\n\n"
             else:
@@ -101,9 +97,7 @@ class ReportManager:
         stop_report += f"🔧 Configured Processing Steps: {', '.join(enabled_steps)}\n"
         stop_report += f"📁 Working Directory: {os.path.basename(self.main_window.base_dir) if self.main_window.base_dir else 'N/A'}\n"
         stop_report += "⚠️ Processing was interrupted. All intermediate files have been cleaned up.\n"
-        stop_report += (
-            "❌ No completed output files were generated due to interruption.\n"
-        )
+        stop_report += "❌ No completed output files were generated due to interruption.\n"
         stop_report += f"{'='*separator_length}\n"
 
         self.main_window.summary_text.append(stop_report)
@@ -114,40 +108,29 @@ class ReportManager:
             self.main_window.summary_text.append(files_status_report)
 
         # Display global IP mapping summary (only when there are fully completed files)
-        if (
-            self.main_window.processed_files_count >= 1
-            and self.main_window.global_ip_mappings
-        ):
-            global_partial_report = self._generate_global_ip_mappings_report(
-                separator_length, True
-            )
+        if self.main_window.processed_files_count >= 1 and self.main_window.global_ip_mappings:
+            global_partial_report = self._generate_global_ip_mappings_report(separator_length, True)
             if global_partial_report:
                 self.main_window.summary_text.append(global_partial_report)
 
         # Display Enhanced Masking intelligent processing statistics (if any)
-        enhanced_partial_report = self._generate_enhanced_masking_report(
-            separator_length, is_partial=True
-        )
+        enhanced_partial_report = self._generate_enhanced_masking_report(separator_length, is_partial=True)
         if enhanced_partial_report:
             self.main_window.summary_text.append(enhanced_partial_report)
 
         # Corrected restart hint
         restart_hint = "\n💡 RESTART INFORMATION:\n"
-        restart_hint += (
-            "   • Clicking 'Start' will restart processing from the beginning\n"
-        )
-        restart_hint += (
-            "   • All files will be reprocessed (no partial resume capability)\n"
-        )
-        restart_hint += (
-            "   • Any existing output files will be skipped to avoid overwriting\n"
-        )
+        restart_hint += "   • Clicking 'Start' will restart processing from the beginning\n"
+        restart_hint += "   • All files will be reprocessed (no partial resume capability)\n"
+        restart_hint += "   • Any existing output files will be skipped to avoid overwriting\n"
         restart_hint += "   • Processing will be performed completely for each file\n"
         self.main_window.summary_text.append(restart_hint)
 
     def _generate_files_status_report(self, separator_length: int) -> str:
         """Generate file processing status report"""
-        files_status_report = f"\n{'='*separator_length}\n📋 FILES PROCESSING STATUS (At Stop)\n{'='*separator_length}\n"
+        files_status_report = (
+            f"\n{'='*separator_length}\n📋 FILES PROCESSING STATUS (At Stop)\n{'='*separator_length}\n"
+        )
 
         completed_files = 0
         partial_files = 0
@@ -171,22 +154,16 @@ class ReportManager:
 
             if is_fully_completed:
                 completed_files += 1
-                files_status_report += self._generate_completed_file_report(
-                    filename, steps_data
-                )
+                files_status_report += self._generate_completed_file_report(filename, steps_data)
             else:
                 partial_files += 1
-                files_status_report += self._generate_partial_file_report(
-                    filename, completed_steps, expected_steps
-                )
+                files_status_report += self._generate_partial_file_report(filename, completed_steps, expected_steps)
 
         if completed_files == 0 and partial_files > 0:
             files_status_report += "\n⚠️ All files were only partially processed.\n"
             files_status_report += "   No final output files were created.\n"
         elif completed_files > 0:
-            files_status_report += (
-                f"\n📈 Summary: {completed_files} completed, {partial_files} partial\n"
-            )
+            files_status_report += f"\n📈 Summary: {completed_files} completed, {partial_files} partial\n"
 
         files_status_report += f"{'='*separator_length}\n"
         return files_status_report
@@ -215,17 +192,11 @@ class ReportManager:
 
         # Prioritize getting original packet count from Deduplication step
         if "Deduplication" in steps_data:
-            original_packets = steps_data["Deduplication"]["data"].get(
-                "total_packets", 0
-            )
+            original_packets = steps_data["Deduplication"]["data"].get("total_packets", 0)
         elif "Anonymize IPs" in steps_data:
-            original_packets = steps_data["Anonymize IPs"]["data"].get(
-                "total_packets", 0
-            )
+            original_packets = steps_data["Anonymize IPs"]["data"].get("total_packets", 0)
         elif "Mask Payloads" in steps_data:
-            original_packets = steps_data["Mask Payloads"]["data"].get(
-                "total_packets", 0
-            )
+            original_packets = steps_data["Mask Payloads"]["data"].get("total_packets", 0)
 
         for step_name in step_order:
             if step_name in steps_data:
@@ -234,34 +205,22 @@ class ReportManager:
                 if step_name == "Anonymize IPs":
                     # Support new AnonStage field names (retrieved from extra_metrics)
                     extra_metrics = data.get("extra_metrics", {})
-                    original_ips = data.get(
-                        "original_ips", extra_metrics.get("original_ips", 0)
-                    )
-                    masked_ips = data.get(
-                        "anonymized_ips", extra_metrics.get("anonymized_ips", 0)
-                    )
+                    original_ips = data.get("original_ips", extra_metrics.get("original_ips", 0))
+                    masked_ips = data.get("anonymized_ips", extra_metrics.get("anonymized_ips", 0))
                     rate = (masked_ips / original_ips * 100) if original_ips > 0 else 0
                     report += f"   🛡️  Anonymize IPs: {original_ips} → {masked_ips} IPs ({rate:.1f}%)\n"
-                    file_ip_mappings = data.get(
-                        "file_ip_mappings", extra_metrics.get("file_ip_mappings", {})
-                    )
+                    file_ip_mappings = data.get("file_ip_mappings", extra_metrics.get("file_ip_mappings", {}))
 
                 elif step_name == "Deduplication":
                     data.get("unique_packets", 0)
                     removed = data.get("removed_count", 0)
-                    rate = (
-                        (removed / original_packets * 100)
-                        if original_packets > 0
-                        else 0
-                    )
+                    rate = (removed / original_packets * 100) if original_packets > 0 else 0
                     report += f"   🔄 Deduplication: {removed} removed ({rate:.1f}%)\n"
 
                 elif step_name == "Mask Payloads":
                     # Support new MaskPayloadStage field names
                     masked = data.get("packets_modified", data.get("masked_packets", 0))
-                    rate = (
-                        (masked / original_packets * 100) if original_packets > 0 else 0
-                    )
+                    rate = (masked / original_packets * 100) if original_packets > 0 else 0
                     report += f"   ✂️  Mask Payloads: {masked} masked ({rate:.1f}%)\n"
 
         # Display IP mappings (if any)
@@ -276,9 +235,7 @@ class ReportManager:
 
         return report
 
-    def _generate_partial_file_report(
-        self, filename: str, completed_steps: set, expected_steps: set
-    ) -> str:
+    def _generate_partial_file_report(self, filename: str, completed_steps: set, expected_steps: set) -> str:
         """Generate report for partially completed file"""
         report = f"\n🔄 {filename}\n"
         report += "   Status: PARTIALLY PROCESSED (Interrupted)\n"
@@ -288,9 +245,7 @@ class ReportManager:
         report += "   🗑️ Temporary files cleaned up automatically\n"
         return report
 
-    def _generate_global_ip_mappings_report(
-        self, separator_length: int, is_partial: bool = False
-    ) -> Optional[str]:
+    def _generate_global_ip_mappings_report(self, separator_length: int, is_partial: bool = False) -> Optional[str]:
         """Generate global IP mapping report"""
         # First check if IP anonymization processing is enabled
         if not self.main_window.anonymize_ips_cb.isChecked():
@@ -308,38 +263,25 @@ class ReportManager:
 
             # Safe check for GUI components with fallback
             try:
-                if (
-                    hasattr(self.main_window, "anonymize_ips_cb")
-                    and self.main_window.anonymize_ips_cb.isChecked()
-                ):
+                if hasattr(self.main_window, "anonymize_ips_cb") and self.main_window.anonymize_ips_cb.isChecked():
                     expected_steps.add("Anonymize IPs")
-                if (
-                    hasattr(self.main_window, "remove_dupes_cb")
-                    and self.main_window.remove_dupes_cb.isChecked()
-                ):
+                if hasattr(self.main_window, "remove_dupes_cb") and self.main_window.remove_dupes_cb.isChecked():
                     expected_steps.add("Deduplication")
-                if (
-                    hasattr(self.main_window, "mask_payloads_cb")
-                    and self.main_window.mask_payloads_cb.isChecked()
-                ):
+                if hasattr(self.main_window, "mask_payloads_cb") and self.main_window.mask_payloads_cb.isChecked():
                     expected_steps.add("Mask Payloads")
             except AttributeError:
                 # Fallback: if GUI components are not available, infer from actual completed steps
                 # This handles cases where the method is called outside of GUI context
                 completed_steps = set(file_result["steps"].keys())
                 if completed_steps:
-                    expected_steps = (
-                        completed_steps  # Assume all completed steps were expected
-                    )
+                    expected_steps = completed_steps  # Assume all completed steps were expected
 
             # If we have IP mappings and Anonymize IPs step exists, consider it completed
             if not expected_steps and "Anonymize IPs" in file_result["steps"]:
                 expected_steps.add("Anonymize IPs")
 
             completed_steps = set(file_result["steps"].keys())
-            if expected_steps.issubset(completed_steps) or (
-                not expected_steps and completed_steps
-            ):
+            if expected_steps.issubset(completed_steps) or (not expected_steps and completed_steps):
                 has_completed_files = True
                 break
 
@@ -355,9 +297,7 @@ class ReportManager:
             title = "🌐 GLOBAL IP MAPPINGS (All Files Combined)"
             subtitle = "📝 Complete IP Mapping Table - Unique Entries Across All Files:"
 
-        global_partial_report = (
-            f"\n{'='*separator_length}\n{title}\n{'='*separator_length}\n"
-        )
+        global_partial_report = f"\n{'='*separator_length}\n{title}\n{'='*separator_length}\n"
         global_partial_report += f"{subtitle}\n"
         global_partial_report += f"   • Total Unique IPs Mapped: {len(self.main_window.global_ip_mappings)}\n\n"
 
@@ -366,12 +306,8 @@ class ReportManager:
             global_partial_report += f"   {i:2d}. {orig_ip:<16} → {new_ip}\n"
 
         if is_partial:
-            global_partial_report += (
-                "\n✅ All unique IP addresses across files have been\n"
-            )
-            global_partial_report += (
-                "   successfully anonymized with consistent mappings.\n"
-            )
+            global_partial_report += "\n✅ All unique IP addresses across files have been\n"
+            global_partial_report += "   successfully anonymized with consistent mappings.\n"
         else:
             # Safe access to processed_files_count with fallback
             files_count = getattr(
@@ -379,12 +315,8 @@ class ReportManager:
                 "processed_files_count",
                 len(self.main_window.file_processing_results),
             )
-            global_partial_report += (
-                f"\n✅ All unique IP addresses across {files_count} files have been\n"
-            )
-            global_partial_report += (
-                "   successfully anonymized with consistent mappings.\n"
-            )
+            global_partial_report += f"\n✅ All unique IP addresses across {files_count} files have been\n"
+            global_partial_report += "   successfully anonymized with consistent mappings.\n"
 
         global_partial_report += f"{'='*separator_length}\n"
         return global_partial_report
@@ -415,21 +347,15 @@ class ReportManager:
         output_filename = None
         if "Deduplication" in steps_data:
             # Deduplication step's total_packets is the true original packet count
-            original_packets = steps_data["Deduplication"]["data"].get(
-                "total_packets", 0
-            )
+            original_packets = steps_data["Deduplication"]["data"].get("total_packets", 0)
             output_filename = steps_data["Deduplication"]["data"].get("output_filename")
         elif "Anonymize IPs" in steps_data:
             # If no deduplication step, get from IP anonymization step
-            original_packets = steps_data["Anonymize IPs"]["data"].get(
-                "total_packets", 0
-            )
+            original_packets = steps_data["Anonymize IPs"]["data"].get("total_packets", 0)
             output_filename = steps_data["Anonymize IPs"]["data"].get("output_filename")
         elif "Mask Payloads" in steps_data:
             # Finally get from payload masking step
-            original_packets = steps_data["Mask Payloads"]["data"].get(
-                "total_packets", 0
-            )
+            original_packets = steps_data["Mask Payloads"]["data"].get("total_packets", 0)
             output_filename = steps_data["Mask Payloads"]["data"].get("output_filename")
 
         # Get final output filename from the last processing step
@@ -442,9 +368,7 @@ class ReportManager:
                     break
 
         # Display original packet count and output filename
-        self.main_window.summary_text.append(
-            f"📦 Original Packets: {original_packets:,}"
-        )
+        self.main_window.summary_text.append(f"📦 Original Packets: {original_packets:,}")
         if output_filename:
             self.main_window.summary_text.append(f"📄 Output File: {output_filename}")
         self.main_window.summary_text.append("")
@@ -461,10 +385,7 @@ class ReportManager:
             )
 
         # Fix: Get IP mapping information from file-level IP mapping cache
-        if (
-            hasattr(self.main_window, "_current_file_ips")
-            and original_filename in self.main_window._current_file_ips
-        ):
+        if hasattr(self.main_window, "_current_file_ips") and original_filename in self.main_window._current_file_ips:
             file_ip_mappings = self.main_window._current_file_ips[original_filename]
 
         for step_name in step_order:
@@ -520,9 +441,7 @@ class ReportManager:
 
                     # Check if this is Enhanced Masking intelligent processing result
                     if self._is_enhanced_masking(data):
-                        line = self._generate_enhanced_masking_report_line(
-                            step_name, data
-                        )
+                        line = self._generate_enhanced_masking_report_line(step_name, data)
                     else:
                         line = f"  🛡️ {step_name:<18} | Total Pkts: {total:>5} | Masked Pkts: {masked:>4} | Rate: {rate:5.1f}%"
                 else:
@@ -536,14 +455,10 @@ class ReportManager:
             self.main_window.summary_text.append("🔗 IP Mappings for this file:")
             sorted_mappings = sorted(file_ip_mappings.items())
             for i, (orig_ip, new_ip) in enumerate(sorted_mappings, 1):
-                self.main_window.summary_text.append(
-                    f"   {i:2d}. {orig_ip:<16} → {new_ip}"
-                )
+                self.main_window.summary_text.append(f"   {i:2d}. {orig_ip:<16} → {new_ip}")
 
         # If Enhanced Masking was used, display intelligent processing details
-        enhanced_report = self._generate_enhanced_masking_report_for_file(
-            original_filename, separator_length
-        )
+        enhanced_report = self._generate_enhanced_masking_report_for_file(original_filename, separator_length)
         if enhanced_report:
             self.main_window.summary_text.append(enhanced_report)
 
@@ -564,9 +479,7 @@ class ReportManager:
             self.main_window.timer.stop()
 
         # Stop statistics manager timing
-        if hasattr(self.main_window, "pipeline_manager") and hasattr(
-            self.main_window.pipeline_manager, "statistics"
-        ):
+        if hasattr(self.main_window, "pipeline_manager") and hasattr(self.main_window.pipeline_manager, "statistics"):
             self.main_window.pipeline_manager.statistics.stop_timing()
 
         self.main_window.update_time_elapsed()
@@ -582,13 +495,9 @@ class ReportManager:
         completion_report = f"\n{'='*separator_length}\n🎉 PROCESSING COMPLETED!\n{'='*separator_length}\n"
         completion_report += f"🎯 All {current_files_processed} files have been successfully processed.\n"
         completion_report += f"📈 Files Processed: {current_files_processed}\n"
-        completion_report += (
-            f"📊 Total Packets Processed: {current_packets_processed}\n"
-        )
+        completion_report += f"📊 Total Packets Processed: {current_packets_processed}\n"
         completion_report += f"⏱️ Time Elapsed: {current_time_elapsed}\n"
-        completion_report += (
-            f"🔧 Applied Processing Steps: {', '.join(enabled_steps)}\n"
-        )
+        completion_report += f"🔧 Applied Processing Steps: {', '.join(enabled_steps)}\n"
 
         # Safely handle output directory display
         if self.main_window.current_output_dir:
@@ -602,16 +511,12 @@ class ReportManager:
         self.main_window.summary_text.append(completion_report)
 
         # Fix: Add global IP mapping summary report (display deduplicated global IP mappings for multi-file processing)
-        global_ip_report = self._generate_global_ip_mappings_report(
-            separator_length, is_partial=False
-        )
+        global_ip_report = self._generate_global_ip_mappings_report(separator_length, is_partial=False)
         if global_ip_report:
             self.main_window.summary_text.append(global_ip_report)
 
         # Add Enhanced Masking intelligent processing total report
-        enhanced_masking_report = self._generate_enhanced_masking_report(
-            separator_length, is_partial=False
-        )
+        enhanced_masking_report = self._generate_enhanced_masking_report(separator_length, is_partial=False)
         if enhanced_masking_report:
             self.main_window.summary_text.append(enhanced_masking_report)
 
@@ -664,9 +569,7 @@ class ReportManager:
                     if report_data and "mask_ip" in step_type:
                         self.set_final_summary_report(report_data)
                 else:
-                    self._logger.warning(
-                        f"Unknown summary report data format: {data.keys()}"
-                    )
+                    self._logger.warning(f"Unknown summary report data format: {data.keys()}")
 
         except Exception as e:
             self._logger.error(f"Error occurred while updating summary report: {e}")
@@ -711,13 +614,9 @@ class ReportManager:
                 if "summary" in result:
                     summary_parts.append(f"  • {step_name}: {result['summary']}")
                 elif "packets_processed" in result:
-                    summary_parts.append(
-                        f"  • {step_name}: {result['packets_processed']} packets"
-                    )
+                    summary_parts.append(f"  • {step_name}: {result['packets_processed']} packets")
                 elif "ips_anonymized" in result:
-                    summary_parts.append(
-                        f"  • {step_name}: {result['ips_anonymized']} IPs anonymized"
-                    )
+                    summary_parts.append(f"  • {step_name}: {result['ips_anonymized']} IPs anonymized")
 
         return "\n".join(summary_parts)
 
@@ -812,9 +711,7 @@ class ReportManager:
                 for step_name, result in file_results.items():
                     if isinstance(result, dict):
                         if "summary" in result:
-                            summary_parts.append(
-                                f"  • {step_name}: {result['summary']}"
-                            )
+                            summary_parts.append(f"  • {step_name}: {result['summary']}")
                         else:
                             summary_parts.append(f"  • {step_name}: Processed")
 
@@ -834,9 +731,7 @@ class ReportManager:
 
         return "\n".join(summary_parts)
 
-    def _aggregate_step_statistics(
-        self, step_results: Dict[str, Dict[str, Any]]
-    ) -> Dict[str, Dict[str, Any]]:
+    def _aggregate_step_statistics(self, step_results: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
         """聚合步骤统计信息"""
         aggregated = {}
 
@@ -858,9 +753,7 @@ class ReportManager:
                             summary_key = "summaries"
                             if summary_key not in aggregated[step_name]:
                                 aggregated[step_name][summary_key] = []
-                            aggregated[step_name][summary_key].append(
-                                f"{filename}: {value}"
-                            )
+                            aggregated[step_name][summary_key].append(f"{filename}: {value}")
 
         # 后处理：计算平均值、格式化显示等
         for step_name, stats in aggregated.items():
@@ -907,9 +800,7 @@ class ReportManager:
             else:
                 self._logger.warning("Cannot find method to save Summary Report")
         except Exception as e:
-            self._logger.error(
-                f"Failed to save Summary Report to output directory: {e}"
-            )
+            self._logger.error(f"Failed to save Summary Report to output directory: {e}")
 
     def collect_step_result(self, data: dict):
         """收集每个步骤的处理结果，但不立即显示"""
@@ -926,24 +817,16 @@ class ReportManager:
         self._logger.info(f"🔍 Data fields: {list(data.keys())}")
 
         # DEBUG: Print detailed data structure
-        print(
-            f"🔍 DEBUG collect_step_result: step_name_raw='{step_name_raw}', step_type='{step_type}'"
-        )
+        print(f"🔍 DEBUG collect_step_result: step_name_raw='{step_name_raw}', step_type='{step_type}'")
         print(f"🔍 DEBUG collect_step_result: data keys={list(data.keys())}")
         if "extra_metrics" in data:
-            print(
-                f"🔍 DEBUG collect_step_result: extra_metrics keys={list(data['extra_metrics'].keys())}"
-            )
+            print(f"🔍 DEBUG collect_step_result: extra_metrics keys={list(data['extra_metrics'].keys())}")
 
         # DEBUG: Print detailed data structure
-        print(
-            f"🔍 DEBUG collect_step_result: step_name_raw='{step_name_raw}', step_type='{step_type}'"
-        )
+        print(f"🔍 DEBUG collect_step_result: step_name_raw='{step_name_raw}', step_type='{step_type}'")
         print(f"🔍 DEBUG collect_step_result: data keys={list(data.keys())}")
         if "extra_metrics" in data:
-            print(
-                f"🔍 DEBUG collect_step_result: extra_metrics keys={list(data['extra_metrics'].keys())}"
-            )
+            print(f"🔍 DEBUG collect_step_result: extra_metrics keys={list(data['extra_metrics'].keys())}")
 
         # **修复**: 支持新Pipeline系统的步骤名称
         # 从step_name推断步骤类型，而不是仅依赖type字段
@@ -1000,9 +883,10 @@ class ReportManager:
         print(f"🔍 DEBUG collect_step_result: standardized step_name='{step_name}'")
 
         # 存储步骤结果
-        self.main_window.file_processing_results[
-            self.main_window.current_processing_file
-        ]["steps"][step_name] = {"type": step_type, "data": data}
+        self.main_window.file_processing_results[self.main_window.current_processing_file]["steps"][step_name] = {
+            "type": step_type,
+            "data": data,
+        }
 
         # **关键修复**: 如果是IP匿名化步骤，提取并累积IP映射到全局映射
         is_ip_anonymization = (
@@ -1034,10 +918,7 @@ class ReportManager:
                     ip_mappings = extra_metrics["ip_mappings"]
                 # 新增：检查IPAnonymizationStage的extra_metrics中包含的原始stats
                 # IPAnonymizationStage将所有原始stats包含在extra_metrics中
-                elif any(
-                    key in extra_metrics
-                    for key in ["total_packets", "anonymized_packets"]
-                ):
+                elif any(key in extra_metrics for key in ["total_packets", "anonymized_packets"]):
                     # 这是IPAnonymizationStage的数据，检查是否有ip_mappings
                     for key, value in extra_metrics.items():
                         if key == "ip_mappings" and isinstance(value, dict):
@@ -1048,15 +929,10 @@ class ReportManager:
                 # 保存文件级IP映射
                 if not hasattr(self.main_window, "_current_file_ips"):
                     self.main_window._current_file_ips = {}
-                self.main_window._current_file_ips[
-                    self.main_window.current_processing_file
-                ] = ip_mappings
+                self.main_window._current_file_ips[self.main_window.current_processing_file] = ip_mappings
 
                 # **关键修复**: 将当前文件的IP映射累积到全局映射中（不覆盖）
-                if (
-                    not hasattr(self.main_window, "global_ip_mappings")
-                    or self.main_window.global_ip_mappings is None
-                ):
+                if not hasattr(self.main_window, "global_ip_mappings") or self.main_window.global_ip_mappings is None:
                     self.main_window.global_ip_mappings = {}
 
                 # 累积映射而不是覆盖
@@ -1078,8 +954,7 @@ class ReportManager:
 
         # 检查Enhanced Masking特有的字段组合 - 必须是真正的Enhanced Intelligent Mode
         enhanced_indicators = [
-            "processing_mode" in data
-            and data.get("processing_mode") == "Enhanced Intelligent Mode",
+            "processing_mode" in data and data.get("processing_mode") == "Enhanced Intelligent Mode",
             "protocol_stats" in data,
             "strategies_applied" in data,
             "enhancement_level" in data,
@@ -1089,9 +964,7 @@ class ReportManager:
         # 如果有真正的Enhanced Masking特有字段组合，认为是智能处理
         return all(enhanced_indicators[:3])  # 前3个字段必须都存在
 
-    def _generate_enhanced_masking_report_line(
-        self, step_name: str, data: Dict[str, Any]
-    ) -> str:
+    def _generate_enhanced_masking_report_line(self, step_name: str, data: Dict[str, Any]) -> str:
         """生成Enhanced Masking的处理结果报告行（移除HTTP统计）"""
         total = data.get("total_packets", 0)
         masked = data.get("masked_packets", 0)
@@ -1107,9 +980,7 @@ class ReportManager:
 
         return line
 
-    def _generate_enhanced_masking_report(
-        self, separator_length: int, is_partial: bool = False
-    ) -> Optional[str]:
+    def _generate_enhanced_masking_report(self, separator_length: int, is_partial: bool = False) -> Optional[str]:
         """生成Enhanced Masking的智能处理统计总报告（移除HTTP支持）"""
         # 检查是否有Enhanced Masking处理的文件
         enhanced_files = []
@@ -1135,12 +1006,8 @@ class ReportManager:
                 total_enhanced_stats["total_packets"] += data.get("total_packets", 0)
 
                 protocol_stats = data.get("protocol_stats", {})
-                total_enhanced_stats["tls_packets"] += protocol_stats.get(
-                    "tls_packets", 0
-                )
-                total_enhanced_stats["other_packets"] += protocol_stats.get(
-                    "other_packets", 0
-                )
+                total_enhanced_stats["tls_packets"] += protocol_stats.get("tls_packets", 0)
+                total_enhanced_stats["other_packets"] += protocol_stats.get("other_packets", 0)
 
                 strategies = data.get("strategies_applied", [])
                 total_enhanced_stats["strategies_applied"].update(strategies)
@@ -1184,17 +1051,13 @@ class ReportManager:
         report += "🚀 Enhanced Processing Benefits:\n"
         report += "   • Automatic protocol detection and strategy selection\n"
         report += "   • TLS handshake preserved, ApplicationData masked\n"
-        report += (
-            "   • Improved accuracy while maintaining network analysis capability\n"
-        )
+        report += "   • Improved accuracy while maintaining network analysis capability\n"
 
         report += f"{'='*separator_length}\n"
 
         return report
 
-    def _generate_enhanced_masking_report_for_file(
-        self, filename: str, separator_length: int
-    ) -> Optional[str]:
+    def _generate_enhanced_masking_report_for_file(self, filename: str, separator_length: int) -> Optional[str]:
         """为单个文件生成Enhanced Masking的处理结果报告（移除HTTP统计）"""
         if filename not in self.main_window.file_processing_results:
             return None
@@ -1203,9 +1066,7 @@ class ReportManager:
         steps_data = file_result.get("steps", {})
         payload_step = steps_data.get("Mask Payloads")
 
-        if not payload_step or not self._is_enhanced_masking(
-            payload_step.get("data", {})
-        ):
+        if not payload_step or not self._is_enhanced_masking(payload_step.get("data", {})):
             return None
 
         data = payload_step["data"]
@@ -1238,12 +1099,8 @@ class ReportManager:
 
         return report
 
-    def _generate_enhanced_masking_report_for_directory(
-        self, separator_length: int
-    ) -> Optional[str]:
+    def _generate_enhanced_masking_report_for_directory(self, separator_length: int) -> Optional[str]:
         """生成整个目录的Enhanced Masking的处理结果报告"""
         # 这个方法在目录级别处理完成时调用
         # 目前先返回通用的Enhanced报告
-        return self._generate_enhanced_masking_report(
-            separator_length, is_partial=False
-        )
+        return self._generate_enhanced_masking_report(separator_length, is_partial=False)

@@ -87,8 +87,7 @@ class CLIProgressHandler:
                 if self.total_files > 0:
                     progress = ((self.processed_files + 1) / self.total_files) * 100
                     print(
-                        f"📄 [{self.processed_files + 1}/{self.total_files}] "
-                        f"({progress:.1f}%) {self.current_file}"
+                        f"📄 [{self.processed_files + 1}/{self.total_files}] " f"({progress:.1f}%) {self.current_file}"
                     )
                 else:
                     print(f"📄 Processing: {self.current_file}")
@@ -98,9 +97,7 @@ class CLIProgressHandler:
             packets_processed = data.get("packets_processed", 0)
             duration_ms = data.get("duration_ms", 0.0)
             if self.verbose:
-                print(
-                    f"  ⚙️  [{stage_name}] {packets_processed:,} packets, {duration_ms:.1f}ms"
-                )
+                print(f"  ⚙️  [{stage_name}] {packets_processed:,} packets, {duration_ms:.1f}ms")
 
         elif event_type == PipelineEvents.FILE_END:
             filename = data.get("path", "Unknown")
@@ -163,9 +160,7 @@ def report_progress(event_type: PipelineEvents, data: Dict[str, Any]):
 
 
 # 向后兼容的回调创建函数
-def create_simple_progress_callback(
-    verbose: bool = False, show_stages: bool = False, report_service=None
-):
+def create_simple_progress_callback(verbose: bool = False, show_stages: bool = False, report_service=None):
     """
     创建简化的进度回调函数 - 替代复杂的回调链
 

@@ -90,9 +90,7 @@ class DataService:
         self.input_dir: Optional[str] = None
         self.output_dir: Optional[str] = None
         self.current_output_dir: Optional[str] = None
-        self.last_opened_dir = self.config.ui.last_input_dir or os.path.join(
-            os.path.expanduser("~"), "Desktop"
-        )
+        self.last_opened_dir = self.config.ui.last_input_dir or os.path.join(os.path.expanduser("~"), "Desktop")
 
         # Statistics management
         self.stats = ProcessingStats()
@@ -105,9 +103,7 @@ class DataService:
     def select_input_directory(self) -> bool:
         """Select input directory"""
         try:
-            dir_path = QFileDialog.getExistingDirectory(
-                self.main_window, "Select Input Folder", self.last_opened_dir
-            )
+            dir_path = QFileDialog.getExistingDirectory(self.main_window, "Select Input Folder", self.last_opened_dir)
 
             if dir_path:
                 self.input_dir = dir_path
@@ -150,9 +146,7 @@ class DataService:
 
                 # Update UI display
                 if hasattr(self.main_window, "output_path_label"):
-                    self.main_window.output_path_label.setText(
-                        f"Custom: {os.path.basename(dir_path)}"
-                    )
+                    self.main_window.output_path_label.setText(f"Custom: {os.path.basename(dir_path)}")
 
                 self._logger.info(f"Selected output directory: {dir_path}")
                 return True
@@ -190,9 +184,7 @@ class DataService:
         else:
             # Default output directory
             if self.config.ui.default_output_dir:
-                actual_path = os.path.join(
-                    self.config.ui.default_output_dir, output_name
-                )
+                actual_path = os.path.join(self.config.ui.default_output_dir, output_name)
             else:
                 # Use subdirectory of input directory
                 actual_path = os.path.join(self.input_dir, output_name)
@@ -233,9 +225,7 @@ class DataService:
                         info["pcap_files"].append(file)
 
         except Exception as e:
-            self._logger.error(
-                f"Error occurred while getting directory information: {e}"
-            )
+            self._logger.error(f"Error occurred while getting directory information: {e}")
 
         return info
 
@@ -276,9 +266,7 @@ class DataService:
         report_lines.append(f"  Files Processed: {self.stats.files_processed}")
         report_lines.append(f"  Packets Processed: {self.stats.packets_processed:,}")
         report_lines.append(f"  Packets Modified: {self.stats.packets_modified:,}")
-        report_lines.append(
-            f"  Processing Time: {self.stats.processing_time:.2f} seconds"
-        )
+        report_lines.append(f"  Processing Time: {self.stats.processing_time:.2f} seconds")
 
         if self.stats.processing_time > 0:
             speed = self.stats.packets_processed / self.stats.processing_time
@@ -309,9 +297,7 @@ class DataService:
 
         return "\n".join(report_lines)
 
-    def save_report_to_file(
-        self, report_content: str, filename: str = "processing_report.txt"
-    ):
+    def save_report_to_file(self, report_content: str, filename: str = "processing_report.txt"):
         """Save report to file"""
         try:
             if self.current_output_dir:

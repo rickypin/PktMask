@@ -130,9 +130,7 @@ class DesktopEventCoordinator(QObject):
 
     def notify_processing_event(self, event_name: str, **kwargs):
         """Notify processing event"""
-        self.emit_fast(
-            EventType.LOG, f"Processing: {event_name}", event=event_name, **kwargs
-        )
+        self.emit_fast(EventType.LOG, f"Processing: {event_name}", event=event_name, **kwargs)
 
     def emit_pipeline_event(self, event_type, data: dict):
         """Emit pipeline event with structured data (legacy compatibility method)"""
@@ -146,9 +144,7 @@ class DesktopEventCoordinator(QObject):
 
         except ImportError:
             # Fallback to simple event emission
-            self._logger.debug(
-                "Structured event models not available, using simple event"
-            )
+            self._logger.debug("Structured event models not available, using simple event")
             message = data.get("message", "Pipeline event")
             # Remove 'message' from data to avoid conflicts
             clean_data = {k: v for k, v in data.items() if k != "message"}
@@ -163,17 +159,13 @@ class DesktopEventCoordinator(QObject):
 
     def get_statistics_data(self) -> Dict[str, Any]:
         """Get statistics data (legacy method)"""
-        if hasattr(self.main_window, "pipeline_manager") and hasattr(
-            self.main_window.pipeline_manager, "statistics"
-        ):
+        if hasattr(self.main_window, "pipeline_manager") and hasattr(self.main_window.pipeline_manager, "statistics"):
             return self.main_window.pipeline_manager.statistics.get_dashboard_stats()
         return {}
 
     def get_processing_summary(self) -> Dict[str, Any]:
         """Get processing summary (legacy method)"""
-        if hasattr(self.main_window, "pipeline_manager") and hasattr(
-            self.main_window.pipeline_manager, "statistics"
-        ):
+        if hasattr(self.main_window, "pipeline_manager") and hasattr(self.main_window.pipeline_manager, "statistics"):
             return self.main_window.pipeline_manager.statistics.get_processing_summary()
         return {}
 

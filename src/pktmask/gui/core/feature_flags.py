@@ -62,9 +62,7 @@ class GUIFeatureFlags:
         Returns:
             True if debug mode is enabled (shows additional logging and validation)
         """
-        return GUIFeatureFlags._get_bool_env(
-            GUIFeatureFlags.ENV_GUI_DEBUG_MODE, GUIFeatureFlags.DEFAULT_GUI_DEBUG_MODE
-        )
+        return GUIFeatureFlags._get_bool_env(GUIFeatureFlags.ENV_GUI_DEBUG_MODE, GUIFeatureFlags.DEFAULT_GUI_DEBUG_MODE)
 
     @staticmethod
     def is_legacy_mode_forced() -> bool:
@@ -147,9 +145,7 @@ class GUIFeatureFlags:
             return "🔒 Legacy Mode (Forced) - Using original service layer"
         elif config["use_consistent_processor"]:
             debug_status = " (Debug Mode)" if config["gui_debug_mode"] else ""
-            return (
-                f"✅ Consistent Processor Mode{debug_status} - Using new unified core"
-            )
+            return f"✅ Consistent Processor Mode{debug_status} - Using new unified core"
         else:
             return "🔄 Legacy Mode - Using original service layer"
 
@@ -190,9 +186,7 @@ class GUIFeatureFlags:
         # Validate and normalize config
         normalized = {}
         if "use_consistent_processor" in config:
-            normalized["use_consistent_processor"] = bool(
-                config["use_consistent_processor"]
-            )
+            normalized["use_consistent_processor"] = bool(config["use_consistent_processor"])
         if "gui_debug_mode" in config:
             normalized["gui_debug_mode"] = bool(config["gui_debug_mode"])
         if "legacy_mode_forced" in config:
@@ -220,20 +214,14 @@ class GUIFeatureFlagValidator:
 
         # Check for conflicting settings by examining raw environment variables
         # This is needed because should_use_consistent_processor() returns False when legacy is forced
-        raw_processor_enabled = GUIFeatureFlags._get_bool_env(
-            GUIFeatureFlags.ENV_USE_CONSISTENT_PROCESSOR
-        )
+        raw_processor_enabled = GUIFeatureFlags._get_bool_env(GUIFeatureFlags.ENV_USE_CONSISTENT_PROCESSOR)
         if results["config"]["legacy_mode_forced"] and raw_processor_enabled:
             results["warnings"].append(
-                "Legacy mode is forced but consistent processor is also enabled. "
-                "Legacy mode takes precedence."
+                "Legacy mode is forced but consistent processor is also enabled. " "Legacy mode takes precedence."
             )
 
         # Check for debug mode without consistent processor
-        if (
-            results["config"]["gui_debug_mode"]
-            and not results["config"]["use_consistent_processor"]
-        ):
+        if results["config"]["gui_debug_mode"] and not results["config"]["use_consistent_processor"]:
             results["warnings"].append(
                 "Debug mode is enabled but consistent processor is disabled. "
                 "Debug mode has no effect in legacy mode."
@@ -241,9 +229,7 @@ class GUIFeatureFlagValidator:
 
         # Check for config file issues
         if "config_file_error" in results["config"]:
-            results["errors"].append(
-                f"Config file error: {results['config']['config_file_error']}"
-            )
+            results["errors"].append(f"Config file error: {results['config']['config_file_error']}")
             results["valid"] = False
 
         return results

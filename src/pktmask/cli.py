@@ -3,10 +3,7 @@ from typing import Any, Dict, Optional, Union
 
 import typer
 
-from pktmask.services.config_service import (
-    build_config_from_unified_args,
-    validate_pipeline_config,
-)
+from pktmask.services.config_service import build_config_from_unified_args, validate_pipeline_config
 from pktmask.services.output_service import create_output_service
 from pktmask.services.pipeline_service import (
     PipelineServiceError,
@@ -20,18 +17,14 @@ from pktmask.services.report_service import get_report_service
 # ---------------------------------------------------------------------------
 # Typer Application Initialization
 # ---------------------------------------------------------------------------
-app = typer.Typer(
-    help="PktMask CLI - Unified command line interface with directory support"
-)
+app = typer.Typer(help="PktMask CLI - Unified command line interface with directory support")
 
 # ---------------------------------------------------------------------------
 # Common Helper Functions
 # ---------------------------------------------------------------------------
 
 
-def _validate_process_parameters(
-    dedup: bool, anon: bool, mask: bool
-) -> tuple[bool, str | None]:
+def _validate_process_parameters(dedup: bool, anon: bool, mask: bool) -> tuple[bool, str | None]:
     """Validate that at least one operation is selected for process command"""
     if not any([dedup, anon, mask]):
         return (
@@ -110,9 +103,7 @@ def _build_config_from_unified_args(
     mask: bool = False,
 ) -> Dict[str, Any]:
     """Build configuration from unified CLI arguments with TLS protocol"""
-    return build_config_from_unified_args(
-        dedup=dedup, anon=anon, mask=mask, protocol="tls"  # Always use TLS protocol
-    )
+    return build_config_from_unified_args(dedup=dedup, anon=anon, mask=mask, protocol="tls")  # Always use TLS protocol
 
 
 def _run_unified_pipeline(
@@ -148,9 +139,7 @@ def _run_unified_pipeline(
         executor = create_pipeline_executor(config)
 
         # 创建输出服务 (smart defaults: text format, auto-detect verbosity level)
-        output_service = create_output_service(
-            format_str="text", level_str="verbose" if verbose else "normal"
-        )
+        output_service = create_output_service(format_str="text", level_str="verbose" if verbose else "normal")
 
         # 开始报告
         if report_service:
@@ -194,14 +183,10 @@ def _run_unified_pipeline(
         # 完成报告
         if report_service:
             total_packets = sum(
-                stats.get("packets_processed", 0)
-                for stats in result.get("stage_stats", [])
-                if isinstance(stats, dict)
+                stats.get("packets_processed", 0) for stats in result.get("stage_stats", []) if isinstance(stats, dict)
             )
             modified_packets = sum(
-                stats.get("packets_modified", 0)
-                for stats in result.get("stage_stats", [])
-                if isinstance(stats, dict)
+                stats.get("packets_modified", 0) for stats in result.get("stage_stats", []) if isinstance(stats, dict)
             )
 
             # 使用GUI兼容的报告数据格式
@@ -210,9 +195,7 @@ def _run_unified_pipeline(
             report = report_service.finalize_report(
                 success=result["success"],
                 total_files=result.get("total_files", 1),
-                processed_files=result.get(
-                    "processed_files", 1 if result["success"] else 0
-                ),
+                processed_files=result.get("processed_files", 1 if result["success"] else 0),
                 total_packets=total_packets,
                 modified_packets=modified_packets,
             )
@@ -222,11 +205,7 @@ def _run_unified_pipeline(
                 # 使用标准报告服务 (simplified - no format options)
                 report_path = report_service.save_report_to_file(
                     report=report,
-                    output_path=(
-                        str(output_path)
-                        if Path(output_path).is_dir()
-                        else str(Path(output_path).parent)
-                    ),
+                    output_path=(str(output_path) if Path(output_path).is_dir() else str(Path(output_path).parent)),
                     format_type="text",  # Smart default
                     detailed=verbose,  # Use verbose flag for detail level
                 )
@@ -253,16 +232,12 @@ def _run_unified_pipeline(
         raise typer.Exit(1)
 
 
-def _create_enhanced_progress_callback(
-    verbose: bool = False, show_stages: bool = False, report_service=None
-):
+def _create_enhanced_progress_callback(verbose: bool = False, show_stages: bool = False, report_service=None):
     """创建增强的进度回调函数 - 使用简化的进度报告系统"""
     from pktmask.core.progress.simple_progress import create_simple_progress_callback
 
     # 使用简化的进度报告系统
-    return create_simple_progress_callback(
-        verbose=verbose, show_stages=show_stages, report_service=report_service
-    )
+    return create_simple_progress_callback(verbose=verbose, show_stages=show_stages, report_service=report_service)
 
 
 # ---------------------------------------------------------------------------
@@ -282,12 +257,8 @@ def cmd_process(
     dedup: bool = typer.Option(False, "--dedup", help="Enable Remove Dupes processing"),
     anon: bool = typer.Option(False, "--anon", help="Enable Anonymize IPs processing"),
     mask: bool = typer.Option(False, "--mask", help="Enable Mask Payloads processing"),
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="Enable verbose progress output"
-    ),
-    save_report: bool = typer.Option(
-        False, "--save-report", help="Save detailed processing report"
-    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose progress output"),
+    save_report: bool = typer.Option(False, "--save-report", help="Save detailed processing report"),
 ):
     """Unified processing command with intelligent operation defaults.
 
@@ -322,12 +293,8 @@ def cmd_process(
         if input_type == "directory":
             # Directory processing: auto-enable all operations
             dedup = anon = mask = True
-            typer.echo(
-                "🔄 Directory processing detected: auto-enabled all operations (--dedup --anon --mask)"
-            )
-            typer.echo(
-                "   Use explicit flags to override this behavior (e.g., --dedup --anon)"
-            )
+            typer.echo("🔄 Directory processing detected: auto-enabled all operations (--dedup --anon --mask)")
+            typer.echo("   Use explicit flags to override this behavior (e.g., --dedup --anon)")
         else:
             # File processing: require explicit operation specification
             typer.echo(
@@ -378,15 +345,9 @@ def cmd_process(
 
 @app.command("info")
 def cmd_info(
-    input_path: Path = typer.Argument(
-        ..., exists=True, help="Input file or directory to analyze"
-    ),
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="Show detailed information"
-    ),
-    output_format: str = typer.Option(
-        "text", "--format", help="Output format: text|json"
-    ),
+    input_path: Path = typer.Argument(..., exists=True, help="Input file or directory to analyze"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show detailed information"),
+    output_format: str = typer.Option("text", "--format", help="Output format: text|json"),
 ):
     """Display information about PCAP files or directories.
 
@@ -490,9 +451,7 @@ def _print_info_text(info: dict, verbose: bool):
     else:
         typer.echo(f"📁 Directory: {info['path']}")
         typer.echo(f"   Files: {info['total_files']}")
-        typer.echo(
-            f"   Total size: {info['total_size_human']} ({info['total_size_bytes']:,} bytes)"
-        )
+        typer.echo(f"   Total size: {info['total_size_human']} ({info['total_size_bytes']:,} bytes)")
         typer.echo(f"   Extensions: {', '.join(info['file_extensions'])}")
 
         if verbose and "files" in info:

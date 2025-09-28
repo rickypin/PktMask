@@ -49,9 +49,7 @@ class PayloadMasker:
             config: Configuration dictionary
         """
         self.config = config
-        self.logger = logging.getLogger(
-            f"{self.__class__.__module__}.{self.__class__.__name__}"
-        )
+        self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
 
         # Note: Remove sequence number state management, use absolute sequence numbers directly
         # self.seq_state = defaultdict(lambda: {"last": None, "epoch": 0})
@@ -68,12 +66,8 @@ class PayloadMasker:
         self.mask_byte_value = config.get("mask_byte_value", 0x00)
 
         # 性能优化配置
-        self.enable_performance_monitoring = config.get(
-            "enable_performance_monitoring", True
-        )
-        self.max_memory_usage = config.get(
-            "max_memory_usage", 2 * 1024 * 1024 * 1024
-        )  # 2GB
+        self.enable_performance_monitoring = config.get("enable_performance_monitoring", True)
+        self.max_memory_usage = config.get("max_memory_usage", 2 * 1024 * 1024 * 1024)  # 2GB
 
         # Initialize unified resource manager
         resource_config = config.get("resource_manager", {})
@@ -108,16 +102,12 @@ class PayloadMasker:
         self.fallback_handler = FallbackHandler(fallback_config)
 
         # 注册内存压力回调（统一方式）
-        self.resource_manager.memory_monitor.register_pressure_callback(
-            self._handle_memory_pressure_unified
-        )
+        self.resource_manager.memory_monitor.register_pressure_callback(self._handle_memory_pressure_unified)
 
         # Register custom error recovery handlers
         self._register_custom_recovery_handlers()
 
-        memory_limit_mb = resource_config.get("memory_monitor", {}).get(
-            "max_memory_mb", 2048
-        )
+        memory_limit_mb = resource_config.get("memory_monitor", {}).get("max_memory_mb", 2048)
         self.logger.info(
             f"PayloadMasker initialized: chunk_size={self.chunk_size}, "
             f"verify_checksums={self.verify_checksums}, "
@@ -159,9 +149,7 @@ class PayloadMasker:
         if hasattr(self.fallback_handler, "reset"):
             self.fallback_handler.reset()
 
-    def apply_masking(
-        self, input_path: str, output_path: str, keep_rules: KeepRuleSet
-    ) -> MaskingStats:
+    def apply_masking(self, input_path: str, output_path: str, keep_rules: KeepRuleSet) -> MaskingStats:
         """Apply masking rules
 
         Complete masking processing flow based on TCP_MARKER_REFERENCE.md algorithm:
@@ -185,9 +173,7 @@ class PayloadMasker:
         self._reset_processing_state()
 
         # 创建统计信息
-        stats = MaskingStats(
-            success=True, input_file=input_path, output_file=output_path
-        )
+        stats = MaskingStats(success=True, input_file=input_path, output_file=output_path)
 
         # Set current statistics for updates during masking process
         self._current_stats = stats
@@ -197,9 +183,7 @@ class PayloadMasker:
             self.logger.info("Validating input file...")
             input_validation = self.data_validator.validate_input_file(input_path)
             if not input_validation.is_valid:
-                error_msg = (
-                    f"Input file validation failed: {input_validation.error_message}"
-                )
+                error_msg = f"Input file validation failed: {input_validation.error_message}"
                 self.error_handler.handle_error(
                     error_msg,
                     ErrorSeverity.HIGH,
@@ -232,9 +216,7 @@ class PayloadMasker:
                 lambda: self._preprocess_keep_rules(keep_rules),
                 error_category=ErrorCategory.PROCESSING_ERROR,
             )
-            self.logger.info(
-                f"Preprocessing completed, {len(rule_lookup)} flow directions total"
-            )
+            self.logger.info(f"Preprocessing completed, {len(rule_lookup)} flow directions total")
 
             # 2. Process payload packet by packet - optimized streaming processing
             self.logger.info("Starting packet-by-packet processing...")
@@ -260,9 +242,7 @@ class PayloadMasker:
 
                         try:
                             # Process single packet
-                            modified_packet, packet_modified = self._process_packet(
-                                packet, rule_lookup
-                            )
+                            modified_packet, packet_modified = self._process_packet(packet, rule_lookup)
 
                             if packet_modified:
                                 stats.modified_packets += 1
@@ -284,9 +264,7 @@ class PayloadMasker:
                         # Unified buffer management: Check if buffer needs to be flushed
                         if self.resource_manager.should_flush_buffer("packet_buffer"):
                             # Flush buffer and write
-                            buffered_packets = self.resource_manager.flush_buffer(
-                                "packet_buffer"
-                            )
+                            buffered_packets = self.resource_manager.flush_buffer("packet_buffer")
                             self._write_packets_to_file(buffered_packets, writer)
 
                         # 定期报告进度
@@ -299,21 +277,15 @@ class PayloadMasker:
                                     f"memory usage: {memory_usage_mb:.1f}MB"
                                 )
                             else:
-                                self.logger.debug(
-                                    f"Processed {stats.processed_packets} packets"
-                                )
+                                self.logger.debug(f"Processed {stats.processed_packets} packets")
 
                     # 写入剩余的缓冲区数据包
-                    remaining_packets = self.resource_manager.flush_buffer(
-                        "packet_buffer"
-                    )
+                    remaining_packets = self.resource_manager.flush_buffer("packet_buffer")
                     if remaining_packets:
                         self._write_packets_to_file(remaining_packets, writer)
 
             # Execute file processing with retry mechanism
-            self.error_handler.retry_operation(
-                process_file, error_category=ErrorCategory.INPUT_ERROR
-            )
+            self.error_handler.retry_operation(process_file, error_category=ErrorCategory.INPUT_ERROR)
 
             # 3. 验证处理状态
             self.logger.info("Validating processing state...")
@@ -342,9 +314,7 @@ class PayloadMasker:
             )
 
             if not output_validation.is_valid:
-                error_msg = (
-                    f"Output file validation failed: {output_validation.error_message}"
-                )
+                error_msg = f"Output file validation failed: {output_validation.error_message}"
                 self.error_handler.handle_error(
                     error_msg,
                     ErrorSeverity.HIGH,
@@ -407,34 +377,24 @@ class PayloadMasker:
                 }
             )
 
-            self.logger.warning(
-                f"Attempting fallback processing: {fallback_mode.value}"
-            )
+            self.logger.warning(f"Attempting fallback processing: {fallback_mode.value}")
 
             fallback_result = self.fallback_handler.execute_fallback(
                 input_path, output_path, fallback_mode, {"original_error": str(e)}
             )
 
             if fallback_result.success:
-                self.logger.info(
-                    f"Fallback processing succeeded: {fallback_result.message}"
-                )
+                self.logger.info(f"Fallback processing succeeded: {fallback_result.message}")
                 stats.success = True  # Fallback processing succeeded
-                stats.add_error(
-                    f"Original processing failed, fallback processing succeeded: {fallback_result.message}"
-                )
+                stats.add_error(f"Original processing failed, fallback processing succeeded: {fallback_result.message}")
                 stats.fallback_used = True
                 stats.fallback_mode = fallback_mode.value
                 stats.fallback_details = fallback_result.details
             else:
-                self.logger.error(
-                    f"Fallback processing also failed: {fallback_result.message}"
-                )
+                self.logger.error(f"Fallback processing also failed: {fallback_result.message}")
                 stats.success = False
                 stats.add_error(str(e))
-                stats.add_error(
-                    f"Fallback processing failed: {fallback_result.message}"
-                )
+                stats.add_error(f"Fallback processing failed: {fallback_result.message}")
 
             # 添加错误摘要到统计信息
             error_summary = self.error_handler.get_error_summary()
@@ -446,9 +406,7 @@ class PayloadMasker:
 
         return stats
 
-    def _preprocess_keep_rules(
-        self, keep_rules: KeepRuleSet
-    ) -> Dict[str, Dict[str, Dict]]:
+    def _preprocess_keep_rules(self, keep_rules: KeepRuleSet) -> Dict[str, Dict[str, Dict]]:
         """Preprocess keep rules to build efficient lookup structure
 
         Based on TCP_MARKER_REFERENCE.md interval pre-computation algorithm, build optimized lookup structure for each flow direction.
@@ -459,9 +417,7 @@ class PayloadMasker:
         Returns:
             Dict[flow_id, Dict[direction, lookup_structure]]
         """
-        rule_lookup = defaultdict(
-            lambda: defaultdict(lambda: {"header_only": [], "full_preserve": []})
-        )
+        rule_lookup = defaultdict(lambda: defaultdict(lambda: {"header_only": [], "full_preserve": []}))
 
         # Group rules by flow, direction and preservation strategy
         for rule in keep_rules.rules:
@@ -472,23 +428,17 @@ class PayloadMasker:
                 preserve_strategy = "full_preserve"
             elif preserve_strategy not in ["header_only", "full_preserve"]:
                 # For unknown strategies, default to full_preserve
-                self.logger.warning(
-                    f"Unknown preserve strategy '{preserve_strategy}', using 'full_preserve' instead"
-                )
+                self.logger.warning(f"Unknown preserve strategy '{preserve_strategy}', using 'full_preserve' instead")
                 preserve_strategy = "full_preserve"
 
             # Insert by stream_id
-            rule_lookup[rule.stream_id][rule.direction][preserve_strategy].append(
-                (rule.seq_start, rule.seq_end)
-            )
+            rule_lookup[rule.stream_id][rule.direction][preserve_strategy].append((rule.seq_start, rule.seq_end))
             # Also insert by tuple_key (if provided) to tolerate stream_id numbering drift
             tuple_key = None
             meta = getattr(rule, "metadata", {}) or {}
             tuple_key = meta.get("tuple_key")
             if tuple_key:
-                rule_lookup[tuple_key][rule.direction][preserve_strategy].append(
-                    (rule.seq_start, rule.seq_end)
-                )
+                rule_lookup[tuple_key][rule.direction][preserve_strategy].append((rule.seq_start, rule.seq_end))
 
         # 为每个流方向构建优化的查找结构
         processed_lookup = {}
@@ -502,9 +452,7 @@ class PayloadMasker:
 
                 # 处理full_preserve规则（可以合并）
                 if full_preserve_ranges:
-                    merged_full_ranges = self._merge_overlapping_ranges(
-                        full_preserve_ranges
-                    )
+                    merged_full_ranges = self._merge_overlapping_ranges(full_preserve_ranges)
                 else:
                     merged_full_ranges = []
 
@@ -513,9 +461,7 @@ class PayloadMasker:
                 sorted_ranges = sorted(all_ranges)
 
                 # 构建边界点集合（保持向后兼容）
-                bounds = sorted(
-                    set(point for start, end in all_ranges for point in [start, end])
-                )
+                bounds = sorted(set(point for start, end in all_ranges for point in [start, end]))
 
                 # 构建保留区间集合（保持向后兼容）
                 keep_set = set(all_ranges)
@@ -530,9 +476,7 @@ class PayloadMasker:
                     "full_preserve_ranges": merged_full_ranges,
                 }
 
-                total_original_ranges = len(header_only_ranges) + len(
-                    full_preserve_ranges
-                )
+                total_original_ranges = len(header_only_ranges) + len(full_preserve_ranges)
                 self.logger.debug(
                     f"Flow {stream_id}:{direction} - "
                     f"original ranges: {total_original_ranges}, after merge: {len(all_ranges)}, "
@@ -542,9 +486,7 @@ class PayloadMasker:
 
         return processed_lookup
 
-    def _debug_log_rule_miss(
-        self, stream_id: str, tuple_key: str, direction: str, rule_lookup: Dict
-    ) -> None:
+    def _debug_log_rule_miss(self, stream_id: str, tuple_key: str, direction: str, rule_lookup: Dict) -> None:
         try:
             available_streams = list(rule_lookup.keys())
             self.logger.warning(
@@ -554,9 +496,7 @@ class PayloadMasker:
         except Exception:
             pass
 
-    def _merge_overlapping_ranges(
-        self, ranges: List[Tuple[int, int]]
-    ) -> List[Tuple[int, int]]:
+    def _merge_overlapping_ranges(self, ranges: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         """合并重叠的区间以优化查找性能
 
         Args:
@@ -631,14 +571,10 @@ class PayloadMasker:
             rule_data = None
             if tuple_key in rule_lookup and direction in rule_lookup[tuple_key]:
                 rule_data = rule_lookup[tuple_key][direction]
-                self.logger.debug(
-                    f"Found matching rule by tuple_key: {tuple_key}, direction={direction}"
-                )
+                self.logger.debug(f"Found matching rule by tuple_key: {tuple_key}, direction={direction}")
             elif stream_id in rule_lookup and direction in rule_lookup[stream_id]:
                 rule_data = rule_lookup[stream_id][direction]
-                self.logger.debug(
-                    f"Found matching rule by stream_id: {stream_id}, direction={direction}"
-                )
+                self.logger.debug(f"Found matching rule by stream_id: {stream_id}, direction={direction}")
             if rule_data is None and tuple_key in rule_lookup:
                 # Combine all directions under tuple_key as a direction-agnostic fallback
                 combined_header = []
@@ -654,9 +590,7 @@ class PayloadMasker:
                         "header_only_ranges": combined_header,
                         "full_preserve_ranges": combined_full,
                     }
-                    self.logger.debug(
-                        f"Using direction-agnostic fallback rule set for tuple_key={tuple_key}"
-                    )
+                    self.logger.debug(f"Using direction-agnostic fallback rule set for tuple_key={tuple_key}")
 
             if rule_data is None:
                 # No matching rules, use empty rule data (will result in full masking)
@@ -669,10 +603,7 @@ class PayloadMasker:
             # Check if payload has changed
             if new_payload is None or new_payload == payload:
                 # If _apply_keep_rules returns None or unmodified, but we need to ensure full masking
-                if (
-                    rule_data["header_only_ranges"] == []
-                    and rule_data["full_preserve_ranges"] == []
-                ):
+                if rule_data["header_only_ranges"] == [] and rule_data["full_preserve_ranges"] == []:
                     # No keep rules, execute full masking
                     new_payload = b"\x00" * len(payload)
                     self.logger.debug(f"Performing full masking: {len(payload)} bytes")
@@ -681,9 +612,7 @@ class PayloadMasker:
                     return packet, False
 
             # Modify packet payload
-            modified_packet = self._modify_packet_payload(
-                packet, tcp_layer, new_payload
-            )
+            modified_packet = self._modify_packet_payload(packet, tcp_layer, new_payload)
             return modified_packet, True
 
         except Exception as e:
@@ -759,9 +688,7 @@ class PayloadMasker:
                 break
 
         if depth >= max_depth:
-            self.logger.warning(
-                f"Reached maximum recursion depth {max_depth}, possible circular reference"
-            )
+            self.logger.warning(f"Reached maximum recursion depth {max_depth}, possible circular reference")
 
         return (tcp_layer, ip_layer) if tcp_layer and ip_layer else (None, None)
 
@@ -880,9 +807,7 @@ class PayloadMasker:
             return "forward"
         return "reverse"
 
-    def _apply_keep_rules(
-        self, payload: bytes, seg_start: int, seg_end: int, rule_data: Dict
-    ) -> bytes:
+    def _apply_keep_rules(self, payload: bytes, seg_start: int, seg_end: int, rule_data: Dict) -> bytes:
         """Apply keep rules to payload
 
         Core algorithm implementation based on TCP_MARKER_REFERENCE.md, using optimized binary search.
@@ -907,16 +832,12 @@ class PayloadMasker:
         # 使用优化的查找算法
         if "sorted_ranges" in rule_data and rule_data["range_count"] > 10:
             # 对于大量规则，使用二分查找优化
-            return self._apply_keep_rules_optimized(
-                payload, seg_start, seg_end, rule_data
-            )
+            return self._apply_keep_rules_optimized(payload, seg_start, seg_end, rule_data)
         else:
             # 对于少量规则，使用简单遍历
             return self._apply_keep_rules_simple(payload, seg_start, seg_end, rule_data)
 
-    def _apply_keep_rules_simple(
-        self, payload: bytes, seg_start: int, seg_end: int, rule_data: Dict
-    ) -> bytes:
+    def _apply_keep_rules_simple(self, payload: bytes, seg_start: int, seg_end: int, rule_data: Dict) -> bytes:
         """简单的保留规则应用（适用于少量规则）
 
         使用规则类型优先级策略处理重叠规则：
@@ -1013,9 +934,7 @@ class PayloadMasker:
         # 总是返回处理后的载荷（全零缓冲区 + 保留区间的原始数据）
         return bytes(buf)
 
-    def _apply_keep_rules_optimized(
-        self, payload: bytes, seg_start: int, seg_end: int, rule_data: Dict
-    ) -> bytes:
+    def _apply_keep_rules_optimized(self, payload: bytes, seg_start: int, seg_end: int, rule_data: Dict) -> bytes:
         """优化的保留规则应用（使用二分查找，适用于大量规则）
 
         使用规则类型优先级策略处理重叠规则：
@@ -1033,14 +952,10 @@ class PayloadMasker:
         buf = bytearray(len(payload))
 
         # 使用二分查找找到可能重叠的header_only区间
-        header_overlapping = self._find_overlapping_ranges(
-            header_only_ranges, seg_start, seg_end
-        )
+        header_overlapping = self._find_overlapping_ranges(header_only_ranges, seg_start, seg_end)
 
         # 使用二分查找找到可能重叠的full_preserve区间
-        full_overlapping = self._find_overlapping_ranges(
-            full_preserve_ranges, seg_start, seg_end
-        )
+        full_overlapping = self._find_overlapping_ranges(full_preserve_ranges, seg_start, seg_end)
 
         # 处理header_only规则
         header_range_infos = []
@@ -1177,9 +1092,7 @@ class PayloadMasker:
         # 确保载荷长度不变
         original_length = len(bytes(tcp_layer.payload)) if tcp_layer.payload else 0
         if len(new_payload) != original_length:
-            raise ValueError(
-                f"Payload length cannot change: {original_length} -> {len(new_payload)}"
-            )
+            raise ValueError(f"Payload length cannot change: {original_length} -> {len(new_payload)}")
 
         # 创建数据包副本
         import copy
@@ -1240,9 +1153,7 @@ class PayloadMasker:
         else:
             return {
                 "memory_monitor_available": False,
-                "flow_directions_count": (
-                    len(self.flow_directions) if hasattr(self, "flow_directions") else 0
-                ),
+                "flow_directions_count": (len(self.flow_directions) if hasattr(self, "flow_directions") else 0),
             }
 
     def _flush_packet_buffer(self, packet_buffer: list, writer):
@@ -1323,9 +1234,7 @@ class PayloadMasker:
             self._reset_processing_state()
 
             if cleanup_errors:
-                self.logger.warning(
-                    f"PayloadMasker cleanup completed with errors: {'; '.join(cleanup_errors)}"
-                )
+                self.logger.warning(f"PayloadMasker cleanup completed with errors: {'; '.join(cleanup_errors)}")
             else:
                 self.logger.debug("PayloadMasker cleanup completed successfully")
 
@@ -1354,9 +1263,7 @@ class PayloadMasker:
                     with open(input_file, "rb") as f:
                         header = f.read(24)  # PCAP文件头
                         if len(header) < 24:
-                            self.logger.error(
-                                f"PCAP file header incomplete: {input_file}"
-                            )
+                            self.logger.error(f"PCAP file header incomplete: {input_file}")
                             return False
 
                 return True
@@ -1371,21 +1278,15 @@ class PayloadMasker:
                 if hasattr(self, "flow_directions"):
                     self.flow_directions.clear()
                     self.stream_id_cache.clear()
-                    self.logger.info(
-                        "Cleared flow direction state to recover processing"
-                    )
+                    self.logger.info("Cleared flow direction state to recover processing")
                     return True
                 return False
             except Exception:
                 return False
 
         # 注册自定义处理器
-        self.error_handler.register_recovery_handler(
-            ErrorCategory.INPUT_ERROR, pcap_file_recovery
-        )
-        self.error_handler.register_recovery_handler(
-            ErrorCategory.PROCESSING_ERROR, processing_error_recovery
-        )
+        self.error_handler.register_recovery_handler(ErrorCategory.INPUT_ERROR, pcap_file_recovery)
+        self.error_handler.register_recovery_handler(ErrorCategory.PROCESSING_ERROR, processing_error_recovery)
 
     def get_error_summary(self) -> Dict[str, Any]:
         """获取错误摘要

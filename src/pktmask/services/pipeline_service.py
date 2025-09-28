@@ -101,15 +101,11 @@ def _process_files_common(
                 result = executor.run(
                     input_path,
                     output_path,
-                    progress_cb=lambda stage, stats: _handle_stage_progress(
-                        stage, stats, progress_callback
-                    ),
+                    progress_cb=lambda stage, stats: _handle_stage_progress(stage, stats, progress_callback),
                 )
             else:
                 # CLI通过process_single_file调用
-                single_result = process_single_file(
-                    executor, input_path, output_path, progress_callback, verbose
-                )
+                single_result = process_single_file(executor, input_path, output_path, progress_callback, verbose)
 
                 # 转换为executor.run的结果格式以保持一致性
                 class MockResult:
@@ -138,17 +134,12 @@ def _process_files_common(
                     for error in result.errors:
                         progress_callback(
                             PipelineEvents.ERROR,
-                            {
-                                "message": f"File {os.path.basename(input_path)}: {error}"
-                            },
+                            {"message": f"File {os.path.basename(input_path)}: {error}"},
                         )
 
                     # Send user-friendly error messages from stage statistics
                     for stage_stats in result.stage_stats:
-                        if (
-                            hasattr(stage_stats, "extra_metrics")
-                            and "user_message" in stage_stats.extra_metrics
-                        ):
+                        if hasattr(stage_stats, "extra_metrics") and "user_message" in stage_stats.extra_metrics:
                             progress_callback(
                                 PipelineEvents.ERROR,
                                 {
@@ -164,18 +155,10 @@ def _process_files_common(
                             {
                                 "step_name": stage_stats.stage_name,
                                 "filename": os.path.basename(input_path),
-                                "packets_processed": getattr(
-                                    stage_stats, "packets_processed", 0
-                                ),
-                                "packets_modified": getattr(
-                                    stage_stats, "packets_modified", 0
-                                ),
+                                "packets_processed": getattr(stage_stats, "packets_processed", 0),
+                                "packets_modified": getattr(stage_stats, "packets_modified", 0),
                                 "duration_ms": getattr(stage_stats, "duration_ms", 0.0),
-                                **(
-                                    stage_stats.extra_metrics
-                                    if hasattr(stage_stats, "extra_metrics")
-                                    else {}
-                                ),
+                                **(stage_stats.extra_metrics if hasattr(stage_stats, "extra_metrics") else {}),
                             },
                         )
 
@@ -199,9 +182,7 @@ def _process_files_common(
                 if interface_type == "gui":
                     progress_callback(
                         PipelineEvents.ERROR,
-                        {
-                            "message": f"Unexpected error processing file {os.path.basename(input_path)}: {str(e)}"
-                        },
+                        {"message": f"Unexpected error processing file {os.path.basename(input_path)}: {str(e)}"},
                     )
                 else:
                     progress_callback(PipelineEvents.ERROR, {"message": error_msg})
@@ -252,9 +233,7 @@ def process_directory(
                 pcap_files.append(file.path)
 
         if not pcap_files:
-            progress_callback(
-                PipelineEvents.LOG, {"message": "No PCAP files found in directory"}
-            )
+            progress_callback(PipelineEvents.LOG, {"message": "No PCAP files found in directory"})
             progress_callback(PipelineEvents.PIPELINE_END, {})
             return
 
@@ -309,12 +288,8 @@ def _handle_stage_progress(stage, stats, progress_callback):
         "AnonymizationStage",
     ]:
         # For IP anonymization, show IP statistics instead of packet statistics
-        original_ips = getattr(stats, "original_ips", 0) or stats.extra_metrics.get(
-            "original_ips", 0
-        )
-        anonymized_ips = getattr(stats, "anonymized_ips", 0) or stats.extra_metrics.get(
-            "anonymized_ips", 0
-        )
+        original_ips = getattr(stats, "original_ips", 0) or stats.extra_metrics.get("original_ips", 0)
+        anonymized_ips = getattr(stats, "anonymized_ips", 0) or stats.extra_metrics.get("anonymized_ips", 0)
         if original_ips > 0:
             msg = f"- {stage_display_name}: processed {original_ips} IPs, anonymized {anonymized_ips} IPs"
         else:
@@ -385,9 +360,7 @@ def validate_config(config: Dict) -> Tuple[bool, Optional[str]]:
 # Dummy implementation; replace ... with real logic
 
 
-def build_pipeline_config(
-    anonymize_ips: bool, remove_dupes: bool, mask_payloads: bool
-) -> Dict:
+def build_pipeline_config(anonymize_ips: bool, remove_dupes: bool, mask_payloads: bool) -> Dict:
     """Build pipeline configuration based on feature switches (using standard naming conventions)"""
     # Use unified configuration service
     from pktmask.services.config_service import get_config_service
@@ -441,12 +414,8 @@ def process_single_file(
                 output_dir.mkdir(parents=True, exist_ok=True)
                 logger.info(f"[Service] Created output directory: {output_dir}")
             except Exception as e:
-                logger.error(
-                    f"[Service] Failed to create output directory {output_dir}: {e}"
-                )
-                raise PipelineServiceError(
-                    f"Failed to create output directory: {str(e)}"
-                )
+                logger.error(f"[Service] Failed to create output directory {output_dir}: {e}")
+                raise PipelineServiceError(f"Failed to create output directory: {str(e)}")
 
         # 发送处理开始事件
         if progress_callback:
@@ -484,8 +453,7 @@ def process_single_file(
             "output_file": result.output_file,
             "duration_ms": result.duration_ms,
             "stage_stats": [
-                stats.model_dump() if hasattr(stats, "model_dump") else stats.__dict__
-                for stats in result.stage_stats
+                stats.model_dump() if hasattr(stats, "model_dump") else stats.__dict__ for stats in result.stage_stats
             ],
             "errors": result.errors,
             "total_files": 1,
@@ -537,9 +505,7 @@ def process_directory_cli(
             pcap_files.extend(files)
 
         if not pcap_files:
-            logger.warning(
-                f"[Service] No matching files found in directory: {input_dir}"
-            )
+            logger.warning(f"[Service] No matching files found in directory: {input_dir}")
             return {
                 "success": True,
                 "input_dir": input_dir,
@@ -556,9 +522,7 @@ def process_directory_cli(
 
         # 发送处理开始事件 (CLI-specific)
         if progress_callback:
-            progress_callback(
-                PipelineEvents.PIPELINE_START, {"total_files": len(pcap_files)}
-            )
+            progress_callback(PipelineEvents.PIPELINE_START, {"total_files": len(pcap_files)})
 
         # 使用共同的文件处理逻辑
         result = _process_files_common(
@@ -660,9 +624,7 @@ def generate_gui_style_report(result: Dict[str, Any]) -> str:
     report_lines.append("")
 
     # 基本信息
-    report_lines.append(
-        f"📊 Files Processed: {gui_data['processed_files']}/{gui_data['total_files']}"
-    )
+    report_lines.append(f"📊 Files Processed: {gui_data['processed_files']}/{gui_data['total_files']}")
     if gui_data["failed_files"] > 0:
         report_lines.append(f"❌ Failed Files: {gui_data['failed_files']}")
     report_lines.append(f"⏱️  Total Duration: {gui_data['duration_ms']:.1f} ms")
@@ -675,15 +637,9 @@ def generate_gui_style_report(result: Dict[str, Any]) -> str:
 
         for step_name, step_data in gui_data["step_results"].items():
             report_lines.append(f"🔧 {step_name}:")
-            report_lines.append(
-                f"  • Packets Processed: {step_data.get('packets_processed', 0):,}"
-            )
-            report_lines.append(
-                f"  • Packets Modified: {step_data.get('packets_modified', 0):,}"
-            )
-            report_lines.append(
-                f"  • Duration: {step_data.get('duration_ms', 0.0):.1f} ms"
-            )
+            report_lines.append(f"  • Packets Processed: {step_data.get('packets_processed', 0):,}")
+            report_lines.append(f"  • Packets Modified: {step_data.get('packets_modified', 0):,}")
+            report_lines.append(f"  • Duration: {step_data.get('duration_ms', 0.0):.1f} ms")
             if "summary" in step_data:
                 report_lines.append(f"  • Summary: {step_data['summary']}")
             report_lines.append("")

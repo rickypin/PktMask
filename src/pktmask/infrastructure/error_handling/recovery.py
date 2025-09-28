@@ -126,9 +126,7 @@ class RetryRecoveryHandler(RecoveryHandler):
         # 计算延迟时间
         delay = self.retry_delay * (self.backoff_factor**current_retries)
 
-        logger.info(
-            f"Retrying operation after {delay:.1f}s (attempt {current_retries + 1}/{self.max_retries})"
-        )
+        logger.info(f"Retrying operation after {delay:.1f}s (attempt {current_retries + 1}/{self.max_retries})")
         time.sleep(delay)
 
         return RecoveryResult(
@@ -158,9 +156,7 @@ class SkipRecoveryHandler(RecoveryHandler):
 
     def recover(self, error: PktMaskError, context: ErrorContext) -> RecoveryResult:
         """跳过当前项"""
-        logger.warning(
-            f"Skipping failed item: {context.file_path or context.operation}"
-        )
+        logger.warning(f"Skipping failed item: {context.file_path or context.operation}")
 
         return RecoveryResult(
             action=RecoveryAction.SKIP_ITEM,
@@ -304,9 +300,7 @@ class ErrorRecoveryManager:
         self.register_handler(user_handler)
         logger.debug("Registered user prompt recovery handler")
 
-    def attempt_recovery(
-        self, error: PktMaskError, context: ErrorContext
-    ) -> RecoveryResult:
+    def attempt_recovery(self, error: PktMaskError, context: ErrorContext) -> RecoveryResult:
         """尝试错误恢复"""
         self.recovery_stats["total_recoveries"] += 1
 

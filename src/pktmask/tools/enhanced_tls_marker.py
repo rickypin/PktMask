@@ -71,9 +71,7 @@ def _check_tshark_version(tshark_path: str | None, verbose: bool = False) -> str
             errors="replace",
         )
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
-        sys.stderr.write(
-            f"[enhanced-tls-marker] 错误: 无法执行 '{executable}': {exc}\n"
-        )
+        sys.stderr.write(f"[enhanced-tls-marker] 错误: 无法执行 '{executable}': {exc}\n")
         sys.exit(1)
 
     version = _parse_tshark_version(completed.stdout + completed.stderr)
@@ -84,15 +82,11 @@ def _check_tshark_version(tshark_path: str | None, verbose: bool = False) -> str
     if version < MIN_TSHARK_VERSION:
         ver_str = ".".join(map(str, version))
         min_str = ".".join(map(str, MIN_TSHARK_VERSION))
-        sys.stderr.write(
-            f"[enhanced-tls-marker] 错误: tshark 版本过低 ({ver_str})，需要 ≥ {min_str}.\n"
-        )
+        sys.stderr.write(f"[enhanced-tls-marker] 错误: tshark 版本过低 ({ver_str})，需要 ≥ {min_str}.\n")
         sys.exit(1)
 
     if verbose:
-        sys.stdout.write(
-            f"[enhanced-tls-marker] 检测到 tshark {'.'.join(map(str, version))} 于 {executable}\n"
-        )
+        sys.stdout.write(f"[enhanced-tls-marker] 检测到 tshark {'.'.join(map(str, version))} 于 {executable}\n")
 
     return executable
 
@@ -117,9 +111,7 @@ def _to_list(val: Any) -> List[str]:
     return val if isinstance(val, list) else [val]
 
 
-def _is_target_content_type(
-    value: str, target_types: set[int] = None
-) -> Tuple[bool, int]:
+def _is_target_content_type(value: str, target_types: set[int] = None) -> Tuple[bool, int]:
     """判断是否为目标TLS内容类型，返回(是否匹配, 协议类型)"""
     if target_types is None:
         target_types = set(TLS_CONTENT_TYPES.keys())  # 默认检测所有类型
@@ -146,9 +138,7 @@ def _is_target_content_type(
     return False, -1
 
 
-def _analyze_tls_records(
-    packets: List[Dict], target_types: set[int] = None, verbose: bool = False
-) -> Dict[str, Any]:
+def _analyze_tls_records(packets: List[Dict], target_types: set[int] = None, verbose: bool = False) -> Dict[str, Any]:
     """分析TLS记录，返回详细的协议类型统计信息"""
     if target_types is None:
         target_types = set(TLS_CONTENT_TYPES.keys())
@@ -173,9 +163,7 @@ def _analyze_tls_records(
         opaque_types_list = _to_list(opaque_types_raw)
 
         # 合并协议类型字段
-        type_fields = content_types_list + [
-            v for v in opaque_types_list if v not in content_types_list
-        ]
+        type_fields = content_types_list + [v for v in opaque_types_list if v not in content_types_list]
         if not type_fields:
             continue
 
@@ -244,9 +232,7 @@ def _analyze_tls_records(
             "protocol_types": target_protocol_types,
             "num_records": len(target_indices),
             "lengths": rec_lengths,
-            "processing_strategies": [
-                TLS_PROCESSING_STRATEGIES[pt] for pt in target_protocol_types
-            ],
+            "processing_strategies": [TLS_PROCESSING_STRATEGIES[pt] for pt in target_protocol_types],
         }
 
         hits.append(hit)
@@ -344,20 +330,14 @@ def main(argv: list[str] | None = None) -> None:
         # 验证协议类型范围
         invalid_types = target_types - set(TLS_CONTENT_TYPES.keys())
         if invalid_types:
-            sys.stderr.write(
-                f"[enhanced-tls-marker] 错误: 无效的TLS协议类型: {invalid_types}\n"
-            )
+            sys.stderr.write(f"[enhanced-tls-marker] 错误: 无效的TLS协议类型: {invalid_types}\n")
             sys.exit(1)
     except ValueError as e:
-        sys.stderr.write(
-            f"[enhanced-tls-marker] 错误: 无法解析协议类型 '{args.types}': {e}\n"
-        )
+        sys.stderr.write(f"[enhanced-tls-marker] 错误: 无法解析协议类型 '{args.types}': {e}\n")
         sys.exit(1)
 
     if args.verbose:
-        target_names = [
-            f"TLS-{t} ({TLS_CONTENT_TYPES[t]})" for t in sorted(target_types)
-        ]
+        target_names = [f"TLS-{t} ({TLS_CONTENT_TYPES[t]})" for t in sorted(target_types)]
         sys.stdout.write(
             f"[enhanced-tls-marker] Input file: {args.pcap}\n"
             f"[enhanced-tls-marker] Target protocol types: {', '.join(target_names)}\n"
@@ -400,9 +380,7 @@ def main(argv: list[str] | None = None) -> None:
             tshark_cmd += ["-d", spec]
 
     if args.verbose:
-        sys.stdout.write(
-            f"[enhanced-tls-marker] Running command: {' '.join(tshark_cmd)}\n"
-        )
+        sys.stdout.write(f"[enhanced-tls-marker] Running command: {' '.join(tshark_cmd)}\n")
 
     # 执行 tshark
     try:
@@ -418,18 +396,14 @@ def main(argv: list[str] | None = None) -> None:
             errors="replace",
         )
     except subprocess.CalledProcessError as exc:
-        sys.stderr.write(
-            f"[enhanced-tls-marker] Error: tshark execution failed: {exc}\n"
-        )
+        sys.stderr.write(f"[enhanced-tls-marker] Error: tshark execution failed: {exc}\n")
         sys.exit(3)
 
     # 解析 JSON 输出
     try:
         packets = json.loads(completed.stdout)
     except json.JSONDecodeError as exc:
-        sys.stderr.write(
-            f"[enhanced-tls-marker] Error: tshark JSON parsing failed: {exc}\n"
-        )
+        sys.stderr.write(f"[enhanced-tls-marker] Error: tshark JSON parsing failed: {exc}\n")
         sys.exit(3)
 
     # 分析TLS记录
@@ -470,9 +444,7 @@ def main(argv: list[str] | None = None) -> None:
     if "tsv" in formats:
         tsv_path = output_dir / f"{pcap_stem}_enhanced_tls_frames.tsv"
         with tsv_path.open("w", encoding="utf-8") as f:
-            f.write(
-                "frame\tprotocol_types\tnum_records\tprocessing_strategies\tlengths\tpath\n"
-            )
+            f.write("frame\tprotocol_types\tnum_records\tprocessing_strategies\tlengths\tpath\n")
             for hit in hits:
                 protocol_types_str = ",".join(map(str, hit["protocol_types"]))
                 strategies_str = ",".join(hit["processing_strategies"])
@@ -485,9 +457,7 @@ def main(argv: list[str] | None = None) -> None:
             sys.stdout.write(f"[enhanced-tls-marker] TSV 输出: {tsv_path}\n")
 
     # 输出统计信息
-    sys.stdout.write(
-        f"[enhanced-tls-marker] ✅ 完成分析，检测到 {len(hits)} 个TLS记录帧\n"
-    )
+    sys.stdout.write(f"[enhanced-tls-marker] ✅ 完成分析，检测到 {len(hits)} 个TLS记录帧\n")
     for ptype in sorted(protocol_type_stats.keys()):
         type_name = TLS_CONTENT_TYPES[ptype]
         strategy = TLS_PROCESSING_STRATEGIES[ptype]

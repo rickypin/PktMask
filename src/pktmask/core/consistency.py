@@ -144,9 +144,7 @@ class ConsistentProcessor:
         return executor.run(input_path, output_path)
 
     @staticmethod
-    def get_configuration_summary(
-        dedup: bool, anon: bool, mask: bool, mask_protocol: str = "auto"
-    ) -> str:
+    def get_configuration_summary(dedup: bool, anon: bool, mask: bool, mask_protocol: str = "auto") -> str:
         """Get human-readable configuration summary
 
         Args:
@@ -164,10 +162,7 @@ class ConsistentProcessor:
         if anon:
             enabled_options.append("Anonymize IPs")
         if mask:
-            enabled_options.append(
-                "Mask Payloads"
-                + (f" (protocol: {mask_protocol})" if mask_protocol else "")
-            )
+            enabled_options.append("Mask Payloads" + (f" (protocol: {mask_protocol})" if mask_protocol else ""))
 
         if not enabled_options:
             return "No processing options enabled"

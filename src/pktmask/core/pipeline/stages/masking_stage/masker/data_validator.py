@@ -49,26 +49,16 @@ class DataValidator:
             config: 配置字典
         """
         self.config = config
-        self.logger = logging.getLogger(
-            f"{self.__class__.__module__}.{self.__class__.__name__}"
-        )
+        self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
 
         # 配置参数
         self.enable_checksum_validation = config.get("enable_checksum_validation", True)
-        self.enable_packet_count_validation = config.get(
-            "enable_packet_count_validation", True
-        )
-        self.enable_file_size_validation = config.get(
-            "enable_file_size_validation", True
-        )
+        self.enable_packet_count_validation = config.get("enable_packet_count_validation", True)
+        self.enable_file_size_validation = config.get("enable_file_size_validation", True)
         self.max_file_size_mb = config.get("max_file_size_mb", 1024)  # 1GB默认限制
-        self.min_file_size_bytes = config.get(
-            "min_file_size_bytes", 24
-        )  # PCAP文件头最小大小
+        self.min_file_size_bytes = config.get("min_file_size_bytes", 24)  # PCAP文件头最小大小
 
-        self.logger.info(
-            f"数据验证器初始化: 校验和验证={'启用' if self.enable_checksum_validation else '禁用'}"
-        )
+        self.logger.info(f"数据验证器初始化: 校验和验证={'启用' if self.enable_checksum_validation else '禁用'}")
 
     def validate_input_file(self, file_path: Union[str, Path]) -> ValidationResult:
         """验证输入文件
@@ -85,15 +75,11 @@ class DataValidator:
         try:
             # 1. 检查文件是否存在
             if not file_path.exists():
-                return ValidationResult(
-                    is_valid=False, error_message=f"输入文件不存在: {file_path}"
-                )
+                return ValidationResult(is_valid=False, error_message=f"输入文件不存在: {file_path}")
 
             # 2. 检查文件是否为普通文件
             if not file_path.is_file():
-                return ValidationResult(
-                    is_valid=False, error_message=f"输入路径不是文件: {file_path}"
-                )
+                return ValidationResult(is_valid=False, error_message=f"输入路径不是文件: {file_path}")
 
             # 3. 检查文件大小
             file_size = file_path.stat().st_size
@@ -112,9 +98,7 @@ class DataValidator:
 
             # 4. 检查文件权限
             if not os.access(file_path, os.R_OK):
-                return ValidationResult(
-                    is_valid=False, error_message=f"无法读取文件: {file_path}"
-                )
+                return ValidationResult(is_valid=False, error_message=f"无法读取文件: {file_path}")
 
             # 5. 验证PCAP文件格式
             pcap_validation = self._validate_pcap_format(file_path)
@@ -126,16 +110,12 @@ class DataValidator:
 
             # 6. 计算文件校验和
             if self.enable_checksum_validation:
-                result.details["file_checksum"] = self._calculate_file_checksum(
-                    file_path
-                )
+                result.details["file_checksum"] = self._calculate_file_checksum(file_path)
 
             self.logger.debug(f"输入文件验证通过: {file_path}")
 
         except Exception as e:
-            return ValidationResult(
-                is_valid=False, error_message=f"验证输入文件时发生错误: {e}"
-            )
+            return ValidationResult(is_valid=False, error_message=f"验证输入文件时发生错误: {e}")
 
         return result
 
@@ -157,18 +137,14 @@ class DataValidator:
         try:
             # 1. 检查文件是否存在
             if not file_path.exists():
-                return ValidationResult(
-                    is_valid=False, error_message=f"输出文件不存在: {file_path}"
-                )
+                return ValidationResult(is_valid=False, error_message=f"输出文件不存在: {file_path}")
 
             # 2. 检查文件大小
             file_size = file_path.stat().st_size
             result.details["file_size_bytes"] = file_size
 
             if file_size < self.min_file_size_bytes:
-                return ValidationResult(
-                    is_valid=False, error_message=f"输出文件太小: {file_size} bytes"
-                )
+                return ValidationResult(is_valid=False, error_message=f"输出文件太小: {file_size} bytes")
 
             # 3. 验证PCAP文件格式
             pcap_validation = self._validate_pcap_format(file_path)
@@ -178,31 +154,22 @@ class DataValidator:
             result.details.update(pcap_validation.details)
 
             # 4. 验证数据包数量
-            if (
-                self.enable_packet_count_validation
-                and expected_packet_count is not None
-            ):
+            if self.enable_packet_count_validation and expected_packet_count is not None:
                 # 重新完整计算包数量，而不是使用格式验证时的部分计数
                 actual_count = self._count_packets_in_file(file_path)
                 result.details["packet_count"] = actual_count
 
                 if actual_count != expected_packet_count:
-                    result.warnings.append(
-                        f"数据包数量不匹配: 期望{expected_packet_count}, 实际{actual_count}"
-                    )
+                    result.warnings.append(f"数据包数量不匹配: 期望{expected_packet_count}, 实际{actual_count}")
 
             # 5. 计算文件校验和
             if self.enable_checksum_validation:
-                result.details["file_checksum"] = self._calculate_file_checksum(
-                    file_path
-                )
+                result.details["file_checksum"] = self._calculate_file_checksum(file_path)
 
             self.logger.debug(f"输出文件验证通过: {file_path}")
 
         except Exception as e:
-            return ValidationResult(
-                is_valid=False, error_message=f"验证输出文件时发生错误: {e}"
-            )
+            return ValidationResult(is_valid=False, error_message=f"验证输出文件时发生错误: {e}")
 
         return result
 
@@ -270,9 +237,7 @@ class DataValidator:
             )
 
         except Exception as e:
-            return ValidationResult(
-                is_valid=False, error_message=f"验证处理状态时发生错误: {e}"
-            )
+            return ValidationResult(is_valid=False, error_message=f"验证处理状态时发生错误: {e}")
 
         return result
 
@@ -286,16 +251,12 @@ class DataValidator:
                 header = f.read(24)
 
                 if len(header) < 24:
-                    return ValidationResult(
-                        is_valid=False, error_message="PCAP文件头不完整"
-                    )
+                    return ValidationResult(is_valid=False, error_message="PCAP文件头不完整")
 
                 # 检查魔数
                 magic = struct.unpack("<I", header[:4])[0]
                 if magic not in [0xA1B2C3D4, 0xD4C3B2A1, 0xA1B23C4D, 0x4D3CB2A1]:
-                    return ValidationResult(
-                        is_valid=False, error_message=f"无效的PCAP魔数: 0x{magic:08x}"
-                    )
+                    return ValidationResult(is_valid=False, error_message=f"无效的PCAP魔数: 0x{magic:08x}")
 
                 # 解析版本信息
                 version_major, version_minor = struct.unpack("<HH", header[4:8])
@@ -324,9 +285,7 @@ class DataValidator:
                     result.warnings.append(f"Scapy验证失败: {e}")
 
         except Exception as e:
-            return ValidationResult(
-                is_valid=False, error_message=f"PCAP格式验证失败: {e}"
-            )
+            return ValidationResult(is_valid=False, error_message=f"PCAP格式验证失败: {e}")
 
         return result
 
@@ -364,9 +323,7 @@ class DataValidator:
 
         return hash_md5.hexdigest()
 
-    def compare_files(
-        self, file1: Union[str, Path], file2: Union[str, Path]
-    ) -> ValidationResult:
+    def compare_files(self, file1: Union[str, Path], file2: Union[str, Path]) -> ValidationResult:
         """比较两个文件
 
         Args:

@@ -97,8 +97,7 @@ class ProgressService:
         if self.style in [ProgressStyle.DETAILED, ProgressStyle.RICH]:
             progress = ((self.state.processed_files + 1) / self.state.total_files) * 100
             self._print(
-                f"📄 [{self.state.processed_files + 1}/{self.state.total_files}] "
-                f"({progress:.1f}%) {filename}"
+                f"📄 [{self.state.processed_files + 1}/{self.state.total_files}] " f"({progress:.1f}%) {filename}"
             )
 
     def update_stage(self, stage_name: str, stats: Dict[str, Any]):
@@ -169,14 +168,11 @@ class ProgressService:
         if self.style != ProgressStyle.NONE:
             self._clear_progress_line()
             if self.state.processed_files == self.state.total_files:
-                self._print(
-                    f"🎉 All {self.state.total_files} files processed successfully!"
-                )
+                self._print(f"🎉 All {self.state.total_files} files processed successfully!")
             else:
                 failed = self.state.total_files - self.state.processed_files
                 self._print(
-                    f"⚠️  Processed {self.state.processed_files}/{self.state.total_files} files "
-                    f"({failed} failed)"
+                    f"⚠️  Processed {self.state.processed_files}/{self.state.total_files} files " f"({failed} failed)"
                 )
 
             # 显示总耗时

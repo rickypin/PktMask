@@ -45,9 +45,7 @@ class ErrorReporter:
     """错误报告器"""
 
     def __init__(self, report_directory: Optional[Path] = None):
-        self.report_directory = (
-            report_directory or Path.home() / ".config" / "pktmask" / "error_reports"
-        )
+        self.report_directory = report_directory or Path.home() / ".config" / "pktmask" / "error_reports"
         self.ensure_report_directory()
 
         # 报告配置
@@ -58,9 +56,7 @@ class ErrorReporter:
         # 报告统计
         self.reports_generated = 0
 
-        logger.debug(
-            f"Error reporter initialized, reports directory: {self.report_directory}"
-        )
+        logger.debug(f"Error reporter initialized, reports directory: {self.report_directory}")
 
     def ensure_report_directory(self) -> None:
         """确保报告目录存在"""
@@ -145,9 +141,7 @@ class ErrorReporter:
                         file_to_delete.unlink()
                         logger.debug(f"Deleted old error report: {file_to_delete}")
                     except Exception as e:
-                        logger.warning(
-                            f"Failed to delete old report {file_to_delete}: {e}"
-                        )
+                        logger.warning(f"Failed to delete old report {file_to_delete}: {e}")
 
         except Exception as e:
             logger.error(f"Failed to cleanup old reports: {e}")
@@ -219,31 +213,19 @@ class ErrorReporter:
 
                 # 错误类型统计
                 error_type = report.error_info.get("type", "Unknown")
-                summary["error_types"][error_type] = (
-                    summary["error_types"].get(error_type, 0) + 1
-                )
+                summary["error_types"][error_type] = summary["error_types"].get(error_type, 0) + 1
 
                 # 严重性分布
                 severity = report.error_info.get("severity", "Unknown")
-                summary["severity_distribution"][severity] = (
-                    summary["severity_distribution"].get(severity, 0) + 1
-                )
+                summary["severity_distribution"][severity] = summary["severity_distribution"].get(severity, 0) + 1
 
                 # 组件错误统计
-                component = report.context_info.get("application", {}).get(
-                    "component", "Unknown"
-                )
-                summary["component_errors"][component] = (
-                    summary["component_errors"].get(component, 0) + 1
-                )
+                component = report.context_info.get("application", {}).get("component", "Unknown")
+                summary["component_errors"][component] = summary["component_errors"].get(component, 0) + 1
 
                 # 操作错误统计
-                operation = report.context_info.get("application", {}).get(
-                    "operation", "Unknown"
-                )
-                summary["operation_errors"][operation] = (
-                    summary["operation_errors"].get(operation, 0) + 1
-                )
+                operation = report.context_info.get("application", {}).get("operation", "Unknown")
+                summary["operation_errors"][operation] = summary["operation_errors"].get(operation, 0) + 1
 
                 # 恢复统计
                 if report.recovery_info:
@@ -256,8 +238,7 @@ class ErrorReporter:
             # 计算成功率
             if summary["recovery_stats"]["attempted"] > 0:
                 summary["recovery_stats"]["success_rate"] = (
-                    summary["recovery_stats"]["successful"]
-                    / summary["recovery_stats"]["attempted"]
+                    summary["recovery_stats"]["successful"] / summary["recovery_stats"]["attempted"]
                 )
 
         except Exception as e:

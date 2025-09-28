@@ -105,9 +105,7 @@ class DesktopEvent:
 
 
 # Factory functions for common events
-def create_pipeline_start_event(
-    total_files: int, root_path: str, output_dir: str
-) -> DesktopEvent:
+def create_pipeline_start_event(total_files: int, root_path: str, output_dir: str) -> DesktopEvent:
     """Create pipeline start event"""
     return DesktopEvent.create_fast(
         EventType.PIPELINE_START,
@@ -118,9 +116,7 @@ def create_pipeline_start_event(
     )
 
 
-def create_pipeline_end_event(
-    success: bool, files_processed: int, duration_ms: int
-) -> DesktopEvent:
+def create_pipeline_end_event(success: bool, files_processed: int, duration_ms: int) -> DesktopEvent:
     """Create pipeline end event"""
     status = "completed" if success else "failed"
     return DesktopEvent.create_fast(
@@ -132,9 +128,7 @@ def create_pipeline_end_event(
     )
 
 
-def create_file_start_event(
-    filename: str, path: str, size_bytes: Optional[int] = None
-) -> DesktopEvent:
+def create_file_start_event(filename: str, path: str, size_bytes: Optional[int] = None) -> DesktopEvent:
     """Create file start event"""
     return DesktopEvent.create_fast(
         EventType.FILE_START,
@@ -145,9 +139,7 @@ def create_file_start_event(
     )
 
 
-def create_file_end_event(
-    filename: str, success: bool, duration_ms: int
-) -> DesktopEvent:
+def create_file_end_event(filename: str, success: bool, duration_ms: int) -> DesktopEvent:
     """Create file end event"""
     status = "completed" if success else "failed"
     return DesktopEvent.create_fast(
@@ -169,9 +161,7 @@ def create_step_start_event(step_name: str, filename: str) -> DesktopEvent:
     )
 
 
-def create_step_end_event(
-    step_name: str, filename: str, success: bool, duration_ms: int
-) -> DesktopEvent:
+def create_step_end_event(step_name: str, filename: str, success: bool, duration_ms: int) -> DesktopEvent:
     """Create step end event"""
     status = "completed" if success else "failed"
     return DesktopEvent.create_fast(
@@ -193,13 +183,9 @@ def create_progress_event(progress: int, message: str = "") -> DesktopEvent:
     )
 
 
-def create_error_event(
-    error_message: str, context: Optional[Dict[str, Any]] = None
-) -> DesktopEvent:
+def create_error_event(error_message: str, context: Optional[Dict[str, Any]] = None) -> DesktopEvent:
     """Create error event"""
-    event = DesktopEvent.create_fast(
-        EventType.ERROR, f"Error: {error_message}", error_message=error_message
-    )
+    event = DesktopEvent.create_fast(EventType.ERROR, f"Error: {error_message}", error_message=error_message)
     event.severity = EventSeverity.ERROR
     if context:
         event.data.update(context)

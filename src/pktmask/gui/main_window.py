@@ -11,24 +11,8 @@ import sys
 from typing import List, Optional
 
 import markdown
-from PyQt6.QtCore import (
-    QEvent,
-    QPropertyAnimation,
-    Qt,
-    QThread,
-    QTime,
-    QTimer,
-    pyqtSignal,
-)
-from PyQt6.QtWidgets import (
-    QApplication,
-    QDialog,
-    QLabel,
-    QMainWindow,
-    QPushButton,
-    QTextEdit,
-    QVBoxLayout,
-)
+from PyQt6.QtCore import QEvent, QPropertyAnimation, Qt, QThread, QTime, QTimer, pyqtSignal
+from PyQt6.QtWidgets import QApplication, QDialog, QLabel, QMainWindow, QPushButton, QTextEdit, QVBoxLayout
 
 from pktmask.common.constants import UIConstants
 from pktmask.config.settings import get_app_config
@@ -47,9 +31,7 @@ class GuideDialog(QDialog):
     def __init__(self, title: str, content: str, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"{title} - Guide")
-        self.setMinimumSize(
-            UIConstants.GUIDE_DIALOG_MIN_WIDTH, UIConstants.GUIDE_DIALOG_MIN_HEIGHT
-        )
+        self.setMinimumSize(UIConstants.GUIDE_DIALOG_MIN_WIDTH, UIConstants.GUIDE_DIALOG_MIN_HEIGHT)
         layout = QVBoxLayout(self)
         content_text = QTextEdit()
         content_text.setReadOnly(True)
@@ -91,15 +73,11 @@ class ServicePipelineThread(QThread):
             if isinstance(e, PipelineServiceError):
                 self.progress_signal.emit(PipelineEvents.ERROR, {"message": str(e)})
             else:
-                self.progress_signal.emit(
-                    PipelineEvents.ERROR, {"message": f"Unexpected error: {str(e)}"}
-                )
+                self.progress_signal.emit(PipelineEvents.ERROR, {"message": f"Unexpected error: {str(e)}"})
 
     def stop(self):
         self.is_running = False
-        self.progress_signal.emit(
-            PipelineEvents.LOG, {"message": "--- Pipeline Stopped by User ---"}
-        )
+        self.progress_signal.emit(PipelineEvents.LOG, {"message": "--- Pipeline Stopped by User ---"})
         from pktmask.services.pipeline_service import stop_pipeline
 
         stop_pipeline(self._executor)
@@ -127,9 +105,7 @@ class MainWindow(QMainWindow):
         self.current_output_dir: Optional[str] = None  # 新增：当前处理的输出目录
 
         # 使用配置中的目录设置
-        self.last_opened_dir = self.config.ui.last_input_dir or os.path.join(
-            os.path.expanduser("~"), "Desktop"
-        )
+        self.last_opened_dir = self.config.ui.last_input_dir or os.path.join(os.path.expanduser("~"), "Desktop")
         self.allowed_root = os.path.expanduser("~")
 
         # 时间相关属性（由PipelineManager管理，但需要在这里声明以保持兼容性）
@@ -154,14 +130,7 @@ class MainWindow(QMainWindow):
     def _init_managers(self):
         """Initialize all managers"""
         # Import manager classes
-        from .managers import (
-            DialogManager,
-            EventCoordinator,
-            FileManager,
-            PipelineManager,
-            ReportManager,
-            UIManager,
-        )
+        from .managers import DialogManager, EventCoordinator, FileManager, PipelineManager, ReportManager, UIManager
 
         # 首先创建事件协调器
         self.event_coordinator = EventCoordinator(self)
@@ -181,35 +150,23 @@ class MainWindow(QMainWindow):
     def _setup_manager_subscriptions(self):
         """Set up subscription relationships between managers"""
         # Subscribe to statistics updates
-        self.event_coordinator.subscribe(
-            "statistics_changed", self._handle_statistics_update
-        )
+        self.event_coordinator.subscribe("statistics_changed", self._handle_statistics_update)
 
         # 订阅UI更新请求
-        self.event_coordinator.subscribe(
-            "ui_state_changed", self._handle_ui_update_request
-        )
+        self.event_coordinator.subscribe("ui_state_changed", self._handle_ui_update_request)
 
         # 新增：订阅结构化数据事件
-        self.event_coordinator.subscribe(
-            "pipeline_event", self._handle_pipeline_event_data
-        )
-        self.event_coordinator.subscribe(
-            "statistics_data", self._handle_statistics_data
-        )
+        self.event_coordinator.subscribe("pipeline_event", self._handle_pipeline_event_data)
+        self.event_coordinator.subscribe("statistics_data", self._handle_statistics_data)
 
         # 连接Qt信号
         # statistics_updated 和 ui_update_requested 信号已移除，使用新的事件系统
 
         # 新增：连接结构化数据信号（如果可用）
         if hasattr(self.event_coordinator, "pipeline_event_data"):
-            self.event_coordinator.pipeline_event_data.connect(
-                self._handle_pipeline_event_data
-            )
+            self.event_coordinator.pipeline_event_data.connect(self._handle_pipeline_event_data)
         if hasattr(self.event_coordinator, "statistics_data_updated"):
-            self.event_coordinator.statistics_data_updated.connect(
-                self._handle_statistics_data
-            )
+            self.event_coordinator.statistics_data_updated.connect(self._handle_statistics_data)
 
     def _handle_statistics_update(self, data: dict):
         """Handle statistics data updates"""
@@ -217,10 +174,7 @@ class MainWindow(QMainWindow):
         if action == "reset":
             # **修复**: 检查是否正在处理中，只有在开始新处理时才重置Live Dashboard显示
             # 避免在处理完成后重置显示导致统计数据丢失
-            if (
-                hasattr(self, "pipeline_manager")
-                and self.pipeline_manager.processing_thread is None
-            ):
+            if hasattr(self, "pipeline_manager") and self.pipeline_manager.processing_thread is None:
                 # 只有在没有处理线程运行时才重置显示（即开始新处理时）
                 self.files_processed_label.setText("0")
                 self.packets_processed_label.setText("0")
@@ -232,9 +186,7 @@ class MainWindow(QMainWindow):
             stats = self.event_coordinator.get_statistics_data()
             if stats:
                 self.files_processed_label.setText(str(stats.get("files_processed", 0)))
-                self.packets_processed_label.setText(
-                    str(stats.get("packets_processed", 0))
-                )
+                self.packets_processed_label.setText(str(stats.get("packets_processed", 0)))
                 self.time_elapsed_label.setText(stats.get("elapsed_time", "00:00.00"))
 
     def _handle_ui_update_request(self, action: str, data: dict = None):
@@ -260,15 +212,11 @@ class MainWindow(QMainWindow):
             from pktmask.core.events import PipelineEvents
             from pktmask.domain.models.pipeline_event_data import PipelineEventData
         except ImportError:
-            self._logger.warning(
-                "Unable to import structured data model, skipping structured processing"
-            )
+            self._logger.warning("Unable to import structured data model, skipping structured processing")
             return
 
         if isinstance(event_data, PipelineEventData):
-            self._logger.debug(
-                f"Received structured event: {event_data.event_type} - {type(event_data.data).__name__}"
-            )
+            self._logger.debug(f"Received structured event: {event_data.event_type} - {type(event_data.data).__name__}")
 
             # 可以在这里添加基于新数据模型的增强处理逻辑
             # 例如：更详细的日志、更精确的UI更新、数据验证等
@@ -278,30 +226,21 @@ class MainWindow(QMainWindow):
 
             # 可以根据事件类型执行特定的增强处理
             if event_data.event_type == PipelineEvents.FILE_START:
-                if (
-                    hasattr(event_data.data, "size_bytes")
-                    and event_data.data.size_bytes
-                ):
-                    self._logger.info(
-                        f"Started processing file, size: {event_data.data.size_bytes} bytes"
-                    )
+                if hasattr(event_data.data, "size_bytes") and event_data.data.size_bytes:
+                    self._logger.info(f"Started processing file, size: {event_data.data.size_bytes} bytes")
 
             elif event_data.event_type == PipelineEvents.STEP_SUMMARY:
                 if hasattr(event_data.data, "result"):
                     self._logger.debug(f"Step result: {event_data.data.result}")
         else:
-            self._logger.warning(
-                f"Received unstructured event data: {type(event_data)}"
-            )
+            self._logger.warning(f"Received unstructured event data: {type(event_data)}")
 
     def _handle_statistics_data(self, stats_data):
         """Handle structured statistics data"""
         try:
             from pktmask.domain.models.statistics_data import StatisticsData
         except ImportError:
-            self._logger.warning(
-                "Unable to import statistics data model, skipping structured processing"
-            )
+            self._logger.warning("Unable to import statistics data model, skipping structured processing")
             return
 
         if isinstance(stats_data, StatisticsData):
@@ -314,24 +253,18 @@ class MainWindow(QMainWindow):
 
             # 获取性能指标
             completion_rate = stats_data.metrics.get_completion_rate()
-            processing_speed = stats_data.timing.get_processing_speed(
-                stats_data.metrics.packets_processed
-            )
+            processing_speed = stats_data.timing.get_processing_speed(stats_data.metrics.packets_processed)
 
             if completion_rate > 0:
                 self._logger.info(f"Processing progress: {completion_rate:.1f}%")
 
             if processing_speed > 0:
-                self._logger.info(
-                    f"Processing speed: {processing_speed:.1f} packets/sec"
-                )
+                self._logger.info(f"Processing speed: {processing_speed:.1f} packets/sec")
 
             # 可以在这里添加实时性能监控、异常检测等功能
 
         else:
-            self._logger.warning(
-                f"Received unstructured statistics data: {type(stats_data)}"
-            )
+            self._logger.warning(f"Received unstructured statistics data: {type(stats_data)}")
 
     def _on_config_changed(self, new_config):
         """Configuration change callback"""
@@ -340,10 +273,7 @@ class MainWindow(QMainWindow):
 
         # 更新窗口尺寸（如果需要）
         current_size = self.size()
-        if (
-            current_size.width() != new_config.ui.window_width
-            or current_size.height() != new_config.ui.window_height
-        ):
+        if current_size.width() != new_config.ui.window_width or current_size.height() != new_config.ui.window_height:
             self.resize(new_config.ui.window_width, new_config.ui.window_height)
 
         # 重新应用样式表
@@ -448,9 +378,7 @@ class MainWindow(QMainWindow):
         self.output_dir = None  # Reset output directory
         self.current_output_dir = None  # Reset current output directory
         self.dir_path_label.setText("Click and pick your pcap directory")
-        self.output_path_label.setText(
-            "Auto-create or click for custom"
-        )  # Reset output path display
+        self.output_path_label.setText("Auto-create or click for custom")  # Reset output path display
         self.log_text.clear()
         self.summary_text.clear()
 
@@ -478,9 +406,7 @@ class MainWindow(QMainWindow):
             self.timer.stop()
 
         # Reset button and display state
-        self.start_proc_btn.setEnabled(
-            False
-        )  # Keep disabled until directory is selected
+        self.start_proc_btn.setEnabled(False)  # Keep disabled until directory is selected
         self.start_proc_btn.setText("Start")
         self.show_initial_guides()
 
@@ -510,9 +436,7 @@ class MainWindow(QMainWindow):
         if event_type == PipelineEvents.PIPELINE_START:
             # Initialize progress bar to 0, maximum will be set when we know the actual file count
             self.progress_bar.setValue(0)
-            self.progress_bar.setMaximum(
-                100
-            )  # Set to 100 for percentage-based progress
+            self.progress_bar.setMaximum(100)  # Set to 100 for percentage-based progress
 
         elif event_type == PipelineEvents.SUBDIR_START:
             # Reset progress bar to 0% when starting directory processing
@@ -527,9 +451,7 @@ class MainWindow(QMainWindow):
 
             # 初始化当前文件的处理结果记录
             if self.current_processing_file not in self.file_processing_results:
-                self.file_processing_results[self.current_processing_file] = {
-                    "steps": {}
-                }
+                self.file_processing_results[self.current_processing_file] = {"steps": {}}
 
         elif event_type == PipelineEvents.FILE_END:
             if self.current_processing_file:
@@ -539,9 +461,7 @@ class MainWindow(QMainWindow):
                 # 获取输出文件名信息
                 output_files = []
                 if self.current_processing_file in self.file_processing_results:
-                    steps_data = self.file_processing_results[
-                        self.current_processing_file
-                    ]["steps"]
+                    steps_data = self.file_processing_results[self.current_processing_file]["steps"]
                     step_order = [
                         "Deduplication",
                         "Anonymize IPs",
@@ -549,9 +469,7 @@ class MainWindow(QMainWindow):
                     ]
                     for step_name in reversed(step_order):
                         if step_name in steps_data:
-                            output_file = steps_data[step_name]["data"].get(
-                                "output_filename"
-                            )
+                            output_file = steps_data[step_name]["data"].get("output_filename")
                             if output_file:
                                 output_files.append(output_file)
                                 break
@@ -569,9 +487,7 @@ class MainWindow(QMainWindow):
             count = data.get("count", 0)
             if count > 0:
                 self.pipeline_manager.statistics.add_packet_count(count)
-                self.packets_processed_label.setText(
-                    str(self.pipeline_manager.statistics.packets_processed)
-                )
+                self.packets_processed_label.setText(str(self.pipeline_manager.statistics.packets_processed))
 
         elif event_type == PipelineEvents.LOG:
             self.update_log(data["message"])
@@ -587,9 +503,7 @@ class MainWindow(QMainWindow):
 
             # 只从去重阶段计算包数（它总是第一个运行的Stage）
             # **修复**: 支持新旧两种Stage名称，并且只要有包数就计算（不要求>0）
-            if (
-                step_name in ["DeduplicationStage", "UnifiedDeduplicationStage"]
-            ) and packets_processed >= 0:
+            if (step_name in ["DeduplicationStage", "UnifiedDeduplicationStage"]) and packets_processed >= 0:
                 # 检查这个文件是否已经计算过包数
                 if not hasattr(self, "_counted_files"):
                     self._counted_files = set()
@@ -598,9 +512,7 @@ class MainWindow(QMainWindow):
                     # Use StatisticsManager's add_packet_count method to properly accumulate
                     self.pipeline_manager.statistics.add_packet_count(packets_processed)
                     # Update UI display
-                    self.packets_processed_label.setText(
-                        str(self.pipeline_manager.statistics.packets_processed)
-                    )
+                    self.packets_processed_label.setText(str(self.pipeline_manager.statistics.packets_processed))
                     self._logger.debug(
                         f"Updated packet count: file={current_file}, packets={packets_processed}, total={self.pipeline_manager.statistics.packets_processed}"
                     )
@@ -610,16 +522,12 @@ class MainWindow(QMainWindow):
             if fallback_used:
                 fallback_mode = data.get("fallback_mode", "unknown")
                 fallback_details = data.get("fallback_details", {})
-                fallback_reason = fallback_details.get(
-                    "fallback_reason", "Processing failed, using fallback mode"
-                )
+                fallback_reason = fallback_details.get("fallback_reason", "Processing failed, using fallback mode")
 
                 self.update_log(f"⚠️  {step_name}: Fallback activated - {fallback_mode}")
                 self.update_log(f"   Reason: {fallback_reason}")
                 if fallback_details.get("file_size"):
-                    self.update_log(
-                        f"   File copied as-is ({fallback_details['file_size']} bytes)"
-                    )
+                    self.update_log(f"   File copied as-is ({fallback_details['file_size']} bytes)")
 
             self.collect_step_result(data)
 
@@ -673,9 +581,7 @@ class MainWindow(QMainWindow):
         """Handle window resize events to update elided text"""
         super().resizeEvent(event)
         if self.base_dir:
-            self.dir_path_label.setText(
-                self.get_elided_text(self.dir_path_label, self.base_dir)
-            )
+            self.dir_path_label.setText(self.get_elided_text(self.dir_path_label, self.base_dir))
 
     def show_about_dialog(self):
         """Show about dialog"""
@@ -737,16 +643,10 @@ class MainWindow(QMainWindow):
 
         try:
             files = os.listdir(self.current_output_dir)
-            summary_files = [
-                f
-                for f in files
-                if f.startswith("summary_report_") and f.endswith(".txt")
-            ]
+            summary_files = [f for f in files if f.startswith("summary_report_") and f.endswith(".txt")]
             # 按修改时间倒序排列，最新的在前
             summary_files.sort(
-                key=lambda x: os.path.getmtime(
-                    os.path.join(self.current_output_dir, x)
-                ),
+                key=lambda x: os.path.getmtime(os.path.join(self.current_output_dir, x)),
                 reverse=True,
             )
             return summary_files
@@ -935,9 +835,7 @@ class MainWindow(QMainWindow):
         """Set test mode (for automated testing)"""
         self._test_mode = enabled
         if enabled:
-            self._logger.info(
-                "Test mode enabled - dialogs will be handled automatically"
-            )
+            self._logger.info("Test mode enabled - dialogs will be handled automatically")
         else:
             self._logger.info("Test mode disabled")
         return self

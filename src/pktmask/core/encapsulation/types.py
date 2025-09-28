@@ -102,10 +102,7 @@ class EncapsulationResult:
         return self.encap_type in [
             EncapsulationType.VLAN,
             EncapsulationType.DOUBLE_VLAN,
-        ] or any(
-            layer.encap_type in [EncapsulationType.VLAN, EncapsulationType.DOUBLE_VLAN]
-            for layer in self.layers
-        )
+        ] or any(layer.encap_type in [EncapsulationType.VLAN, EncapsulationType.DOUBLE_VLAN] for layer in self.layers)
 
     def has_multiple_ips(self) -> bool:
         """是否包含多层IP"""
@@ -113,11 +110,7 @@ class EncapsulationResult:
 
     def is_complex_encapsulation(self) -> bool:
         """是否为复杂封装 (多层或复合)"""
-        return (
-            self.encap_type == EncapsulationType.COMPOSITE
-            or self.total_depth > 3
-            or self.has_multiple_ips()
-        )
+        return self.encap_type == EncapsulationType.COMPOSITE or self.total_depth > 3 or self.has_multiple_ips()
 
 
 class EncapsulationError(Exception):

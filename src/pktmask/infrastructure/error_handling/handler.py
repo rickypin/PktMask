@@ -135,9 +135,7 @@ class ErrorHandler:
             # Logging failure should not affect error handling
             print(f"Failed to log error: {log_error}", file=sys.stderr)
 
-    def _attempt_recovery(
-        self, error: PktMaskError, context: ErrorContext
-    ) -> Optional[RecoveryResult]:
+    def _attempt_recovery(self, error: PktMaskError, context: ErrorContext) -> Optional[RecoveryResult]:
         """尝试错误恢复"""
         try:
             recovery_result = self.recovery_manager.attempt_recovery(error, context)
@@ -239,9 +237,7 @@ class ErrorHandler:
         self.recovery_manager.reset_stats()
         logger.debug("Error handler statistics reset")
 
-    def handle_critical_error(
-        self, error: Exception, context_data: Optional[Dict[str, Any]] = None
-    ) -> None:
+    def handle_critical_error(self, error: Exception, context_data: Optional[Dict[str, Any]] = None) -> None:
         """Handle critical error"""
         # Force create PktMask exception
         if isinstance(error, PktMaskError):
@@ -258,9 +254,7 @@ class ErrorHandler:
         # Handle error (do not attempt automatic recovery)
         self.handle_exception(pkt_error, auto_recover=False)
 
-    def handle_file_processing_error(
-        self, error: Exception, file_path: str
-    ) -> Optional[RecoveryResult]:
+    def handle_file_processing_error(self, error: Exception, file_path: str) -> Optional[RecoveryResult]:
         """Handle file processing error"""
         self.context_manager.set_current_file(file_path)
 
@@ -271,9 +265,7 @@ class ErrorHandler:
             custom_data={"file_path": file_path},
         )
 
-    def handle_gui_error(
-        self, error: Exception, component: str, user_action: str
-    ) -> Optional[RecoveryResult]:
+    def handle_gui_error(self, error: Exception, component: str, user_action: str) -> Optional[RecoveryResult]:
         """Handle GUI error"""
         return self.handle_exception(
             error,
@@ -282,9 +274,7 @@ class ErrorHandler:
             user_action=user_action,
         )
 
-    def handle_config_error(
-        self, error: Exception, config_key: Optional[str] = None
-    ) -> Optional[RecoveryResult]:
+    def handle_config_error(self, error: Exception, config_key: Optional[str] = None) -> Optional[RecoveryResult]:
         """Handle configuration error"""
         custom_data = {"config_key": config_key} if config_key else None
 
@@ -318,9 +308,7 @@ class GlobalExceptionHandler:
             self.installed = False
             logger.debug("Global exception handler uninstalled")
 
-    def handle_exception(
-        self, exc_type: Type[BaseException], exc_value: BaseException, exc_traceback
-    ) -> None:
+    def handle_exception(self, exc_type: Type[BaseException], exc_value: BaseException, exc_traceback) -> None:
         """Handle uncaught exceptions"""
         # Ignore system exceptions like KeyboardInterrupt
         if issubclass(exc_type, (KeyboardInterrupt, SystemExit)):
@@ -362,9 +350,7 @@ def handle_error(exception: Exception, **kwargs) -> Optional[Any]:
     return _error_handler.handle_exception(exception, **kwargs)
 
 
-def handle_critical_error(
-    error: Exception, context_data: Optional[Dict[str, Any]] = None
-) -> None:
+def handle_critical_error(error: Exception, context_data: Optional[Dict[str, Any]] = None) -> None:
     """Convenience function: handle critical error"""
     _error_handler.handle_critical_error(error, context_data)
 
@@ -374,15 +360,11 @@ def handle_file_error(error: Exception, file_path: str) -> Optional[RecoveryResu
     return _error_handler.handle_file_processing_error(error, file_path)
 
 
-def handle_gui_error(
-    error: Exception, component: str, user_action: str
-) -> Optional[RecoveryResult]:
+def handle_gui_error(error: Exception, component: str, user_action: str) -> Optional[RecoveryResult]:
     """Convenience function: handle GUI error"""
     return _error_handler.handle_gui_error(error, component, user_action)
 
 
-def handle_config_error(
-    error: Exception, config_key: Optional[str] = None
-) -> Optional[RecoveryResult]:
+def handle_config_error(error: Exception, config_key: Optional[str] = None) -> Optional[RecoveryResult]:
     """Convenience function: handle configuration error"""
     return _error_handler.handle_config_error(error, config_key)

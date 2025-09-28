@@ -117,22 +117,15 @@ class PktMaskLogger:
             # Update levels for all existing handlers
             pktmask_logger = logging.getLogger("pktmask")
             for handler in pktmask_logger.handlers:
-                if (
-                    isinstance(handler, logging.StreamHandler)
-                    and handler.stream == sys.stdout
-                ):
+                if isinstance(handler, logging.StreamHandler) and handler.stream == sys.stdout:
                     # This is the console handler
                     handler.setLevel(console_level)
 
         except Exception as e:
             # If reconfiguration fails, log warning but don't interrupt program
-            logging.getLogger("pktmask").warning(
-                f"Failed to reconfigure logging system: {e}"
-            )
+            logging.getLogger("pktmask").warning(f"Failed to reconfigure logging system: {e}")
 
-    def log_exception(
-        self, logger_name: str, exc: Exception, context: Optional[Dict[str, Any]] = None
-    ):
+    def log_exception(self, logger_name: str, exc: Exception, context: Optional[Dict[str, Any]] = None):
         """Log exception information with context"""
         logger = self.get_logger(logger_name)
         context_str = ""
@@ -143,9 +136,7 @@ class PktMaskLogger:
             exc_info=True,
         )
 
-    def log_performance(
-        self, logger_name: str, operation: str, duration: float, **kwargs
-    ):
+    def log_performance(self, logger_name: str, operation: str, duration: float, **kwargs):
         """Log performance information for operations"""
         logger = self.get_logger(logger_name)
         extra_info = " ".join(f"{k}={v}" for k, v in kwargs.items())
@@ -171,16 +162,12 @@ def reconfigure_logging():
     _logger_manager.reconfigure_from_config()
 
 
-def log_exception(
-    exc: Exception, logger_name: str = "root", context: Optional[Dict[str, Any]] = None
-):
+def log_exception(exc: Exception, logger_name: str = "root", context: Optional[Dict[str, Any]] = None):
     """Convenience function to log exceptions"""
     _logger_manager.log_exception(logger_name, exc, context)
 
 
-def log_performance(
-    operation: str, duration: float, logger_name: str = "performance", **kwargs
-):
+def log_performance(operation: str, duration: float, logger_name: str = "performance", **kwargs):
     """Convenience function to log performance"""
     _logger_manager.log_performance(logger_name, operation, duration, **kwargs)
 

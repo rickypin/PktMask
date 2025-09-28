@@ -65,9 +65,7 @@ class ErrorRecoveryHandler:
             config: 配置字典
         """
         self.config = config
-        self.logger = logging.getLogger(
-            f"{self.__class__.__module__}.{self.__class__.__name__}"
-        )
+        self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
 
         # 配置参数
         self.max_retry_attempts = config.get("max_retry_attempts", 3)
@@ -117,9 +115,7 @@ class ErrorRecoveryHandler:
             category=category,
             message=str(error),
             exception=error if isinstance(error, Exception) else None,
-            traceback_str=(
-                traceback.format_exc() if isinstance(error, Exception) else None
-            ),
+            traceback_str=(traceback.format_exc() if isinstance(error, Exception) else None),
             context=context or {},
         )
 
@@ -128,9 +124,7 @@ class ErrorRecoveryHandler:
 
         # Update statistics
         self.total_errors += 1
-        self.error_count_by_category[category] = (
-            self.error_count_by_category.get(category, 0) + 1
-        )
+        self.error_count_by_category[category] = self.error_count_by_category.get(category, 0) + 1
 
         # Add to history
         self.error_history.append(error_info)
@@ -145,9 +139,7 @@ class ErrorRecoveryHandler:
 
         return error_info
 
-    def register_recovery_handler(
-        self, category: ErrorCategory, handler: Callable[[ErrorInfo], bool]
-    ):
+    def register_recovery_handler(self, category: ErrorCategory, handler: Callable[[ErrorInfo], bool]):
         """注册错误恢复处理器
 
         Args:
@@ -190,9 +182,7 @@ class ErrorRecoveryHandler:
             try:
                 result = operation()
                 if attempt > 0:
-                    self.logger.info(
-                        f"Operation succeeded after {attempt + 1} attempts"
-                    )
+                    self.logger.info(f"Operation succeeded after {attempt + 1} attempts")
                 return result
             except Exception as e:
                 last_exception = e
@@ -210,9 +200,7 @@ class ErrorRecoveryHandler:
                     if delay > 0:
                         time.sleep(delay)
                 else:
-                    self.logger.error(
-                        f"Operation failed after {max_attempts} attempts: {e}"
-                    )
+                    self.logger.error(f"Operation failed after {max_attempts} attempts: {e}")
                     self.handle_error(
                         e,
                         ErrorSeverity.HIGH,
@@ -259,15 +247,11 @@ class ErrorRecoveryHandler:
             try:
                 if handler(error_info):
                     error_info.recovery_successful = True
-                    error_info.recovery_details = (
-                        f"通过处理器 {handler.__name__} 恢复成功"
-                    )
+                    error_info.recovery_details = f"通过处理器 {handler.__name__} 恢复成功"
                     self.logger.info(f"错误恢复成功: {error_info.recovery_details}")
                     return
             except Exception as recovery_error:
-                self.logger.warning(
-                    f"恢复处理器 {handler.__name__} 执行失败: {recovery_error}"
-                )
+                self.logger.warning(f"恢复处理器 {handler.__name__} 执行失败: {recovery_error}")
 
         error_info.recovery_details = "所有恢复尝试均失败"
         self.logger.warning(f"错误恢复失败: {error_info.message}")
@@ -306,9 +290,7 @@ class ErrorRecoveryHandler:
                 return False
 
         # 注册默认处理器
-        self.register_recovery_handler(
-            ErrorCategory.MEMORY_ERROR, memory_error_recovery
-        )
+        self.register_recovery_handler(ErrorCategory.MEMORY_ERROR, memory_error_recovery)
         self.register_recovery_handler(ErrorCategory.INPUT_ERROR, file_error_recovery)
         self.register_recovery_handler(ErrorCategory.OUTPUT_ERROR, file_error_recovery)
 
@@ -319,9 +301,7 @@ class ErrorRecoveryHandler:
             log_file.parent.mkdir(parents=True, exist_ok=True)
 
             with open(log_file, "a", encoding="utf-8") as f:
-                f.write(
-                    f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(error_info.timestamp))}\n"
-                )
+                f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(error_info.timestamp))}\n")
                 f.write(f"Severity: {error_info.severity.value}\n")
                 f.write(f"Category: {error_info.category.value}\n")
                 f.write(f"Message: {error_info.message}\n")
@@ -357,9 +337,7 @@ class ErrorRecoveryHandler:
         if not attempted_recoveries:
             return 0.0
 
-        successful_recoveries = [
-            e for e in attempted_recoveries if e.recovery_successful
-        ]
+        successful_recoveries = [e for e in attempted_recoveries if e.recovery_successful]
         return len(successful_recoveries) / len(attempted_recoveries)
 
     def clear_error_history(self):

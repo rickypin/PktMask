@@ -103,9 +103,7 @@ class FileError(PktMaskError):
 class NetworkError(PktMaskError):
     """网络处理相关错误"""
 
-    def __init__(
-        self, message: str, packet_info: Optional[Dict[str, Any]] = None, **kwargs
-    ):
+    def __init__(self, message: str, packet_info: Optional[Dict[str, Any]] = None, **kwargs):
         super().__init__(message, error_code="NETWORK_ERROR", **kwargs)
         self.packet_info = packet_info or {}
 
@@ -151,9 +149,7 @@ class ResourceError(PktMaskError):
 
 
 # 便利函数
-def create_error_from_exception(
-    exc: Exception, context: Optional[Dict[str, Any]] = None
-) -> PktMaskError:
+def create_error_from_exception(exc: Exception, context: Optional[Dict[str, Any]] = None) -> PktMaskError:
     """Create PktMask exception from standard exception"""
     if isinstance(exc, PktMaskError):
         return exc

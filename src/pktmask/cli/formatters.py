@@ -85,9 +85,7 @@ def _format_stage_stats(stage_stat: StageStats, stage_number: int):
 
     # Calculate modification percentage
     if stage_stat.packets_processed > 0:
-        mod_percentage = MessageFormatter.format_percentage(
-            stage_stat.packets_modified, stage_stat.packets_processed
-        )
+        mod_percentage = MessageFormatter.format_percentage(stage_stat.packets_modified, stage_stat.packets_processed)
         typer.echo(f"     📊 Modification rate: {mod_percentage}")
 
     # Display extra metrics if available
@@ -281,9 +279,7 @@ def format_processing_start(input_path, output_path, config_summary: str):
 
 def format_processing_complete():
     """Format processing complete message"""
-    typer.echo(
-        f"{StandardMessages.SUCCESS_ICON} {StandardMessages.PROCESSING_COMPLETE}"
-    )
+    typer.echo(f"{StandardMessages.SUCCESS_ICON} {StandardMessages.PROCESSING_COMPLETE}")
 
 
 def format_processing_failed(error_message: str):

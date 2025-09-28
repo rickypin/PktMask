@@ -40,9 +40,7 @@ def process_command(
         "--mask-protocol",
         help="Masking protocol when --mask is enabled (tls|http|auto)",
     ),
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="Enable verbose output"
-    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output"),
 ):
     """Process PCAP/PCAPNG files with unified core processing
 
@@ -69,8 +67,7 @@ def process_command(
         allowed_protocols = {"tls", "http", "auto"}
         if mask_protocol not in allowed_protocols:
             typer.echo(
-                f"{StandardMessages.ERROR_ICON} Invalid --mask-protocol: {mask_protocol}. "
-                f"Allowed: tls|http|auto",
+                f"{StandardMessages.ERROR_ICON} Invalid --mask-protocol: {mask_protocol}. " f"Allowed: tls|http|auto",
                 err=True,
             )
             raise typer.Exit(1)
@@ -83,21 +80,15 @@ def process_command(
 
     # Display configuration if verbose
     if verbose:
-        config_summary = ConsistentProcessor.get_configuration_summary(
-            dedup, anon, mask, mask_protocol
-        )
+        config_summary = ConsistentProcessor.get_configuration_summary(dedup, anon, mask, mask_protocol)
         typer.echo(f"⚙️ Configuration: {config_summary}")
 
     # Process using unified core
     try:
         if input_path.is_file():
-            _process_single_file(
-                input_path, output_path, dedup, anon, mask, mask_protocol, verbose
-            )
+            _process_single_file(input_path, output_path, dedup, anon, mask, mask_protocol, verbose)
         else:
-            _process_directory(
-                input_path, output_path, dedup, anon, mask, mask_protocol, verbose
-            )
+            _process_directory(input_path, output_path, dedup, anon, mask, mask_protocol, verbose)
     except Exception as e:
         typer.echo(f"{StandardMessages.ERROR_ICON} {str(e)}", err=True)
         raise typer.Exit(1)
@@ -121,25 +112,17 @@ def _process_single_file(
         typer.echo(f"📁 Output: {output_path}")
 
     try:
-        result = ConsistentProcessor.process_file(
-            input_path, output_path, dedup, anon, mask, mask_protocol
-        )
+        result = ConsistentProcessor.process_file(input_path, output_path, dedup, anon, mask, mask_protocol)
         format_result(result, verbose)
 
         if result.success:
-            typer.echo(
-                f"{StandardMessages.SUCCESS_ICON} {StandardMessages.PROCESSING_COMPLETE}"
-            )
+            typer.echo(f"{StandardMessages.SUCCESS_ICON} {StandardMessages.PROCESSING_COMPLETE}")
         else:
-            typer.echo(
-                f"{StandardMessages.ERROR_ICON} {StandardMessages.PROCESSING_FAILED}"
-            )
+            typer.echo(f"{StandardMessages.ERROR_ICON} {StandardMessages.PROCESSING_FAILED}")
             raise typer.Exit(1)
 
     except Exception as e:
-        typer.echo(
-            f"{StandardMessages.ERROR_ICON} Processing failed: {str(e)}", err=True
-        )
+        typer.echo(f"{StandardMessages.ERROR_ICON} Processing failed: {str(e)}", err=True)
         raise typer.Exit(1)
 
 
@@ -161,9 +144,7 @@ def _process_directory(
             pcap_files.append(Path(file.path))
 
     if not pcap_files:
-        typer.echo(
-            f"{StandardMessages.WARNING_ICON} No PCAP/PCAPNG files found in directory"
-        )
+        typer.echo(f"{StandardMessages.WARNING_ICON} No PCAP/PCAPNG files found in directory")
         return
 
     typer.echo(f"{StandardMessages.START_ICON} {StandardMessages.PROCESSING_START}")
@@ -185,17 +166,13 @@ def _process_directory(
         output_file = output_path / pcap_file.name
 
         try:
-            result = ConsistentProcessor.process_file(
-                pcap_file, output_file, dedup, anon, mask, mask_protocol
-            )
+            result = ConsistentProcessor.process_file(pcap_file, output_file, dedup, anon, mask, mask_protocol)
 
             if result.success:
                 processed_files += 1
                 total_duration += result.duration_ms
                 if verbose:
-                    format_result(
-                        result, verbose=False
-                    )  # Brief format for directory processing
+                    format_result(result, verbose=False)  # Brief format for directory processing
             else:
                 failed_files += 1
                 typer.echo(f"{StandardMessages.ERROR_ICON} Failed: {pcap_file.name}")
@@ -205,31 +182,21 @@ def _process_directory(
 
         except Exception as e:
             failed_files += 1
-            typer.echo(
-                f"{StandardMessages.ERROR_ICON} Failed: {pcap_file.name} - {str(e)}"
-            )
+            typer.echo(f"{StandardMessages.ERROR_ICON} Failed: {pcap_file.name} - {str(e)}")
 
     # Display summary
     format_directory_summary(processed_files, failed_files, total_duration, verbose)
 
     if failed_files > 0:
-        typer.echo(
-            f"{StandardMessages.WARNING_ICON} {failed_files} files failed processing"
-        )
+        typer.echo(f"{StandardMessages.WARNING_ICON} {failed_files} files failed processing")
         raise typer.Exit(1)
     else:
-        typer.echo(
-            f"{StandardMessages.SUCCESS_ICON} {StandardMessages.PROCESSING_COMPLETE}"
-        )
+        typer.echo(f"{StandardMessages.SUCCESS_ICON} {StandardMessages.PROCESSING_COMPLETE}")
 
 
 def validate_command(
-    input_path: Path = typer.Argument(
-        ..., help="Input PCAP/PCAPNG file or directory to validate"
-    ),
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="Enable verbose output"
-    ),
+    input_path: Path = typer.Argument(..., help="Input PCAP/PCAPNG file or directory to validate"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output"),
 ):
     """Validate PCAP/PCAPNG files without processing
 
@@ -248,9 +215,7 @@ def validate_command(
                 file_size = input_path.stat().st_size
                 from ..core.messages import MessageFormatter
 
-                typer.echo(
-                    f"📊 File size: {MessageFormatter.format_file_size(file_size)}"
-                )
+                typer.echo(f"📊 File size: {MessageFormatter.format_file_size(file_size)}")
         else:
             # Count files in directory (current directory only)
             pcap_files = []
@@ -258,9 +223,7 @@ def validate_command(
                 if file.name.lower().endswith((".pcap", ".pcapng")):
                     pcap_files.append(Path(file.path))
 
-            typer.echo(
-                f"{StandardMessages.SUCCESS_ICON} Valid directory with {len(pcap_files)} PCAP/PCAPNG files"
-            )
+            typer.echo(f"{StandardMessages.SUCCESS_ICON} Valid directory with {len(pcap_files)} PCAP/PCAPNG files")
 
             if verbose and pcap_files:
                 typer.echo("📁 Files found:")
@@ -268,16 +231,12 @@ def validate_command(
                     file_size = pcap_file.stat().st_size
                     from ..core.messages import MessageFormatter
 
-                    typer.echo(
-                        f"  - {pcap_file.name} ({MessageFormatter.format_file_size(file_size)})"
-                    )
+                    typer.echo(f"  - {pcap_file.name} ({MessageFormatter.format_file_size(file_size)})")
                 if len(pcap_files) > 10:
                     typer.echo(f"  ... and {len(pcap_files) - 10} more files")
 
     except (FileNotFoundError, ValueError) as e:
-        typer.echo(
-            f"{StandardMessages.ERROR_ICON} Validation failed: {str(e)}", err=True
-        )
+        typer.echo(f"{StandardMessages.ERROR_ICON} Validation failed: {str(e)}", err=True)
         raise typer.Exit(1)
 
 

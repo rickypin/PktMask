@@ -68,9 +68,7 @@ class StepStatistics(BaseModel):
     total_executions: int = Field(default=0, ge=0, description="总执行次数")
     successful_executions: int = Field(default=0, ge=0, description="成功执行次数")
     failed_executions: int = Field(default=0, ge=0, description="失败执行次数")
-    average_duration_ms: float = Field(
-        default=0.0, ge=0.0, description="平均执行时间(毫秒)"
-    )
+    average_duration_ms: float = Field(default=0.0, ge=0.0, description="平均执行时间(毫秒)")
     total_packets_processed: int = Field(default=0, ge=0, description="总处理包数")
 
     def get_success_rate(self) -> float:
@@ -84,16 +82,12 @@ class ErrorSummary(BaseModel):
     """错误摘要"""
 
     total_errors: int = Field(default=0, ge=0, description="总错误数")
-    error_types: Dict[str, int] = Field(
-        default_factory=dict, description="错误类型统计"
-    )
+    error_types: Dict[str, int] = Field(default_factory=dict, description="错误类型统计")
     critical_errors: int = Field(default=0, ge=0, description="严重错误数")
     recoverable_errors: int = Field(default=0, ge=0, description="可恢复错误数")
     most_common_error: Optional[str] = Field(default=None, description="最常见错误")
 
-    def add_error(
-        self, error_type: str, is_critical: bool = False, is_recoverable: bool = False
-    ):
+    def add_error(self, error_type: str, is_critical: bool = False, is_recoverable: bool = False):
         """添加错误统计"""
         self.total_errors += 1
         self.error_types[error_type] = self.error_types.get(error_type, 0) + 1
@@ -104,9 +98,7 @@ class ErrorSummary(BaseModel):
             self.recoverable_errors += 1
 
         # 更新最常见错误
-        if not self.most_common_error or self.error_types[
-            error_type
-        ] > self.error_types.get(self.most_common_error, 0):
+        if not self.most_common_error or self.error_types[error_type] > self.error_types.get(self.most_common_error, 0):
             self.most_common_error = error_type
 
 
@@ -116,15 +108,9 @@ class PerformanceMetrics(BaseModel):
     files_per_minute: float = Field(default=0.0, ge=0.0, description="每分钟处理文件数")
     packets_per_second: float = Field(default=0.0, ge=0.0, description="每秒处理包数")
     throughput_mbps: float = Field(default=0.0, ge=0.0, description="吞吐量(MB/s)")
-    average_file_size_mb: float = Field(
-        default=0.0, ge=0.0, description="平均文件大小(MB)"
-    )
-    peak_memory_usage_mb: float = Field(
-        default=0.0, ge=0.0, description="峰值内存使用(MB)"
-    )
-    cpu_utilization_percent: float = Field(
-        default=0.0, ge=0.0, le=100.0, description="CPU使用率"
-    )
+    average_file_size_mb: float = Field(default=0.0, ge=0.0, description="平均文件大小(MB)")
+    peak_memory_usage_mb: float = Field(default=0.0, ge=0.0, description="峰值内存使用(MB)")
+    cpu_utilization_percent: float = Field(default=0.0, ge=0.0, le=100.0, description="CPU使用率")
 
     @classmethod
     def calculate(
@@ -144,9 +130,7 @@ class PerformanceMetrics(BaseModel):
         total_mb = total_bytes / (1024 * 1024)
 
         return cls(
-            files_per_minute=(
-                total_files / duration_minutes if duration_minutes > 0 else 0.0
-            ),
+            files_per_minute=(total_files / duration_minutes if duration_minutes > 0 else 0.0),
             packets_per_second=total_packets / duration_seconds,
             throughput_mbps=total_mb / duration_seconds,
             average_file_size_mb=total_mb / total_files if total_files > 0 else 0.0,
@@ -163,53 +147,33 @@ class ReportMetadata(BaseModel):
     version: str = Field(default="1.0", description="报告版本")
     report_id: Optional[str] = Field(default=None, description="报告ID")
     tags: List[str] = Field(default_factory=list, description="报告标签")
-    custom_fields: Dict[str, Any] = Field(
-        default_factory=dict, description="自定义字段"
-    )
+    custom_fields: Dict[str, Any] = Field(default_factory=dict, description="自定义字段")
 
 
 class ReportData(BaseModel):
     """完整报告数据模型"""
 
-    metadata: ReportMetadata = Field(
-        default_factory=ReportMetadata, description="报告元数据"
-    )
+    metadata: ReportMetadata = Field(default_factory=ReportMetadata, description="报告元数据")
     report_type: ReportType = Field(..., description="报告类型")
     title: str = Field(..., description="报告标题")
 
     # 核心数据
-    summary: ProcessingSummary = Field(
-        default_factory=ProcessingSummary, description="处理摘要"
-    )
-    step_statistics: List[StepStatistics] = Field(
-        default_factory=list, description="步骤统计"
-    )
-    error_summary: ErrorSummary = Field(
-        default_factory=ErrorSummary, description="错误摘要"
-    )
-    performance_metrics: PerformanceMetrics = Field(
-        default_factory=PerformanceMetrics, description="性能指标"
-    )
+    summary: ProcessingSummary = Field(default_factory=ProcessingSummary, description="处理摘要")
+    step_statistics: List[StepStatistics] = Field(default_factory=list, description="步骤统计")
+    error_summary: ErrorSummary = Field(default_factory=ErrorSummary, description="错误摘要")
+    performance_metrics: PerformanceMetrics = Field(default_factory=PerformanceMetrics, description="性能指标")
 
     # 详细数据
-    file_results: List[FileStepResults] = Field(
-        default_factory=list, description="文件结果详情"
-    )
+    file_results: List[FileStepResults] = Field(default_factory=list, description="文件结果详情")
     sections: List[ReportSection] = Field(default_factory=list, description="报告段落")
 
     # 配置和上下文
-    processing_config: Dict[str, Any] = Field(
-        default_factory=dict, description="处理配置"
-    )
-    environment_info: Dict[str, Any] = Field(
-        default_factory=dict, description="环境信息"
-    )
+    processing_config: Dict[str, Any] = Field(default_factory=dict, description="处理配置")
+    environment_info: Dict[str, Any] = Field(default_factory=dict, description="环境信息")
 
     def add_section(self, title: str, content: str, level: int = 1, **metadata):
         """添加报告段落"""
-        section = ReportSection(
-            title=title, content=content, level=level, metadata=metadata
-        )
+        section = ReportSection(title=title, content=content, level=level, metadata=metadata)
         self.sections.append(section)
 
     def add_step_statistics(self, step_stats: StepStatistics):
@@ -220,9 +184,7 @@ class ReportData(BaseModel):
         """添加文件结果"""
         self.file_results.append(file_result)
 
-    def get_formatted_content(
-        self, format_type: ReportFormat = ReportFormat.TEXT
-    ) -> str:
+    def get_formatted_content(self, format_type: ReportFormat = ReportFormat.TEXT) -> str:
         """获取格式化的报告内容"""
         if format_type == ReportFormat.TEXT:
             return self._format_as_text()
@@ -345,11 +307,7 @@ class ReportData(BaseModel):
             total_packets=stats.metrics.packets_processed,
             processing_time=stats.timing.get_elapsed_time_string(),
             success_rate=(
-                (
-                    stats.metrics.files_processed
-                    / stats.metrics.total_files_to_process
-                    * 100.0
-                )
+                (stats.metrics.files_processed / stats.metrics.total_files_to_process * 100.0)
                 if stats.metrics.total_files_to_process > 0
                 else 0.0
             ),

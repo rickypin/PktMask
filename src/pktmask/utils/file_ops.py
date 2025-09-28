@@ -35,9 +35,7 @@ def ensure_directory(path: Union[str, Path], create_if_missing: bool = True) -> 
 
     if path.exists():
         if not path.is_dir():
-            raise FileError(
-                f"Path exists but is not a directory: {path}", file_path=str(path)
-            )
+            raise FileError(f"Path exists but is not a directory: {path}", file_path=str(path))
         return True
 
     if create_if_missing:
@@ -46,9 +44,7 @@ def ensure_directory(path: Union[str, Path], create_if_missing: bool = True) -> 
             logger.debug(f"Created directory: {path}")
             return True
         except Exception as e:
-            raise FileError(
-                f"Failed to create directory: {path}", file_path=str(path)
-            ) from e
+            raise FileError(f"Failed to create directory: {path}", file_path=str(path)) from e
 
     return False
 
@@ -108,9 +104,7 @@ def get_file_size(filepath: Union[str, Path]) -> int:
     try:
         return Path(filepath).stat().st_size
     except Exception as e:
-        raise FileError(
-            f"Cannot get file size: {filepath}", file_path=str(filepath)
-        ) from e
+        raise FileError(f"Cannot get file size: {filepath}", file_path=str(filepath)) from e
 
 
 def validate_file_size(filepath: Union[str, Path]) -> bool:
@@ -129,14 +123,10 @@ def validate_file_size(filepath: Union[str, Path]) -> bool:
     file_size = get_file_size(filepath)
 
     if file_size > ValidationConstants.MAX_FILE_SIZE:
-        raise ValidationError(
-            f"File too large: {file_size} bytes > {ValidationConstants.MAX_FILE_SIZE} bytes"
-        )
+        raise ValidationError(f"File too large: {file_size} bytes > {ValidationConstants.MAX_FILE_SIZE} bytes")
 
     if file_size < ValidationConstants.MIN_FILE_SIZE:
-        raise ValidationError(
-            f"File too small: {file_size} bytes < {ValidationConstants.MIN_FILE_SIZE} bytes"
-        )
+        raise ValidationError(f"File too small: {file_size} bytes < {ValidationConstants.MIN_FILE_SIZE} bytes")
 
     return True
 
@@ -155,9 +145,7 @@ def is_supported_file(filepath: Union[str, Path]) -> bool:
     return ext in ProcessingConstants.SUPPORTED_EXTENSIONS
 
 
-def find_files_by_extension(
-    directory: Union[str, Path], extensions: List[str], recursive: bool = False
-) -> List[str]:
+def find_files_by_extension(directory: Union[str, Path], extensions: List[str], recursive: bool = False) -> List[str]:
     """
     Find files with specified extensions in a directory
 
@@ -172,9 +160,7 @@ def find_files_by_extension(
     directory = Path(directory)
     found_files = []
 
-    extensions = [
-        ext.lower() if ext.startswith(".") else f".{ext.lower()}" for ext in extensions
-    ]
+    extensions = [ext.lower() if ext.startswith(".") else f".{ext.lower()}" for ext in extensions]
 
     if recursive:
         for ext in extensions:
@@ -200,9 +186,7 @@ def find_pcap_files(directory: Union[str, Path]) -> List[str]:
     return find_files_by_extension(directory, ProcessingConstants.SUPPORTED_EXTENSIONS)
 
 
-def copy_file_safely(
-    src: Union[str, Path], dst: Union[str, Path], overwrite: bool = False
-) -> bool:
+def copy_file_safely(src: Union[str, Path], dst: Union[str, Path], overwrite: bool = False) -> bool:
     """
     Safely copy a file
 
@@ -239,9 +223,7 @@ def copy_file_safely(
         return True
 
     except Exception as e:
-        raise FileError(
-            f"Failed to copy file: {src} -> {dst}", file_path=str(src)
-        ) from e
+        raise FileError(f"Failed to copy file: {src} -> {dst}", file_path=str(src)) from e
 
 
 def delete_file_safely(filepath: Union[str, Path]) -> bool:
@@ -285,9 +267,7 @@ def open_directory_in_system(directory: Union[str, Path]) -> bool:
     return open_directory_hidden(directory)
 
 
-def generate_output_filename(
-    input_filename: str, suffix: str, directory: Optional[Union[str, Path]] = None
-) -> str:
+def generate_output_filename(input_filename: str, suffix: str, directory: Optional[Union[str, Path]] = None) -> str:
     """
     Generate output filename based on input filename
 
@@ -356,9 +336,7 @@ def cleanup_temp_files(directory: Union[str, Path], pattern: str = "*.tmp") -> i
                     cleaned_count += 1
                     logger.debug(f"Cleaned temp file: {temp_file}")
                 except Exception as e:
-                    logger.warning(
-                        f"Failed to clean temp file: {temp_file}, error: {e}"
-                    )
+                    logger.warning(f"Failed to clean temp file: {temp_file}, error: {e}")
     except Exception as e:
         logger.warning(f"Error during temp file cleanup: {directory}, error: {e}")
 

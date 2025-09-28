@@ -29,9 +29,7 @@ class StatisticsManager:
         self.processing_time = 0
 
         # 文件处理结果
-        self.file_processing_results = (
-            {}
-        )  # original_file -> {steps: {step_name: result_data}}
+        self.file_processing_results = {}  # original_file -> {steps: {step_name: result_data}}
         self.step_results = {}  # 步骤结果缓存
 
         # IP映射相关
@@ -83,9 +81,7 @@ class StatisticsManager:
         if self.start_time:
             elapsed_msecs = self.start_time.msecsTo(QTime.currentTime())
             self.processing_time = elapsed_msecs
-            self._logger.debug(
-                f"Stopped timing, total elapsed: {self.get_elapsed_time_string()}"
-            )
+            self._logger.debug(f"Stopped timing, total elapsed: {self.get_elapsed_time_string()}")
 
     def get_elapsed_time_string(self) -> str:
         """获取耗时字符串"""
@@ -113,9 +109,7 @@ class StatisticsManager:
     def add_packet_count(self, additional: int):
         """增加包处理计数"""
         self.packets_processed += additional
-        self._logger.debug(
-            f"Added {additional} packets, total: {self.packets_processed}"
-        )
+        self._logger.debug(f"Added {additional} packets, total: {self.packets_processed}")
 
     def set_total_files(self, total: int):
         """设置总文件数"""
@@ -145,9 +139,7 @@ class StatisticsManager:
             "all_ip_reports": self.all_ip_reports.copy(),
         }
 
-    def collect_step_result(
-        self, step_name: str, filename: str, result_data: Dict[str, Any]
-    ):
+    def collect_step_result(self, step_name: str, filename: str, result_data: Dict[str, Any]):
         """收集步骤处理结果"""
         # 使用文件名作为键而不是完整路径
         file_key = filename.split("/")[-1] if filename else "unknown"
@@ -158,9 +150,7 @@ class StatisticsManager:
         self.step_results[file_key][step_name] = result_data
         self._logger.debug(f"Collected step result: {step_name} for {file_key}")
 
-    def add_file_processing_result(
-        self, filename: str, step_name: str, result_data: Dict[str, Any]
-    ):
+    def add_file_processing_result(self, filename: str, step_name: str, result_data: Dict[str, Any]):
         """添加文件处理结果"""
         if filename not in self.file_processing_results:
             self.file_processing_results[filename] = {"steps": {}}
@@ -175,9 +165,7 @@ class StatisticsManager:
     def update_global_ip_mappings(self, new_mappings: Dict[str, str]):
         """更新全局IP映射"""
         self.global_ip_mappings.update(new_mappings)
-        self._logger.debug(
-            f"Updated global IP mappings, total: {len(self.global_ip_mappings)}"
-        )
+        self._logger.debug(f"Updated global IP mappings, total: {len(self.global_ip_mappings)}")
 
     def add_ip_report(self, subdir: str, report_data: Dict[str, Any]):
         """添加IP报告数据"""
@@ -209,10 +197,7 @@ class StatisticsManager:
 
     def is_processing_complete(self) -> bool:
         """检查处理是否完成"""
-        return (
-            self.total_files_to_process > 0
-            and self.files_processed >= self.total_files_to_process
-        )
+        return self.total_files_to_process > 0 and self.files_processed >= self.total_files_to_process
 
     def get_debug_info(self) -> Dict[str, Any]:
         """获取调试信息"""

@@ -118,9 +118,7 @@ class GUIServicePipelineThread(QThread):
     # CRITICAL: Preserve all Qt signals exactly as current implementation
     progress_signal = pyqtSignal(PipelineEvents, dict)
 
-    def __init__(
-        self, executor, base_dir: Union[str, Path], output_dir: Union[str, Path]
-    ):
+    def __init__(self, executor, base_dir: Union[str, Path], output_dir: Union[str, Path]):
         super().__init__()
         self._executor = executor
         self._base_dir = Path(base_dir)
@@ -130,9 +128,7 @@ class GUIServicePipelineThread(QThread):
         # Debug mode support
         self._debug_mode = GUIFeatureFlags.is_gui_debug_mode()
         if self._debug_mode:
-            self._log_debug(
-                "GUIServicePipelineThread initialized with ConsistentProcessor"
-            )
+            self._log_debug("GUIServicePipelineThread initialized with ConsistentProcessor")
 
     def run(self):
         """CRITICAL: Preserve exact current behavior while using consistent core
@@ -142,9 +138,7 @@ class GUIServicePipelineThread(QThread):
         """
         try:
             if self._debug_mode:
-                self._log_debug(
-                    f"Starting processing: {self._base_dir} -> {self._output_dir}"
-                )
+                self._log_debug(f"Starting processing: {self._base_dir} -> {self._output_dir}")
 
             # Direct processing using ConsistentProcessor approach
             # This eliminates dependency on pipeline_service.process_directory
@@ -173,14 +167,10 @@ class GUIServicePipelineThread(QThread):
             )
 
             # Emit file start signal
-            self.progress_signal.emit(
-                PipelineEvents.FILE_START, {"path": str(self._base_dir), "index": 0}
-            )
+            self.progress_signal.emit(PipelineEvents.FILE_START, {"path": str(self._base_dir), "index": 0})
 
             # Process using executor directly (same as CLI) with progress callback
-            result = self._executor.run(
-                self._base_dir, output_file, progress_cb=self._handle_stage_progress
-            )
+            result = self._executor.run(self._base_dir, output_file, progress_cb=self._handle_stage_progress)
 
             # Emit stage summaries BEFORE file end (GUI expects this order)
             for stage_stat in result.stage_stats:
@@ -200,9 +190,7 @@ class GUIServicePipelineThread(QThread):
                 self.progress_signal.emit(PipelineEvents.STEP_SUMMARY, payload)
 
             # Emit file end signal with result (after summaries)
-            self.progress_signal.emit(
-                PipelineEvents.FILE_END, {"path": str(self._base_dir), "result": result}
-            )
+            self.progress_signal.emit(PipelineEvents.FILE_END, {"path": str(self._base_dir), "result": result})
 
             # Emit pipeline end signal
             self.progress_signal.emit(
@@ -233,20 +221,14 @@ class GUIServicePipelineThread(QThread):
             return
 
         # Emit pipeline start signal
-        self.progress_signal.emit(
-            PipelineEvents.PIPELINE_START, {"total_files": len(pcap_files)}
-        )
+        self.progress_signal.emit(PipelineEvents.PIPELINE_START, {"total_files": len(pcap_files)})
 
         # CRITICAL FIX: Emit SUBDIR_START event to set total file count for progress bar
         # This matches the behavior expected by PipelineManager for proper progress calculation
         self.progress_signal.emit(
             PipelineEvents.SUBDIR_START,
             {
-                "name": str(
-                    self._base_dir.name
-                    if self._base_dir.is_dir()
-                    else self._base_dir.parent.name
-                ),
+                "name": str(self._base_dir.name if self._base_dir.is_dir() else self._base_dir.parent.name),
                 "current": 1,
                 "total": 1,
                 "file_count": len(pcap_files),
@@ -259,24 +241,18 @@ class GUIServicePipelineThread(QThread):
         for i, pcap_file in enumerate(pcap_files):
             # Check if user stopped processing
             if not self.is_running:
-                self.progress_signal.emit(
-                    PipelineEvents.LOG, {"message": "--- Pipeline Stopped by User ---"}
-                )
+                self.progress_signal.emit(PipelineEvents.LOG, {"message": "--- Pipeline Stopped by User ---"})
                 break
 
             # Emit file start signal
-            self.progress_signal.emit(
-                PipelineEvents.FILE_START, {"path": str(pcap_file), "index": i}
-            )
+            self.progress_signal.emit(PipelineEvents.FILE_START, {"path": str(pcap_file), "index": i})
 
             try:
                 # Generate output file path with unified suffix logic
                 output_file = self._build_output_file_path(pcap_file)
 
                 # Process file using executor directly with progress callback
-                result = self._executor.run(
-                    pcap_file, output_file, progress_cb=self._handle_stage_progress
-                )
+                result = self._executor.run(pcap_file, output_file, progress_cb=self._handle_stage_progress)
 
                 if result.success:
                     processed_files += 1
@@ -294,17 +270,12 @@ class GUIServicePipelineThread(QThread):
                         "total_packets": stage_stat.packets_processed,
                         "output_filename": str(output_file),
                     }
-                    if (
-                        hasattr(stage_stat, "extra_metrics")
-                        and stage_stat.extra_metrics
-                    ):
+                    if hasattr(stage_stat, "extra_metrics") and stage_stat.extra_metrics:
                         payload["extra_metrics"] = stage_stat.extra_metrics
                     self.progress_signal.emit(PipelineEvents.STEP_SUMMARY, payload)
 
                 # Emit file end signal with result (after summaries)
-                self.progress_signal.emit(
-                    PipelineEvents.FILE_END, {"path": str(pcap_file), "result": result}
-                )
+                self.progress_signal.emit(PipelineEvents.FILE_END, {"path": str(pcap_file), "result": result})
 
             except Exception as e:
                 # Emit error for this specific file
@@ -335,9 +306,7 @@ class GUIServicePipelineThread(QThread):
             self._log_debug("Pipeline stop requested by user")
 
         # Emit stop message using same format as original
-        self.progress_signal.emit(
-            PipelineEvents.LOG, {"message": "--- Pipeline Stopped by User ---"}
-        )
+        self.progress_signal.emit(PipelineEvents.LOG, {"message": "--- Pipeline Stopped by User ---"})
 
         # Note: We don't call stop_pipeline() from service layer since we're
         # using the executor directly. The executor handles its own cleanup.
@@ -348,9 +317,7 @@ class GUIServicePipelineThread(QThread):
     def _log_debug(self, message: str):
         """Log debug message if debug mode is enabled"""
         if self._debug_mode:
-            self.progress_signal.emit(
-                PipelineEvents.LOG, {"message": f"[DEBUG] {message}"}
-            )
+            self.progress_signal.emit(PipelineEvents.LOG, {"message": f"[DEBUG] {message}"})
 
     def _handle_stage_progress(self, stage, stats):
         """Handle stage progress callback to emit detailed stage statistics
@@ -371,12 +338,8 @@ class GUIServicePipelineThread(QThread):
             "AnonymizationStage",
         ]:
             # For IP anonymization, show IP statistics instead of packet statistics
-            original_ips = getattr(stats, "original_ips", 0) or stats.extra_metrics.get(
-                "original_ips", 0
-            )
-            anonymized_ips = getattr(
-                stats, "anonymized_ips", 0
-            ) or stats.extra_metrics.get("anonymized_ips", 0)
+            original_ips = getattr(stats, "original_ips", 0) or stats.extra_metrics.get("original_ips", 0)
+            anonymized_ips = getattr(stats, "anonymized_ips", 0) or stats.extra_metrics.get("anonymized_ips", 0)
             if original_ips > 0:
                 msg = f"- {stage_display_name}: processed {original_ips} IPs, anonymized {anonymized_ips} IPs"
             else:
@@ -446,9 +409,7 @@ class GUIThreadingHelper:
             ValueError: If configuration validation fails
         """
         # Validate options first
-        GUIConsistentProcessor.validate_gui_options(
-            remove_dupes_checked, anonymize_ips_checked, mask_payloads_checked
-        )
+        GUIConsistentProcessor.validate_gui_options(remove_dupes_checked, anonymize_ips_checked, mask_payloads_checked)
 
         # Create executor using GUI wrapper
         executor = GUIConsistentProcessor.create_executor_from_gui(

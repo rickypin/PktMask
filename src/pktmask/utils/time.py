@@ -64,15 +64,9 @@ def format_duration_seconds(duration_seconds: float) -> str:
     Returns:
         格式化的时长字符串
     """
-    hours = int(
-        duration_seconds
-        // (SystemConstants.MINUTES_PER_HOUR * SystemConstants.SECONDS_PER_MINUTE)
-    )
+    hours = int(duration_seconds // (SystemConstants.MINUTES_PER_HOUR * SystemConstants.SECONDS_PER_MINUTE))
     minutes = int(
-        (
-            duration_seconds
-            % (SystemConstants.MINUTES_PER_HOUR * SystemConstants.SECONDS_PER_MINUTE)
-        )
+        (duration_seconds % (SystemConstants.MINUTES_PER_HOUR * SystemConstants.SECONDS_PER_MINUTE))
         // SystemConstants.SECONDS_PER_MINUTE
     )
     seconds = int(duration_seconds % SystemConstants.SECONDS_PER_MINUTE)
@@ -96,9 +90,7 @@ def format_milliseconds_to_time(milliseconds: int) -> str:
         格式化的时间字符串，如 "01:23.45"
     """
     total_seconds = milliseconds // SystemConstants.MILLISECONDS_PER_SECOND
-    msecs = (
-        milliseconds % SystemConstants.MILLISECONDS_PER_SECOND
-    ) // SystemConstants.MILLISECONDS_DISPLAY_DIVISOR
+    msecs = (milliseconds % SystemConstants.MILLISECONDS_PER_SECOND) // SystemConstants.MILLISECONDS_DISPLAY_DIVISOR
 
     hours, remainder = divmod(
         total_seconds,
@@ -112,9 +104,7 @@ def format_milliseconds_to_time(milliseconds: int) -> str:
         return f"{minutes:02d}:{seconds:02d}.{msecs:02d}"
 
 
-def get_performance_metrics(
-    start_time: float, end_time: Optional[float] = None, item_count: int = 0
-) -> dict:
+def get_performance_metrics(start_time: float, end_time: Optional[float] = None, item_count: int = 0) -> dict:
     """
     计算性能指标
 

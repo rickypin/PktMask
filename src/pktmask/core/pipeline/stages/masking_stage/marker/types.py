@@ -92,11 +92,7 @@ class KeepRule:
             return None
 
         # 如果保留策略不同，不进行合并
-        if (
-            self_strategy is not None
-            and other_strategy is not None
-            and self_strategy != other_strategy
-        ):
+        if self_strategy is not None and other_strategy is not None and self_strategy != other_strategy:
             return None
 
         # 合并重叠或相邻的规则
@@ -138,11 +134,7 @@ class KeepRuleSet:
 
     def get_rules_for_stream(self, stream_id: str, direction: str) -> List[KeepRule]:
         """获取指定流和方向的所有规则"""
-        return [
-            rule
-            for rule in self.rules
-            if rule.stream_id == stream_id and rule.direction == direction
-        ]
+        return [rule for rule in self.rules if rule.stream_id == stream_id and rule.direction == direction]
 
     def optimize_rules(self) -> None:
         """优化规则集合，合并重叠和相邻的规则"""
@@ -183,10 +175,7 @@ class KeepRuleSet:
             last_rule = merged_rules[-1]
 
             # 检查是否可以合并
-            if (
-                current_rule.seq_start <= last_rule.seq_end
-                or current_rule.seq_start == last_rule.seq_end
-            ):
+            if current_rule.seq_start <= last_rule.seq_end or current_rule.seq_start == last_rule.seq_end:
                 # 合并规则
                 merged_rule = last_rule.merge_with(current_rule)
                 if merged_rule:

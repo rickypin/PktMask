@@ -53,9 +53,7 @@ def _check_tshark_version(tshark_path: str | None, verbose: bool = False) -> str
             errors="replace",
         )
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
-        sys.stderr.write(
-            f"[tls23-marker] Error: Cannot execute '{executable}': {exc}\n"
-        )
+        sys.stderr.write(f"[tls23-marker] Error: Cannot execute '{executable}': {exc}\n")
         sys.exit(1)
 
     version = _parse_tshark_version(completed.stdout + completed.stderr)
@@ -66,15 +64,11 @@ def _check_tshark_version(tshark_path: str | None, verbose: bool = False) -> str
     if version < MIN_TSHARK_VERSION:
         ver_str = ".".join(map(str, version))
         min_str = ".".join(map(str, MIN_TSHARK_VERSION))
-        sys.stderr.write(
-            f"[tls23-marker] Error: tshark version too low ({ver_str}), requires ≥ {min_str}.\n"
-        )
+        sys.stderr.write(f"[tls23-marker] Error: tshark version too low ({ver_str}), requires ≥ {min_str}.\n")
         sys.exit(1)
 
     if verbose:
-        sys.stdout.write(
-            f"[tls23-marker] 检测到 tshark {'.'.join(map(str, version))} 于 {executable}\n"
-        )
+        sys.stdout.write(f"[tls23-marker] 检测到 tshark {'.'.join(map(str, version))} 于 {executable}\n")
 
     return executable
 
@@ -248,9 +242,7 @@ def main(argv: list[str] | None = None) -> None:
 
         # 合并两类字段，保持原顺序，确保同时检测含混合记录的帧
         # Wireshark 对于同一条记录仅会输出其中一个字段，因此简单拼接即可
-        type_fields = content_types_list + [
-            v for v in opaque_types_list if v not in content_types_list
-        ]
+        type_fields = content_types_list + [v for v in opaque_types_list if v not in content_types_list]
         if not type_fields:
             continue
 
@@ -335,9 +327,7 @@ def main(argv: list[str] | None = None) -> None:
     # -------------------- 阶段 3：缺头补标实现 -------------------- #
 
     # 以 streamID -> set(frame_no) 形式补充 hits
-    supplemented_frames: dict[int, set[int]] = {
-        k: set(v) for k, v in hits_by_stream.items()
-    }
+    supplemented_frames: dict[int, set[int]] = {k: set(v) for k, v in hits_by_stream.items()}
 
     for stream_id in hits_by_stream.keys():
         stream_cmd = [
@@ -468,11 +458,7 @@ def main(argv: list[str] | None = None) -> None:
                 #         if _frame_idx != -1:
                 #             zero_bytes_count[_frame_idx] += 1
 
-                frames_set = {
-                    frame_map[i]
-                    for i in range(cursor, cursor + total_rec_len)
-                    if frame_map[i] != -1
-                }
+                frames_set = {frame_map[i] for i in range(cursor, cursor + total_rec_len) if frame_map[i] != -1}
                 supplemented_frames[stream_id].update(frames_set)
                 for _f in frames_set:
                     frame_record_counts[_f] += 1
@@ -574,11 +560,7 @@ def main(argv: list[str] | None = None) -> None:
                 base_cols = f"{item['frame']}\t{item['path']}"
                 if not args.legacy:
                     num_rec = item.get("num_records", 1)
-                    lengths_txt = (
-                        ",".join(map(str, item.get("lengths", [])))
-                        if item.get("lengths")
-                        else ""
-                    )
+                    lengths_txt = ",".join(map(str, item.get("lengths", []))) if item.get("lengths") else ""
                     zero_bytes = item.get("zero_bytes", 0)
                     fp.write(f"{base_cols}\t{num_rec}\t{lengths_txt}\t{zero_bytes}\n")
                 else:
@@ -591,9 +573,7 @@ def main(argv: list[str] | None = None) -> None:
 
         editcap_exec = shutil.which("editcap")
         if editcap_exec is None:
-            sys.stderr.write(
-                "[tls23-marker] Warning: 'editcap' not found. Skip annotation.\n"
-            )
+            sys.stderr.write("[tls23-marker] Warning: 'editcap' not found. Skip annotation.\n")
         else:
             annotated_path = output_dir / f"{stem}_annotated.pcapng"
 
@@ -601,9 +581,7 @@ def main(argv: list[str] | None = None) -> None:
             capture_comment_parts = [
                 f"TLS23 Marker: {total_records} records in {total_frames} packets",
             ]
-            capture_comment_parts += [
-                f"{path}={cnt}" for path, cnt in summary_info["by_path"].items()
-            ]
+            capture_comment_parts += [f"{path}={cnt}" for path, cnt in summary_info["by_path"].items()]
             capture_comment = "; ".join(capture_comment_parts)
 
             editcap_cmd: list[str] = [
@@ -615,9 +593,7 @@ def main(argv: list[str] | None = None) -> None:
             # Per-frame comments
             for item in sorted(hits, key=lambda x: int(x["frame"])):
                 if not args.legacy and item.get("num_records", 1) > 1:
-                    comment_text = (
-                        f"TLS23 Application Data ({item['num_records']} records)"
-                    )
+                    comment_text = f"TLS23 Application Data ({item['num_records']} records)"
                 else:
                     comment_text = "TLS23 Application Data"
                 editcap_cmd += ["-a", f"{item['frame']}:{comment_text}"]
@@ -625,28 +601,18 @@ def main(argv: list[str] | None = None) -> None:
             editcap_cmd += [str(args.pcap), str(annotated_path)]
 
             if args.verbose:
-                short_preview = " ".join(editcap_cmd[:15]) + (
-                    " ..." if len(editcap_cmd) > 15 else ""
-                )
-                sys.stdout.write(
-                    f"[tls23-marker] Calling editcap for annotation: {short_preview}\n"
-                )
+                short_preview = " ".join(editcap_cmd[:15]) + (" ..." if len(editcap_cmd) > 15 else "")
+                sys.stdout.write(f"[tls23-marker] Calling editcap for annotation: {short_preview}\n")
 
             try:
                 # Use hidden subprocess to prevent cmd window popup on Windows
                 from ..utils.subprocess_utils import run_hidden_subprocess
 
-                run_hidden_subprocess(
-                    editcap_cmd, check=True, encoding="utf-8", errors="replace"
-                )
+                run_hidden_subprocess(editcap_cmd, check=True, encoding="utf-8", errors="replace")
                 if args.verbose:
-                    sys.stdout.write(
-                        f"[tls23-marker] Generated annotated file: {annotated_path}\n"
-                    )
+                    sys.stdout.write(f"[tls23-marker] Generated annotated file: {annotated_path}\n")
             except subprocess.CalledProcessError as exc:
-                sys.stderr.write(
-                    f"[tls23-marker] Warning: editcap annotation failed: {exc}\n"
-                )
+                sys.stderr.write(f"[tls23-marker] Warning: editcap annotation failed: {exc}\n")
 
     # Success exit
     sys.exit(0)

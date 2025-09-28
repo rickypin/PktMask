@@ -52,14 +52,10 @@ class FallbackHandler:
             config: 配置字典
         """
         self.config = config
-        self.logger = logging.getLogger(
-            f"{self.__class__.__module__}.{self.__class__.__name__}"
-        )
+        self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
 
         # 配置参数
-        self.default_fallback_mode = FallbackMode(
-            config.get("default_fallback_mode", FallbackMode.COPY_ORIGINAL.value)
-        )
+        self.default_fallback_mode = FallbackMode(config.get("default_fallback_mode", FallbackMode.COPY_ORIGINAL.value))
         self.enable_fallback = config.get("enable_fallback", True)
         self.preserve_original = config.get("preserve_original", True)
         self.fallback_timeout = config.get("fallback_timeout", 300)  # 5分钟超时
@@ -123,9 +119,7 @@ class FallbackHandler:
             result.execution_time = time.time() - start_time
 
             if result.success:
-                self.logger.info(
-                    f"降级处理成功: {mode.value}, 耗时: {result.execution_time:.2f}秒"
-                )
+                self.logger.info(f"降级处理成功: {mode.value}, 耗时: {result.execution_time:.2f}秒")
             else:
                 self.logger.error(f"降级处理失败: {result.message}")
 
@@ -273,9 +267,7 @@ class FallbackHandler:
                 safe_marker = output_path.with_suffix(".safe_mode")
 
                 with open(safe_marker, "w") as f:
-                    f.write(
-                        f"Safe mode processing at {time.strftime('%Y-%m-%d %H:%M:%S')}\n"
-                    )
+                    f.write(f"Safe mode processing at {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
                     f.write("Original file preserved without modification\n")
                     f.write("Reason: Fallback to safe mode\n")
 
@@ -293,9 +285,7 @@ class FallbackHandler:
                 message=f"安全模式处理失败: {e}",
             )
 
-    def get_recommended_fallback_mode(
-        self, error_context: Dict[str, Any]
-    ) -> FallbackMode:
+    def get_recommended_fallback_mode(self, error_context: Dict[str, Any]) -> FallbackMode:
         """根据错误上下文推荐降级模式
 
         Args:

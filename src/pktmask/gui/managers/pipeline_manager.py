@@ -14,11 +14,7 @@ if TYPE_CHECKING:
 
 from pktmask.core.events import PipelineEvents
 from pktmask.infrastructure.logging import get_logger
-from pktmask.services import (
-    ConfigurationError,
-    build_pipeline_config,
-    create_pipeline_executor,
-)
+from pktmask.services import ConfigurationError, build_pipeline_config, create_pipeline_executor
 
 # Import GUI protection layer for safe rollout
 from ..core.feature_flags import GUIFeatureFlags
@@ -84,15 +80,11 @@ class PipelineManager:
                 self._logger.error(f"Failed to show warning dialog: {e}")
                 # Fallback: update log text
                 if hasattr(self.main_window, "update_log"):
-                    self.main_window.update_log(
-                        "⚠️ Please choose an input folder to process."
-                    )
+                    self.main_window.update_log("⚠️ Please choose an input folder to process.")
             return
 
         # Generate actual output directory path
-        self.main_window.current_output_dir = (
-            self.main_window.file_manager.generate_actual_output_path()
-        )
+        self.main_window.current_output_dir = self.main_window.file_manager.generate_actual_output_path()
 
         # Create output directory
         try:
@@ -104,9 +96,7 @@ class PipelineManager:
             )
 
             # Update output path display
-            self.main_window.output_path_label.setText(
-                os.path.basename(self.main_window.current_output_dir)
-            )
+            self.main_window.output_path_label.setText(os.path.basename(self.main_window.current_output_dir))
         except Exception as e:
             from PyQt6.QtWidgets import QMessageBox
 
@@ -197,9 +187,7 @@ class PipelineManager:
             thread.stop()
             # Wait for thread to safely end, maximum wait 3 seconds
             if not thread.wait(3000):
-                self.main_window.log_text.append(
-                    "Warning: Pipeline did not stop gracefully, forcing termination."
-                )
+                self.main_window.log_text.append("Warning: Pipeline did not stop gracefully, forcing termination.")
                 thread.terminate()
                 thread.wait()
 
@@ -311,17 +299,13 @@ class PipelineManager:
         # Start timing (unified use of StatisticsManager) (same as original)
         self.statistics.start_timing()
         self.main_window.time_elapsed = 0
-        self.main_window.start_time = (
-            self.statistics.start_time
-        )  # Maintain compatibility
+        self.main_window.start_time = self.statistics.start_time  # Maintain compatibility
         self.main_window.timer.start(100)  # Update every 100ms
 
         # Start thread (same as original)
         self.processing_thread.start()
 
-        self._logger.info(
-            f"Processing thread started, output directory: {self.main_window.current_output_dir}"
-        )
+        self._logger.info(f"Processing thread started, output directory: {self.main_window.current_output_dir}")
 
     def _start_with_legacy_implementation(self):
         """Start processing using legacy service layer (feature flag disabled)
@@ -387,17 +371,13 @@ class PipelineManager:
             elif event_type == PipelineEvents.SUBDIR_START:
                 data.get("name", "Unknown directory")
                 file_count = data.get("file_count", 0)
-                self.statistics.set_total_files(
-                    file_count
-                )  # Set actual total file count
+                self.statistics.set_total_files(file_count)  # Set actual total file count
 
             # Handle file completion events
             elif event_type in (PipelineEvents.FILE_END, PipelineEvents.FILE_COMPLETED):
                 self.statistics.increment_file_count()
                 # Update Live Dashboard display
-                self.main_window.files_processed_label.setText(
-                    str(self.statistics.files_processed)
-                )
+                self.main_window.files_processed_label.setText(str(self.statistics.files_processed))
                 self._update_progress()
 
             # Handle pipeline completion events
@@ -453,13 +433,7 @@ class PipelineManager:
     def _update_progress(self):
         """Update progress bar"""
         if self.statistics.total_files_to_process > 0:
-            progress = int(
-                (
-                    self.statistics.files_processed
-                    / self.statistics.total_files_to_process
-                )
-                * 100
-            )
+            progress = int((self.statistics.files_processed / self.statistics.total_files_to_process) * 100)
             # Ensure progress doesn't exceed 100%
             progress = min(progress, 100)
             self.main_window._animate_progress_to(progress)
@@ -495,18 +469,11 @@ class PipelineManager:
 
         # Update output path display
         if self.main_window.current_output_dir:
-            self.main_window.output_path_label.setText(
-                os.path.basename(self.main_window.current_output_dir)
-            )
-        self.main_window.update_log(
-            "Output directory ready. Click output path to view results."
-        )
+            self.main_window.output_path_label.setText(os.path.basename(self.main_window.current_output_dir))
+        self.main_window.update_log("Output directory ready. Click output path to view results.")
 
         # If configuration is enabled, automatically open output directory
-        if (
-            self.main_window.config.ui.auto_open_output
-            and self.main_window.current_output_dir
-        ):
+        if self.main_window.config.ui.auto_open_output and self.main_window.current_output_dir:
             try:
                 success = open_directory_in_system(self.main_window.current_output_dir)
                 if success:
@@ -545,9 +512,7 @@ class PipelineManager:
             # **Fix**: Again ensure Live Dashboard displays the correct final statistics
             # Prevent any subsequent operations from accidentally resetting the display
             self.main_window.files_processed_label.setText(str(final_files_processed))
-            self.main_window.packets_processed_label.setText(
-                str(final_packets_processed)
-            )
+            self.main_window.packets_processed_label.setText(str(final_packets_processed))
 
         # Delay 100ms to execute UI update
         QTimer.singleShot(100, update_ui_state)

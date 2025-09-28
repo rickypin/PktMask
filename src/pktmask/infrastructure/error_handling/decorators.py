@@ -10,12 +10,7 @@ import functools
 from typing import Any, Callable, List, Optional, Type, Union
 
 from ...infrastructure.logging import get_logger
-from .context import (
-    add_recent_action,
-    clear_operation,
-    set_current_component,
-    set_current_operation,
-)
+from .context import add_recent_action, clear_operation, set_current_component, set_current_operation
 from .handler import get_error_handler
 from .recovery import RecoveryAction
 
@@ -110,9 +105,7 @@ def handle_errors(
     return decorator
 
 
-def handle_gui_errors(
-    component: str, show_user_dialog: bool = True, fallback_return_value: Any = None
-):
+def handle_gui_errors(component: str, show_user_dialog: bool = True, fallback_return_value: Any = None):
     """
     GUI错误处理装饰器
 
@@ -134,9 +127,7 @@ def handle_gui_errors(
                 logger.error(f"GUI error in {component}.{func.__name__}: {e}")
 
                 # 处理GUI错误
-                error_handler.handle_gui_error(
-                    e, component=component, user_action=func.__name__
-                )
+                error_handler.handle_gui_error(e, component=component, user_action=func.__name__)
 
                 # GUI错误通常不重试，直接返回fallback值
                 if show_user_dialog:
@@ -182,16 +173,11 @@ def handle_processing_errors(
 
             while retry_count <= max_retries:
                 try:
-                    add_recent_action(
-                        f"Processing {step_name}"
-                        + (f" for {file_path}" if file_path else "")
-                    )
+                    add_recent_action(f"Processing {step_name}" + (f" for {file_path}" if file_path else ""))
                     result = func(*args, **kwargs)
 
                     if retry_count > 0:
-                        logger.info(
-                            f"Successfully completed {step_name} after {retry_count} retries"
-                        )
+                        logger.info(f"Successfully completed {step_name} after {retry_count} retries")
 
                     return result
 
@@ -201,18 +187,11 @@ def handle_processing_errors(
                     logger.warning(f"Error in {step_name} (attempt {retry_count}): {e}")
 
                     # 处理处理错误
-                    recovery_result = error_handler.handle_file_processing_error(
-                        e, file_path or "unknown"
-                    )
+                    recovery_result = error_handler.handle_file_processing_error(e, file_path or "unknown")
 
                     if recovery_result:
-                        if (
-                            recovery_result.action == RecoveryAction.RETRY
-                            and retry_count <= max_retries
-                        ):
-                            logger.info(
-                                f"Retrying {step_name} (attempt {retry_count + 1})"
-                            )
+                        if recovery_result.action == RecoveryAction.RETRY and retry_count <= max_retries:
+                            logger.info(f"Retrying {step_name} (attempt {retry_count + 1})")
                             continue
                         elif recovery_result.action == RecoveryAction.SKIP_ITEM:
                             logger.warning(f"Skipping file due to error in {step_name}")
@@ -221,14 +200,10 @@ def handle_processing_errors(
                     # 如果达到最大重试次数或不可恢复
                     if retry_count > max_retries:
                         if skip_on_error:
-                            logger.error(
-                                f"Skipping file after {max_retries} failed attempts in {step_name}"
-                            )
+                            logger.error(f"Skipping file after {max_retries} failed attempts in {step_name}")
                             return None
                         else:
-                            logger.error(
-                                f"Failed {step_name} after {max_retries} attempts, re-raising"
-                            )
+                            logger.error(f"Failed {step_name} after {max_retries} attempts, re-raising")
                             raise
 
         return wrapper
@@ -265,9 +240,7 @@ def handle_config_errors(
                 error_handler.handle_config_error(e, config_key)
 
                 if use_defaults:
-                    logger.warning(
-                        f"Using default value for configuration in {func.__name__}"
-                    )
+                    logger.warning(f"Using default value for configuration in {func.__name__}")
                     return default_value
                 else:
                     raise
@@ -346,9 +319,7 @@ def retry_on_failure(
 
                 except tuple(exceptions) as e:
                     if attempt == max_attempts:
-                        logger.error(
-                            f"Function {func.__name__} failed after {max_attempts} attempts"
-                        )
+                        logger.error(f"Function {func.__name__} failed after {max_attempts} attempts")
                         raise
 
                     logger.warning(
@@ -388,16 +359,10 @@ def validate_arguments(**validators):
                     value = bound_args.arguments[param_name]
                     try:
                         if not validator(value):
-                            raise ValueError(
-                                f"Validation failed for parameter '{param_name}' with value: {value}"
-                            )
+                            raise ValueError(f"Validation failed for parameter '{param_name}' with value: {value}")
                     except Exception as e:
-                        logger.error(
-                            f"Parameter validation error in {func.__name__}: {e}"
-                        )
-                        raise ValueError(
-                            f"Invalid value for parameter '{param_name}': {e}"
-                        )
+                        logger.error(f"Parameter validation error in {func.__name__}: {e}")
+                        raise ValueError(f"Invalid value for parameter '{param_name}': {e}")
 
             return func(*args, **kwargs)
 
@@ -409,9 +374,7 @@ def validate_arguments(**validators):
 class ErrorHandlingContext:
     """错误处理上下文管理器"""
 
-    def __init__(
-        self, operation: str, component: Optional[str] = None, auto_recover: bool = True
-    ):
+    def __init__(self, operation: str, component: Optional[str] = None, auto_recover: bool = True):
         self.operation = operation
         self.component = component
         self.auto_recover = auto_recover

@@ -119,17 +119,13 @@ class MaskingStage(StageBase):
 
         try:
             # Use dual-module processing mode (enhanced mode)
-            return self._process_with_dual_module_mode(
-                input_path, output_path, start_time
-            )
+            return self._process_with_dual_module_mode(input_path, output_path, start_time)
 
         except Exception as e:
             self.logger.error(f"File processing failed: {e}")
             raise
 
-    def _process_with_dual_module_mode(
-        self, input_path: Path, output_path: Path, start_time: float
-    ) -> StageStats:
+    def _process_with_dual_module_mode(self, input_path: Path, output_path: Path, start_time: float) -> StageStats:
         """Process file using dual-module architecture"""
         self.logger.debug("Using dual-module architecture processing mode")
 
@@ -143,9 +139,7 @@ class MaskingStage(StageBase):
 
             # Phase 2: Call Masker module to apply rules
             self.logger.debug("Phase 2: Apply masking rules")
-            masking_stats = self.masker.apply_masking(
-                str(working_input_path), str(output_path), keep_rules
-            )
+            masking_stats = self.masker.apply_masking(str(working_input_path), str(output_path), keep_rules)
 
             # Phase 3: Convert statistics information
             stage_stats = self._convert_to_stage_stats(masking_stats)
@@ -180,9 +174,7 @@ class MaskingStage(StageBase):
 
             # Small file: Use directly, performance impact negligible
             if file_size_mb < 50:
-                self.logger.debug(
-                    f"Small file ({file_size_mb:.1f}MB), using direct access"
-                )
+                self.logger.debug(f"Small file ({file_size_mb:.1f}MB), using direct access")
                 return input_path
 
             # Medium file: Log hint but no optimization
@@ -233,27 +225,19 @@ class MaskingStage(StageBase):
                 try:
                     temp_dir.rmdir()
                 except OSError as cleanup_error:
-                    self.logger.debug(
-                        f"Failed to cleanup temp directory after hardlink failure: {cleanup_error}"
-                    )
+                    self.logger.debug(f"Failed to cleanup temp directory after hardlink failure: {cleanup_error}")
                 return input_path
 
             # Register temp file using unified temp file management
             self.register_temp_file(temp_file)
             # Also register a cleanup callback for the directory
-            self.resource_manager.register_cleanup_callback(
-                lambda: self._cleanup_temp_directory(temp_dir)
-            )
+            self.resource_manager.register_cleanup_callback(lambda: self._cleanup_temp_directory(temp_dir))
 
-            self.logger.info(
-                f"Created temporary hardlink for large file ({file_size_mb:.1f}MB): {temp_file}"
-            )
+            self.logger.info(f"Created temporary hardlink for large file ({file_size_mb:.1f}MB): {temp_file}")
             return temp_file
 
         except Exception as e:
-            self.logger.warning(
-                f"Failed to create hardlink for optimization: {e}, using direct access"
-            )
+            self.logger.warning(f"Failed to create hardlink for optimization: {e}, using direct access")
             return input_path
 
     def _cleanup_temp_directory(self, temp_dir: Path) -> None:
@@ -262,11 +246,7 @@ class MaskingStage(StageBase):
         Args:
             temp_dir: Temporary directory to clean up
         """
-        if (
-            temp_dir
-            and temp_dir.exists()
-            and temp_dir.name.startswith("pktmask_stage_")
-        ):
+        if temp_dir and temp_dir.exists() and temp_dir.name.startswith("pktmask_stage_"):
             try:
                 # Try to remove directory (will only succeed if empty)
                 temp_dir.rmdir()
@@ -294,9 +274,7 @@ class MaskingStage(StageBase):
                         working_path.unlink()
                         self.logger.debug(f"Cleaned up temporary file: {working_path}")
                     except OSError as e:
-                        self.logger.warning(
-                            f"Failed to delete temporary file {working_path}: {e}"
-                        )
+                        self.logger.warning(f"Failed to delete temporary file {working_path}: {e}")
                         # Continue with directory cleanup even if file deletion fails
 
                     # 删除临时目录（如果为空）
@@ -304,19 +282,14 @@ class MaskingStage(StageBase):
                     if temp_dir.name.startswith("pktmask_stage_"):
                         try:
                             temp_dir.rmdir()  # 只删除空目录
-                            self.logger.debug(
-                                f"Cleaned up temporary directory: {temp_dir}"
-                            )
+                            self.logger.debug(f"Cleaned up temporary directory: {temp_dir}")
                         except OSError as e:
                             # Directory not empty or other error, log but don't raise exception
                             self.logger.debug(
-                                f"Could not remove temporary directory {temp_dir}: {e} "
-                                f"(directory may not be empty)"
+                                f"Could not remove temporary directory {temp_dir}: {e} " f"(directory may not be empty)"
                             )
                 else:
-                    self.logger.debug(
-                        f"Temporary file already cleaned up: {working_path}"
-                    )
+                    self.logger.debug(f"Temporary file already cleaned up: {working_path}")
 
     def _create_marker(self):
         """Create Marker module instance supporting tls|http|auto"""

@@ -233,11 +233,7 @@ class UIStrings(Enum):
     MSG_ERROR = "Error"
 
     # Tooltip information (using standard GUI naming)
-    TOOLTIP_REMOVE_DUPES = (
-        "Remove duplicate packets based on content hash to reduce file size."
-    )
+    TOOLTIP_REMOVE_DUPES = "Remove duplicate packets based on content hash to reduce file size."
     TOOLTIP_ANONYMIZE_IPS = "Replace IP addresses with anonymized versions while preserving network structure."
-    TOOLTIP_MASK_PAYLOADS = (
-        "Intelligently trims packet payloads while preserving TLS handshake data."
-    )
+    TOOLTIP_MASK_PAYLOADS = "Intelligently trims packet payloads while preserving TLS handshake data."
     TOOLTIP_WEB_FOCUSED = "HTTP protocol processing feature has been removed from this version. Only supports TLS, IP anonymization and deduplication features."

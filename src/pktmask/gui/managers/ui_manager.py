@@ -49,9 +49,7 @@ class UIManager:
         self.main_window.setGeometry(100, 100, window_width, window_height)
 
         # 设置最小尺寸
-        self.main_window.setMinimumSize(
-            self.config.ui.window_min_width, self.config.ui.window_min_height
-        )
+        self.main_window.setMinimumSize(self.config.ui.window_min_width, self.config.ui.window_min_height)
 
         self.main_window.setWindowIcon(QIcon(resource_path("icon.png")))
 
@@ -124,9 +122,7 @@ class UIManager:
         input_label.setMaximumHeight(UIConstants.INPUT_LABEL_HEIGHT)
         input_path_layout = QHBoxLayout()
         input_path_layout.setSpacing(8)
-        self.main_window.dir_path_label = QPushButton(
-            "Click and pick your pcap directory"
-        )
+        self.main_window.dir_path_label = QPushButton("Click and pick your pcap directory")
         self.main_window.dir_path_label.setObjectName("DirPathLabel")
         self.main_window.dir_path_label.setMaximumHeight(UIConstants.BUTTON_MAX_HEIGHT)
         self.main_window.dir_path_label.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -141,9 +137,7 @@ class UIManager:
         output_label.setMaximumHeight(20)
         output_path_layout = QHBoxLayout()
         output_path_layout.setSpacing(8)
-        self.main_window.output_path_label = QPushButton(
-            "Auto-create or click for custom"
-        )
+        self.main_window.output_path_label = QPushButton("Auto-create or click for custom")
         self.main_window.output_path_label.setObjectName("DirPathLabel")
         self.main_window.output_path_label.setMaximumHeight(30)
         self.main_window.output_path_label.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -175,9 +169,7 @@ class UIManager:
 
         self.main_window.remove_dupes_cb = QCheckBox("Remove Dupes")
         self.main_window.anonymize_ips_cb = QCheckBox("Anonymize IPs")
-        self.main_window.mask_payloads_cb = QCheckBox(
-            "Mask Payloads ( Keep TLS Handshakes )"
-        )
+        self.main_window.mask_payloads_cb = QCheckBox("Mask Payloads ( Keep TLS Handshakes )")
 
         self.main_window.mask_payloads_cb.setToolTip(
             "Intelligently masks packet payloads while preserving TLS handshake data."
@@ -193,12 +185,8 @@ class UIManager:
 
         # 使用配置中的默认状态
         self.main_window.remove_dupes_cb.setChecked(self.config.ui.default_remove_dupes)
-        self.main_window.anonymize_ips_cb.setChecked(
-            self.config.ui.default_anonymize_ips
-        )
-        self.main_window.mask_payloads_cb.setChecked(
-            self.config.ui.default_mask_payloads
-        )
+        self.main_window.anonymize_ips_cb.setChecked(self.config.ui.default_anonymize_ips)
+        self.main_window.mask_payloads_cb.setChecked(self.config.ui.default_mask_payloads)
 
         pipeline_layout.addWidget(self.main_window.remove_dupes_cb)
         pipeline_layout.addWidget(self.main_window.anonymize_ips_cb)
@@ -238,9 +226,7 @@ class UIManager:
         self.main_window.progress_bar.setFixedHeight(18)
 
         # 初始化进度条动画
-        self.main_window.progress_animation = QPropertyAnimation(
-            self.main_window.progress_bar, b"value"
-        )
+        self.main_window.progress_animation = QPropertyAnimation(self.main_window.progress_bar, b"value")
         self.main_window.progress_animation.setDuration(300)
         self.main_window.progress_animation.setEasingCurve(QEasingCurve.Type.OutCubic)
 
@@ -256,21 +242,11 @@ class UIManager:
         self.main_window.time_elapsed_label = QLabel("00:00.00")
         self.main_window.time_elapsed_label.setObjectName("DupesRemovedLabel")
 
-        kpi_layout.addWidget(
-            self.main_window.files_processed_label, 0, 0, Qt.AlignmentFlag.AlignCenter
-        )
-        kpi_layout.addWidget(
-            QLabel("Files Processed"), 1, 0, Qt.AlignmentFlag.AlignCenter
-        )
-        kpi_layout.addWidget(
-            self.main_window.packets_processed_label, 0, 1, Qt.AlignmentFlag.AlignCenter
-        )
-        kpi_layout.addWidget(
-            QLabel("Packets Processed"), 1, 1, Qt.AlignmentFlag.AlignCenter
-        )
-        kpi_layout.addWidget(
-            self.main_window.time_elapsed_label, 0, 2, Qt.AlignmentFlag.AlignCenter
-        )
+        kpi_layout.addWidget(self.main_window.files_processed_label, 0, 0, Qt.AlignmentFlag.AlignCenter)
+        kpi_layout.addWidget(QLabel("Files Processed"), 1, 0, Qt.AlignmentFlag.AlignCenter)
+        kpi_layout.addWidget(self.main_window.packets_processed_label, 0, 1, Qt.AlignmentFlag.AlignCenter)
+        kpi_layout.addWidget(QLabel("Packets Processed"), 1, 1, Qt.AlignmentFlag.AlignCenter)
+        kpi_layout.addWidget(self.main_window.time_elapsed_label, 0, 2, Qt.AlignmentFlag.AlignCenter)
         kpi_layout.addWidget(QLabel("Time Elapsed"), 1, 2, Qt.AlignmentFlag.AlignCenter)
 
         dashboard_layout.addLayout(kpi_layout)
@@ -333,12 +309,8 @@ class UIManager:
         """Connect UI component signals to their handlers"""
         try:
             # Directory selection signals
-            self.main_window.dir_path_label.clicked.connect(
-                self.main_window.file_manager.choose_folder
-            )
-            self.main_window.output_path_label.clicked.connect(
-                self.main_window.file_manager.handle_output_click
-            )
+            self.main_window.dir_path_label.clicked.connect(self.main_window.file_manager.choose_folder)
+            self.main_window.output_path_label.clicked.connect(self.main_window.file_manager.handle_output_click)
 
             # Processing button signals
             self.main_window.start_proc_btn.clicked.connect(
@@ -353,15 +325,9 @@ class UIManager:
             traceback.print_exc()
 
         # checkbox state change signals - correctly call UIManager methods
-        self.main_window.anonymize_ips_cb.stateChanged.connect(
-            self._update_start_button_state
-        )
-        self.main_window.remove_dupes_cb.stateChanged.connect(
-            self._update_start_button_state
-        )
-        self.main_window.mask_payloads_cb.stateChanged.connect(
-            self._update_start_button_state
-        )
+        self.main_window.anonymize_ips_cb.stateChanged.connect(self._update_start_button_state)
+        self.main_window.remove_dupes_cb.stateChanged.connect(self._update_start_button_state)
+        self.main_window.mask_payloads_cb.stateChanged.connect(self._update_start_button_state)
 
     def _apply_initial_styles(self):
         """Apply initial styles"""
@@ -430,9 +396,7 @@ class UIManager:
                 summary_md_content = f.read()
 
             # Convert markdown content to display-friendly format, maintaining existing styles
-            formatted_content = "\n" + self._format_summary_md_content(
-                summary_md_content
-            )
+            formatted_content = "\n" + self._format_summary_md_content(summary_md_content)
 
         except Exception:
             # If reading fails, use fallback content
@@ -661,9 +625,7 @@ class UIManager:
         )
 
         # 检查是否正在处理中 - Store thread reference to avoid race condition
-        processing_thread = getattr(
-            self.main_window.pipeline_manager, "processing_thread", None
-        )
+        processing_thread = getattr(self.main_window.pipeline_manager, "processing_thread", None)
         is_processing = processing_thread is not None and processing_thread.isRunning()
 
         # 只有当有输入目录且至少选择一个操作时才启用按钮，或者正在处理中时保持启用

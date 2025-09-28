@@ -75,9 +75,7 @@ class DependencyChecker:
         self.logger = get_logger(__name__)
         self._cache = {}  # 简单的结果缓存
 
-    def check_all_dependencies(
-        self, use_cache: bool = True
-    ) -> Dict[str, DependencyResult]:
+    def check_all_dependencies(self, use_cache: bool = True) -> Dict[str, DependencyResult]:
         """检查所有依赖
 
         Args:
@@ -194,9 +192,7 @@ class DependencyChecker:
                 error_message=f"Unexpected error during TShark check: {e}",
             )
 
-    def _find_tshark_executable(
-        self, custom_path: Optional[str] = None
-    ) -> Optional[str]:
+    def _find_tshark_executable(self, custom_path: Optional[str] = None) -> Optional[str]:
         """查找tshark可执行文件 (复用自scripts/check_tshark_dependencies.py)"""
         # 1. 检查自定义路径
         if custom_path:
@@ -238,9 +234,7 @@ class DependencyChecker:
             )
 
             if proc.returncode != 0:
-                result["error"] = (
-                    f"tshark -v returned non-zero exit code: {proc.returncode}"
-                )
+                result["error"] = f"tshark -v returned non-zero exit code: {proc.returncode}"
                 return result
 
             output = proc.stdout + proc.stderr
@@ -291,9 +285,7 @@ class DependencyChecker:
             )
 
             if proc.returncode != 0:
-                result["error"] = (
-                    f"tshark -G protocols returned non-zero exit code: {proc.returncode}"
-                )
+                result["error"] = f"tshark -G protocols returned non-zero exit code: {proc.returncode}"
                 return result
 
             protocols = proc.stdout.lower()
@@ -353,7 +345,9 @@ class DependencyChecker:
         if result.status == DependencyStatus.MISSING:
             return f"{result.name.upper()} not found in system PATH"
         elif result.status == DependencyStatus.VERSION_MISMATCH:
-            return f"{result.name.upper()} version too old: {result.version_found}, required: ≥{result.version_required}"
+            return (
+                f"{result.name.upper()} version too old: {result.version_found}, required: ≥{result.version_required}"
+            )
         elif result.status == DependencyStatus.PERMISSION_ERROR:
             return f"{result.name.upper()} permission denied: {result.error_message}"
         elif result.status == DependencyStatus.EXECUTION_ERROR:

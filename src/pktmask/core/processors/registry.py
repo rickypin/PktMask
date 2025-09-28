@@ -58,9 +58,7 @@ class ProcessorRegistry:
             raise RuntimeError(f"Failed to load required processors: {e}")
 
     @classmethod
-    def get_processor(
-        cls, name: str, config: Optional[Dict[str, Any]] = None
-    ) -> StageBase:
+    def get_processor(cls, name: str, config: Optional[Dict[str, Any]] = None) -> StageBase:
         """获取处理器实例
 
         Args:
@@ -74,9 +72,7 @@ class ProcessorRegistry:
 
         if name not in cls._processors:
             available = list(cls._processors.keys())
-            raise ValueError(
-                f"Unknown processor: {name}. Available processors: {available}"
-            )
+            raise ValueError(f"Unknown processor: {name}. Available processors: {available}")
 
         processor_class = cls._processors[name]
 
@@ -111,9 +107,7 @@ class ProcessorRegistry:
             default_config: 默认配置字典
         """
         if not issubclass(processor_class, StageBase):
-            raise TypeError(
-                f"Processor class must inherit from StageBase: {processor_class}"
-            )
+            raise TypeError(f"Processor class must inherit from StageBase: {processor_class}")
 
         cls._processors[name] = processor_class
         if default_config:

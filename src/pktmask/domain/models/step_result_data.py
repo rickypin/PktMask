@@ -67,9 +67,7 @@ class IPAnonymizationResult(BaseStepResult):
     original_ips_count: int = Field(default=0, ge=0, description="原始IP数量")
     anonymized_ips_count: int = Field(default=0, ge=0, description="匿名化IP数量")
     ip_mappings: Dict[str, str] = Field(default_factory=dict, description="IP映射表")
-    file_ip_mappings: Dict[str, str] = Field(
-        default_factory=dict, description="文件级IP映射"
-    )
+    file_ip_mappings: Dict[str, str] = Field(default_factory=dict, description="文件级IP映射")
     packets_modified: int = Field(default=0, ge=0, description="修改的包数量")
 
     def __init__(self, **data):
@@ -88,9 +86,7 @@ class DeduplicationResult(BaseStepResult):
     original_packets: int = Field(default=0, ge=0, description="原始包数量")
     unique_packets: int = Field(default=0, ge=0, description="去重后包数量")
     duplicates_removed: int = Field(default=0, ge=0, description="移除的重复包数量")
-    deduplication_ratio: float = Field(
-        default=0.0, ge=0.0, le=100.0, description="去重比例"
-    )
+    deduplication_ratio: float = Field(default=0.0, ge=0.0, le=100.0, description="去重比例")
 
     def __init__(self, **data):
         super().__init__(step_type="dedup_packet", **data)
@@ -141,9 +137,7 @@ class MaskingResult(BaseStepResult):
 class CustomStepResult(BaseStepResult):
     """自定义步骤结果"""
 
-    custom_metrics: Dict[str, Any] = Field(
-        default_factory=dict, description="自定义指标"
-    )
+    custom_metrics: Dict[str, Any] = Field(default_factory=dict, description="自定义指标")
 
     def add_metric(self, key: str, value: Any):
         """添加自定义指标"""
@@ -182,12 +176,8 @@ class FileStepResults(BaseModel):
     file_path: str = Field(..., description="文件路径")
     start_time: Optional[datetime] = Field(default=None, description="文件处理开始时间")
     end_time: Optional[datetime] = Field(default=None, description="文件处理结束时间")
-    steps: Dict[str, BaseStepResult] = Field(
-        default_factory=dict, description="步骤结果"
-    )
-    overall_status: StepStatus = Field(
-        default=StepStatus.PENDING, description="整体状态"
-    )
+    steps: Dict[str, BaseStepResult] = Field(default_factory=dict, description="步骤结果")
+    overall_status: StepStatus = Field(default=StepStatus.PENDING, description="整体状态")
     total_duration_ms: int = Field(default=0, ge=0, description="总耗时(毫秒)")
 
     def add_step_result(self, step_result: BaseStepResult):
@@ -213,9 +203,7 @@ class FileStepResults(BaseModel):
             self.overall_status = StepStatus.RUNNING
         elif all(status == StepStatus.COMPLETED for status in statuses):
             self.overall_status = StepStatus.COMPLETED
-        elif all(
-            status in [StepStatus.COMPLETED, StepStatus.SKIPPED] for status in statuses
-        ):
+        elif all(status in [StepStatus.COMPLETED, StepStatus.SKIPPED] for status in statuses):
             self.overall_status = StepStatus.COMPLETED
         else:
             self.overall_status = StepStatus.PENDING
@@ -225,9 +213,7 @@ class FileStepResults(BaseModel):
         if not self.steps:
             return 0.0
 
-        successful_steps = sum(
-            1 for step in self.steps.values() if step.is_successful()
-        )
+        successful_steps = sum(1 for step in self.steps.values() if step.is_successful())
         return (successful_steps / len(self.steps)) * 100.0
 
     def get_total_packets_processed(self) -> int:
@@ -242,12 +228,8 @@ class FileStepResults(BaseModel):
 class StepResultData(BaseModel):
     """步骤结果数据的根模型"""
 
-    file_results: Dict[str, FileStepResults] = Field(
-        default_factory=dict, description="文件结果"
-    )
-    global_statistics: Dict[str, Any] = Field(
-        default_factory=dict, description="全局统计"
-    )
+    file_results: Dict[str, FileStepResults] = Field(default_factory=dict, description="文件结果")
+    global_statistics: Dict[str, Any] = Field(default_factory=dict, description="全局统计")
 
     def add_file_result(self, file_result: FileStepResults):
         """添加文件结果"""
@@ -261,34 +243,23 @@ class StepResultData(BaseModel):
         """获取整体统计数据"""
         total_files = len(self.file_results)
         completed_files = sum(
-            1
-            for result in self.file_results.values()
-            if result.overall_status == StepStatus.COMPLETED
+            1 for result in self.file_results.values() if result.overall_status == StepStatus.COMPLETED
         )
-        failed_files = sum(
-            1
-            for result in self.file_results.values()
-            if result.overall_status == StepStatus.FAILED
-        )
+        failed_files = sum(1 for result in self.file_results.values() if result.overall_status == StepStatus.FAILED)
 
-        total_packets = sum(
-            result.get_total_packets_processed()
-            for result in self.file_results.values()
-        )
+        total_packets = sum(result.get_total_packets_processed() for result in self.file_results.values())
 
         avg_success_rate = 0.0
         if self.file_results:
-            avg_success_rate = sum(
-                result.get_success_rate() for result in self.file_results.values()
-            ) / len(self.file_results)
+            avg_success_rate = sum(result.get_success_rate() for result in self.file_results.values()) / len(
+                self.file_results
+            )
 
         return {
             "total_files": total_files,
             "completed_files": completed_files,
             "failed_files": failed_files,
-            "success_rate": (
-                (completed_files / total_files * 100.0) if total_files > 0 else 0.0
-            ),
+            "success_rate": ((completed_files / total_files * 100.0) if total_files > 0 else 0.0),
             "total_packets_processed": total_packets,
             "average_step_success_rate": avg_success_rate,
         }

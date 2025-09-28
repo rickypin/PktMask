@@ -84,9 +84,7 @@ class EncapsulationDetector:
             for encap_type, detector in self._detection_patterns.items():
                 if detector(packet):
                     detected_types.add(encap_type)
-                    self.logger.debug(
-                        f"Detected encapsulation type: {encap_type.value}"
-                    )
+                    self.logger.debug(f"Detected encapsulation type: {encap_type.value}")
 
             # 确定最终封装类型
             final_type = self._resolve_encapsulation_type(detected_types)
@@ -94,9 +92,7 @@ class EncapsulationDetector:
             # 缓存结果
             self._cache_result(cache_key, final_type)
 
-            self.logger.info(
-                f"Packet encapsulation type detection completed: {final_type.value}"
-            )
+            self.logger.info(f"Packet encapsulation type detection completed: {final_type.value}")
             return final_type
 
         except Exception as e:
@@ -177,9 +173,7 @@ class EncapsulationDetector:
             # 方法2: 检测连续的两个Dot1Q层
             if packet.haslayer(Dot1Q):
                 dot1q_layer = packet[Dot1Q]
-                if hasattr(dot1q_layer, "payload") and dot1q_layer.payload.haslayer(
-                    Dot1Q
-                ):
+                if hasattr(dot1q_layer, "payload") and dot1q_layer.payload.haslayer(Dot1Q):
                     return True
 
             # 方法3: 检测EtherType模式 (0x88a8 + 0x8100)
@@ -235,9 +229,7 @@ class EncapsulationDetector:
 
     # === 辅助方法 ===
 
-    def _resolve_encapsulation_type(
-        self, detected_types: Set[EncapsulationType]
-    ) -> EncapsulationType:
+    def _resolve_encapsulation_type(self, detected_types: Set[EncapsulationType]) -> EncapsulationType:
         """
         解析最终的封装类型
 
@@ -310,9 +302,7 @@ class EncapsulationDetector:
         # 如果缓存已满，清除旧条目
         if len(self._detection_cache) >= self._cache_max_size:
             # 清除一半的缓存
-            keys_to_remove = list(self._detection_cache.keys())[
-                : self._cache_max_size // 2
-            ]
+            keys_to_remove = list(self._detection_cache.keys())[: self._cache_max_size // 2]
             for key in keys_to_remove:
                 del self._detection_cache[key]
 

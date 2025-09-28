@@ -174,9 +174,7 @@ class ErrorHandlerRegistry:
 
     def list_handlers(self) -> List[Dict[str, Any]]:
         """列出所有注册的错误处理器"""
-        return [
-            self.get_handler_info(handler_id) for handler_id in self.handlers.keys()
-        ]
+        return [self.get_handler_info(handler_id) for handler_id in self.handlers.keys()]
 
     def clear_all(self) -> None:
         """清除所有注册的处理器"""
@@ -205,12 +203,8 @@ class ErrorHandlerRegistry:
 
         priority_distribution = {}
         for config in self.handlers.values():
-            priority_range = (
-                f"{config.priority // 10 * 10}-{config.priority // 10 * 10 + 9}"
-            )
-            priority_distribution[priority_range] = (
-                priority_distribution.get(priority_range, 0) + 1
-            )
+            priority_range = f"{config.priority // 10 * 10}-{config.priority // 10 * 10 + 9}"
+            priority_distribution[priority_range] = priority_distribution.get(priority_range, 0) + 1
 
         return {
             "total_handlers": total_handlers,
@@ -239,9 +233,7 @@ def register_error_handler(
     config: Optional[Dict[str, Any]] = None,
 ) -> None:
     """注册错误处理器"""
-    _error_handler_registry.register_handler(
-        handler_id, handler_class, priority, enabled, config
-    )
+    _error_handler_registry.register_handler(handler_id, handler_class, priority, enabled, config)
 
 
 def get_error_handler_by_id(handler_id: str) -> Optional[Any]:

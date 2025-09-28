@@ -14,9 +14,7 @@ class AnonymizationStrategy(ABC):
     """Abstract base class for IP anonymization strategies."""
 
     @abstractmethod
-    def create_mapping(
-        self, files_to_process: List[str], subdir_path: str, error_log: List
-    ) -> Dict[str, str]:
+    def create_mapping(self, files_to_process: List[str], subdir_path: str, error_log: List) -> Dict[str, str]:
         """
         Create mapping from original IPs to anonymous IPs based on a set of files.
 
@@ -53,9 +51,7 @@ def ip_sort_key(ip_str: str) -> tuple:
     try:
         if "." in ip_str:
             parts = ip_str.split(".")
-            return (ProcessingConstants.IPV4_SORT_WEIGHT,) + tuple(
-                int(x) for x in parts
-            )
+            return (ProcessingConstants.IPV4_SORT_WEIGHT,) + tuple(int(x) for x in parts)
         else:
             try:
                 ip_obj = ipaddress.IPv6Address(ip_str)
@@ -63,9 +59,7 @@ def ip_sort_key(ip_str: str) -> tuple:
             except Exception:
                 pass
             parts = ip_str.split(":")
-            return (ProcessingConstants.IPV6_SORT_WEIGHT,) + tuple(
-                int(x, ProcessingConstants.HEX_BASE) for x in parts
-            )
+            return (ProcessingConstants.IPV6_SORT_WEIGHT,) + tuple(int(x, ProcessingConstants.HEX_BASE) for x in parts)
     except Exception:
         return (ProcessingConstants.UNKNOWN_IP_SORT_WEIGHT,)
 
@@ -164,9 +158,7 @@ def _generate_unique_segment(
         return original_seg
 
 
-def _generate_new_ipv4_address_hierarchical(
-    original_ip: str, freq1, freq2, freq3, maps, used_segments
-) -> str:
+def _generate_new_ipv4_address_hierarchical(original_ip: str, freq1, freq2, freq3, maps, used_segments) -> str:
     """
     Frequency-based hierarchical IPv4 address generation, ensuring consistency for high-frequency subnets
     """
@@ -183,9 +175,7 @@ def _generate_new_ipv4_address_hierarchical(
     # A segment processing - maintain consistent mapping for high-frequency A segments
     if freq1.get(A, 0) >= 2:
         if A not in ipv4_first_map:
-            ipv4_first_map[A] = _generate_unique_segment(
-                A, f"first_{A}", used_a, 1, 255
-            )
+            ipv4_first_map[A] = _generate_unique_segment(A, f"first_{A}", used_a, 1, 255)
         newA = ipv4_first_map[A]
     else:
         newA = _generate_unique_segment(A, f"first_single_{A}", used_a, 1, 255)
@@ -197,9 +187,7 @@ def _generate_new_ipv4_address_hierarchical(
         # High-frequency A.B segment: must maintain consistent mapping
         if key2 not in ipv4_second_map:
             # Assign a new B segment value for this high-frequency A.B segment
-            ipv4_second_map[key2] = _generate_unique_segment(
-                B, f"second_freq_{key2}", used_ab, 0, 255
-            )
+            ipv4_second_map[key2] = _generate_unique_segment(B, f"second_freq_{key2}", used_ab, 0, 255)
         newB = ipv4_second_map[key2]
 
         # Build new A.B segment combination and record
@@ -208,9 +196,7 @@ def _generate_new_ipv4_address_hierarchical(
     else:
         # Low-frequency A.B segment: generate unique mapping for each independent A.B segment
         if key2 not in ipv4_second_map:
-            ipv4_second_map[key2] = _generate_unique_segment(
-                B, f"second_single_{key2}", used_ab, 0, 255
-            )
+            ipv4_second_map[key2] = _generate_unique_segment(B, f"second_single_{key2}", used_ab, 0, 255)
         newB = ipv4_second_map[key2]
 
         # Build new A.B segment combination and record
@@ -223,9 +209,7 @@ def _generate_new_ipv4_address_hierarchical(
     if freq3.get(key3, 0) >= 2:
         # High-frequency A.B.C segment: must maintain consistent mapping
         if key3 not in ipv4_third_map:
-            ipv4_third_map[key3] = _generate_unique_segment(
-                C, f"third_freq_{key3}", used_abc, 0, 255
-            )
+            ipv4_third_map[key3] = _generate_unique_segment(C, f"third_freq_{key3}", used_abc, 0, 255)
         newC = ipv4_third_map[key3]
 
         # Build new A.B.C segment combination and record
@@ -234,9 +218,7 @@ def _generate_new_ipv4_address_hierarchical(
     else:
         # Low-frequency A.B.C segment: generate unique mapping for each independent A.B.C segment
         if key3 not in ipv4_third_map:
-            ipv4_third_map[key3] = _generate_unique_segment(
-                C, f"third_single_{key3}", used_abc, 0, 255
-            )
+            ipv4_third_map[key3] = _generate_unique_segment(C, f"third_single_{key3}", used_abc, 0, 255)
         newC = ipv4_third_map[key3]
 
         # Build new A.B.C segment combination and record
@@ -263,9 +245,7 @@ def _generate_new_ipv6_address_hierarchical(original_ip: str, freqs, maps) -> st
         key = ":".join(parts[: i + 1])
         if freqs[i].get(key, 0) >= 2:
             if key not in maps[i]:
-                maps[i][key] = _generate_unique_ipv6_segment(
-                    parts[i], f"ipv6_{i}_{key}"
-                )
+                maps[i][key] = _generate_unique_ipv6_segment(parts[i], f"ipv6_{i}_{key}")
             new_seg = maps[i][key]
         else:
             new_seg = _generate_unique_ipv6_segment(parts[i], f"ipv6_single_{i}_{key}")
@@ -380,9 +360,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
     def get_ip_map(self) -> Dict[str, str]:
         return self._ip_map
 
-    def _prescan_addresses(
-        self, files_to_process: List[str], subdir_path: str, error_log: List[str]
-    ) -> Tuple:
+    def _prescan_addresses(self, files_to_process: List[str], subdir_path: str, error_log: List[str]) -> Tuple:
         """
         Corrected version: Correctly count frequency of all IP addresses (source and destination)
         """
@@ -416,12 +394,8 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                 return
             # 统计各级频率
             freq_ipv4_1[parts[0]] = freq_ipv4_1.get(parts[0], 0) + 1
-            freq_ipv4_2[".".join(parts[:2])] = (
-                freq_ipv4_2.get(".".join(parts[:2]), 0) + 1
-            )
-            freq_ipv4_3[".".join(parts[:3])] = (
-                freq_ipv4_3.get(".".join(parts[:3]), 0) + 1
-            )
+            freq_ipv4_2[".".join(parts[:2])] = freq_ipv4_2.get(".".join(parts[:2]), 0) + 1
+            freq_ipv4_3[".".join(parts[:3])] = freq_ipv4_3.get(".".join(parts[:3]), 0) + 1
 
         def process_ipv6_address(ip_str: str):
             """处理单个IPv6地址的频率统计"""
@@ -435,24 +409,12 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                 return
             # 统计各级前缀频率
             freq_ipv6_1[parts[0]] = freq_ipv6_1.get(parts[0], 0) + 1
-            freq_ipv6_2[":".join(parts[:2])] = (
-                freq_ipv6_2.get(":".join(parts[:2]), 0) + 1
-            )
-            freq_ipv6_3[":".join(parts[:3])] = (
-                freq_ipv6_3.get(":".join(parts[:3]), 0) + 1
-            )
-            freq_ipv6_4[":".join(parts[:4])] = (
-                freq_ipv6_4.get(":".join(parts[:4]), 0) + 1
-            )
-            freq_ipv6_5[":".join(parts[:5])] = (
-                freq_ipv6_5.get(":".join(parts[:5]), 0) + 1
-            )
-            freq_ipv6_6[":".join(parts[:6])] = (
-                freq_ipv6_6.get(":".join(parts[:6]), 0) + 1
-            )
-            freq_ipv6_7[":".join(parts[:7])] = (
-                freq_ipv6_7.get(":".join(parts[:7]), 0) + 1
-            )
+            freq_ipv6_2[":".join(parts[:2])] = freq_ipv6_2.get(":".join(parts[:2]), 0) + 1
+            freq_ipv6_3[":".join(parts[:3])] = freq_ipv6_3.get(":".join(parts[:3]), 0) + 1
+            freq_ipv6_4[":".join(parts[:4])] = freq_ipv6_4.get(":".join(parts[:4]), 0) + 1
+            freq_ipv6_5[":".join(parts[:5])] = freq_ipv6_5.get(":".join(parts[:5]), 0) + 1
+            freq_ipv6_6[":".join(parts[:6])] = freq_ipv6_6.get(":".join(parts[:6]), 0) + 1
+            freq_ipv6_7[":".join(parts[:7])] = freq_ipv6_7.get(":".join(parts[:7]), 0) + 1
 
         # Direct IP processing without adapter layer
         for f in files_to_process:
@@ -501,9 +463,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         )
 
         logger = get_logger("anonymization.strategy")
-        logger.info(
-            f"Frequency statistics completed: unique IPs={len(unique_ips)}, duration={duration:.2f}s"
-        )
+        logger.info(f"Frequency statistics completed: unique IPs={len(unique_ips)}, duration={duration:.2f}s")
 
         # Direct IP processing statistics report
         logger.info(
@@ -513,32 +473,17 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
             f"multi-IP={self._ip_stats['multi_ip_packets']}"
         )
         if self._ip_stats["total_packets_scanned"] > 0:
-            ipv4_ratio = (
-                self._ip_stats["ipv4_packets"] / self._ip_stats["total_packets_scanned"]
-            )
-            ipv6_ratio = (
-                self._ip_stats["ipv6_packets"] / self._ip_stats["total_packets_scanned"]
-            )
-            multi_ip_ratio = (
-                self._ip_stats["multi_ip_packets"]
-                / self._ip_stats["total_packets_scanned"]
-            )
-            logger.info(
-                f"IP distribution: IPv4={ipv4_ratio:.1%}, IPv6={ipv6_ratio:.1%}, multi-IP={multi_ip_ratio:.1%}"
-            )
+            ipv4_ratio = self._ip_stats["ipv4_packets"] / self._ip_stats["total_packets_scanned"]
+            ipv6_ratio = self._ip_stats["ipv6_packets"] / self._ip_stats["total_packets_scanned"]
+            multi_ip_ratio = self._ip_stats["multi_ip_packets"] / self._ip_stats["total_packets_scanned"]
+            logger.info(f"IP distribution: IPv4={ipv4_ratio:.1%}, IPv6={ipv6_ratio:.1%}, multi-IP={multi_ip_ratio:.1%}")
 
         if freq_ipv4_1:
-            top_ipv4_a = dict(
-                sorted(freq_ipv4_1.items(), key=lambda x: x[1], reverse=True)[:5]
-            )
+            top_ipv4_a = dict(sorted(freq_ipv4_1.items(), key=lambda x: x[1], reverse=True)[:5])
             logger.debug(f"IPv4 A-segment frequency statistics (top 5): {top_ipv4_a}")
         if freq_ipv4_2:
-            top_ipv4_ab = dict(
-                sorted(freq_ipv4_2.items(), key=lambda x: x[1], reverse=True)[:5]
-            )
-            logger.debug(
-                f"IPv4 A.B-segment frequency statistics (top 5): {top_ipv4_ab}"
-            )
+            top_ipv4_ab = dict(sorted(freq_ipv4_2.items(), key=lambda x: x[1], reverse=True)[:5])
+            logger.debug(f"IPv4 A.B-segment frequency statistics (top 5): {top_ipv4_ab}")
 
         return (
             (freq_ipv4_1, freq_ipv4_2, freq_ipv4_3),
@@ -554,9 +499,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
             unique_ips,
         )
 
-    def create_mapping(
-        self, files_to_process: List[str], subdir_path: str, error_log: List[str]
-    ) -> Dict[str, str]:
+    def create_mapping(self, files_to_process: List[str], subdir_path: str, error_log: List[str]) -> Dict[str, str]:
         """
         Create IP mapping, ensuring no conflicts
         """
@@ -566,9 +509,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
 
         start_time = time.time()
 
-        freqs_ipv4, freqs_ipv6, all_ips = self._prescan_addresses(
-            files_to_process, subdir_path, error_log
-        )
+        freqs_ipv4, freqs_ipv6, all_ips = self._prescan_addresses(files_to_process, subdir_path, error_log)
 
         mapping = {}
         maps_ipv4 = ({}, {}, {})
@@ -582,9 +523,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         # Record mapping generation start information
         logger = get_logger("anonymization.strategy")
         ipv4_count = sum(1 for ip in sorted_ips if "." in ip)
-        logger.info(
-            f"Starting mapping generation - IPv4 addresses: {ipv4_count}, total IPs: {len(sorted_ips)}"
-        )
+        logger.info(f"Starting mapping generation - IPv4 addresses: {ipv4_count}, total IPs: {len(sorted_ips)}")
 
         for ip in sorted_ips:
             try:
@@ -599,9 +538,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                         used_segments,
                     )
                 else:
-                    mapping[ip] = _generate_new_ipv6_address_hierarchical(
-                        ip, freqs_ipv6, maps_ipv6
-                    )
+                    mapping[ip] = _generate_new_ipv6_address_hierarchical(ip, freqs_ipv6, maps_ipv6)
             except Exception as e:
                 error_log.append(f"Pre-calculate mapping error for IP {ip}: {str(e)}")
 
@@ -655,22 +592,16 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
             for error in consistency_errors[:5]:  # Only log first 5
                 logger.warning(f"Consistency error: {error}")
         else:
-            logger.info(
-                "All high-frequency network segment mapping consistency validation passed"
-            )
+            logger.info("All high-frequency network segment mapping consistency validation passed")
 
         # 验证高频段映射的正确性
         high_freq_ab_segments = {k: v for k, v in freqs_ipv4[1].items() if v >= 2}
         if high_freq_ab_segments:
             logger.debug("High-frequency A.B-segment consistency validation:")
-            for orig_ab, freq in sorted(
-                high_freq_ab_segments.items(), key=lambda x: x[1], reverse=True
-            )[:3]:
+            for orig_ab, freq in sorted(high_freq_ab_segments.items(), key=lambda x: x[1], reverse=True)[:3]:
                 if orig_ab in ab_mapping_check:
                     mapped_ab = ab_mapping_check[orig_ab]
-                    logger.debug(
-                        f"High-frequency segment mapping: {orig_ab} (frequency:{freq}) → {mapped_ab}"
-                    )
+                    logger.debug(f"High-frequency segment mapping: {orig_ab} (frequency:{freq}) → {mapped_ab}")
 
         if maps_ipv4[0]:
             sample_mappings = dict(list(maps_ipv4[0].items())[:3])
@@ -687,9 +618,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
             files_processed=len(files_to_process),
         )
 
-        logger.info(
-            f"IP mapping creation completed: {len(mapping)} mappings, duration={duration:.2f}s"
-        )
+        logger.info(f"IP mapping creation completed: {len(mapping)} mappings, duration={duration:.2f}s")
 
         self._ip_map = mapping
         return mapping
@@ -704,9 +633,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         error_log = []
 
         logger = get_logger("anonymization.strategy")
-        logger.info(
-            f"Starting directory-level mapping construction - file count: {len(filenames)}"
-        )
+        logger.info(f"Starting directory-level mapping construction - file count: {len(filenames)}")
         self.create_mapping(filenames, subdir_path, error_log)
 
     def anonymize_packet(self, pkt) -> Tuple[object, bool]:
@@ -741,10 +668,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
             while current_layer:
                 if hasattr(current_layer, "chksum"):
                     del current_layer.chksum
-                elif (
-                    hasattr(current_layer, "len")
-                    and current_layer.__class__.__name__ == "IPv6"
-                ):
+                elif hasattr(current_layer, "len") and current_layer.__class__.__name__ == "IPv6":
                     del current_layer.len
 
                 if hasattr(current_layer, "payload"):

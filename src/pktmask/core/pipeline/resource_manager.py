@@ -58,9 +58,7 @@ class MemoryMonitor:
     """Unified memory monitoring component"""
 
     def __init__(self, config: Dict[str, Any]):
-        self.logger = logging.getLogger(
-            f"{self.__class__.__module__}.{self.__class__.__name__}"
-        )
+        self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
 
         # Configuration
         self.max_memory_mb = config.get("max_memory_mb", 2048)
@@ -119,9 +117,7 @@ class MemoryMonitor:
         """Trigger garbage collection and return collected objects count"""
         collected = gc.collect()
         self.gc_count += 1
-        self.logger.debug(
-            f"Garbage collection completed: {collected} objects collected"
-        )
+        self.logger.debug(f"Garbage collection completed: {collected} objects collected")
         return collected
 
 
@@ -129,9 +125,7 @@ class BufferManager:
     """Unified buffer management component"""
 
     def __init__(self, config: Dict[str, Any]):
-        self.logger = logging.getLogger(
-            f"{self.__class__.__module__}.{self.__class__.__name__}"
-        )
+        self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
 
         # Configuration
         self.default_buffer_size = config.get("default_buffer_size", 100)
@@ -211,9 +205,7 @@ class BufferManager:
                     del self.buffer_stats[name]
                 self.logger.debug(f"Cleaned up buffer '{name}'")
             else:
-                self.logger.debug(
-                    f"Buffer '{name}' already cleaned up or never existed"
-                )
+                self.logger.debug(f"Buffer '{name}' already cleaned up or never existed")
         except Exception as e:
             self.logger.warning(f"Error cleaning up buffer '{name}': {e}")
 
@@ -231,9 +223,7 @@ class BufferManager:
                 failed_count += 1
                 self.logger.warning(f"Failed to cleanup buffer '{name}': {e}")
 
-        self.logger.debug(
-            f"Buffer cleanup completed: {cleaned_count} cleaned, {failed_count} failed"
-        )
+        self.logger.debug(f"Buffer cleanup completed: {cleaned_count} cleaned, {failed_count} failed")
 
     def _calculate_size_threshold(self, memory_pressure: float) -> int:
         """Calculate dynamic buffer size threshold based on memory pressure"""
@@ -255,9 +245,7 @@ class ResourceManager:
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
-        self.logger = logging.getLogger(
-            f"{self.__class__.__module__}.{self.__class__.__name__}"
-        )
+        self.logger = logging.getLogger(f"{self.__class__.__module__}.{self.__class__.__name__}")
 
         # Initialize components
         memory_config = self.config.get("memory_monitor", {})
@@ -336,9 +324,7 @@ class ResourceManager:
 
         # Log results
         if cleanup_errors:
-            self.logger.warning(
-                f"Resource cleanup completed with errors: {'; '.join(cleanup_errors)}"
-            )
+            self.logger.warning(f"Resource cleanup completed with errors: {'; '.join(cleanup_errors)}")
         else:
             self.logger.debug("Resource cleanup completed successfully")
 
@@ -381,21 +367,15 @@ class ResourceManager:
                 for buffer_name in buffer_names:
                     try:
                         self.buffer_manager.flush_buffer(buffer_name)
-                        self.logger.debug(
-                            f"Flushed buffer '{buffer_name}' due to memory pressure"
-                        )
+                        self.logger.debug(f"Flushed buffer '{buffer_name}' due to memory pressure")
                     except Exception as e:
-                        self.logger.warning(
-                            f"Failed to flush buffer '{buffer_name}' during memory pressure: {e}"
-                        )
+                        self.logger.warning(f"Failed to flush buffer '{buffer_name}' during memory pressure: {e}")
 
             # Trigger garbage collection
             try:
                 self.memory_monitor.trigger_gc()
             except Exception as e:
-                self.logger.warning(
-                    f"Failed to trigger garbage collection during memory pressure: {e}"
-                )
+                self.logger.warning(f"Failed to trigger garbage collection during memory pressure: {e}")
 
         except Exception as e:
             self.logger.error(f"Error handling memory pressure: {e}")
@@ -421,22 +401,16 @@ class ResourceManager:
                     self.logger.debug(f"Temp file already removed: {temp_file}")
             except PermissionError as e:
                 failed_count += 1
-                self.logger.warning(
-                    f"Permission denied cleaning temp file {temp_file}: {e}"
-                )
+                self.logger.warning(f"Permission denied cleaning temp file {temp_file}: {e}")
             except OSError as e:
                 failed_count += 1
                 self.logger.warning(f"OS error cleaning temp file {temp_file}: {e}")
             except Exception as e:
                 failed_count += 1
-                self.logger.warning(
-                    f"Unexpected error cleaning temp file {temp_file}: {e}"
-                )
+                self.logger.warning(f"Unexpected error cleaning temp file {temp_file}: {e}")
 
         # Clear the list regardless of cleanup success
         self.temp_files.clear()
 
         if cleaned_count > 0 or failed_count > 0:
-            self.logger.info(
-                f"Temp file cleanup completed: {cleaned_count} cleaned, {failed_count} failed"
-            )
+            self.logger.info(f"Temp file cleanup completed: {cleaned_count} cleaned, {failed_count} failed")

@@ -17,7 +17,9 @@ app = typer.Typer(
 try:
     import logging
 
-    from pktmask.infrastructure.logging import get_logger  # ensure handlers initialized
+    from pktmask.infrastructure.logging import get_logger as _ensure_logger  # ensure handlers initialized
+
+    _ensure_logger()  # touch to initialize logging system
 
     pkt_logger = logging.getLogger("pktmask")
     pkt_logger.setLevel(logging.DEBUG)
@@ -40,15 +42,9 @@ def main(ctx: typer.Context):
 
 
 # Register core commands using new simplified interface
-app.command("process", help="Process PCAP/PCAPNG files with unified core processing")(
-    process_command
-)
-app.command("validate", help="Validate PCAP/PCAPNG files without processing")(
-    validate_command
-)
-app.command("config", help="Display configuration summary for given options")(
-    config_command
-)
+app.command("process", help="Process PCAP/PCAPNG files with unified core processing")(process_command)
+app.command("validate", help="Validate PCAP/PCAPNG files without processing")(validate_command)
+app.command("config", help="Display configuration summary for given options")(config_command)
 
 if __name__ == "__main__":
     app()

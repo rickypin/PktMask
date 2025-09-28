@@ -71,12 +71,8 @@ class UIBuilder:
     def _setup_window_properties(self):
         """设置窗口属性"""
         self.main_window.setWindowTitle("PktMask - Packet Processing Tool")
-        self.main_window.setMinimumSize(
-            UIConstants.MIN_WINDOW_WIDTH, UIConstants.MIN_WINDOW_HEIGHT
-        )
-        self.main_window.resize(
-            UIConstants.DEFAULT_WINDOW_WIDTH, UIConstants.DEFAULT_WINDOW_HEIGHT
-        )
+        self.main_window.setMinimumSize(UIConstants.MIN_WINDOW_WIDTH, UIConstants.MIN_WINDOW_HEIGHT)
+        self.main_window.resize(UIConstants.DEFAULT_WINDOW_WIDTH, UIConstants.DEFAULT_WINDOW_HEIGHT)
 
     def _create_menu_bar(self):
         """创建菜单栏"""
@@ -160,12 +156,8 @@ class UIBuilder:
 
         # 输出目录
         output_label = QLabel("Output:")
-        self.main_window.output_path_label = QPushButton(
-            "Auto-generated based on input"
-        )
-        self.main_window.output_path_label.setStyleSheet(
-            "text-align: left; padding: 5px;"
-        )
+        self.main_window.output_path_label = QPushButton("Auto-generated based on input")
+        self.main_window.output_path_label.setStyleSheet("text-align: left; padding: 5px;")
 
         layout.addWidget(input_label)
         layout.addWidget(self.main_window.dir_path_label, 1)
@@ -184,9 +176,7 @@ class UIBuilder:
         self.main_window.remove_dupes_cb = QCheckBox("Remove Dupes")
         self.main_window.remove_dupes_cb.setChecked(True)
 
-        self.main_window.mask_payloads_cb = QCheckBox(
-            "Mask Payloads ( Keep TLS Handshakes )"
-        )
+        self.main_window.mask_payloads_cb = QCheckBox("Mask Payloads ( Keep TLS Handshakes )")
         self.main_window.mask_payloads_cb.setChecked(True)
 
         layout.addWidget(self.main_window.anonymize_ips_cb)
@@ -279,9 +269,7 @@ class UIBuilder:
             self.main_window.log_text.append("   • Install Wireshark (includes tshark)")
             self.main_window.log_text.append("   • Ensure tshark is in system PATH")
             self.main_window.log_text.append("   • Minimum version required: 4.2.0")
-            self.main_window.log_text.append(
-                "   • Download: https://www.wireshark.org/download.html"
-            )
+            self.main_window.log_text.append("   • Download: https://www.wireshark.org/download.html")
             self.main_window.log_text.append("-" * 40)
             self.main_window.log_text.append("")
 
@@ -295,9 +283,7 @@ class UIBuilder:
         self.main_window.log_text.append("│ 3. Start processing          │")
         self.main_window.log_text.append("└──────────────────────────────┘")
         self.main_window.log_text.append("")
-        self.main_window.log_text.append(
-            "💡 Remove Dupes & Anonymize IPs enabled by default"
-        )
+        self.main_window.log_text.append("💡 Remove Dupes & Anonymize IPs enabled by default")
         self.main_window.log_text.append("")
         self.main_window.log_text.append("Processing logs will appear here...")
 

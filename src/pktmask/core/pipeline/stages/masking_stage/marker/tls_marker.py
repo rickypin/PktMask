@@ -66,9 +66,7 @@ class TLSProtocolMarker(ProtocolMarker):
                 "handshake": tls_config.get("preserve_handshake", True),
                 "application_data": tls_config.get("preserve_application_data", False),
                 "alert": tls_config.get("preserve_alert", True),
-                "change_cipher_spec": tls_config.get(
-                    "preserve_change_cipher_spec", True
-                ),
+                "change_cipher_spec": tls_config.get("preserve_change_cipher_spec", True),
                 "heartbeat": tls_config.get("preserve_heartbeat", True),
             }
         else:
@@ -97,9 +95,7 @@ class TLSProtocolMarker(ProtocolMarker):
         """初始化TLS分析组件"""
         # 验证tshark可用性
         self.tshark_exec = self._check_tshark_version(self.tshark_path)
-        self.logger.info(
-            f"TLS analyzer initialization completed, using tshark: {self.tshark_exec}"
-        )
+        self.logger.info(f"TLS analyzer initialization completed, using tshark: {self.tshark_exec}")
 
     def analyze_file(self, pcap_path: str, config: Dict[str, Any]) -> KeepRuleSet:
         """分析TLS流量并生成保留规则
@@ -206,9 +202,7 @@ class TLSProtocolMarker(ProtocolMarker):
             min_str = ".".join(map(str, MIN_TSHARK_VERSION))
             raise RuntimeError(f"tshark 版本过低 ({ver_str})，需要 ≥ {min_str}")
 
-        self.logger.debug(
-            f"Detected tshark {'.'.join(map(str, version))} at {executable}"
-        )
+        self.logger.debug(f"Detected tshark {'.'.join(map(str, version))} at {executable}")
         return executable
 
     def _parse_tshark_version(self, output: str) -> Optional[Tuple[int, int, int]]:
@@ -407,9 +401,7 @@ class TLSProtocolMarker(ProtocolMarker):
             raise RuntimeError(f"TLS消息扫描失败: {exc}") from exc
 
         # 合并两阶段的结果
-        tls_packets = self._merge_tls_scan_results(
-            packets_reassembled, packets_segments
-        )
+        tls_packets = self._merge_tls_scan_results(packets_reassembled, packets_segments)
 
         self.logger.debug(f"Found {len(tls_packets)} packets containing TLS messages")
         return tls_packets
@@ -448,9 +440,7 @@ class TLSProtocolMarker(ProtocolMarker):
                 merged_packets[str(frame_number)] = packet
 
                 _dbg_reassembled_added += 1
-                if layers.get("tls.record.content_type") or layers.get(
-                    "tls.record.opaque_type"
-                ):
+                if layers.get("tls.record.content_type") or layers.get("tls.record.opaque_type"):
                     _dbg_ct_present_count += 1
 
         # 第二阶段：添加包含TLS段数据的包（跨分段情况）
@@ -465,8 +455,7 @@ class TLSProtocolMarker(ProtocolMarker):
 
                     _dbg_segments_added += 1
                     if not (
-                        layers.get("tls.record.content_type")
-                        or layers.get("tls.record.opaque_type")
+                        layers.get("tls.record.content_type") or layers.get("tls.record.opaque_type")
                     ) and self._has_tls_segment_data(layers):
                         _dbg_seg_only_count += 1
 
@@ -474,11 +463,7 @@ class TLSProtocolMarker(ProtocolMarker):
         result_packets = list(merged_packets.values())
 
         result_packets.sort(
-            key=lambda p: int(
-                self._get_first_value(
-                    p.get("_source", {}).get("layers", {}).get("frame.number", 0)
-                )
-            )
+            key=lambda p: int(self._get_first_value(p.get("_source", {}).get("layers", {}).get("frame.number", 0)))
         )
 
         self.logger.debug(
@@ -508,9 +493,7 @@ class TLSProtocolMarker(ProtocolMarker):
         # 检查是否有TLS段数据
         return len(segment_data) > 0 and any(data for data in segment_data if data)
 
-    def _infer_tls_type_from_segment_data(
-        self, layers: Dict[str, Any]
-    ) -> Optional[int]:
+    def _infer_tls_type_from_segment_data(self, layers: Dict[str, Any]) -> Optional[int]:
         """通过分析TLS段数据的头部来确定消息类型（复用tls_flow_analyzer逻辑）
 
         Args:
@@ -525,11 +508,7 @@ class TLSProtocolMarker(ProtocolMarker):
 
         try:
             # 获取段数据（可能是列表格式）
-            segment_data_hex = (
-                tls_segment_data[0]
-                if isinstance(tls_segment_data, list)
-                else tls_segment_data
-            )
+            segment_data_hex = tls_segment_data[0] if isinstance(tls_segment_data, list) else tls_segment_data
 
             if segment_data_hex and len(segment_data_hex) >= 2:
                 # TLS记录的第一个字节是内容类型
@@ -563,9 +542,7 @@ class TLSProtocolMarker(ProtocolMarker):
 
         return False
 
-    def _analyze_tcp_flows(
-        self, pcap_path: str, tls_packets: List[Dict[str, Any]]
-    ) -> Dict[str, Dict[str, Any]]:
+    def _analyze_tcp_flows(self, pcap_path: str, tls_packets: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
         """分析TCP流（复用自tls_flow_analyzer逻辑）"""
         self.logger.debug("Analyzing TCP flows")
 
@@ -586,9 +563,7 @@ class TLSProtocolMarker(ProtocolMarker):
         self.logger.debug(f"Analyzed {len(tcp_flows)} TCP flows")
         return tcp_flows
 
-    def _analyze_single_tcp_flow(
-        self, pcap_path: str, stream_id: str
-    ) -> Optional[Dict[str, Any]]:
+    def _analyze_single_tcp_flow(self, pcap_path: str, stream_id: str) -> Optional[Dict[str, Any]]:
         """分析单个TCP流（复用自tls_flow_analyzer逻辑）"""
         cmd = [
             self.tshark_exec,
@@ -676,40 +651,24 @@ class TLSProtocolMarker(ProtocolMarker):
             return value[0] if value else None
         return value
 
-    def _build_tuple_key_from_values(
-        self, src_ip: str, src_port: int, dst_ip: str, dst_port: int
-    ) -> str:
+    def _build_tuple_key_from_values(self, src_ip: str, src_port: int, dst_ip: str, dst_port: int) -> str:
         """生成与Masker一致的规范化tuple_key（较小(ip,port)在前）。"""
         if (str(src_ip), int(src_port)) < (str(dst_ip), int(dst_port)):
             return f"{src_ip}:{int(src_port)}-{dst_ip}:{int(dst_port)}"
         else:
             return f"{dst_ip}:{int(dst_port)}-{src_ip}:{int(src_port)}"
 
-    def _get_endpoints_from_layers(
-        self, layers: Dict[str, Any]
-    ) -> Tuple[str, int, str, int]:
+    def _get_endpoints_from_layers(self, layers: Dict[str, Any]) -> Tuple[str, int, str, int]:
         """从tshark JSON layers提取四元组端点。"""
-        src_ip = (
-            self._get_first_value(layers.get("ip.src"))
-            or self._get_first_value(layers.get("ipv6.src"))
-            or ""
-        )
-        dst_ip = (
-            self._get_first_value(layers.get("ip.dst"))
-            or self._get_first_value(layers.get("ipv6.dst"))
-            or ""
-        )
+        src_ip = self._get_first_value(layers.get("ip.src")) or self._get_first_value(layers.get("ipv6.src")) or ""
+        dst_ip = self._get_first_value(layers.get("ip.dst")) or self._get_first_value(layers.get("ipv6.dst")) or ""
         src_port = int(self._get_first_value(layers.get("tcp.srcport")) or 0)
         dst_port = int(self._get_first_value(layers.get("tcp.dstport")) or 0)
         return str(src_ip), src_port, str(dst_ip), dst_port
 
-    def _get_local_stream_id_from_values(
-        self, src_ip: str, src_port: int, dst_ip: str, dst_port: int
-    ) -> str:
+    def _get_local_stream_id_from_values(self, src_ip: str, src_port: int, dst_ip: str, dst_port: int) -> str:
         """依据tuple_key返回/分配本地stream_id（与Masker一致）。"""
-        tuple_key = self._build_tuple_key_from_values(
-            src_ip, src_port, dst_ip, dst_port
-        )
+        tuple_key = self._build_tuple_key_from_values(src_ip, src_port, dst_ip, dst_port)
         sid = self.tuple_to_stream_id.get(tuple_key)
         if sid is None:
             sid = str(self.flow_id_counter)
@@ -760,9 +719,7 @@ class TLSProtocolMarker(ProtocolMarker):
             else "reverse"
         )
 
-    def _identify_flow_directions(
-        self, packets: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def _identify_flow_directions(self, packets: List[Dict[str, Any]]) -> Dict[str, Any]:
         """识别TCP流的两个方向（与Masker一致：基于字典序的canonical方向）"""
         directions = {
             "forward": {
@@ -786,12 +743,8 @@ class TLSProtocolMarker(ProtocolMarker):
 
         # 读取第一个包的端点，计算 canonical forward（字典序较小端点作为源）
         first_layers = packets[0].get("_source", {}).get("layers", {})
-        a_ip = self._get_first_value(
-            first_layers.get("ip.src")
-        ) or self._get_first_value(first_layers.get("ipv6.src"))
-        b_ip = self._get_first_value(
-            first_layers.get("ip.dst")
-        ) or self._get_first_value(first_layers.get("ipv6.dst"))
+        a_ip = self._get_first_value(first_layers.get("ip.src")) or self._get_first_value(first_layers.get("ipv6.src"))
+        b_ip = self._get_first_value(first_layers.get("ip.dst")) or self._get_first_value(first_layers.get("ipv6.dst"))
         a_port = self._get_first_value(first_layers.get("tcp.srcport"))
         b_port = self._get_first_value(first_layers.get("tcp.dstport"))
 
@@ -825,12 +778,8 @@ class TLSProtocolMarker(ProtocolMarker):
         # 按 canonical forward 划分所有数据包
         for packet in packets:
             layers = packet.get("_source", {}).get("layers", {})
-            src_ip = self._get_first_value(
-                layers.get("ip.src")
-            ) or self._get_first_value(layers.get("ipv6.src"))
-            dst_ip = self._get_first_value(
-                layers.get("ip.dst")
-            ) or self._get_first_value(layers.get("ipv6.dst"))
+            src_ip = self._get_first_value(layers.get("ip.src")) or self._get_first_value(layers.get("ipv6.src"))
+            dst_ip = self._get_first_value(layers.get("ip.dst")) or self._get_first_value(layers.get("ipv6.dst"))
             src_port = int(self._get_first_value(layers.get("tcp.srcport")) or 0)
             dst_port = int(self._get_first_value(layers.get("tcp.dstport")) or 0)
 
@@ -846,9 +795,7 @@ class TLSProtocolMarker(ProtocolMarker):
 
         return directions
 
-    def _reassemble_tcp_payloads(
-        self, packets: List[Dict[str, Any]], directions: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _reassemble_tcp_payloads(self, packets: List[Dict[str, Any]], directions: Dict[str, Any]) -> Dict[str, Any]:
         """重组 TCP 载荷并记录序列号映射（移植自 tls_flow_analyzer）"""
         reassembled = {
             "forward": {"payload": b"", "seq_mapping": []},
@@ -859,11 +806,7 @@ class TLSProtocolMarker(ProtocolMarker):
             # 按序列号排序数据包
             direction_packets = sorted(
                 direction_info["packets"],
-                key=lambda p: int(
-                    self._get_first_value(
-                        p.get("_source", {}).get("layers", {}).get("tcp.seq", 0)
-                    )
-                ),
+                key=lambda p: int(self._get_first_value(p.get("_source", {}).get("layers", {}).get("tcp.seq", 0))),
             )
 
             # 重组载荷并记录序列号映射
@@ -889,9 +832,7 @@ class TLSProtocolMarker(ProtocolMarker):
                                 seq_mapping.append(
                                     {
                                         "offset_start": current_offset,
-                                        "offset_end": current_offset
-                                        + len(payload_bytes)
-                                        - 1,
+                                        "offset_end": current_offset + len(payload_bytes) - 1,
                                         "tcp_seq_raw": int(tcp_seq_raw),
                                         "payload_length": len(payload_bytes),
                                     }
@@ -907,9 +848,7 @@ class TLSProtocolMarker(ProtocolMarker):
 
         return reassembled
 
-    def _find_actual_seq_for_offset(
-        self, tls_offset: int, seq_mapping: List[Dict[str, Any]]
-    ) -> int:
+    def _find_actual_seq_for_offset(self, tls_offset: int, seq_mapping: List[Dict[str, Any]]) -> int:
         """根据TLS记录在重组载荷中的偏移位置，查找对应的实际TCP序列号（移植自 tls_flow_analyzer）"""
         for mapping in seq_mapping:
             offset_start = mapping["offset_start"]
@@ -961,18 +900,14 @@ class TLSProtocolMarker(ProtocolMarker):
                 actual_length = len(payload) - offset - 5
 
                 # 【修复1】：验证跨段消息的合理性
-                if not self._validate_cross_segment_record(
-                    content_type, length, actual_length
-                ):
+                if not self._validate_cross_segment_record(content_type, length, actual_length):
                     self.logger.warning(
                         f"Cross-segment TLS message validation failed: type {content_type}, declared length {length}, actual length {actual_length}"
                     )
                     offset += 1  # 跳过这个字节，继续寻找下一个TLS记录
                     continue
 
-                tls_payload_seq_end = (
-                    self._find_actual_seq_for_offset(len(payload) - 1, seq_mapping) + 1
-                )
+                tls_payload_seq_end = self._find_actual_seq_for_offset(len(payload) - 1, seq_mapping) + 1
                 records.append(
                     {
                         "stream_id": stream_id,
@@ -1108,9 +1043,7 @@ class TLSProtocolMarker(ProtocolMarker):
 
         return ruleset
 
-    def _create_keep_rule_from_tls_record(
-        self, record: Dict[str, Any]
-    ) -> Optional[KeepRule]:
+    def _create_keep_rule_from_tls_record(self, record: Dict[str, Any]) -> Optional[KeepRule]:
         """从TLS记录创建保留规则（支持精确序列号范围）"""
         try:
             stream_id = record["stream_id"]
@@ -1120,9 +1053,7 @@ class TLSProtocolMarker(ProtocolMarker):
 
             # 检查是否为TLS-23 ApplicationData且配置为只保留头部
             is_application_data = content_type == 23
-            preserve_full_application_data = self.preserve_config.get(
-                "application_data", False
-            )
+            preserve_full_application_data = self.preserve_config.get("application_data", False)
 
             if is_application_data and not preserve_full_application_data:
                 # TLS-23且配置为False：只保留5字节TLS记录头部
@@ -1178,12 +1109,8 @@ class TLSProtocolMarker(ProtocolMarker):
 
             # 提取基础信息（对齐Masker 的本地stream_id与canonical方向）
             src_ip, src_port, dst_ip, dst_port = self._get_endpoints_from_layers(layers)
-            local_stream_id = self._get_local_stream_id_from_values(
-                src_ip, src_port, dst_ip, dst_port
-            )
-            direction = self._determine_direction_from_values(
-                local_stream_id, src_ip, src_port, dst_ip, dst_port
-            )
+            local_stream_id = self._get_local_stream_id_from_values(src_ip, src_port, dst_ip, dst_port)
+            direction = self._determine_direction_from_values(local_stream_id, src_ip, src_port, dst_ip, dst_port)
 
             frame_number = self._get_first_value(layers.get("frame.number"))
             tcp_seq_raw = self._get_first_value(layers.get("tcp.seq_raw"))
@@ -1257,9 +1184,7 @@ class TLSProtocolMarker(ProtocolMarker):
                         type_num = int(content_type)
 
                         # 验证TLS类型与载荷头部的一致性
-                        if not self._validate_tls_type_consistency(
-                            tcp_payload, type_num
-                        ):
+                        if not self._validate_tls_type_consistency(tcp_payload, type_num):
                             self.logger.warning(
                                 f"Frame {frame_number}: TLS type {type_num} inconsistent with payload, skipping"
                             )
@@ -1267,28 +1192,20 @@ class TLSProtocolMarker(ProtocolMarker):
 
                         if self._should_preserve_tls_type(type_num):
                             # 创建简化的单包规则
-                            rule = self._create_simple_packet_rule(
-                                packet, tcp_flows, type_num
-                            )
+                            rule = self._create_simple_packet_rule(packet, tcp_flows, type_num)
                             if rule:
                                 # 【解决方案3B】：验证规则的合理性
-                                if self._validate_rule_reasonableness(
-                                    rule, packet, tcp_payload
-                                ):
+                                if self._validate_rule_reasonableness(rule, packet, tcp_payload):
                                     ruleset.add_rule(rule)
                                     self.logger.debug(
                                         f"Generated TLS record rule: Frame {frame_number} "
                                         f"TLS-{type_num} seq {rule.seq_start}-{rule.seq_end}"
                                     )
                                 else:
-                                    self.logger.warning(
-                                        f"Frame {frame_number}: rule validation failed, skipping"
-                                    )
+                                    self.logger.warning(f"Frame {frame_number}: rule validation failed, skipping")
             else:
                 # 非TLS数据或无法识别：完全掩码（不生成保留规则）
-                self.logger.debug(
-                    f"Non-TLS data, skipping rule generation: Frame {frame_number}"
-                )
+                self.logger.debug(f"Non-TLS data, skipping rule generation: Frame {frame_number}")
                 continue
 
     def _create_simple_packet_rule(
@@ -1303,15 +1220,9 @@ class TLSProtocolMarker(ProtocolMarker):
 
             # 基于端点 -> 本地 stream_id + canonical 方向/tuple_key
             src_ip, src_port, dst_ip, dst_port = self._get_endpoints_from_layers(layers)
-            stream_id = self._get_local_stream_id_from_values(
-                src_ip, src_port, dst_ip, dst_port
-            )
-            direction = self._determine_direction_from_values(
-                stream_id, src_ip, src_port, dst_ip, dst_port
-            )
-            tuple_key = self._build_tuple_key_from_values(
-                src_ip, src_port, dst_ip, dst_port
-            )
+            stream_id = self._get_local_stream_id_from_values(src_ip, src_port, dst_ip, dst_port)
+            direction = self._determine_direction_from_values(stream_id, src_ip, src_port, dst_ip, dst_port)
+            tuple_key = self._build_tuple_key_from_values(src_ip, src_port, dst_ip, dst_port)
 
             frame_number = self._get_first_value(layers.get("frame.number"))
             tcp_seq_raw = self._get_first_value(layers.get("tcp.seq_raw"))
@@ -1323,9 +1234,7 @@ class TLSProtocolMarker(ProtocolMarker):
             # 检查是否为TLS-23 ApplicationData且配置为只保留头部
             tls_type_name = TLS_CONTENT_TYPES.get(tls_type, f"unknown_{tls_type}")
             is_application_data = tls_type == 23
-            preserve_full_application_data = self.preserve_config.get(
-                "application_data", False
-            )
+            preserve_full_application_data = self.preserve_config.get("application_data", False)
 
             if is_application_data and not preserve_full_application_data:
                 # 只保留5字节头部（左闭右开区间）
@@ -1364,25 +1273,19 @@ class TLSProtocolMarker(ProtocolMarker):
             self.logger.warning(f"Failed to create simplified packet rule: {e}")
             return None
 
-    def _determine_packet_direction(
-        self, packet: Dict[str, Any], flow_info: Optional[Dict[str, Any]]
-    ) -> Optional[str]:
+    def _determine_packet_direction(self, packet: Dict[str, Any], flow_info: Optional[Dict[str, Any]]) -> Optional[str]:
         """确定数据包的流方向"""
         if not flow_info:
             return "forward"  # 默认方向
 
         layers = packet.get("_source", {}).get("layers", {})
-        src_ip = self._get_first_value(layers.get("ip.src")) or self._get_first_value(
-            layers.get("ipv6.src")
-        )
+        src_ip = self._get_first_value(layers.get("ip.src")) or self._get_first_value(layers.get("ipv6.src"))
         src_port = self._get_first_value(layers.get("tcp.srcport"))
 
         directions = flow_info.get("directions", {})
         forward_info = directions.get("forward", {})
 
-        if src_ip == forward_info.get("src_ip") and str(src_port) == str(
-            forward_info.get("src_port")
-        ):
+        if src_ip == forward_info.get("src_ip") and str(src_port) == str(forward_info.get("src_port")):
             return "forward"
         else:
             return "reverse"
@@ -1475,15 +1378,11 @@ class TLSProtocolMarker(ProtocolMarker):
             # 检查是否为TLS-23 ApplicationData且配置为只保留头部
             tls_type_name = TLS_CONTENT_TYPES.get(tls_type, f"unknown_{tls_type}")
             is_application_data = tls_type == 23
-            preserve_full_application_data = self.preserve_config.get(
-                "application_data", False
-            )
+            preserve_full_application_data = self.preserve_config.get("application_data", False)
 
             if is_application_data and not preserve_full_application_data:
                 # TLS-23且配置为False：只保留5字节TLS记录头部
-                return self._create_tls23_header_rule(
-                    stream_id, direction, tcp_seq_int, frame_number
-                )
+                return self._create_tls23_header_rule(stream_id, direction, tcp_seq_int, frame_number)
             else:
                 # 其他情况：保留整个TCP载荷
                 seq_start = tcp_seq_int
@@ -1555,8 +1454,7 @@ class TLSProtocolMarker(ProtocolMarker):
             )
 
             self.logger.debug(
-                f"Created TLS-23 header keep rule: Frame {frame_number}, "
-                f"seq {seq_start}-{seq_end} (5-byte header)"
+                f"Created TLS-23 header keep rule: Frame {frame_number}, " f"seq {seq_start}-{seq_end} (5-byte header)"
             )
 
             return rule
@@ -1595,9 +1493,7 @@ class TLSProtocolMarker(ProtocolMarker):
             # 检查是否为TLS-23 ApplicationData且配置为只保留头部
             tls_type_name = TLS_CONTENT_TYPES.get(tls_type, f"unknown_{tls_type}")
             is_application_data = tls_type == 23
-            preserve_full_application_data = self.preserve_config.get(
-                "application_data", False
-            )
+            preserve_full_application_data = self.preserve_config.get("application_data", False)
 
             if is_application_data and not preserve_full_application_data:
                 # TLS-23且配置为False：只保留5字节TLS记录头部
@@ -1669,9 +1565,7 @@ class TLSProtocolMarker(ProtocolMarker):
     #     state["last"] = seq32
     #     return (state["epoch"] << 32) | seq32
 
-    def _create_flow_info(
-        self, stream_id: str, flow_data: Optional[Dict[str, Any]]
-    ) -> Optional[FlowInfo]:
+    def _create_flow_info(self, stream_id: str, flow_data: Optional[Dict[str, Any]]) -> Optional[FlowInfo]:
         """创建流信息"""
         if not flow_data:
             return None
@@ -1683,16 +1577,8 @@ class TLSProtocolMarker(ProtocolMarker):
             stream_id=stream_id,
             src_ip=forward_info.get("src_ip", ""),
             dst_ip=forward_info.get("dst_ip", ""),
-            src_port=(
-                int(forward_info.get("src_port", 0))
-                if forward_info.get("src_port")
-                else 0
-            ),
-            dst_port=(
-                int(forward_info.get("dst_port", 0))
-                if forward_info.get("dst_port")
-                else 0
-            ),
+            src_port=(int(forward_info.get("src_port", 0)) if forward_info.get("src_port") else 0),
+            dst_port=(int(forward_info.get("dst_port", 0)) if forward_info.get("dst_port") else 0),
             protocol="tcp",
             direction="forward",
             packet_count=flow_data.get("packet_count", 0),
@@ -1727,9 +1613,7 @@ class TLSProtocolMarker(ProtocolMarker):
 
         return errors
 
-    def _is_tls_record_start(
-        self, packet_info: Dict[str, Any], payload_hex: str
-    ) -> bool:
+    def _is_tls_record_start(self, packet_info: Dict[str, Any], payload_hex: str) -> bool:
         """检测是否为TLS记录的开始
 
         Args:
@@ -1820,9 +1704,7 @@ class TLSProtocolMarker(ProtocolMarker):
             if not isinstance(content_types, list):
                 content_types = [content_types]
             is_app23 = any(str(ct) == "23" for ct in content_types)
-            self.logger.debug(
-                f"FragClass frame={frame_no} content_type={content_types} -> appdata={is_app23}"
-            )
+            self.logger.debug(f"FragClass frame={frame_no} content_type={content_types} -> appdata={is_app23}")
             return is_app23
 
         # 如果是TLS片段，当前实现会默认视作ApplicationData（待后续策略调整）
@@ -1833,9 +1715,7 @@ class TLSProtocolMarker(ProtocolMarker):
             )
             return True
 
-        self.logger.debug(
-            f"FragClass frame={frame_no} not_tls_fragment -> appdata=False"
-        )
+        self.logger.debug(f"FragClass frame={frame_no} not_tls_fragment -> appdata=False")
         return False
 
     def _get_tcp_payload_hex(self, packet: Dict[str, Any]) -> str:
@@ -1873,15 +1753,9 @@ class TLSProtocolMarker(ProtocolMarker):
 
             # 基于端点 -> 本地 stream_id + canonical 方向/tuple_key
             src_ip, src_port, dst_ip, dst_port = self._get_endpoints_from_layers(layers)
-            local_stream_id = self._get_local_stream_id_from_values(
-                src_ip, src_port, dst_ip, dst_port
-            )
-            direction = self._determine_direction_from_values(
-                local_stream_id, src_ip, src_port, dst_ip, dst_port
-            )
-            tuple_key = self._build_tuple_key_from_values(
-                src_ip, src_port, dst_ip, dst_port
-            )
+            local_stream_id = self._get_local_stream_id_from_values(src_ip, src_port, dst_ip, dst_port)
+            direction = self._determine_direction_from_values(local_stream_id, src_ip, src_port, dst_ip, dst_port)
+            tuple_key = self._build_tuple_key_from_values(src_ip, src_port, dst_ip, dst_port)
 
             frame_number = self._get_first_value(layers.get("frame.number"))
             tcp_seq_raw = self._get_first_value(layers.get("tcp.seq_raw"))
@@ -1913,9 +1787,7 @@ class TLSProtocolMarker(ProtocolMarker):
             self.logger.warning(f"Failed to create full preserve rule: {e}")
             return None
 
-    def _validate_tls_type_consistency(
-        self, payload_hex: str, expected_type: int
-    ) -> bool:
+    def _validate_tls_type_consistency(self, payload_hex: str, expected_type: int) -> bool:
         """验证TLS类型与载荷头部的一致性
 
         Args:
@@ -1939,17 +1811,13 @@ class TLSProtocolMarker(ProtocolMarker):
             # 对于某些特殊情况，允许一定的容错
             # 例如，如果Wireshark解析为TLS-23，但载荷第一字节不是23，
             # 可能是因为这是一个跨段消息的片段
-            self.logger.debug(
-                f"TLS type inconsistent: expected {expected_type}, actual {actual_type}"
-            )
+            self.logger.debug(f"TLS type inconsistent: expected {expected_type}, actual {actual_type}")
             return False
 
         except (ValueError, TypeError):
             return False
 
-    def _validate_rule_reasonableness(
-        self, rule: KeepRule, packet: Dict[str, Any], payload_hex: str
-    ) -> bool:
+    def _validate_rule_reasonableness(self, rule: KeepRule, packet: Dict[str, Any], payload_hex: str) -> bool:
         """验证规则的合理性
 
         Args:
@@ -1970,53 +1838,41 @@ class TLSProtocolMarker(ProtocolMarker):
             # 对于header_only规则，长度应该是5字节
             if rule.metadata.get("preserve_strategy") == "header_only":
                 if rule_length != 5:
-                    self.logger.warning(
-                        f"Header_only rule length abnormal: {rule_length} (expected 5)"
-                    )
+                    self.logger.warning(f"Header_only rule length abnormal: {rule_length} (expected 5)")
                     return False
 
             # 对于full_message规则，长度不应该超过TCP载荷长度
             elif rule.metadata.get("preserve_strategy") == "full_message":
                 if rule_length > tcp_len:
-                    self.logger.warning(
-                        f"Full_message rule length exceeds TCP payload: {rule_length} > {tcp_len}"
-                    )
+                    self.logger.warning(f"Full_message rule length exceeds TCP payload: {rule_length} > {tcp_len}")
                     return False
 
             # 2. 检查TLS-23规则的特殊性
             if rule.rule_type == "tls_applicationdata_header":
                 # ApplicationData头部规则必须是5字节
                 if rule_length != 5:
-                    self.logger.warning(
-                        f"ApplicationData header rule length incorrect: {rule_length}"
-                    )
+                    self.logger.warning(f"ApplicationData header rule length incorrect: {rule_length}")
                     return False
 
                 # 验证载荷确实以TLS-23开头
                 if payload_hex and len(payload_hex) >= 2:
                     first_byte = int(payload_hex[0:2], 16)
                     if first_byte != 23:
-                        self.logger.warning(
-                            f"ApplicationData rule but payload does not start with 23: {first_byte}"
-                        )
+                        self.logger.warning(f"ApplicationData rule but payload does not start with 23: {first_byte}")
                         return False
 
             # 3. 检查ChangeCipherSpec规则的特殊性
             elif rule.rule_type == "tls_changecipherspec":
                 # ChangeCipherSpec消息通常很短（6字节：5字节头+1字节载荷）
                 if rule_length > 50:  # 给一些容错空间
-                    self.logger.warning(
-                        f"ChangeCipherSpec rule length abnormal: {rule_length}"
-                    )
+                    self.logger.warning(f"ChangeCipherSpec rule length abnormal: {rule_length}")
                     return False
 
                 # 验证载荷确实以TLS-20开头
                 if payload_hex and len(payload_hex) >= 2:
                     first_byte = int(payload_hex[0:2], 16)
                     if first_byte != 20:
-                        self.logger.warning(
-                            f"ChangeCipherSpec rule but payload does not start with 20: {first_byte}"
-                        )
+                        self.logger.warning(f"ChangeCipherSpec rule but payload does not start with 20: {first_byte}")
                         return False
 
             return True
@@ -2025,9 +1881,7 @@ class TLSProtocolMarker(ProtocolMarker):
             self.logger.warning(f"Rule reasonableness validation failed: {e}")
             return False
 
-    def _validate_cross_segment_record(
-        self, content_type: int, declared_length: int, actual_length: int
-    ) -> bool:
+    def _validate_cross_segment_record(self, content_type: int, declared_length: int, actual_length: int) -> bool:
         """验证跨段TLS记录的合理性
 
         Args:
@@ -2051,24 +1905,18 @@ class TLSProtocolMarker(ProtocolMarker):
             if content_type == 20:  # ChangeCipherSpec
                 # ChangeCipherSpec消息载荷通常只有1字节
                 if declared_length > 10:  # 给一些容错空间
-                    self.logger.warning(
-                        f"ChangeCipherSpec declared length abnormal: {declared_length}"
-                    )
+                    self.logger.warning(f"ChangeCipherSpec declared length abnormal: {declared_length}")
                     return False
 
             elif content_type == 21:  # Alert
                 # Alert消息载荷通常只有2字节
                 if declared_length > 10:  # 给一些容错空间
-                    self.logger.warning(
-                        f"Alert declared length abnormal: {declared_length}"
-                    )
+                    self.logger.warning(f"Alert declared length abnormal: {declared_length}")
                     return False
 
             # 3. 检查实际长度与声明长度的差异
             if actual_length > declared_length:
-                self.logger.warning(
-                    f"Actual length exceeds declared length: {actual_length} > {declared_length}"
-                )
+                self.logger.warning(f"Actual length exceeds declared length: {actual_length} > {declared_length}")
                 return False
 
             # 4. 检查跨段的合理性（实际长度不应该太小）
@@ -2084,9 +1932,7 @@ class TLSProtocolMarker(ProtocolMarker):
             self.logger.warning(f"Cross-segment record validation failed: {e}")
             return False
 
-    def _validate_cross_segment_rule(
-        self, rule: KeepRule, record: Dict[str, Any]
-    ) -> bool:
+    def _validate_cross_segment_rule(self, rule: KeepRule, record: Dict[str, Any]) -> bool:
         """验证跨段消息生成的规则的合理性
 
         Args:
@@ -2117,26 +1963,20 @@ class TLSProtocolMarker(ProtocolMarker):
                 if content_type == 20:  # ChangeCipherSpec
                     # ChangeCipherSpec规则不应该超过100字节
                     if rule_length > 100:
-                        self.logger.warning(
-                            f"Cross-segment ChangeCipherSpec rule length abnormal: {rule_length}"
-                        )
+                        self.logger.warning(f"Cross-segment ChangeCipherSpec rule length abnormal: {rule_length}")
                         return False
 
                 elif content_type == 21:  # Alert
                     # Alert规则不应该超过50字节
                     if rule_length > 50:
-                        self.logger.warning(
-                            f"Cross-segment Alert rule length abnormal: {rule_length}"
-                        )
+                        self.logger.warning(f"Cross-segment Alert rule length abnormal: {rule_length}")
                         return False
 
             # 2. 检查声明长度与实际规则长度的一致性
             if rule.metadata.get("preserve_strategy") == "full_message":
                 expected_length = 5 + actual_length  # 5字节头部 + 实际载荷长度
                 if abs(rule_length - expected_length) > 10:  # 允许一些误差
-                    self.logger.warning(
-                        f"Rule length does not match expected: {rule_length} vs {expected_length}"
-                    )
+                    self.logger.warning(f"Rule length does not match expected: {rule_length} vs {expected_length}")
                     return False
 
             return True
