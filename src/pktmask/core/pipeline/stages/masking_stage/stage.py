@@ -13,6 +13,7 @@ from typing import Any, Dict, Optional
 
 from pktmask.core.pipeline.base_stage import StageBase
 from pktmask.core.pipeline.models import StageStats
+from pktmask.core.temp_file_manager import get_temp_file_manager
 from pktmask.infrastructure.logging import get_logger
 
 
@@ -203,13 +204,11 @@ class MaskingStage(StageBase):
             Temporary hard link path
         """
         import os
-        import tempfile
 
         try:
-            # Use TemporaryDirectory context manager for automatic cleanup
-            # Note: We can't use 'with' here since we need to return the path
-            # Instead, we'll create the directory and register it for cleanup
-            temp_dir = Path(tempfile.mkdtemp(prefix="pktmask_stage_"))
+            # Use global TempFileManager for reliable cleanup
+            temp_manager = get_temp_file_manager()
+            temp_dir = temp_manager.create_temp_dir(prefix="pktmask_stage_")
             temp_file = temp_dir / f"input_{input_path.name}"
 
             # Create hard link (no additional disk space) with enhanced error handling

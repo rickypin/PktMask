@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import logging
-import tempfile
 import time
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
 from pktmask.core.pipeline.base_stage import StageBase
 from pktmask.core.pipeline.models import ProcessResult, StageStats
+from pktmask.core.temp_file_manager import get_temp_file_manager
 from pktmask.infrastructure.logging.logger import log_exception
 
 # ---------------------------------------------------------------------------
@@ -94,9 +94,11 @@ class PipelineExecutor:
                 errors=[error_msg],
             )
 
-        # Use TemporaryDirectory context manager for automatic cleanup
-        with tempfile.TemporaryDirectory(prefix="pktmask_pipeline_") as temp_dir_str:
-            temp_dir = Path(temp_dir_str)
+        # Use global TempFileManager for reliable cleanup
+        temp_manager = get_temp_file_manager()
+        temp_dir = temp_manager.create_temp_dir(prefix="pktmask_pipeline_")
+
+        try:
 
             try:
                 overall_start = time.time()
@@ -228,7 +230,18 @@ class PipelineExecutor:
                     stage_stats=[],
                     errors=[error_msg],
                 )
-        # Temporary directory is automatically cleaned up by context manager
+        finally:
+            # Explicit cleanup of temporary directory
+            # Note: Global cleanup via atexit will also handle this,
+            # but we clean up immediately to free resources
+            try:
+                if temp_dir and temp_dir.exists():
+                    import shutil
+
+                    shutil.rmtree(temp_dir, ignore_errors=True)
+                    self._logger.debug(f"Cleaned up pipeline temp directory: {temp_dir}")
+            except Exception as cleanup_error:
+                self._logger.warning(f"Failed to clean up temp directory {temp_dir}: {cleanup_error}")
 
     # ------------------------------------------------------------------
     # 内部方法
