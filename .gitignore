@@ -84,3 +84,27 @@ backup_refactor_*/
 # Log files from maintenance scripts
 cleanup_*.log
 maintenance_*.log
+
+# E2E Test Generated Files
+# HTML test reports (regenerated on each test run)
+tests/e2e/report.html
+tests/e2e/report_debug.html
+tests/e2e/**/report*.html
+
+# Test results JSON (updated on each test run)
+tests/e2e/test_results.json
+
+# Pytest cache and temporary files
+.pytest_cache/
+tests/.pytest_cache/
+tests/e2e/.pytest_cache/
+
+# Test output directories (temporary test artifacts)
+tests/e2e/test_output/
+tests/e2e/tmp/
+
+# Keep golden baseline files (these are reference data, not temporary)
+# !tests/e2e/golden/**/*.json
+# !tests/e2e/golden/**/*.pcap
+# !tests/e2e/golden_cli/**/*.json
+# !tests/e2e/golden_cli/**/*.pcap
