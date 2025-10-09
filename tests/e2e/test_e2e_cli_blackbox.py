@@ -163,27 +163,12 @@ class TestE2ECLIBlackbox:
     @pytest.mark.parametrize(
         "test_id,protocol,input_file",
         [
-            pytest.param(
-                "E2E-101",
-                "TLS 1.0",
-                "tls_1_0_multi_segment_google-https.pcap",
-                marks=pytest.mark.xfail(reason="File path issue - needs investigation"),
-            ),
+            ("E2E-101", "TLS 1.0", "tls_1_0_multi_segment_google-https.pcap"),
             ("E2E-102", "TLS 1.2", "tls_1_2-2.pcap"),
             ("E2E-103", "TLS 1.3", "tls_1_3_0-RTT-2_22_23_mix.pcap"),
             ("E2E-104", "SSL 3.0", "ssl_3.pcap"),
-            pytest.param(
-                "E2E-105",
-                "HTTP",
-                "http-download-good.pcap",
-                marks=pytest.mark.xfail(reason="File path issue - needs investigation"),
-            ),
-            pytest.param(
-                "E2E-106",
-                "HTTP Error",
-                "http-500error.pcap",
-                marks=pytest.mark.xfail(reason="File path issue - needs investigation"),
-            ),
+            ("E2E-105", "HTTP", "http-download-good.pcap"),
+            ("E2E-106", "HTTP Error", "http-500error.pcap"),
         ],
     )
     def test_cli_protocol_coverage_consistency(
@@ -194,8 +179,8 @@ class TestE2ECLIBlackbox:
         baseline = golden_baselines[test_id]
 
         # 2. Determine input path
-        if "http" in input_file.lower():
-            input_path = project_root / "tests" / "data" / "http" / input_file
+        if input_file.startswith("http"):
+            input_path = project_root / "tests" / "samples" / "http-collector" / input_file
         else:
             input_path = project_root / "tests" / "data" / "tls" / input_file
 
@@ -225,24 +210,9 @@ class TestE2ECLIBlackbox:
     @pytest.mark.parametrize(
         "test_id,encap_type,input_file",
         [
-            pytest.param(
-                "E2E-201",
-                "Plain IP",
-                "tls_1_2_plainip.pcap",
-                marks=pytest.mark.xfail(reason="CLI/API parameter difference - needs baseline regeneration"),
-            ),
-            pytest.param(
-                "E2E-202",
-                "Single VLAN",
-                "tls_1_2_single_vlan.pcap",
-                marks=pytest.mark.xfail(reason="CLI/API parameter difference - needs baseline regeneration"),
-            ),
-            pytest.param(
-                "E2E-203",
-                "Double VLAN",
-                "tls_1_2_double_vlan.pcap",
-                marks=pytest.mark.xfail(reason="CLI/API parameter difference - needs baseline regeneration"),
-            ),
+            ("E2E-201", "Plain IP", "tls_1_2_plainip.pcap"),
+            ("E2E-202", "Single VLAN", "tls_1_2_single_vlan.pcap"),
+            ("E2E-203", "Double VLAN", "tls_1_2_double_vlan.pcap"),
         ],
     )
     def test_cli_encapsulation_consistency(
@@ -256,7 +226,7 @@ class TestE2ECLIBlackbox:
         input_path = project_root / "tests" / "data" / "tls" / input_file
         output_path = tmp_path / f"{test_id}_cli_output.pcap"
 
-        result = self._run_cli_command(cli_executable, input_path, output_path, dedup=True, anon=True)
+        result = self._run_cli_command(cli_executable, input_path, output_path, dedup=False, anon=True, mask=True)
 
         # 3. Verify CLI succeeded
         assert result.returncode == 0, (
