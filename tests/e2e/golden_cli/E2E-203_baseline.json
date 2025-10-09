@@ -1,0 +1,14 @@
+{
+  "test_id": "E2E-203",
+  "name": "Double VLAN Encapsulation",
+  "input_file": "tests/data/tls/tls_1_2_double_vlan.pcap",
+  "input_hash": "55898583e179454d0f9dc220d0bfcb75f891415c819b773e0dd7178a641ba6bb",
+  "cli_args": [
+    "--anon",
+    "--mask"
+  ],
+  "output_hash": "40ffb9cb8a4ece3ac9f6b0203106ca9ba350887817cfa0b29fbcf0fda04f3ae2",
+  "timestamp": "2025-10-09T21:31:43.894396",
+  "version": "1.0-cli",
+  "note": "Generated using CLI only - completely decoupled from API"
+}

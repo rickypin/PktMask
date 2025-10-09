@@ -1,0 +1,15 @@
+{
+  "test_id": "E2E-103",
+  "name": "TLS 1.3 Protocol",
+  "input_file": "tests/data/tls/tls_1_3_0-RTT-2_22_23_mix.pcap",
+  "input_hash": "7f0eb211ffb44bb94d886f25a31e30f98079ac085efa3bb1482de09c7a59ffdb",
+  "cli_args": [
+    "--dedup",
+    "--anon",
+    "--mask"
+  ],
+  "output_hash": "afac65f2d708d572f37809e5a7d8a30125cbde215d9554e8092f8d78b16d38f0",
+  "timestamp": "2025-10-09T21:31:16.818679",
+  "version": "1.0-cli",
+  "note": "Generated using CLI only - completely decoupled from API"
+}

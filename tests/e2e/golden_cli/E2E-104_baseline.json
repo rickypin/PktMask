@@ -1,0 +1,15 @@
+{
+  "test_id": "E2E-104",
+  "name": "SSL 3.0 Protocol",
+  "input_file": "tests/data/tls/ssl_3.pcap",
+  "input_hash": "bcbcac47c47d082a28b9fe53208be6afb39f6131137c719224f1a599c0097a9d",
+  "cli_args": [
+    "--dedup",
+    "--anon",
+    "--mask"
+  ],
+  "output_hash": "08acf85e4a5800e486a2ccf59c1d09fb70bdd24440cd40ec50a23941ce2f9f2e",
+  "timestamp": "2025-10-09T21:31:17.827279",
+  "version": "1.0-cli",
+  "note": "Generated using CLI only - completely decoupled from API"
+}

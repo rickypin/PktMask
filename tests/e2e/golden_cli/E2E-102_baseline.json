@@ -1,0 +1,15 @@
+{
+  "test_id": "E2E-102",
+  "name": "TLS 1.2 Protocol",
+  "input_file": "tests/data/tls/tls_1_2-2.pcap",
+  "input_hash": "baf39e40187111119c0de19358b3c944a07489806231fd24e6ab922b678b3ded",
+  "cli_args": [
+    "--dedup",
+    "--anon",
+    "--mask"
+  ],
+  "output_hash": "842f73e19e66611188fa4827f93af6c8813e0978f1a9445a2dc80fac65f7958b",
+  "timestamp": "2025-10-09T21:31:15.800979",
+  "version": "1.0-cli",
+  "note": "Generated using CLI only - completely decoupled from API"
+}

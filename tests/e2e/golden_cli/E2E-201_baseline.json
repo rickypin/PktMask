@@ -1,0 +1,14 @@
+{
+  "test_id": "E2E-201",
+  "name": "Plain IP Encapsulation",
+  "input_file": "tests/data/tls/tls_1_2_plainip.pcap",
+  "input_hash": "61378b09ce12676b9d891e76f395c77956bf98750ab4055aba94959b88f1fe43",
+  "cli_args": [
+    "--anon",
+    "--mask"
+  ],
+  "output_hash": "bc22b060af129b3fa5b04487b2a31d3a27bf8d767430735591298457fa360aad",
+  "timestamp": "2025-10-09T21:31:29.875939",
+  "version": "1.0-cli",
+  "note": "Generated using CLI only - completely decoupled from API"
+}

@@ -14,11 +14,19 @@ Test Philosophy:
 - Only validates output file integrity (SHA256 hash)
 - Completely isolated from internal code changes
 - Tests the actual user interface (CLI)
+- Uses CLI-generated golden baselines (golden_cli/) for 100% decoupling
+
+Complete Decoupling:
+- Code: No internal imports ✅
+- Execution: subprocess CLI calls ✅
+- Validation: Only SHA256 hash ✅
+- Baselines: Generated via CLI ✅
+- Decoupling Level: 100% ✅
 
 Test Categories:
-- Core Functionality Combinations (E2E-CLI-001 to E2E-CLI-007)
-- Protocol Coverage (E2E-CLI-101 to E2E-CLI-106)
-- Encapsulation Types (E2E-CLI-201 to E2E-CLI-203)
+- Core Functionality Combinations (E2E-001 to E2E-007)
+- Protocol Coverage (E2E-101 to E2E-106)
+- Encapsulation Types (E2E-201 to E2E-203)
 """
 
 import hashlib
@@ -54,8 +62,8 @@ class TestE2ECLIBlackbox:
 
     @pytest.fixture(scope="class")
     def golden_baselines(self):
-        """Load all golden baselines"""
-        golden_dir = Path(__file__).parent / "golden"
+        """Load all CLI golden baselines (completely decoupled from API)"""
+        golden_dir = Path(__file__).parent / "golden_cli"
         baselines = {}
         for baseline_file in golden_dir.glob("*_baseline.json"):
             baseline = json.loads(baseline_file.read_text())

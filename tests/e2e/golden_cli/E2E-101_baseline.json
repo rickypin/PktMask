@@ -1,0 +1,15 @@
+{
+  "test_id": "E2E-101",
+  "name": "TLS 1.0 Protocol",
+  "input_file": "tests/data/tls/tls_1_0_multi_segment_google-https.pcap",
+  "input_hash": "d6108b59afc5fb7b2b14eb6237775b4853cca20444e657dae8f2913cda2cf940",
+  "cli_args": [
+    "--dedup",
+    "--anon",
+    "--mask"
+  ],
+  "output_hash": "bf915ea23a8fc8bd601e7224e9e5c942f012177d4f6374288298fb9c7ed1028e",
+  "timestamp": "2025-10-09T21:31:14.904336",
+  "version": "1.0-cli",
+  "note": "Generated using CLI only - completely decoupled from API"
+}

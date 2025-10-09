@@ -1,0 +1,13 @@
+{
+  "test_id": "E2E-003",
+  "name": "Mask Only",
+  "input_file": "tests/data/tls/tls_1_2-2.pcap",
+  "input_hash": "baf39e40187111119c0de19358b3c944a07489806231fd24e6ab922b678b3ded",
+  "cli_args": [
+    "--mask"
+  ],
+  "output_hash": "f638af03eb9dfae58fbf5a8757c2c0b0947bfa2803687d9e18f2ec92ed3b5b03",
+  "timestamp": "2025-10-09T21:31:09.354689",
+  "version": "1.0-cli",
+  "note": "Generated using CLI only - completely decoupled from API"
+}

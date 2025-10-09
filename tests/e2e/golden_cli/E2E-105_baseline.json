@@ -1,0 +1,15 @@
+{
+  "test_id": "E2E-105",
+  "name": "HTTP Protocol",
+  "input_file": "tests/samples/http-collector/http-download-good.pcap",
+  "input_hash": "86cd741eabb29592990817eb2799a40c7d6db826b2cc357db6d638f1dd7e5b54",
+  "cli_args": [
+    "--dedup",
+    "--anon",
+    "--mask"
+  ],
+  "output_hash": "ea8227090f2cc0b02560d662e5bff8f7dd3b4990d56decde1eb1dc77743c6757",
+  "timestamp": "2025-10-09T21:31:28.139742",
+  "version": "1.0-cli",
+  "note": "Generated using CLI only - completely decoupled from API"
+}

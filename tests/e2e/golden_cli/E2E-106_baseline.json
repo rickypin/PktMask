@@ -1,0 +1,15 @@
+{
+  "test_id": "E2E-106",
+  "name": "HTTP Error Response",
+  "input_file": "tests/samples/http-collector/http-500error.pcap",
+  "input_hash": "e575b9b1c4e82ad94992a1bdf69a103fd41569c2e8d59c365f50bb18c29cc4c9",
+  "cli_args": [
+    "--dedup",
+    "--anon",
+    "--mask"
+  ],
+  "output_hash": "197a26550aff56ee2ecad867f25915622beab877a762f324e0cc34093f551177",
+  "timestamp": "2025-10-09T21:31:28.940101",
+  "version": "1.0-cli",
+  "note": "Generated using CLI only - completely decoupled from API"
+}

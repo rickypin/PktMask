@@ -1,0 +1,14 @@
+{
+  "test_id": "E2E-004",
+  "name": "Dedup + Anonymize",
+  "input_file": "tests/data/tls/tls_1_2-2.pcap",
+  "input_hash": "baf39e40187111119c0de19358b3c944a07489806231fd24e6ab922b678b3ded",
+  "cli_args": [
+    "--dedup",
+    "--anon"
+  ],
+  "output_hash": "4871caf1e13175a7de0dfdaa5fe433f595145c2f5eb6acf954d245ee98c201ed",
+  "timestamp": "2025-10-09T21:31:09.716980",
+  "version": "1.0-cli",
+  "note": "Generated using CLI only - completely decoupled from API"
+}
