@@ -1,0 +1,35 @@
+{
+  "test_id": "E2E-203",
+  "name": "Double VLAN",
+  "input_file": "tests/data/tls/tls_1_2_double_vlan.pcap",
+  "input_hash": "55898583e179454d0f9dc220d0bfcb75f891415c819b773e0dd7178a641ba6bb",
+  "config": {
+    "dedup": false,
+    "anon": true,
+    "mask": true
+  },
+  "output_hash": "40ffb9cb8a4ece3ac9f6b0203106ca9ba350887817cfa0b29fbcf0fda04f3ae2",
+  "output_file_size": 384819,
+  "packet_count": 854,
+  "stats": {
+    "packets_processed": 854,
+    "packets_modified": 924,
+    "duration_ms": 4244.5690631866455,
+    "stages": [
+      {
+        "name": "AnonymizationStage",
+        "packets_processed": 854,
+        "packets_modified": 854,
+        "duration_ms": 392.61913299560547
+      },
+      {
+        "name": "Mask Payloads",
+        "packets_processed": 854,
+        "packets_modified": 70,
+        "duration_ms": 349.4598865509033
+      }
+    ]
+  },
+  "timestamp": "2025-10-09T19:40:14.959417",
+  "version": "1.0"
+}

@@ -1,0 +1,35 @@
+{
+  "test_id": "E2E-201",
+  "name": "Plain IP",
+  "input_file": "tests/data/tls/tls_1_2_plainip.pcap",
+  "input_hash": "61378b09ce12676b9d891e76f395c77956bf98750ab4055aba94959b88f1fe43",
+  "config": {
+    "dedup": false,
+    "anon": true,
+    "mask": true
+  },
+  "output_hash": "bc22b060af129b3fa5b04487b2a31d3a27bf8d767430735591298457fa360aad",
+  "output_file_size": 4717,
+  "packet_count": 22,
+  "stats": {
+    "packets_processed": 22,
+    "packets_modified": 24,
+    "duration_ms": 469.2378044128418,
+    "stages": [
+      {
+        "name": "AnonymizationStage",
+        "packets_processed": 22,
+        "packets_modified": 22,
+        "duration_ms": 9.369850158691406
+      },
+      {
+        "name": "Mask Payloads",
+        "packets_processed": 22,
+        "packets_modified": 2,
+        "duration_ms": 9.851694107055664
+      }
+    ]
+  },
+  "timestamp": "2025-10-09T19:40:01.869996",
+  "version": "1.0"
+}

@@ -1,0 +1,41 @@
+{
+  "test_id": "E2E-104",
+  "name": "SSL 3.0",
+  "input_file": "tests/data/tls/ssl_3.pcap",
+  "input_hash": "bcbcac47c47d082a28b9fe53208be6afb39f6131137c719224f1a599c0097a9d",
+  "config": {
+    "dedup": true,
+    "anon": true,
+    "mask": true
+  },
+  "output_hash": "08acf85e4a5800e486a2ccf59c1d09fb70bdd24440cd40ec50a23941ce2f9f2e",
+  "output_file_size": 86007,
+  "packet_count": 101,
+  "stats": {
+    "packets_processed": 101,
+    "packets_modified": 160,
+    "duration_ms": 550.6322383880615,
+    "stages": [
+      {
+        "name": "DeduplicationStage",
+        "packets_processed": 101,
+        "packets_modified": 0,
+        "duration_ms": 33.73908996582031
+      },
+      {
+        "name": "AnonymizationStage",
+        "packets_processed": 101,
+        "packets_modified": 101,
+        "duration_ms": 35.80975532531738
+      },
+      {
+        "name": "Mask Payloads",
+        "packets_processed": 101,
+        "packets_modified": 59,
+        "duration_ms": 42.762041091918945
+      }
+    ]
+  },
+  "timestamp": "2025-10-09T19:39:50.990424",
+  "version": "1.0"
+}

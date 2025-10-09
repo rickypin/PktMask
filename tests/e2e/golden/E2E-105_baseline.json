@@ -1,0 +1,41 @@
+{
+  "test_id": "E2E-105",
+  "name": "HTTP Download",
+  "input_file": "tests/samples/http-collector/http-download-good.pcap",
+  "input_hash": "86cd741eabb29592990817eb2799a40c7d6db826b2cc357db6d638f1dd7e5b54",
+  "config": {
+    "dedup": true,
+    "anon": true,
+    "mask": true
+  },
+  "output_hash": "ea8227090f2cc0b02560d662e5bff8f7dd3b4990d56decde1eb1dc77743c6757",
+  "output_file_size": 7207107,
+  "packet_count": 9354,
+  "stats": {
+    "packets_processed": 9354,
+    "packets_modified": 14137,
+    "duration_ms": 9728.943824768066,
+    "stages": [
+      {
+        "name": "DeduplicationStage",
+        "packets_processed": 9354,
+        "packets_modified": 0,
+        "duration_ms": 1301.5069961547852
+      },
+      {
+        "name": "AnonymizationStage",
+        "packets_processed": 9354,
+        "packets_modified": 9354,
+        "duration_ms": 3046.48494720459
+      },
+      {
+        "name": "Mask Payloads",
+        "packets_processed": 9354,
+        "packets_modified": 4783,
+        "duration_ms": 3315.1910305023193
+      }
+    ]
+  },
+  "timestamp": "2025-10-09T19:40:00.831563",
+  "version": "1.0"
+}

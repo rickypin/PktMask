@@ -1,0 +1,41 @@
+{
+  "test_id": "E2E-102",
+  "name": "TLS 1.2 Standard",
+  "input_file": "tests/data/tls/tls_1_2-2.pcap",
+  "input_hash": "baf39e40187111119c0de19358b3c944a07489806231fd24e6ab922b678b3ded",
+  "config": {
+    "dedup": true,
+    "anon": true,
+    "mask": true
+  },
+  "output_hash": "842f73e19e66611188fa4827f93af6c8813e0978f1a9445a2dc80fac65f7958b",
+  "output_file_size": 2721,
+  "packet_count": 14,
+  "stats": {
+    "packets_processed": 14,
+    "packets_modified": 15,
+    "duration_ms": 426.73516273498535,
+    "stages": [
+      {
+        "name": "DeduplicationStage",
+        "packets_processed": 14,
+        "packets_modified": 0,
+        "duration_ms": 2.541780471801758
+      },
+      {
+        "name": "AnonymizationStage",
+        "packets_processed": 14,
+        "packets_modified": 14,
+        "duration_ms": 5.757331848144531
+      },
+      {
+        "name": "Mask Payloads",
+        "packets_processed": 14,
+        "packets_modified": 1,
+        "duration_ms": 7.23576545715332
+      }
+    ]
+  },
+  "timestamp": "2025-10-09T19:39:49.690352",
+  "version": "1.0"
+}

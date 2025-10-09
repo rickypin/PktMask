@@ -1,0 +1,41 @@
+{
+  "test_id": "E2E-007",
+  "name": "All Features",
+  "input_file": "tests/data/tls/tls_1_2-2.pcap",
+  "input_hash": "baf39e40187111119c0de19358b3c944a07489806231fd24e6ab922b678b3ded",
+  "config": {
+    "dedup": true,
+    "anon": true,
+    "mask": true
+  },
+  "output_hash": "842f73e19e66611188fa4827f93af6c8813e0978f1a9445a2dc80fac65f7958b",
+  "output_file_size": 2721,
+  "packet_count": 14,
+  "stats": {
+    "packets_processed": 14,
+    "packets_modified": 15,
+    "duration_ms": 422.2090244293213,
+    "stages": [
+      {
+        "name": "DeduplicationStage",
+        "packets_processed": 14,
+        "packets_modified": 0,
+        "duration_ms": 2.4521350860595703
+      },
+      {
+        "name": "AnonymizationStage",
+        "packets_processed": 14,
+        "packets_modified": 14,
+        "duration_ms": 5.255937576293945
+      },
+      {
+        "name": "Mask Payloads",
+        "packets_processed": 14,
+        "packets_modified": 1,
+        "duration_ms": 6.859064102172852
+      }
+    ]
+  },
+  "timestamp": "2025-10-09T19:39:47.069590",
+  "version": "1.0"
+}

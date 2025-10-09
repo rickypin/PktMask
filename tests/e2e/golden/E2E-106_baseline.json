@@ -1,0 +1,41 @@
+{
+  "test_id": "E2E-106",
+  "name": "HTTP 500 Error",
+  "input_file": "tests/samples/http-collector/http-500error.pcap",
+  "input_hash": "e575b9b1c4e82ad94992a1bdf69a103fd41569c2e8d59c365f50bb18c29cc4c9",
+  "config": {
+    "dedup": true,
+    "anon": true,
+    "mask": true
+  },
+  "output_hash": "197a26550aff56ee2ecad867f25915622beab877a762f324e0cc34093f551177",
+  "output_file_size": 5639,
+  "packet_count": 12,
+  "stats": {
+    "packets_processed": 12,
+    "packets_modified": 17,
+    "duration_ms": 332.629919052124,
+    "stages": [
+      {
+        "name": "DeduplicationStage",
+        "packets_processed": 12,
+        "packets_modified": 0,
+        "duration_ms": 2.6998519897460938
+      },
+      {
+        "name": "AnonymizationStage",
+        "packets_processed": 12,
+        "packets_modified": 12,
+        "duration_ms": 5.589962005615234
+      },
+      {
+        "name": "Mask Payloads",
+        "packets_processed": 12,
+        "packets_modified": 5,
+        "duration_ms": 7.462978363037109
+      }
+    ]
+  },
+  "timestamp": "2025-10-09T19:40:01.271207",
+  "version": "1.0"
+}

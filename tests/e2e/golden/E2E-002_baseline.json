@@ -1,0 +1,29 @@
+{
+  "test_id": "E2E-002",
+  "name": "Anonymize Only",
+  "input_file": "tests/data/tls/tls_1_2-2.pcap",
+  "input_hash": "baf39e40187111119c0de19358b3c944a07489806231fd24e6ab922b678b3ded",
+  "config": {
+    "dedup": false,
+    "anon": true,
+    "mask": false
+  },
+  "output_hash": "4871caf1e13175a7de0dfdaa5fe433f595145c2f5eb6acf954d245ee98c201ed",
+  "output_file_size": 2721,
+  "packet_count": 14,
+  "stats": {
+    "packets_processed": 14,
+    "packets_modified": 14,
+    "duration_ms": 5.303144454956055,
+    "stages": [
+      {
+        "name": "AnonymizationStage",
+        "packets_processed": 14,
+        "packets_modified": 14,
+        "duration_ms": 5.232095718383789
+      }
+    ]
+  },
+  "timestamp": "2025-10-09T19:39:44.742426",
+  "version": "1.0"
+}

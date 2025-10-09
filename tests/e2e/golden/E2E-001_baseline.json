@@ -1,0 +1,29 @@
+{
+  "test_id": "E2E-001",
+  "name": "Dedup Only",
+  "input_file": "tests/data/tls/tls_1_2-2.pcap",
+  "input_hash": "baf39e40187111119c0de19358b3c944a07489806231fd24e6ab922b678b3ded",
+  "config": {
+    "dedup": true,
+    "anon": false,
+    "mask": false
+  },
+  "output_hash": "baf39e40187111119c0de19358b3c944a07489806231fd24e6ab922b678b3ded",
+  "output_file_size": 2721,
+  "packet_count": 14,
+  "stats": {
+    "packets_processed": 14,
+    "packets_modified": 0,
+    "duration_ms": 8.348941802978516,
+    "stages": [
+      {
+        "name": "DeduplicationStage",
+        "packets_processed": 14,
+        "packets_modified": 0,
+        "duration_ms": 7.904052734375
+      }
+    ]
+  },
+  "timestamp": "2025-10-09T19:39:44.736627",
+  "version": "1.0"
+}

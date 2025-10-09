@@ -1,0 +1,41 @@
+{
+  "test_id": "E2E-101",
+  "name": "TLS 1.0 Multi-Segment",
+  "input_file": "tests/data/tls/tls_1_0_multi_segment_google-https.pcap",
+  "input_hash": "d6108b59afc5fb7b2b14eb6237775b4853cca20444e657dae8f2913cda2cf940",
+  "config": {
+    "dedup": true,
+    "anon": true,
+    "mask": true
+  },
+  "output_hash": "bf915ea23a8fc8bd601e7224e9e5c942f012177d4f6374288298fb9c7ed1028e",
+  "output_file_size": 752703,
+  "packet_count": 1204,
+  "stats": {
+    "packets_processed": 1204,
+    "packets_modified": 1731,
+    "duration_ms": 1988.6517524719238,
+    "stages": [
+      {
+        "name": "DeduplicationStage",
+        "packets_processed": 1204,
+        "packets_modified": 0,
+        "duration_ms": 164.9758815765381
+      },
+      {
+        "name": "AnonymizationStage",
+        "packets_processed": 1204,
+        "packets_modified": 1204,
+        "duration_ms": 404.6800136566162
+      },
+      {
+        "name": "Mask Payloads",
+        "packets_processed": 1204,
+        "packets_modified": 527,
+        "duration_ms": 418.8358783721924
+      }
+    ]
+  },
+  "timestamp": "2025-10-09T19:39:49.160130",
+  "version": "1.0"
+}
