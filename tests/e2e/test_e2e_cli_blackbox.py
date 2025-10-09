@@ -31,12 +31,16 @@ Test Categories:
 
 import hashlib
 import json
+import logging
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Dict
 
 import pytest
+
+# Configure logger for CLI output capture
+logger = logging.getLogger(__name__)
 
 
 class TestE2ECLIBlackbox:
@@ -92,7 +96,7 @@ class TestE2ECLIBlackbox:
         anon: bool = False,
         mask: bool = False,
     ) -> subprocess.CompletedProcess:
-        """Run PktMask CLI command"""
+        """Run PktMask CLI command and capture output for pytest logs"""
 
         # Build command
         if cli_executable:
@@ -112,6 +116,9 @@ class TestE2ECLIBlackbox:
         if mask:
             cmd.append("--mask")
 
+        # Log command being executed
+        logger.info(f"Executing CLI command: {' '.join(cmd)}")
+
         # Run command
         result = subprocess.run(
             cmd,
@@ -119,6 +126,20 @@ class TestE2ECLIBlackbox:
             text=True,
             timeout=60,  # 60 second timeout
         )
+
+        # Log output to pytest capture (this will appear in HTML report)
+        if result.stdout:
+            logger.info(f"CLI STDOUT:\n{result.stdout}")
+            # Also print to ensure pytest captures it
+            print(f"\n=== CLI STDOUT ===\n{result.stdout}")
+
+        if result.stderr:
+            logger.warning(f"CLI STDERR:\n{result.stderr}")
+            # Also print to ensure pytest captures it
+            print(f"\n=== CLI STDERR ===\n{result.stderr}")
+
+        logger.info(f"CLI exit code: {result.returncode}")
+        print(f"\n=== CLI Exit Code: {result.returncode} ===")
 
         return result
 
@@ -140,12 +161,21 @@ class TestE2ECLIBlackbox:
         self, test_id, dedup, anon, mask, input_file, golden_baselines, project_root, cli_executable, tmp_path
     ):
         """Validate core functionality through CLI against golden baselines"""
+        logger.info(f"Starting test {test_id}: dedup={dedup}, anon={anon}, mask={mask}")
+        print(f"\n{'='*60}\nTest {test_id}: Core Functionality Test\n{'='*60}")
+
         # 1. Get golden baseline
         baseline = golden_baselines[test_id]
+        logger.info(f"Loaded baseline for {test_id}: expected hash={baseline['output_hash'][:16]}...")
 
         # 2. Run CLI command
         input_path = project_root / "tests" / "data" / "tls" / input_file
         output_path = tmp_path / f"{test_id}_cli_output.pcap"
+
+        # Get input file metrics
+        input_size = input_path.stat().st_size
+        logger.info(f"Input file: {input_path} ({input_size} bytes)")
+        print(f"Input:  {input_path} ({input_size:,} bytes)")
 
         result = self._run_cli_command(cli_executable, input_path, output_path, dedup, anon, mask)
 
@@ -154,17 +184,41 @@ class TestE2ECLIBlackbox:
             f"CLI command failed for {test_id}\n" f"STDOUT: {result.stdout}\n" f"STDERR: {result.stderr}"
         )
 
-        # 4. Verify output file exists
+        # 4. Verify output file exists and get metrics
         assert output_path.exists(), f"Output file not created for {test_id}"
+        output_size = output_path.stat().st_size
+
+        # Calculate size change
+        size_change = output_size - input_size
+        size_change_pct = (size_change / input_size * 100) if input_size > 0 else 0
+
+        logger.info(f"Output file created successfully: {output_size} bytes")
+        logger.info(f"Size change: {size_change:+d} bytes ({size_change_pct:+.2f}%)")
+
+        print(f"\n{'─'*60}")
+        print(f"📊 File Metrics:")
+        print(f"  Input size:   {input_size:>10,} bytes")
+        print(f"  Output size:  {output_size:>10,} bytes")
+        print(f"  Change:       {size_change:>+10,} bytes ({size_change_pct:+.2f}%)")
+        print(f"{'─'*60}\n")
 
         # 5. Verify output file hash (ONLY validation - pure blackbox)
         output_hash = self._calculate_file_hash(output_path)
+        logger.info(f"Calculated output hash: {output_hash[:16]}...")
+        print(f"🔐 Hash Verification:")
+        print(f"  Expected: {baseline['output_hash'][:16]}...")
+        print(f"  Actual:   {output_hash[:16]}...")
+
         assert output_hash == baseline["output_hash"], (
             f"CLI output inconsistent for {test_id}\n"
             f"Expected hash: {baseline['output_hash']}\n"
             f"Got hash: {output_hash}\n"
             f"This indicates the CLI output has changed from the baseline."
         )
+
+        logger.info(f"Test {test_id} PASSED: Hash matches baseline")
+        print(f"  Status:   ✅ MATCH\n")
+        print(f"✅ Test {test_id} PASSED\n")
 
     # ========== Protocol Coverage Tests ==========
 
@@ -183,8 +237,12 @@ class TestE2ECLIBlackbox:
         self, test_id, protocol, input_file, golden_baselines, project_root, cli_executable, tmp_path
     ):
         """Validate protocol coverage through CLI against golden baselines"""
+        logger.info(f"Starting test {test_id}: Protocol={protocol}")
+        print(f"\n{'='*60}\nTest {test_id}: Protocol Coverage - {protocol}\n{'='*60}")
+
         # 1. Get golden baseline
         baseline = golden_baselines[test_id]
+        logger.info(f"Loaded baseline for {test_id}: expected hash={baseline['output_hash'][:16]}...")
 
         # 2. Determine input path
         if input_file.startswith("http"):
@@ -194,6 +252,11 @@ class TestE2ECLIBlackbox:
 
         output_path = tmp_path / f"{test_id}_cli_output.pcap"
 
+        # Get input file metrics
+        input_size = input_path.stat().st_size
+        logger.info(f"Input file: {input_path} ({input_size} bytes)")
+        print(f"Input:  {input_path} ({input_size:,} bytes)")
+
         # 3. Run CLI with all features enabled
         result = self._run_cli_command(cli_executable, input_path, output_path, dedup=True, anon=True, mask=True)
 
@@ -202,16 +265,40 @@ class TestE2ECLIBlackbox:
             f"CLI command failed for {test_id} ({protocol})\n" f"STDOUT: {result.stdout}\n" f"STDERR: {result.stderr}"
         )
 
-        # 5. Verify output file exists
+        # 5. Verify output file exists and get metrics
         assert output_path.exists(), f"Output file not created for {test_id}"
+        output_size = output_path.stat().st_size
+
+        # Calculate size change
+        size_change = output_size - input_size
+        size_change_pct = (size_change / input_size * 100) if input_size > 0 else 0
+
+        logger.info(f"Output file created successfully: {output_size} bytes")
+        logger.info(f"Size change: {size_change:+d} bytes ({size_change_pct:+.2f}%)")
+
+        print(f"\n{'─'*60}")
+        print(f"📊 File Metrics ({protocol}):")
+        print(f"  Input size:   {input_size:>10,} bytes")
+        print(f"  Output size:  {output_size:>10,} bytes")
+        print(f"  Change:       {size_change:>+10,} bytes ({size_change_pct:+.2f}%)")
+        print(f"{'─'*60}\n")
 
         # 6. Verify output file hash (ONLY validation - pure blackbox)
         output_hash = self._calculate_file_hash(output_path)
+        logger.info(f"Calculated output hash: {output_hash[:16]}...")
+        print(f"🔐 Hash Verification:")
+        print(f"  Expected: {baseline['output_hash'][:16]}...")
+        print(f"  Actual:   {output_hash[:16]}...")
+
         assert output_hash == baseline["output_hash"], (
             f"CLI output inconsistent for {test_id} ({protocol})\n"
             f"Expected hash: {baseline['output_hash']}\n"
             f"Got hash: {output_hash}"
         )
+
+        logger.info(f"Test {test_id} PASSED: Hash matches baseline")
+        print(f"  Status:   ✅ MATCH\n")
+        print(f"✅ Test {test_id} PASSED\n")
 
     # ========== Encapsulation Type Tests ==========
 
@@ -227,12 +314,21 @@ class TestE2ECLIBlackbox:
         self, test_id, encap_type, input_file, golden_baselines, project_root, cli_executable, tmp_path
     ):
         """Validate encapsulation types through CLI against golden baselines"""
+        logger.info(f"Starting test {test_id}: Encapsulation={encap_type}")
+        print(f"\n{'='*60}\nTest {test_id}: Encapsulation - {encap_type}\n{'='*60}")
+
         # 1. Get golden baseline
         baseline = golden_baselines[test_id]
+        logger.info(f"Loaded baseline for {test_id}: expected hash={baseline['output_hash'][:16]}...")
 
         # 2. Run CLI command
         input_path = project_root / "tests" / "data" / "tls" / input_file
         output_path = tmp_path / f"{test_id}_cli_output.pcap"
+
+        # Get input file metrics
+        input_size = input_path.stat().st_size
+        logger.info(f"Input file: {input_path} ({input_size} bytes)")
+        print(f"Input:  {input_path} ({input_size:,} bytes)")
 
         result = self._run_cli_command(cli_executable, input_path, output_path, dedup=False, anon=True, mask=True)
 
@@ -241,13 +337,37 @@ class TestE2ECLIBlackbox:
             f"CLI command failed for {test_id} ({encap_type})\n" f"STDOUT: {result.stdout}\n" f"STDERR: {result.stderr}"
         )
 
-        # 4. Verify output file exists
+        # 4. Verify output file exists and get metrics
         assert output_path.exists(), f"Output file not created for {test_id}"
+        output_size = output_path.stat().st_size
+
+        # Calculate size change
+        size_change = output_size - input_size
+        size_change_pct = (size_change / input_size * 100) if input_size > 0 else 0
+
+        logger.info(f"Output file created successfully: {output_size} bytes")
+        logger.info(f"Size change: {size_change:+d} bytes ({size_change_pct:+.2f}%)")
+
+        print(f"\n{'─'*60}")
+        print(f"📊 File Metrics ({encap_type}):")
+        print(f"  Input size:   {input_size:>10,} bytes")
+        print(f"  Output size:  {output_size:>10,} bytes")
+        print(f"  Change:       {size_change:>+10,} bytes ({size_change_pct:+.2f}%)")
+        print(f"{'─'*60}\n")
 
         # 5. Verify output file hash (ONLY validation - pure blackbox)
         output_hash = self._calculate_file_hash(output_path)
+        logger.info(f"Calculated output hash: {output_hash[:16]}...")
+        print(f"🔐 Hash Verification:")
+        print(f"  Expected: {baseline['output_hash'][:16]}...")
+        print(f"  Actual:   {output_hash[:16]}...")
+
         assert output_hash == baseline["output_hash"], (
             f"CLI output inconsistent for {test_id} ({encap_type})\n"
             f"Expected hash: {baseline['output_hash']}\n"
             f"Got hash: {output_hash}"
         )
+
+        logger.info(f"Test {test_id} PASSED: Hash matches baseline")
+        print(f"  Status:   ✅ MATCH\n")
+        print(f"✅ Test {test_id} PASSED\n")
