@@ -1,27 +1,27 @@
 {
-  "timestamp": "2025-10-09T21:05:43.681393",
+  "timestamp": "2025-10-09T21:34:55.872354",
   "summary": {
-    "total": 16,
-    "passed": 10,
+    "total": 32,
+    "passed": 32,
     "failed": 0,
-    "skipped": 6,
-    "total_duration": 11.06470220600022,
-    "average_duration": 0.6915438878750138
+    "skipped": 0,
+    "total_duration": 67.2873724580204,
+    "average_duration": 2.1027303893131375
   },
   "categories": {
     "core_functionality": {
-      "total": 7,
-      "passed": 7,
+      "total": 14,
+      "passed": 14,
       "failed": 0
     },
     "protocol_coverage": {
-      "total": 6,
-      "passed": 3,
+      "total": 12,
+      "passed": 12,
       "failed": 0
     },
     "encapsulation": {
-      "total": 3,
-      "passed": 0,
+      "total": 6,
+      "passed": 6,
       "failed": 0
     }
   },
@@ -30,113 +30,225 @@
       "test_id": "E2E-001",
       "test_name": "test_cli_core_functionality_consistency[E2E-001-True-False-False-tls_1_2-2.pcap]",
       "outcome": "passed",
-      "duration": 0.4103700830019079,
-      "timestamp": "2025-10-09T21:05:33.005964"
+      "duration": 0.38767241700406885,
+      "timestamp": "2025-10-09T21:33:48.930358"
     },
     {
       "test_id": "E2E-002",
       "test_name": "test_cli_core_functionality_consistency[E2E-002-False-True-False-tls_1_2-2.pcap]",
       "outcome": "passed",
-      "duration": 0.35040804099844536,
-      "timestamp": "2025-10-09T21:05:33.357551"
+      "duration": 0.36714458400092553,
+      "timestamp": "2025-10-09T21:33:49.298664"
     },
     {
       "test_id": "E2E-003",
       "test_name": "test_cli_core_functionality_consistency[E2E-003-False-False-True-tls_1_2-2.pcap]",
       "outcome": "passed",
-      "duration": 1.1344102499933797,
-      "timestamp": "2025-10-09T21:05:34.493080"
+      "duration": 1.191604459003429,
+      "timestamp": "2025-10-09T21:33:50.491345"
     },
     {
       "test_id": "E2E-004",
       "test_name": "test_cli_core_functionality_consistency[E2E-004-True-True-False-tls_1_2-2.pcap]",
       "outcome": "passed",
-      "duration": 0.3573090419959044,
-      "timestamp": "2025-10-09T21:05:34.851516"
+      "duration": 0.3638117080045049,
+      "timestamp": "2025-10-09T21:33:50.856222"
     },
     {
       "test_id": "E2E-005",
       "test_name": "test_cli_core_functionality_consistency[E2E-005-True-False-True-tls_1_2-2.pcap]",
       "outcome": "passed",
-      "duration": 0.8769949170018663,
-      "timestamp": "2025-10-09T21:05:35.729752"
+      "duration": 0.8930066670000087,
+      "timestamp": "2025-10-09T21:33:51.750282"
     },
     {
       "test_id": "E2E-006",
       "test_name": "test_cli_core_functionality_consistency[E2E-006-False-True-True-tls_1_2-2.pcap]",
       "outcome": "passed",
-      "duration": 0.8854517080035293,
-      "timestamp": "2025-10-09T21:05:36.616437"
+      "duration": 0.897448333002103,
+      "timestamp": "2025-10-09T21:33:52.648813"
     },
     {
       "test_id": "E2E-007",
       "test_name": "test_cli_core_functionality_consistency[E2E-007-True-True-True-tls_1_2-2.pcap]",
       "outcome": "passed",
-      "duration": 0.9342407080039266,
-      "timestamp": "2025-10-09T21:05:37.551812"
+      "duration": 0.9340333750005811,
+      "timestamp": "2025-10-09T21:33:53.583935"
     },
     {
       "test_id": "E2E-101",
       "test_name": "test_cli_protocol_coverage_consistency[E2E-101-TLS 1.0-tls_1_0_multi_segment_google-https.pcap]",
-      "outcome": "skipped",
-      "duration": 0.10568849999981467,
-      "timestamp": "2025-10-09T21:05:37.658937"
+      "outcome": "passed",
+      "duration": 2.511180667002918,
+      "timestamp": "2025-10-09T21:33:56.096171"
     },
     {
       "test_id": "E2E-102",
       "test_name": "test_cli_protocol_coverage_consistency[E2E-102-TLS 1.2-tls_1_2-2.pcap]",
       "outcome": "passed",
-      "duration": 0.8946768329988117,
-      "timestamp": "2025-10-09T21:05:38.554627"
+      "duration": 0.9042873750004219,
+      "timestamp": "2025-10-09T21:33:57.001539"
     },
     {
       "test_id": "E2E-103",
       "test_name": "test_cli_protocol_coverage_consistency[E2E-103-TLS 1.3-tls_1_3_0-RTT-2_22_23_mix.pcap]",
       "outcome": "passed",
-      "duration": 1.0128705419992912,
-      "timestamp": "2025-10-09T21:05:39.568604"
+      "duration": 1.027810708998004,
+      "timestamp": "2025-10-09T21:33:58.030459"
     },
     {
       "test_id": "E2E-104",
       "test_name": "test_cli_protocol_coverage_consistency[E2E-104-SSL 3.0-ssl_3.pcap]",
       "outcome": "passed",
-      "duration": 1.0033183339983225,
-      "timestamp": "2025-10-09T21:05:40.572967"
+      "duration": 1.0230064159986796,
+      "timestamp": "2025-10-09T21:33:59.054515"
     },
     {
       "test_id": "E2E-105",
       "test_name": "test_cli_protocol_coverage_consistency[E2E-105-HTTP-http-download-good.pcap]",
-      "outcome": "skipped",
-      "duration": 0.10594920800213004,
-      "timestamp": "2025-10-09T21:05:40.680358"
+      "outcome": "passed",
+      "duration": 10.328150749999622,
+      "timestamp": "2025-10-09T21:34:09.383808"
     },
     {
       "test_id": "E2E-106",
       "test_name": "test_cli_protocol_coverage_consistency[E2E-106-HTTP Error-http-500error.pcap]",
-      "outcome": "skipped",
-      "duration": 0.10430854200239992,
-      "timestamp": "2025-10-09T21:05:40.786040"
+      "outcome": "passed",
+      "duration": 0.8106273750017863,
+      "timestamp": "2025-10-09T21:34:10.195517"
     },
     {
       "test_id": "E2E-201",
       "test_name": "test_cli_encapsulation_consistency[E2E-201-Plain IP-tls_1_2_plainip.pcap]",
-      "outcome": "skipped",
-      "duration": 0.36456941600044956,
-      "timestamp": "2025-10-09T21:05:41.151915"
+      "outcome": "passed",
+      "duration": 0.9146804589981912,
+      "timestamp": "2025-10-09T21:34:11.111229"
     },
     {
       "test_id": "E2E-202",
       "test_name": "test_cli_encapsulation_consistency[E2E-202-Single VLAN-tls_1_2_single_vlan.pcap]",
-      "outcome": "skipped",
-      "duration": 1.5969304160025786,
-      "timestamp": "2025-10-09T21:05:42.750171"
+      "outcome": "passed",
+      "duration": 9.241235374996904,
+      "timestamp": "2025-10-09T21:34:20.353603"
     },
     {
       "test_id": "E2E-203",
       "test_name": "test_cli_encapsulation_consistency[E2E-203-Double VLAN-tls_1_2_double_vlan.pcap]",
-      "outcome": "skipped",
-      "duration": 0.9272056659974623,
-      "timestamp": "2025-10-09T21:05:43.678676"
+      "outcome": "passed",
+      "duration": 4.737413165996259,
+      "timestamp": "2025-10-09T21:34:25.092154"
+    },
+    {
+      "test_id": "E2E-001",
+      "test_name": "test_core_functionality_consistency[E2E-001-config0-tls_1_2-2.pcap]",
+      "outcome": "passed",
+      "duration": 0.21014850000210572,
+      "timestamp": "2025-10-09T21:34:25.306823"
+    },
+    {
+      "test_id": "E2E-002",
+      "test_name": "test_core_functionality_consistency[E2E-002-config1-tls_1_2-2.pcap]",
+      "outcome": "passed",
+      "duration": 0.0060688330049742945,
+      "timestamp": "2025-10-09T21:34:25.313569"
+    },
+    {
+      "test_id": "E2E-003",
+      "test_name": "test_core_functionality_consistency[E2E-003-config2-tls_1_2-2.pcap]",
+      "outcome": "passed",
+      "duration": 0.5450961669994285,
+      "timestamp": "2025-10-09T21:34:25.859275"
+    },
+    {
+      "test_id": "E2E-004",
+      "test_name": "test_core_functionality_consistency[E2E-004-config3-tls_1_2-2.pcap]",
+      "outcome": "passed",
+      "duration": 0.01009337499999674,
+      "timestamp": "2025-10-09T21:34:25.870244"
+    },
+    {
+      "test_id": "E2E-005",
+      "test_name": "test_core_functionality_consistency[E2E-005-config4-tls_1_2-2.pcap]",
+      "outcome": "passed",
+      "duration": 0.5403027499996824,
+      "timestamp": "2025-10-09T21:34:26.411188"
+    },
+    {
+      "test_id": "E2E-006",
+      "test_name": "test_core_functionality_consistency[E2E-006-config5-tls_1_2-2.pcap]",
+      "outcome": "passed",
+      "duration": 0.5404782910045469,
+      "timestamp": "2025-10-09T21:34:26.952594"
+    },
+    {
+      "test_id": "E2E-007",
+      "test_name": "test_core_functionality_consistency[E2E-007-config6-tls_1_2-2.pcap]",
+      "outcome": "passed",
+      "duration": 0.5461057919965242,
+      "timestamp": "2025-10-09T21:34:27.499721"
+    },
+    {
+      "test_id": "E2E-101",
+      "test_name": "test_protocol_coverage_consistency[E2E-101-TLS 1.0-tls_1_0_multi_segment_google-https.pcap]",
+      "outcome": "passed",
+      "duration": 2.181246624997584,
+      "timestamp": "2025-10-09T21:34:29.681853"
+    },
+    {
+      "test_id": "E2E-102",
+      "test_name": "test_protocol_coverage_consistency[E2E-102-TLS 1.2-tls_1_2-2.pcap]",
+      "outcome": "passed",
+      "duration": 0.5475038750009844,
+      "timestamp": "2025-10-09T21:34:30.230701"
+    },
+    {
+      "test_id": "E2E-103",
+      "test_name": "test_protocol_coverage_consistency[E2E-103-TLS 1.3-tls_1_3_0-RTT-2_22_23_mix.pcap]",
+      "outcome": "passed",
+      "duration": 0.6736958749970654,
+      "timestamp": "2025-10-09T21:34:30.905374"
+    },
+    {
+      "test_id": "E2E-104",
+      "test_name": "test_protocol_coverage_consistency[E2E-104-SSL 3.0-ssl_3.pcap]",
+      "outcome": "passed",
+      "duration": 0.654841875002603,
+      "timestamp": "2025-10-09T21:34:31.561176"
+    },
+    {
+      "test_id": "E2E-105",
+      "test_name": "test_protocol_coverage_consistency[E2E-105-HTTP-http-download-good.pcap]",
+      "outcome": "passed",
+      "duration": 9.910602415999165,
+      "timestamp": "2025-10-09T21:34:41.472832"
+    },
+    {
+      "test_id": "E2E-106",
+      "test_name": "test_protocol_coverage_consistency[E2E-106-HTTP Error-http-500error.pcap]",
+      "outcome": "passed",
+      "duration": 0.4503466660025879,
+      "timestamp": "2025-10-09T21:34:41.928297"
+    },
+    {
+      "test_id": "E2E-201",
+      "test_name": "test_encapsulation_consistency[E2E-201-Plain IP-tls_1_2_plainip.pcap]",
+      "outcome": "passed",
+      "duration": 0.5568919580036891,
+      "timestamp": "2025-10-09T21:34:42.486198"
+    },
+    {
+      "test_id": "E2E-202",
+      "test_name": "test_encapsulation_consistency[E2E-202-Single VLAN-tls_1_2_single_vlan.pcap]",
+      "outcome": "passed",
+      "duration": 8.946073334001994,
+      "timestamp": "2025-10-09T21:34:51.433350"
+    },
+    {
+      "test_id": "E2E-203",
+      "test_name": "test_encapsulation_consistency[E2E-203-Double VLAN-tls_1_2_double_vlan.pcap]",
+      "outcome": "passed",
+      "duration": 4.4347622909990605,
+      "timestamp": "2025-10-09T21:34:55.870198"
     }
   ]
 }
