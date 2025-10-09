@@ -1,7 +1,42 @@
 # PktMask 端到端测试 (E2E Tests)
 
-> **目标**: 确保重构、更新后功能一致性  
+> **目标**: 确保重构、更新后功能一致性
 > **方法**: 黄金文件测试法 (Golden File Testing)
+> **架构**: 双层测试 - CLI黑盒测试(完全解耦) + API白盒测试(详细验证)
+
+---
+
+## 🏗️ 测试架构
+
+本框架采用**双层测试架构**,提供不同级别的验证:
+
+### Level 1: CLI黑盒测试 (完全解耦) 🔒
+
+- **文件**: `test_e2e_cli_blackbox.py`
+- **方法**: 通过CLI subprocess调用
+- **验证**: 仅输出文件SHA256哈希
+- **耦合**: 零耦合,完全黑盒
+- **目的**: 确保用户接口稳定性
+- **优势**: 不受内部代码重构影响
+
+### Level 2: API白盒测试 (详细验证) 📊
+
+- **文件**: `test_e2e_golden_validation.py`
+- **方法**: 直接调用ConsistentProcessor API
+- **验证**: 详细指标(hash, 包数, 阶段统计等)
+- **耦合**: 依赖API接口和数据结构
+- **目的**: 详细的回归验证和调试
+- **优势**: 提供丰富的调试信息
+
+### 测试对比
+
+| 方面 | CLI黑盒测试 | API白盒测试 |
+|------|------------|------------|
+| **验证指标** | 1个(文件哈希) | 10+个(哈希+详细统计) |
+| **测试速度** | 较慢(进程启动) | 较快(直接调用) |
+| **调试信息** | 少(仅CLI输出) | 多(详细内部指标) |
+| **隔离程度** | 完全隔离 | 中度耦合 |
+| **用户真实性** | 高(测试实际CLI) | 中(测试API) |
 
 ---
 
@@ -13,7 +48,7 @@
 # 激活虚拟环境
 source venv/bin/activate
 
-# 运行所有测试并生成HTML报告（自动在浏览器中打开）
+# 运行所有测试(CLI黑盒 + API白盒)并生成HTML报告
 ./tests/e2e/run_e2e_tests.sh --all --open
 
 # 只运行核心功能测试
@@ -33,6 +68,22 @@ source venv/bin/activate
 ```
 
 ### 🔧 方式二：使用pytest命令
+
+#### 运行不同测试层
+
+```bash
+# 1. 只运行CLI黑盒测试(完全解耦,快速验证用户接口)
+pytest tests/e2e/test_e2e_cli_blackbox.py -v
+
+# 2. 只运行API白盒测试(详细验证,丰富调试信息)
+pytest tests/e2e/test_e2e_golden_validation.py -v
+
+# 3. 运行所有E2E测试(CLI黑盒 + API白盒)
+pytest tests/e2e/ -v
+
+# 4. 生成HTML报告
+pytest tests/e2e/ -v --html=tests/e2e/report.html --self-contained-html
+```
 
 #### 前置条件
 
