@@ -2,10 +2,13 @@
 Windows subprocess utilities to prevent cmd window popup
 """
 
+import logging
 import platform
 import subprocess
 from pathlib import Path
 from typing import Dict, List, Optional, Union
+
+logger = logging.getLogger(__name__)
 
 
 def get_subprocess_creation_flags() -> int:
@@ -121,6 +124,65 @@ def run_editcap_command(
     return run_hidden_subprocess(cmd=cmd, timeout=timeout, check=True, **kwargs)
 
 
+def calculate_tshark_timeout(pcap_path: Optional[Union[str, Path]] = None, operation: str = "scan") -> float:
+    """
+    Calculate appropriate timeout for TShark operation based on file size.
+
+    Args:
+        pcap_path: Path to PCAP file (optional, used for file-size-based calculation)
+        operation: Type of operation:
+            - 'version': Version check (10s)
+            - 'protocol': Protocol list (30s)
+            - 'test': Quick test operation (10s)
+            - 'scan': PCAP scanning (60s-600s based on file size)
+            - 'analyze': Flow analysis (60s-600s based on file size)
+
+    Returns:
+        Timeout in seconds
+
+    Examples:
+        >>> calculate_tshark_timeout(operation="version")
+        10.0
+        >>> calculate_tshark_timeout("small.pcap", "scan")  # <10MB
+        60.0
+        >>> calculate_tshark_timeout("large.pcap", "scan")  # >100MB
+        600.0
+    """
+    # Quick operations with fixed timeouts
+    if operation == "version":
+        return 10.0
+    elif operation == "protocol":
+        return 30.0
+    elif operation == "test":
+        return 10.0
+
+    # File-based operations - calculate based on file size
+    if pcap_path is None:
+        logger.warning(f"No PCAP path provided for operation '{operation}', using default timeout")
+        return 300.0  # Default 5 minutes
+
+    try:
+        file_size_bytes = Path(pcap_path).stat().st_size
+        file_size_mb = file_size_bytes / (1024 * 1024)
+
+        # Dynamic timeout based on file size
+        if file_size_mb < 10:
+            timeout = 60.0  # 1 minute for small files
+        elif file_size_mb < 100:
+            timeout = 300.0  # 5 minutes for medium files
+        else:
+            timeout = 600.0  # 10 minutes for large files
+
+        logger.debug(
+            f"Calculated TShark timeout: file_size={file_size_mb:.2f}MB, " f"operation={operation}, timeout={timeout}s"
+        )
+        return timeout
+
+    except (OSError, FileNotFoundError) as e:
+        logger.warning(f"Cannot determine file size for {pcap_path}: {e}, using default timeout")
+        return 300.0  # Default 5 minutes on error
+
+
 def open_directory_hidden(directory: Union[str, Path]) -> bool:
     """
     Open directory in system file manager without showing cmd window.
@@ -131,11 +193,8 @@ def open_directory_hidden(directory: Union[str, Path]) -> bool:
     Returns:
         Whether successfully opened
     """
-    import logging
-
     from ..common.constants import SystemConstants
 
-    logger = logging.getLogger(__name__)
     directory = Path(directory)
 
     if not directory.exists() or not directory.is_dir():

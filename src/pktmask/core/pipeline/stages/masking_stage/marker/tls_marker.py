@@ -180,7 +180,7 @@ class TLSProtocolMarker(ProtocolMarker):
 
         try:
             # Use hidden subprocess to prevent cmd window popup on Windows
-            from ......utils.subprocess_utils import run_hidden_subprocess
+            from ......utils.subprocess_utils import calculate_tshark_timeout, run_hidden_subprocess
 
             completed = run_hidden_subprocess(
                 [executable, "-v"],
@@ -189,9 +189,12 @@ class TLSProtocolMarker(ProtocolMarker):
                 capture_output=True,
                 encoding="utf-8",
                 errors="replace",
+                timeout=calculate_tshark_timeout(operation="version"),
             )
         except (subprocess.CalledProcessError, FileNotFoundError) as exc:
             raise RuntimeError(f"无法执行 tshark '{executable}': {exc}") from exc
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError(f"tshark version check timeout after {exc.timeout}s") from exc
 
         version = self._parse_tshark_version(completed.stdout + completed.stderr)
         if version is None:
@@ -373,7 +376,11 @@ class TLSProtocolMarker(ProtocolMarker):
 
         try:
             # Use hidden subprocess to prevent cmd window popup on Windows
-            from ......utils.subprocess_utils import run_hidden_subprocess
+            from ......utils.subprocess_utils import calculate_tshark_timeout, run_hidden_subprocess
+
+            # Calculate timeout based on file size
+            timeout = calculate_tshark_timeout(pcap_path, operation="scan")
+            self.logger.debug(f"TLS scan timeout set to {timeout}s for {pcap_path}")
 
             # 执行第一阶段扫描
             completed_reassembled = run_hidden_subprocess(
@@ -383,6 +390,7 @@ class TLSProtocolMarker(ProtocolMarker):
                 capture_output=True,
                 encoding="utf-8",
                 errors="replace",
+                timeout=timeout,
             )
             packets_reassembled = json.loads(completed_reassembled.stdout)
 
@@ -394,9 +402,12 @@ class TLSProtocolMarker(ProtocolMarker):
                 capture_output=True,
                 encoding="utf-8",
                 errors="replace",
+                timeout=timeout,
             )
             packets_segments = json.loads(completed_segments.stdout)
 
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError(f"TLS scan timeout after {exc.timeout}s for file {pcap_path}") from exc
         except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
             raise RuntimeError(f"TLS消息扫描失败: {exc}") from exc
 
@@ -613,7 +624,10 @@ class TLSProtocolMarker(ProtocolMarker):
 
         try:
             # Use hidden subprocess to prevent cmd window popup on Windows
-            from ......utils.subprocess_utils import run_hidden_subprocess
+            from ......utils.subprocess_utils import calculate_tshark_timeout, run_hidden_subprocess
+
+            # Use analyze timeout for flow analysis
+            timeout = calculate_tshark_timeout(pcap_path, operation="analyze")
 
             completed = run_hidden_subprocess(
                 cmd,
@@ -622,8 +636,12 @@ class TLSProtocolMarker(ProtocolMarker):
                 capture_output=True,
                 encoding="utf-8",
                 errors="replace",
+                timeout=timeout,
             )
             packets = json.loads(completed.stdout)
+        except subprocess.TimeoutExpired:
+            self.logger.warning(f"TCP flow analysis timeout (stream {stream_id})")
+            return None
         except (subprocess.CalledProcessError, json.JSONDecodeError):
             self.logger.warning(f"TCP flow analysis failed (stream {stream_id})")
             return None
