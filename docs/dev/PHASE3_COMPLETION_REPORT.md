@@ -1,8 +1,8 @@
 # Phase 3 Completion Report: UIManager Removal
 
-**Date**: 2025-10-10  
-**Branch**: `refactor-remove-managers`  
-**Commit**: 76ce48b
+**Date**: 2025-10-10
+**Branch**: `refactor-remove-managers`
+**Commit**: ccf3c09 (final), c97d871 (fixes), 76ce48b (initial)
 
 ---
 
@@ -84,6 +84,26 @@ self._show_initial_guides()
 All methods were automatically transformed:
 - `self.main_window.` → `self.`
 - `QAction("...", self.main_window)` → `QAction("...", self)`
+
+#### 3. Fixed Issues (Commit c97d871 & ccf3c09)
+**Missing Imports**:
+- Added `QIcon`, `QFont`, `QEasingCurve` to imports
+- Added `resource_path` and `generate_stylesheet` imports
+
+**Method Name Conflicts**:
+- Renamed UIManager's `_connect_signals()` to `_connect_ui_signals()` to avoid conflict with internal signal connections
+
+**Duplicate Methods**:
+- Removed duplicate method definitions that were both in UIManager code and MainWindow delegation code
+
+**Recursive Calls**:
+- Fixed `_update_path_link_styles()` - was calling itself instead of `_get_path_link_style()`
+- Fixed `_update_start_button_style()` - was calling itself instead of implementing the logic
+
+**References in Other Managers**:
+- Updated `DialogsManager.choose_input_folder()` to call `self.main_window._update_start_button_state()` directly
+- Updated `PipelineManager` to call `self.main_window._update_start_button_style()` directly (2 locations)
+- Removed UIManager from `managers/__init__.py` imports and `__all__`
 
 ---
 
