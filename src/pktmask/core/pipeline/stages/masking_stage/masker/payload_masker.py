@@ -223,10 +223,14 @@ class PayloadMasker:
 
             # 性能监控
             if self.enable_performance_monitoring:
-                import psutil
+                try:
+                    import psutil
 
-                process = psutil.Process()
-                process.memory_info().rss
+                    process = psutil.Process()
+                    process.memory_info().rss
+                except ImportError:
+                    self.logger.debug("psutil not available, performance monitoring disabled")
+                    pass
 
             # Use unified buffer management
             packet_buffer = self.resource_manager.create_buffer("packet_buffer")

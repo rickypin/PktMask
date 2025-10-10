@@ -24,21 +24,14 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "scapy>=2.5.0,<3.0.0",  # Core packet processing
-    "PyQt6>=6.4.0",
-    "PyQt6-Qt6>=6.4.0",
-    "PyQt6_sip>=13.0.0",
-    "markdown>=3.4.0",
-    "jinja2>=3.1.0",
-    "MarkupSafe>=3.0.2",
-    "packaging>=25.0",
-    "setuptools>=80.9.0",
-    "pydantic>=2.0.0",
-    "PyYAML>=6.0.0",
-    "psutil>=5.9.0",
-    "toml>=0.10.2",
-    "typer>=0.9.0",
-    "typing-extensions>=4.0.0;python_version<'3.10'"
+    "scapy>=2.5.0,<3.0.0",      # Core packet processing
+    "PyQt6>=6.4.0",             # GUI framework (includes PyQt6-Qt6 and PyQt6_sip)
+    "markdown>=3.4.0",          # User guide rendering
+    "jinja2>=3.1.0",            # HTML report templates (includes MarkupSafe)
+    "pydantic>=2.0.0",          # Configuration validation
+    "PyYAML>=6.0.0",            # YAML configuration files
+    "typer>=0.9.0",             # CLI framework
+    "typing-extensions>=4.0.0;python_version<'3.10'"  # Type hints backport
 ]
 
 [project.optional-dependencies]
@@ -66,9 +59,9 @@ build = [
     "altgraph",
     "macholib"
 ]
-performance = [  # 新增性能监控组，从子包合并
-    "psutil>=5.9.0",
-    "memory-profiler>=0.60.0"
+performance = [  # Performance monitoring (optional)
+    "psutil>=5.9.0",            # System resource monitoring
+    "memory-profiler>=0.60.0"   # Memory profiling
 ]
 
 [project.urls]
