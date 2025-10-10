@@ -2339,7 +2339,7 @@ class MainWindow(QMainWindow):
                 os.environ.get("QT_QPA_PLATFORM") == "offscreen"  # Headless mode
                 or os.environ.get("PYTEST_CURRENT_TEST") is not None  # pytest environment
                 or os.environ.get("CI") == "true"  # CI environment
-                or hasattr(self.main_window, "_test_mode")  # Test mode flag
+                or hasattr(self, "_test_mode")  # Test mode flag
             )
 
             if is_automated_test:
@@ -2384,11 +2384,11 @@ class MainWindow(QMainWindow):
         """Send non-blocking error notification (for automated testing)"""
         try:
             # Can send status bar message, log update or other non-blocking notifications
-            if hasattr(self.main_window, "statusBar"):
+            if hasattr(self, "statusBar"):
                 self.statusBar().showMessage(f"Error: {error_message}", 5000)
 
             # Emit error signal for test listening
-            if hasattr(self.main_window, "error_occurred"):
+            if hasattr(self, "error_occurred"):
                 self.error_occurred.emit(error_message)
 
         except Exception as e:
@@ -2667,11 +2667,11 @@ class MainWindow(QMainWindow):
 
         # Generate processing options identifier
         enabled_steps = []
-        if hasattr(self.main_window, "anonymize_ips_cb") and self.anonymize_ips_cb.isChecked():
+        if hasattr(self, "anonymize_ips_cb") and self.anonymize_ips_cb.isChecked():
             enabled_steps.append("MaskIP")
-        if hasattr(self.main_window, "remove_dupes_cb") and self.remove_dupes_cb.isChecked():
+        if hasattr(self, "remove_dupes_cb") and self.remove_dupes_cb.isChecked():
             enabled_steps.append("Dedup")
-        if hasattr(self.main_window, "mask_payloads_cb") and self.mask_payloads_cb.isChecked():
+        if hasattr(self, "mask_payloads_cb") and self.mask_payloads_cb.isChecked():
             enabled_steps.append("Trim")
 
         steps_suffix = "_".join(enabled_steps) if enabled_steps else "NoSteps"
