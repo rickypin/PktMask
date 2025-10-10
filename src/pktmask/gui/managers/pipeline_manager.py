@@ -238,7 +238,7 @@ class PipelineManager:
         # Update UI state (same as original start_processing)
         self.main_window.start_proc_btn.setText("Stop")
         self.main_window.start_proc_btn.setEnabled(True)
-        self.main_window.ui_manager._update_start_button_style()
+        self.main_window._update_start_button_style()
 
         # Reset statistics before starting new processing
         self.main_window.files_processed = 0
@@ -448,7 +448,7 @@ class PipelineManager:
                 cb.setEnabled(True)
 
             # Update button style
-            self.main_window.ui_manager._update_start_button_style()
+            self.main_window._update_start_button_style()
 
         def ensure_final_stats_display():
             """Ensure final statistics are correctly displayed in Live Dashboard"""

@@ -320,7 +320,7 @@ class DialogsManager:
 
             # Auto-generate default output path
             self.generate_default_output_path()
-            self.main_window.ui_manager._update_start_button_state()  # Intelligently update button state
+            self.main_window._update_start_button_state()  # Intelligently update button state
 
             self._logger.info(f"Selected input directory: {dir_path}")
 
