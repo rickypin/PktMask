@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Optional, Set
 
-from pktmask.common.exceptions import ProcessingError, ResourceError
+from pktmask.common.exceptions import PktMaskError, ProcessingError
 from pktmask.core.pipeline.base_stage import StageBase
 from pktmask.core.pipeline.models import StageStats
 from pktmask.infrastructure.logging import get_logger
@@ -124,62 +124,66 @@ class DeduplicationStage(StageBase):
 
             # Import Scapy with error handling
             try:
-                from scapy.all import rdpcap, wrpcap
+                from scapy.all import PcapReader, PcapWriter
             except ImportError as e:
                 raise ProcessingError("Scapy library not available for deduplication") from e
 
-            # 读取数据包 with retry mechanism and memory monitoring
-            def load_packets():
-                # Check memory pressure before loading
-                if self.resource_manager.get_memory_pressure() > 0.8:
-                    self.logger.warning("High memory pressure detected before loading packets")
-                return rdpcap(str(input_path))
-
-            packets = self.retry_operation(load_packets, f"loading packets from {input_path}")
-            total_packets = len(packets)
-
-            self.logger.info(f"Loaded {total_packets} packets from {input_path}")
-
-            # Deduplication processing with memory monitoring and error handling
-            unique_packets = []
+            # 开始流式去重处理
+            self.logger.info("Starting streaming deduplication")
+            total_packets = 0
+            unique_packets = 0
             removed_count = 0
 
-            with self.safe_operation("packet deduplication"):
-                for i, packet in enumerate(packets):
-                    try:
-                        # Monitor memory pressure during processing
-                        if i % 1000 == 0 and self.resource_manager.get_memory_pressure() > 0.9:
-                            self.logger.warning(
-                                f"High memory pressure during deduplication at packet {i}/{total_packets}"
-                            )
+            # 使用流式处理：逐包读取、去重、写入
+            def process_streaming_dedup():
+                nonlocal total_packets, unique_packets, removed_count
 
-                        # Generate packet hash with error handling
-                        packet_hash = self._generate_packet_hash(packet)
+                with PcapReader(str(input_path)) as reader:
+                    with PcapWriter(str(output_path), sync=True) as writer:
+                        for packet in reader:
+                            total_packets += 1
 
-                        if packet_hash not in self._packet_hashes:
-                            self._packet_hashes.add(packet_hash)
-                            unique_packets.append(packet)
-                        else:
-                            removed_count += 1
+                            try:
+                                # 监控内存压力
+                                if total_packets % 1000 == 0 and self.resource_manager.get_memory_pressure() > 0.9:
+                                    self.logger.warning(
+                                        f"High memory pressure during deduplication at packet {total_packets}"
+                                    )
 
-                    except Exception as e:
-                        self.logger.warning(
-                            f"Failed to process packet {i+1}/{total_packets} during deduplication: {e}. "
-                            f"Treating as unique packet."
-                        )
-                        unique_packets.append(packet)  # Keep packet to maintain file integrity
+                                # 生成数据包哈希
+                                packet_hash = self._generate_packet_hash(packet)
 
-            # 保存去重后的数据包 with error handling
-            def save_unique_packets():
-                if unique_packets:
-                    wrpcap(str(output_path), unique_packets)
-                    self.logger.info(f"Saved {len(unique_packets)} unique packets to {output_path}")
-                else:
-                    # 如果没有唯一数据包，创建空文件
+                                if packet_hash not in self._packet_hashes:
+                                    # 首次出现，保留
+                                    self._packet_hashes.add(packet_hash)
+                                    writer.write(packet)
+                                    unique_packets += 1
+                                else:
+                                    # 重复，跳过
+                                    removed_count += 1
+
+                            except Exception as e:
+                                self.logger.warning(
+                                    f"Failed to process packet {total_packets} during deduplication: {e}. "
+                                    f"Treating as unique packet."
+                                )
+                                # 保留包以维护文件完整性
+                                writer.write(packet)
+                                unique_packets += 1
+
+                            # 定期报告进度
+                            if total_packets % 10000 == 0:
+                                self.logger.debug(
+                                    f"Processed {total_packets} packets, "
+                                    f"{unique_packets} unique, {removed_count} duplicates"
+                                )
+
+                # 如果没有处理任何包，创建空文件
+                if total_packets == 0:
                     output_path.touch()
-                    self.logger.warning("No unique packets found, created empty output file")
+                    self.logger.warning("No packets processed, created empty output file")
 
-            self.retry_operation(save_unique_packets, f"saving deduplicated packets to {output_path}")
+            self.retry_operation(process_streaming_dedup, f"streaming deduplication from {input_path} to {output_path}")
 
             processing_time = time.time() - start_time
             duration_ms = processing_time * 1000
@@ -194,7 +198,7 @@ class DeduplicationStage(StageBase):
             self._stats.update(
                 {
                     "total_packets": total_packets,
-                    "unique_packets": len(unique_packets),
+                    "unique_packets": unique_packets,
                     "removed_count": removed_count,
                     "deduplication_rate": deduplication_rate,
                     "space_saved": space_saved,
@@ -216,7 +220,7 @@ class DeduplicationStage(StageBase):
                 extra_metrics={
                     "algorithm": self.algorithm,
                     "total_packets": total_packets,
-                    "unique_packets": len(unique_packets),
+                    "unique_packets": unique_packets,
                     "removed_count": removed_count,
                     "deduplication_rate": deduplication_rate,
                     "space_saved": space_saved,
@@ -236,9 +240,9 @@ class DeduplicationStage(StageBase):
         except MemoryError as e:
             # Clear hash set to free memory
             self._packet_hashes.clear()
-            raise ResourceError(
+            raise PktMaskError(
                 f"Insufficient memory for deduplication of {input_path}",
-                resource_type="memory",
+                error_code="RESOURCE_ERROR",
             ) from e
 
         except Exception as e:

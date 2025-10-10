@@ -2,71 +2,31 @@
 # -*- coding: utf-8 -*-
 
 """
-配置管理模块 - 兼容性代理
+配置管理模块
 
-此模块现在作为兼容性代理，重定向到统一的配置目录。
-新的配置文件位于项目根目录的 config/ 目录中。
+统一的配置管理系统，提供应用程序配置、默认值和验证功能。
 """
 
-import sys
-import warnings
-from pathlib import Path
-
-# 发出迁移警告
-warnings.warn(
-    "从 src.pktmask.config 导入配置已废弃。请使用 'from config import ...' 代替。",
-    DeprecationWarning,
-    stacklevel=2,
+# 从本地模块导出配置接口
+from .defaults import (
+    DEFAULT_LOGGING_CONFIG,
+    DEFAULT_PROCESSING_CONFIG,
+    DEFAULT_UI_CONFIG,
+    get_default_config_dict,
+    get_processor_config,
+    is_valid_dedup_algorithm,
+    is_valid_log_level,
+    is_valid_theme,
 )
-
-# 添加新配置目录到Python路径
-project_root = Path(__file__).parent.parent.parent.parent
-config_path = project_root / "config"
-if str(config_path) not in sys.path:
-    sys.path.insert(0, str(config_path))
-
-# 重新导出配置接口
-try:
-    from config.app.defaults import (
-        DEFAULT_LOGGING_CONFIG,
-        DEFAULT_PROCESSING_CONFIG,
-        DEFAULT_UI_CONFIG,
-        get_default_config_dict,
-        get_processor_config,
-        is_valid_dedup_algorithm,
-        is_valid_log_level,
-        is_valid_theme,
-    )
-    from config.app.settings import (
-        AppConfig,
-        LoggingSettings,
-        ProcessingSettings,
-        UISettings,
-        get_app_config,
-        reload_app_config,
-        save_app_config,
-    )
-except ImportError:
-    # 如果无法导入，直接从本地导入
-    from .defaults import (
-        DEFAULT_LOGGING_CONFIG,
-        DEFAULT_PROCESSING_CONFIG,
-        DEFAULT_UI_CONFIG,
-        get_default_config_dict,
-        get_processor_config,
-        is_valid_dedup_algorithm,
-        is_valid_log_level,
-        is_valid_theme,
-    )
-    from .settings import (
-        AppConfig,
-        LoggingSettings,
-        ProcessingSettings,
-        UISettings,
-        get_app_config,
-        reload_app_config,
-        save_app_config,
-    )
+from .settings import (
+    AppConfig,
+    LoggingSettings,
+    ProcessingSettings,
+    UISettings,
+    get_app_config,
+    reload_app_config,
+    save_app_config,
+)
 
 __all__ = [
     # 主要配置类

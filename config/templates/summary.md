@@ -12,9 +12,11 @@
 * Re-computes checksums automatically.
 
 ## Mask Payloads
-* Scans TLS streams and keeps only handshake, alert and control records.
-* Discards bulk TLS application data while leaving TCP control packets intact.
-* Greatly shrinks captures without hiding session establishment details.
+* Masks all TCP payload data to zeros by default.
+* Preserves TLS handshakes and HTTP headers for troubleshooting.
+* TLS encrypted data (ApplicationData) and HTTP bodies are fully masked.
+* For HTTP: Cookie/Authorization/Referer header values are also masked (only names kept).
+* Notice: The masking algorithm isn't perfect, so double-check it.
 
 ## Processing Flow
 * Input pcap → **\[Remove Dupes]** → **\[Anonymize IPs]** → **\[Mask Payloads]** → Sanitized pcap

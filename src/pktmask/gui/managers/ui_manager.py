@@ -169,7 +169,9 @@ class UIManager:
 
         self.main_window.remove_dupes_cb = QCheckBox("Remove Dupes")
         self.main_window.anonymize_ips_cb = QCheckBox("Anonymize IPs")
-        self.main_window.mask_payloads_cb = QCheckBox("Mask Payloads ( Keep TLS Handshakes )")
+        self.main_window.mask_payloads_cb = QCheckBox(
+            "Mask Payloads ( Keep TLS Handshakes and HTTP Headers for troubleshooting )"
+        )
 
         self.main_window.mask_payloads_cb.setToolTip(
             "Intelligently masks packet payloads while preserving TLS handshake data."
@@ -398,30 +400,15 @@ class UIManager:
             # Convert markdown content to display-friendly format, maintaining existing styles
             formatted_content = "\n" + self._format_summary_md_content(summary_md_content)
 
-        except Exception:
-            # If reading fails, use fallback content
+        except Exception as e:
+            # If reading fails, show error message instead of fallback content
+            self.logger.error(f"Failed to load summary.md: {e}")
             formatted_content = (
-                "\n📊 Processing results and statistics will be displayed here.\n\n"
-                "═══════════════════════════════════════════════════════════════════\n\n"
-                "📦 PktMask — Network Packet Processing Tool\n\n"
-                "🔄 Remove Dupes\n"
-                "   • Eliminates duplicate packets to reduce file size\n"
-                "   • Reduces noise in network analysis and forensics\n"
-                "   • Optimizes storage and speeds up analysis\n\n"
-                "🛡️ Anonymize IPs - Advanced Anonymization\n"
-                "   • Preserves network topology and subnet relationships\n"
-                "   • Uses hierarchical anonymization for consistent mapping\n"
-                "   • Perfect for data sharing, compliance, and research\n\n"
-                "✂️ Mask Payloads - Intelligent Data Reduction\n"
-                "   • Removes sensitive payload data while preserving headers\n"
-                "   • Keeps TLS handshakes intact for protocol analysis\n"
-                "   • Reduces file size without losing network behavior insights\n\n"
-                "🌐 Web-Focused Traffic Only (Coming Soon)\n"
-                "   • HTTP protocol processing functionality will be provided in future versions\n"
-                "   • Only supports TLS, IP anonymization, and de-duplication functionality\n"
-                "   • It's recommended to use a generic processing mode\n\n"
-                "🎯 Use Cases: Security research, network troubleshooting,\n"
-                "   compliance reporting, and safe data sharing."
+                "\n⚠️ User Guide Not Available\n\n"
+                "The summary.md file could not be loaded.\n"
+                f"Error: {str(e)}\n\n"
+                "Please check the installation or contact support.\n"
+                "If you're in development mode, ensure config/templates/summary.md exists."
             )
 
         self.main_window.summary_text.setPlaceholderText(formatted_content)

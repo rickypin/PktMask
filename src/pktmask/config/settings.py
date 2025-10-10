@@ -471,6 +471,7 @@ def reload_app_config():
 
 def save_app_config() -> bool:
     """保存当前配置"""
+    global _app_config
     if _app_config is not None:
         return _app_config.save()
     return False

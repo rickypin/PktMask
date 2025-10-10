@@ -176,7 +176,9 @@ class UIBuilder:
         self.main_window.remove_dupes_cb = QCheckBox("Remove Dupes")
         self.main_window.remove_dupes_cb.setChecked(True)
 
-        self.main_window.mask_payloads_cb = QCheckBox("Mask Payloads ( Keep TLS Handshakes )")
+        self.main_window.mask_payloads_cb = QCheckBox(
+            "Mask Payloads ( Keep TLS Handshakes and HTTP Headers for troubleshooting )"
+        )
         self.main_window.mask_payloads_cb.setChecked(True)
 
         layout.addWidget(self.main_window.anonymize_ips_cb)

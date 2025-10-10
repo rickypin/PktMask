@@ -116,36 +116,8 @@ class UIError(PktMaskError):
         self.component_name = component_name
 
 
-class PluginError(PktMaskError):
-    """插件系统相关错误"""
-
-    def __init__(self, message: str, plugin_name: Optional[str] = None, **kwargs):
-        super().__init__(message, error_code="PLUGIN_ERROR", **kwargs)
-        self.plugin_name = plugin_name
-
-
-class SecurityError(PktMaskError):
-    """安全相关错误"""
-
-    def __init__(self, message: str, security_level: Optional[str] = None, **kwargs):
-        super().__init__(message, error_code="SECURITY_ERROR", **kwargs)
-        self.security_level = security_level
-
-
-class DependencyError(PktMaskError):
-    """依赖相关错误"""
-
-    def __init__(self, message: str, dependency_name: Optional[str] = None, **kwargs):
-        super().__init__(message, error_code="DEPENDENCY_ERROR", **kwargs)
-        self.dependency_name = dependency_name
-
-
-class ResourceError(PktMaskError):
-    """资源相关错误（内存、磁盘空间等）"""
-
-    def __init__(self, message: str, resource_type: Optional[str] = None, **kwargs):
-        super().__init__(message, error_code="RESOURCE_ERROR", **kwargs)
-        self.resource_type = resource_type
+# Removed rarely used exception classes: PluginError, SecurityError, DependencyError, ResourceError
+# These can be represented using the base PktMaskError class with appropriate error codes
 
 
 # 便利函数
@@ -158,14 +130,14 @@ def create_error_from_exception(exc: Exception, context: Optional[Dict[str, Any]
     error_type = type(exc).__name__
 
     # Select appropriate PktMask exception class based on exception type
-    if isinstance(exc, (IOError, OSError)):
+    if isinstance(exc, (IOError, OSError, FileNotFoundError, PermissionError)):
         return FileError(error_message, context=context)
     elif isinstance(exc, ValueError):
         return ValidationError(error_message, context=context)
-    elif isinstance(exc, ImportError):
-        return DependencyError(error_message, context=context)
+    elif isinstance(exc, (ImportError, ModuleNotFoundError)):
+        return PktMaskError(error_message, error_code="DEPENDENCY_ERROR", context=context)
     elif isinstance(exc, MemoryError):
-        return ResourceError(error_message, resource_type="memory", context=context)
+        return PktMaskError(error_message, error_code="RESOURCE_ERROR", context=context)
     else:
         return PktMaskError(
             f"{error_type}: {error_message}",

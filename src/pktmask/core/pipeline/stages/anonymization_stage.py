@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from pktmask.common.exceptions import ProcessingError, ResourceError
+from pktmask.common.exceptions import PktMaskError, ProcessingError
 from pktmask.core.pipeline.base_stage import StageBase
 from pktmask.core.pipeline.models import StageStats
 from pktmask.core.strategy import HierarchicalAnonymizationStrategy
@@ -123,55 +123,59 @@ class AnonymizationStage(StageBase):
 
             # Import Scapy with error handling
             try:
-                from scapy.all import rdpcap, wrpcap
+                from scapy.all import PcapReader, PcapWriter
             except ImportError as e:
                 raise ProcessingError("Scapy library not available for IP anonymization") from e
 
-            # 读取数据包 with retry mechanism
-            def load_packets():
-                return rdpcap(str(input_path))
-
-            packets = self.retry_operation(load_packets, f"loading packets from {input_path}")
-            total_packets = len(packets)
-
-            self.logger.info(f"Loaded {total_packets} packets from {input_path}")
-
             # 关键修复：先构建IP映射表 with error handling
+            # 使用流式读取构建映射表（第一遍扫描）
             with self.safe_operation("IP mapping construction"):
                 self.logger.info("Analyzing IP addresses and building mapping table...")
                 self._strategy.build_mapping_from_directory([str(input_path)])
                 ip_mappings = self._strategy.get_ip_map()
                 self.logger.info(f"IP mapping construction completed: {len(ip_mappings)} IP addresses")
 
-            # 开始匿名化数据包 with error handling
-            self.logger.info("Starting packet anonymization")
+            # 开始流式匿名化数据包（第二遍处理）
+            self.logger.info("Starting streaming packet anonymization")
+            total_packets = 0
             anonymized_packets = 0
-            anonymized_pkts = []
 
-            # 处理每个数据包 with individual packet error handling
-            for i, packet in enumerate(packets):
-                try:
-                    modified_packet, was_modified = self._strategy.anonymize_packet(packet)
-                    anonymized_pkts.append(modified_packet)
-                    if was_modified:
-                        anonymized_packets += 1
-                except Exception as e:
-                    self.logger.warning(
-                        f"Failed to anonymize packet {i+1}/{total_packets}: {e}. Using original packet."
-                    )
-                    anonymized_pkts.append(packet)  # Keep original packet to maintain file integrity
+            # 使用流式处理：逐包读取、处理、写入
+            def process_streaming():
+                nonlocal total_packets, anonymized_packets
 
-            # 保存匿名化后的数据包 with error handling
-            def save_packets():
-                if anonymized_pkts:
-                    wrpcap(str(output_path), anonymized_pkts)
-                    self.logger.info(f"Saved {len(anonymized_pkts)} anonymized packets to {output_path}")
-                else:
-                    # 如果没有数据包，创建空文件
+                with PcapReader(str(input_path)) as reader:
+                    with PcapWriter(str(output_path), sync=True) as writer:
+                        for packet in reader:
+                            total_packets += 1
+
+                            try:
+                                # 处理单个数据包
+                                modified_packet, was_modified = self._strategy.anonymize_packet(packet)
+
+                                if was_modified:
+                                    anonymized_packets += 1
+
+                                # 立即写入，释放内存
+                                writer.write(modified_packet)
+
+                            except Exception as e:
+                                self.logger.warning(
+                                    f"Failed to anonymize packet {total_packets}: {e}. Using original packet."
+                                )
+                                # 保留原始包以维护文件完整性
+                                writer.write(packet)
+
+                            # 定期报告进度
+                            if total_packets % 10000 == 0:
+                                self.logger.debug(f"Processed {total_packets} packets, {anonymized_packets} modified")
+
+                # 如果没有处理任何包，创建空文件
+                if total_packets == 0:
                     output_path.touch()
-                    self.logger.warning("No packets to save, created empty output file")
+                    self.logger.warning("No packets processed, created empty output file")
 
-            self.retry_operation(save_packets, f"saving anonymized packets to {output_path}")
+            self.retry_operation(process_streaming, f"streaming anonymization from {input_path} to {output_path}")
 
             processing_time = time.time() - start_time
             duration_ms = processing_time * 1000
@@ -231,9 +235,9 @@ class AnonymizationStage(StageBase):
             raise ProcessingError(f"Required dependency not available for IP anonymization: {e}") from e
 
         except MemoryError as e:
-            raise ResourceError(
+            raise PktMaskError(
                 f"Insufficient memory for IP anonymization of {input_path}",
-                resource_type="memory",
+                error_code="RESOURCE_ERROR",
             ) from e
 
         except Exception as e:
