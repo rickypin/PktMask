@@ -50,14 +50,17 @@ class ReportManager:
         if self.main_window.timer:
             self.main_window.timer.stop()
 
-        # Stop statistics manager timing
-        if hasattr(self.main_window, "pipeline_manager") and hasattr(self.main_window.pipeline_manager, "statistics"):
-            self.main_window.statistics.stop_timing()
+        # Stop timing and update elapsed time
+        if self.main_window.start_time:
+            from PyQt6.QtCore import QTime
+
+            elapsed_msecs = self.main_window.start_time.msecsTo(QTime.currentTime())
+            self.main_window.processing_time = elapsed_msecs
 
         self.main_window.update_time_elapsed()
 
         partial_time = self.main_window.time_elapsed_label.text()
-        partial_files = self.main_window.files_processed_count
+        partial_files = self.main_window.files_processed
         partial_packets = self.main_window.packets_processed_count
 
         # Generate stop summary report
@@ -478,9 +481,12 @@ class ReportManager:
         if self.main_window.timer and self.main_window.timer.isActive():
             self.main_window.timer.stop()
 
-        # Stop statistics manager timing
-        if hasattr(self.main_window, "pipeline_manager") and hasattr(self.main_window.pipeline_manager, "statistics"):
-            self.main_window.statistics.stop_timing()
+        # Stop timing and update elapsed time
+        if self.main_window.start_time:
+            from PyQt6.QtCore import QTime
+
+            elapsed_msecs = self.main_window.start_time.msecsTo(QTime.currentTime())
+            self.main_window.processing_time = elapsed_msecs
 
         self.main_window.update_time_elapsed()
 

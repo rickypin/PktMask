@@ -159,14 +159,14 @@ class DesktopEventCoordinator(QObject):
 
     def get_statistics_data(self) -> Dict[str, Any]:
         """Get statistics data (legacy method)"""
-        if hasattr(self.main_window, "pipeline_manager") and hasattr(self.main_window.pipeline_manager, "statistics"):
-            return self.main_window.pipeline_manager.statistics.get_dashboard_stats()
+        if hasattr(self.main_window, "pipeline_manager"):
+            return self.main_window.pipeline_manager.get_processing_stats()
         return {}
 
     def get_processing_summary(self) -> Dict[str, Any]:
         """Get processing summary (legacy method)"""
-        if hasattr(self.main_window, "pipeline_manager") and hasattr(self.main_window.pipeline_manager, "statistics"):
-            return self.main_window.pipeline_manager.statistics.get_processing_summary()
+        if hasattr(self.main_window, "pipeline_manager"):
+            return self.main_window.pipeline_manager.get_processing_stats()
         return {}
 
     def reset_all_data(self):

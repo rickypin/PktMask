@@ -262,17 +262,30 @@ class PipelineManager:
         self.main_window.start_proc_btn.setEnabled(True)
         self.main_window.ui_manager._update_start_button_style()
 
-        # Reset statistics before starting new processing (same as original)
-        self.main_window.statistics.reset_all_statistics()
+        # Reset statistics before starting new processing
+        self.main_window.files_processed = 0
+        self.main_window.packets_processed = 0
+        self.main_window.total_files_to_process = 0
+        self.main_window.processing_time = 0
+        self.main_window.file_processing_results.clear()
+        self.main_window.step_results.clear()
+        self.main_window.global_ip_mappings.clear()
+        self.main_window.all_ip_reports.clear()
+        self.main_window.processed_files_count = 0
+        self.main_window.current_processing_file = None
+        self.main_window.subdirs_files_counted.clear()
+        self.main_window.subdirs_packets_counted.clear()
+        self.main_window.printed_summary_headers.clear()
 
-        # Also reset the main window's packet counting cache (same as original)
+        # Also reset the main window's packet counting cache
         if hasattr(self.main_window, "_counted_files"):
             self.main_window._counted_files.clear()
 
-        # Start timing (unified use of StatisticsManager) (same as original)
-        self.main_window.statistics.start_timing()
+        # Start timing
+        from PyQt6.QtCore import QTime
+
+        self.main_window.start_time = QTime.currentTime()
         self.main_window.time_elapsed = 0
-        self.main_window.start_time = self.main_window.statistics.start_time  # Maintain compatibility
         self.main_window.timer.start(100)  # Update every 100ms
 
         # Start thread (same as original)
@@ -294,20 +307,20 @@ class PipelineManager:
             ):
                 # Pipeline sends total directory count, but we need to track file count
                 data.get("total_subdirs", data.get("total_files", 0))
-                # Reset file counter (through StatisticsManager)
-                self.main_window.statistics.update_file_count(0)
+                # Reset file counter
+                self.main_window.files_processed = 0
 
             # Handle subdirectory start events
             elif event_type == PipelineEvents.SUBDIR_START:
                 data.get("name", "Unknown directory")
                 file_count = data.get("file_count", 0)
-                self.main_window.statistics.set_total_files(file_count)  # Set actual total file count
+                self.main_window.total_files_to_process = file_count  # Set actual total file count
 
             # Handle file completion events
             elif event_type in (PipelineEvents.FILE_END, PipelineEvents.FILE_COMPLETED):
-                self.main_window.statistics.increment_file_count()
+                self.main_window.files_processed += 1
                 # Update Live Dashboard display
-                self.main_window.files_processed_label.setText(str(self.main_window.statistics.files_processed))
+                self.main_window.files_processed_label.setText(str(self.main_window.files_processed))
                 self._update_progress()
 
             # Handle pipeline completion events
@@ -351,26 +364,46 @@ class PipelineManager:
             else:
                 result_data["result"] = data["result"]
 
-        # Delegate to StatisticsManager
-        self.main_window.statistics.collect_step_result(step_name, filename, result_data)
+        # Collect step result (moved from StatisticsManager)
+        file_key = filename.split("/")[-1] if filename else "unknown"
+        if file_key not in self.main_window.step_results:
+            self.main_window.step_results[file_key] = {}
+        self.main_window.step_results[file_key][step_name] = result_data
 
         # Note: Real-time statistics are handled by MainWindow
 
     def get_processing_stats(self) -> dict:
         """Get processing statistics"""
-        return self.main_window.statistics.get_processing_summary()
+        # Return processing summary (moved from StatisticsManager)
+        from PyQt6.QtCore import QTime
+
+        from pktmask.utils.time import format_milliseconds_to_time
+
+        elapsed_time = "00:00.00"
+        if self.main_window.start_time:
+            elapsed_msecs = self.main_window.start_time.msecsTo(QTime.currentTime())
+            elapsed_time = format_milliseconds_to_time(elapsed_msecs)
+
+        return {
+            "files_processed": self.main_window.files_processed,
+            "total_files": self.main_window.total_files_to_process,
+            "packets_processed": self.main_window.packets_processed,
+            "processing_time": elapsed_time,
+            "step_results": self.main_window.step_results.copy(),
+            "file_processing_results": self.main_window.file_processing_results.copy(),
+            "global_ip_mappings": self.main_window.global_ip_mappings.copy(),
+            "all_ip_reports": self.main_window.all_ip_reports.copy(),
+        }
 
     def _update_progress(self):
         """Update progress bar"""
-        if self.main_window.statistics.total_files_to_process > 0:
-            progress = int(
-                (self.main_window.statistics.files_processed / self.main_window.statistics.total_files_to_process) * 100
-            )
+        if self.main_window.total_files_to_process > 0:
+            progress = int((self.main_window.files_processed / self.main_window.total_files_to_process) * 100)
             # Ensure progress doesn't exceed 100%
             progress = min(progress, 100)
             self.main_window._animate_progress_to(progress)
             self._logger.debug(
-                f"Progress updated: {self.main_window.statistics.files_processed}/{self.main_window.statistics.total_files_to_process} = {progress}%"
+                f"Progress updated: {self.main_window.files_processed}/{self.main_window.total_files_to_process} = {progress}%"
             )
         else:
             # If no files to process, keep progress at 0
@@ -385,8 +418,8 @@ class PipelineManager:
 
         # **Fix**: Before generating the report, ensure Live Dashboard displays final statistics
         # Update Live Dashboard to show final statistics
-        final_files_processed = self.main_window.statistics.files_processed
-        final_packets_processed = self.main_window.statistics.packets_processed
+        final_files_processed = self.main_window.files_processed
+        final_packets_processed = self.main_window.packets_processed
 
         # Ensure Live Dashboard displays the correct final data
         self.main_window.files_processed_label.setText(str(final_files_processed))
@@ -462,8 +495,21 @@ class PipelineManager:
 
     def reset_processing_state(self):
         """Reset processing state (only called when starting new processing)"""
-        # Use statistics manager to reset data
-        self.main_window.statistics.reset_all_statistics()
+        # Reset all statistics
+        self.main_window.files_processed = 0
+        self.main_window.packets_processed = 0
+        self.main_window.total_files_to_process = 0
+        self.main_window.processing_time = 0
+        self.main_window.file_processing_results.clear()
+        self.main_window.step_results.clear()
+        self.main_window.global_ip_mappings.clear()
+        self.main_window.all_ip_reports.clear()
+        self.main_window.processed_files_count = 0
+        self.main_window.current_processing_file = None
+        self.main_window.subdirs_files_counted.clear()
+        self.main_window.subdirs_packets_counted.clear()
+        self.main_window.printed_summary_headers.clear()
+
         self.user_stopped = False
 
         # **Fix**: Notify UI update through event coordinator, but only reset display when starting new processing
@@ -478,8 +524,8 @@ class PipelineManager:
     def generate_partial_summary_on_stop(self):
         """Generate partial summary when stopped"""
         try:
-            # Get data from StatisticsManager
-            stats = self.main_window.statistics.get_processing_summary()
+            # Get processing summary
+            stats = self.get_processing_stats()
             partial_data = {**stats, "status": "stopped_by_user"}
 
             self.main_window.report_manager.set_final_summary_report(partial_data)
@@ -490,8 +536,8 @@ class PipelineManager:
     def _generate_final_report(self):
         """Generate final report"""
         try:
-            # Get data from StatisticsManager
-            stats = self.main_window.statistics.get_processing_summary()
+            # Get processing summary
+            stats = self.get_processing_stats()
             final_data = {
                 **stats,
                 "status": "completed",
