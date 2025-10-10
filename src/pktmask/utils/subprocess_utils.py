@@ -193,7 +193,7 @@ def open_directory_hidden(directory: Union[str, Path]) -> bool:
     Returns:
         Whether successfully opened
     """
-    from ..common.constants import SystemConstants
+    from ..shared.constants import SystemConstants
 
     directory = Path(directory)
 

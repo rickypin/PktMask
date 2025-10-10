@@ -6,8 +6,8 @@ from typing import Dict, List, Set, Tuple
 
 from scapy.all import IP, IPv6, PcapNgReader, PcapReader
 
-from ..common.constants import ProcessingConstants
 from ..infrastructure.logging import get_logger
+from ..shared.constants import ProcessingConstants
 
 
 class AnonymizationStrategy(ABC):

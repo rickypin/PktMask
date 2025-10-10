@@ -12,8 +12,8 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from ...common.constants import FileConstants
-from ...common.enums import LogLevel
+from ...shared.constants import FileConstants
+from ...shared.enums import LogLevel
 
 
 class PktMaskLogger:

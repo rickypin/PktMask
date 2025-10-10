@@ -136,7 +136,7 @@ class DesktopEventCoordinator(QObject):
         """Emit pipeline event with structured data (legacy compatibility method)"""
         try:
             # Try to create structured event data if available
-            from pktmask.domain.models.pipeline_event_data import PipelineEventData
+            from pktmask.gui.models.pipeline_event_data import PipelineEventData
 
             # Create structured event data with proper format
             event_data = PipelineEventData(event_type=event_type, data=data)

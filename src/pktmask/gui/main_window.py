@@ -14,12 +14,12 @@ import markdown
 from PyQt6.QtCore import QEvent, QPropertyAnimation, Qt, QTime, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QDialog, QLabel, QMainWindow, QPushButton, QTextEdit, QVBoxLayout
 
-from pktmask.common.constants import UIConstants
 from pktmask.config.settings import get_app_config
 
 # Refactored imports
 from pktmask.core.events import PipelineEvents
 from pktmask.infrastructure.logging import get_logger
+from pktmask.shared.constants import UIConstants
 from pktmask.utils import current_time, current_timestamp, format_milliseconds_to_time
 
 # PROCESS_DISPLAY_NAMES moved to common.constants
@@ -168,7 +168,7 @@ class MainWindow(QMainWindow):
         """Handle structured pipeline event data"""
         try:
             from pktmask.core.events import PipelineEvents
-            from pktmask.domain.models.pipeline_event_data import PipelineEventData
+            from pktmask.gui.models.pipeline_event_data import PipelineEventData
         except ImportError:
             self._logger.warning("Unable to import structured data model, skipping structured processing")
             return
@@ -196,7 +196,7 @@ class MainWindow(QMainWindow):
     def _handle_statistics_data(self, stats_data):
         """Handle structured statistics data"""
         try:
-            from pktmask.domain.models.statistics_data import StatisticsData
+            from pktmask.gui.models.statistics_data import StatisticsData
         except ImportError:
             self._logger.warning("Unable to import statistics data model, skipping structured processing")
             return

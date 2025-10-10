@@ -14,8 +14,8 @@ from PyQt6.QtWidgets import *
 if TYPE_CHECKING:
     from ..main_window import MainWindow
 
-from pktmask.common.constants import UIConstants
 from pktmask.infrastructure.logging import get_logger
+from pktmask.shared.constants import UIConstants
 from pktmask.utils.path import resource_path
 
 from ..stylesheet import generate_stylesheet

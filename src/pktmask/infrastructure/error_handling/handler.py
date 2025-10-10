@@ -10,9 +10,9 @@ import sys
 import traceback
 from typing import Any, Callable, Dict, Optional
 
-from ...common.enums import ErrorSeverity
-from ...common.exceptions import PktMaskError, create_error_from_exception
 from ...infrastructure.logging import get_logger, log_exception
+from ...shared.enums import ErrorSeverity
+from ...shared.exceptions import PktMaskError, create_error_from_exception
 
 logger = get_logger(__name__)
 

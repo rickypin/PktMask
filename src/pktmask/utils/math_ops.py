@@ -8,7 +8,7 @@ Provides unified mathematical calculation and statistical functionality
 
 from typing import Any, Dict, Union
 
-from ..common.constants import FormatConstants, ProcessingConstants
+from ..shared.constants import FormatConstants, ProcessingConstants
 
 
 def calculate_percentage(

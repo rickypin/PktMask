@@ -8,7 +8,7 @@ Provides unified string processing and formatting functionality
 
 from typing import Any, Dict, List, Optional
 
-from ..common.constants import FormatConstants
+from ..shared.constants import FormatConstants
 
 
 def create_separator(

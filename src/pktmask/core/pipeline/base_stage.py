@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from ...common.exceptions import FileError, ProcessingError
+from ...shared.exceptions import FileError, ProcessingError
 from .models import StageStats
 from .resource_manager import ResourceManager
 

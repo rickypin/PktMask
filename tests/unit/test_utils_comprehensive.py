@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 import pytest
 
-from pktmask.common.exceptions import FileError, ValidationError
+from pktmask.shared.exceptions import FileError, ValidationError
 from pktmask.utils import file_ops, math_ops, string_ops
 from pktmask.utils import time as time_ops
 

@@ -251,18 +251,14 @@ class TestEndToEndConsistency:
 class TestConsistencyRegression:
     """Regression tests to ensure consistency is maintained"""
 
-    def test_service_layer_compatibility(self):
-        """Test that new implementation is compatible with existing service layer interfaces"""
-        # This test ensures we haven't broken existing interfaces
-        from pktmask.services import build_pipeline_config, create_pipeline_executor
+    def test_core_layer_compatibility(self):
+        """Test that core layer provides consistent interface"""
+        # Test that ConsistentProcessor works correctly
+        from pktmask.core.consistency import ConsistentProcessor
 
-        # Test that legacy service layer still works
-        config = build_pipeline_config(anonymize_ips=True, remove_dupes=False, mask_payloads=False)
+        # Test executor creation
+        executor = ConsistentProcessor.create_executor(remove_duplicates=False, anonymize_ips=True, mask_payloads=False)
 
-        assert config is not None
-        assert "anonymize_ips" in config
-
-        executor = create_pipeline_executor(config)
         assert executor is not None
 
     def test_gui_signal_compatibility(self):

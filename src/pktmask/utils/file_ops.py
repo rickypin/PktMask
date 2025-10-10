@@ -10,9 +10,9 @@ import shutil
 from pathlib import Path
 from typing import List, Optional, Union
 
-from ..common.constants import ProcessingConstants, ValidationConstants
-from ..common.exceptions import FileError, ValidationError
 from ..infrastructure.logging import get_logger
+from ..shared.constants import ProcessingConstants, ValidationConstants
+from ..shared.exceptions import FileError, ValidationError
 
 logger = get_logger("file_ops")
 
