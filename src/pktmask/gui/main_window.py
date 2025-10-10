@@ -1194,6 +1194,16 @@ class MainWindow(QMainWindow):
             self.update_log(f"Error loading summary report: {str(e)}")
             return None
 
+    def _animate_progress_to(self, target_value: int):
+        """Smooth animation to target progress value"""
+        if self.progress_animation.state() == QPropertyAnimation.State.Running:
+            self.progress_animation.stop()
+
+        current_value = self.progress_bar.value()
+        self.progress_animation.setStartValue(current_value)
+        self.progress_animation.setEndValue(target_value)
+        self.progress_animation.start()
+
     # === Statistics attributes are now direct attributes (no longer using property accessors) ===
     # All statistics are initialized in __init__ and accessed directly
 
