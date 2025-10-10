@@ -1028,7 +1028,14 @@ class MainWindow(QMainWindow):
 
     def on_thread_finished(self):
         """Callback function when thread finishes, ensuring UI state is properly restored"""
-        # Thread cleanup is now handled by PipelineManager
+        self._logger.info("Processing thread finished")
+
+        # Stop the timer
+        if hasattr(self, "timer") and self.timer.isActive():
+            self.timer.stop()
+
+        # Call processing_finished to generate final report and update UI
+        self.processing_finished()
 
     def get_elided_text(self, label: QLabel, text: str) -> str:
         """Elide text if it's too long"""
@@ -2779,25 +2786,27 @@ class MainWindow(QMainWindow):
                 thread.terminate()
                 thread.wait()
 
+        # Stop the timer
+        if hasattr(self, "timer") and self.timer.isActive():
+            self.timer.stop()
+
+        # Clean up thread reference
+        self.processing_thread = None
+
         # Generate partial summary statistics when stopped
         self.generate_partial_summary_on_stop()
 
-        # Re-enable controls via Qt signal
-        self.ui_update_requested.emit(
-            "enable_controls",
-            {
-                "controls": [
-                    "dir_path_label",
-                    "output_path_label",
-                    "anonymize_ips_cb",
-                    "remove_dupes_cb",
-                    "mask_payloads_cb",
-                    "start_proc_btn",
-                ],
-                "enabled": True,
-            },
-        )
-        self.ui_update_requested.emit("update_button_text", {"button": "start_proc_btn", "text": "Start"})
+        # Update button state
+        self.start_proc_btn.setText("Start")
+        self.start_proc_btn.setEnabled(True)
+        self._update_start_button_style()
+
+        # Re-enable controls
+        self.dir_path_label.setEnabled(True)
+        self.output_path_label.setEnabled(True)
+        self.anonymize_ips_cb.setEnabled(True)
+        self.remove_dupes_cb.setEnabled(True)
+        self.mask_payloads_cb.setEnabled(True)
 
     def _start_with_consistent_processor(self):
         """Start processing using new ConsistentProcessor (feature flag enabled)
