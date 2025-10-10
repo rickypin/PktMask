@@ -2631,97 +2631,6 @@ class MainWindow(QMainWindow):
     # REPORT FILE OPERATIONS (from FileManager)
     # ========================================================================
 
-    def save_summary_report_to_output_dir(self) -> bool:
-        """Save summary report to output directory"""
-        if not self.current_output_dir:
-            self._logger.warning("Output directory path is empty, cannot save summary report")
-            return False
-
-        try:
-            # Ensure output directory exists
-            if not os.path.exists(self.current_output_dir):
-                self._logger.info(f"Creating output directory: {self.current_output_dir}")
-                os.makedirs(self.current_output_dir, exist_ok=True)
-
-            filename = self.generate_summary_report_filename()
-            filepath = os.path.join(self.current_output_dir, filename)
-
-            # Get summary text
-            summary_text = self.summary_text.toPlainText()
-
-            with open(filepath, "w", encoding="utf-8") as f:
-                f.write(summary_text)
-
-            self._logger.info(f"Summary report saved to: {filepath}")
-            self.update_log(f"Summary report saved: {filename}")
-            return True
-
-        except Exception as e:
-            self._logger.error(f"Failed to save summary report: {e}")
-            self.update_log(f"Error saving summary report: {str(e)}")
-            return False
-
-    def generate_summary_report_filename(self) -> str:
-        """Generate summary report filename"""
-        timestamp = current_timestamp()
-
-        # Generate processing options identifier
-        enabled_steps = []
-        if hasattr(self, "anonymize_ips_cb") and self.anonymize_ips_cb.isChecked():
-            enabled_steps.append("MaskIP")
-        if hasattr(self, "remove_dupes_cb") and self.remove_dupes_cb.isChecked():
-            enabled_steps.append("Dedup")
-        if hasattr(self, "mask_payloads_cb") and self.mask_payloads_cb.isChecked():
-            enabled_steps.append("Trim")
-
-        steps_suffix = "_".join(enabled_steps) if enabled_steps else "NoSteps"
-        filename = f"summary_report_{steps_suffix}_{timestamp}.txt"
-
-        return filename
-
-    def find_existing_summary_reports(self) -> list[str]:
-        """Find existing summary report files"""
-        if not self.current_output_dir or not os.path.exists(self.current_output_dir):
-            return []
-
-        try:
-            reports = []
-            for file in os.listdir(self.current_output_dir):
-                if file.startswith("summary_report_") and file.endswith(".txt"):
-                    filepath = os.path.join(self.current_output_dir, file)
-                    reports.append(filepath)
-
-            # Sort by modification time, newest first
-            reports.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-            return reports
-
-        except Exception as e:
-            self._logger.error(f"Error occurred while finding summary report files: {e}")
-            return []
-
-    def load_latest_summary_report(self) -> Optional[str]:
-        """Load latest summary report"""
-        reports = self.find_existing_summary_reports()
-        if not reports:
-            return None
-
-        try:
-            latest_report = reports[0]  # Latest report
-            with open(latest_report, "r", encoding="utf-8") as f:
-                content = f.read()
-
-            self._logger.info(f"Loaded latest summary report: {latest_report}")
-            return content
-
-        except Exception as e:
-            self._logger.error(f"Failed to load summary report: {e}")
-            return None
-
-    # ========================================================================
-    # LEGACY COMPATIBILITY METHODS
-    # ========================================================================
-
-    # These methods maintain backward compatibility with old method names
     def choose_folder(self):
         """Legacy method - redirects to choose_input_folder"""
         return self.choose_input_folder()
@@ -2974,85 +2883,6 @@ class MainWindow(QMainWindow):
 
         self._logger.info(f"Processing thread started, output directory: {self.current_output_dir}")
 
-    def handle_thread_progress(self, event_type: PipelineEvents, data: dict):
-        """Handle thread progress events"""
-        try:
-            # First let MainWindow handle events to update UI statistics and collect data
-            self.handle_thread_progress(event_type, data)
-
-            # Then PipelineManager handles its own logic
-            # Handle pipeline start events
-            if event_type in (
-                PipelineEvents.PIPELINE_START,
-                PipelineEvents.PIPELINE_STARTED,
-            ):
-                # Pipeline sends total directory count, but we need to track file count
-                data.get("total_subdirs", data.get("total_files", 0))
-                # Reset file counter
-                self.files_processed = 0
-
-            # Handle subdirectory start events
-            elif event_type == PipelineEvents.SUBDIR_START:
-                data.get("name", "Unknown directory")
-                file_count = data.get("file_count", 0)
-                self.total_files_to_process = file_count  # Set actual total file count
-
-            # Handle file completion events
-            elif event_type in (PipelineEvents.FILE_END, PipelineEvents.FILE_COMPLETED):
-                self.files_processed += 1
-                # Update Live Dashboard display
-                self.files_processed_label.setText(str(self.files_processed))
-                self._update_progress()
-
-            # Handle pipeline completion events
-            elif event_type in (
-                PipelineEvents.PIPELINE_END,
-                PipelineEvents.PIPELINE_COMPLETED,
-            ):
-                self.processing_finished()
-
-            # Handle step summary events
-            elif event_type == PipelineEvents.STEP_SUMMARY:
-                # Important: collect step result data for final report
-                self.collect_step_result(data)
-
-            # Handle error events
-            elif event_type == PipelineEvents.ERROR:
-                data.get("message", data.get("error", "Unknown error"))
-                # MainWindow has already handled this, no need to repeat
-
-        except Exception as e:
-            self._logger.error(f"Error occurred while processing progress event: {e}")
-            self.processing_error(f"Event processing error: {str(e)}")
-
-    def collect_step_result(self, data: dict):
-        """Collect step results"""
-        step_name = data.get("step_name", "")
-        filename = data.get("filename", data.get("path", ""))
-
-        # Collect all available result data
-        result_data = {}
-
-        # Extract useful statistics from data
-        for key, value in data.items():
-            if key not in ["step_name", "filename", "path", "type"]:
-                result_data[key] = value
-
-        # If there's an existing result field, merge it
-        if "result" in data:
-            if isinstance(data["result"], dict):
-                result_data.update(data["result"])
-            else:
-                result_data["result"] = data["result"]
-
-        # Collect step result (moved from StatisticsManager)
-        file_key = filename.split("/")[-1] if filename else "unknown"
-        if file_key not in self.step_results:
-            self.step_results[file_key] = {}
-        self.step_results[file_key][step_name] = result_data
-
-        # Note: Real-time statistics are handled by MainWindow
-
     def get_processing_stats(self) -> dict:
         """Get processing statistics"""
         # Return processing summary (moved from StatisticsManager)
@@ -3164,12 +2994,6 @@ class MainWindow(QMainWindow):
 
         self._logger.info("Processing flow completed")
 
-    def on_thread_finished(self):
-        """Thread completion handling"""
-        # Ensure thread cleanup happens regardless of how processing ended
-        if self.processing_thread:
-            self.processing_thread = None
-
     def reset_processing_state(self):
         """Reset processing state (only called when starting new processing)"""
         # Reset all statistics
@@ -3196,18 +3020,6 @@ class MainWindow(QMainWindow):
         # Stop timer
         if self.timer.isActive():
             self.timer.stop()
-
-    def generate_partial_summary_on_stop(self):
-        """Generate partial summary when stopped"""
-        try:
-            # Get processing summary
-            stats = self.get_processing_stats()
-            partial_data = {**stats, "status": "stopped_by_user"}
-
-            self.set_final_summary_report(partial_data)
-
-        except Exception as e:
-            self._logger.error(f"Error occurred while generating partial summary: {e}")
 
     def _generate_final_report(self):
         """Generate final report"""
