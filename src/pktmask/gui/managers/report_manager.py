@@ -24,25 +24,20 @@ class ReportManager:
         self._logger = get_logger(__name__)
 
     def update_log(self, message: str):
-        """Update log display (delegates to DisplayManager if available)"""
+        """Update log display"""
         try:
-            # Use DisplayManager if available (new architecture)
-            if hasattr(self.main_window, "display"):
-                self.main_window.display.update_log(message)
-            else:
-                # Fallback to direct implementation (backward compatibility)
-                timestamp = datetime.now().strftime("%H:%M:%S")
-                formatted_message = f"[{timestamp}] {message}"
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            formatted_message = f"[{timestamp}] {message}"
 
-                # Add to log text area
-                self.main_window.log_text.append(formatted_message)
+            # Add to log text area
+            self.main_window.log_text.append(formatted_message)
 
-                # Auto-scroll to bottom
-                cursor = self.main_window.log_text.textCursor()
-                cursor.movePosition(cursor.MoveOperation.End)
-                self.main_window.log_text.setTextCursor(cursor)
+            # Auto-scroll to bottom
+            cursor = self.main_window.log_text.textCursor()
+            cursor.movePosition(cursor.MoveOperation.End)
+            self.main_window.log_text.setTextCursor(cursor)
 
-                self._logger.debug(f"UI log updated: {message}")
+            self._logger.debug(f"UI log updated: {message}")
 
         except Exception as e:
             self._logger.error(f"Error occurred while updating log display: {e}")
@@ -770,16 +765,11 @@ class ReportManager:
         return aggregated
 
     def clear_displays(self):
-        """清空显示区域 (delegates to DisplayManager if available)"""
+        """Clear display areas"""
         try:
-            # Use DisplayManager if available (new architecture)
-            if hasattr(self.main_window, "display"):
-                self.main_window.display.clear_displays()
-            else:
-                # Fallback to direct implementation (backward compatibility)
-                self.main_window.log_text.clear()
-                self.main_window.summary_text.clear()
-                self._logger.debug("Cleared log and summary display")
+            self.main_window.log_text.clear()
+            self.main_window.summary_text.clear()
+            self._logger.debug("Cleared log and summary display")
 
         except Exception as e:
             self._logger.error(f"Error occurred while clearing display area: {e}")

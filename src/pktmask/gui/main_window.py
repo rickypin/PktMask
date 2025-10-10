@@ -89,7 +89,6 @@ class MainWindow(QMainWindow):
         """Initialize all managers"""
         # Import manager classes
         from .managers import DialogsManager, EventCoordinator, PipelineManager, ReportManager, UIManager
-        from .managers.display_manager import DisplayManager
         from .managers.statistics_manager import StatisticsManager
 
         # 首先创建事件协调器
@@ -100,8 +99,7 @@ class MainWindow(QMainWindow):
 
         # 创建管理器实例
         self.ui_manager = UIManager(self)
-        self.dialogs = DialogsManager(self)  # New unified dialogs manager
-        self.display = DisplayManager(self)  # New display manager for log/dashboard updates
+        self.dialogs = DialogsManager(self)  # Unified dialogs and file manager
         self.pipeline_manager = PipelineManager(self)
         self.report_manager = ReportManager(self)
 
