@@ -108,6 +108,12 @@ class MaskingStage(StageBase):
             if not self.initialize():
                 raise RuntimeError("MaskingStage initialization failed")
 
+        # Normalize input parameters to Path
+        if not isinstance(input_path, Path):
+            input_path = Path(input_path)
+        if not isinstance(output_path, Path):
+            output_path = Path(output_path)
+
         # Validate input parameters
         if not input_path.exists():
             raise FileNotFoundError(f"Input file does not exist: {input_path}")

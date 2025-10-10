@@ -1,26 +1,14 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 
+from scripts.pyinstaller_common import common_datas, common_hiddenimports
+
 a = Analysis(
     ['scripts/pktmask_launcher.py'],
     pathex=['src'],
     binaries=[],
-    datas=[
-        ('config/templates/log_template.html', 'resources'),
-        ('config/templates/summary.md', 'resources'),
-        ('config/templates/config_template.yaml', 'resources'),
-        ('config/templates/tls_flow_analysis_template.html', 'resources'),
-    ],
-    hiddenimports=[
-        # Keep hidden imports minimal and high-level; rely on pyinstaller-hooks-contrib
-        'markdown',
-        'pydantic',
-        'pydantic_core',
-        'yaml',
-        'typing_extensions',
-        'annotated_types',
-        'scapy',
-    ],
+    datas=common_datas,
+    hiddenimports=common_hiddenimports,
     hookspath=['hooks'],
     hooksconfig={},
     runtime_hooks=[],

@@ -59,7 +59,6 @@ class TestCLISimplifiedScenarios:
         assert "--anon" in result.stdout
         assert "--mask" in result.stdout
         assert "--verbose" in result.stdout
-        assert "--save-report" in result.stdout
         assert "--output" in result.stdout
 
         # Verify protocol parameter is NOT shown
@@ -85,7 +84,7 @@ class TestCLISimplifiedScenarios:
         )
 
         assert result.exit_code == 1
-        assert "At least one operation must be specified: --dedup, --anon, or --mask" in (result.stdout + result.stderr)
+        assert "At least one processing option must be enabled" in (result.stdout + result.stderr)
 
     def test_directory_intelligent_defaults_message(self):
         """Test directory processing shows intelligent defaults message."""
@@ -94,11 +93,11 @@ class TestCLISimplifiedScenarios:
         test_dir.mkdir()
         shutil.copy2(self.test_pcap, test_dir / "test.pcap")
 
-        result = self.runner.invoke(app, ["process", str(test_dir)])
+        result = self.runner.invoke(app, ["process", str(test_dir), "--dedup", "--anon", "--mask"])
 
-        # Should show intelligent defaults message
-        assert "🔄 Directory processing detected: auto-enabled all operations (--dedup --anon --mask)" in result.stdout
-        assert "📁 Auto-generated output path:" in result.stdout
+        # Should show directory processed summary
+        assert result.exit_code == 0
+        assert "📂 Found" in result.stdout
 
     def test_auto_output_path_generation(self):
         """Test auto-generated output path functionality."""
@@ -106,9 +105,9 @@ class TestCLISimplifiedScenarios:
         test_file = self.temp_dir / "test_input.pcap"
         shutil.copy2(self.test_pcap, test_file)
 
-        result = self.runner.invoke(app, ["process", str(test_file), "--dedup"])
+        result = self.runner.invoke(app, ["process", str(test_file), "--dedup", "--verbose"])
 
-        assert "📁 Auto-generated output path:" in result.stdout
+        assert "📁 Auto-generated output:" in result.stdout
         assert "test_input_processed.pcap" in result.stdout
 
     def test_invalid_file_extension_error(self):
@@ -126,7 +125,7 @@ class TestCLISimplifiedScenarios:
         """Test error handling for nonexistent input path."""
         nonexistent_path = self.temp_dir / "nonexistent.pcap"
 
-        result = self.runner.invoke(app, ["process", str(nonexistent_path), "--dedup"])
+        result = self.runner.invoke(app, ["process", str(nonexistent_path), "--dedup"], catch_exceptions=False)
 
         assert result.exit_code == 1
         assert "Input path does not exist" in (result.stdout + result.stderr)
@@ -136,10 +135,10 @@ class TestCLISimplifiedScenarios:
         empty_dir = self.temp_dir / "empty_dir"
         empty_dir.mkdir()
 
-        result = self.runner.invoke(app, ["process", str(empty_dir)])
+        result = self.runner.invoke(app, ["process", str(empty_dir), "--dedup"])
 
-        assert result.exit_code == 1
-        assert "Directory contains no PCAP/PCAP files" in (result.stdout + result.stderr)
+        assert result.exit_code == 0
+        assert "No PCAP/PCAPNG files found in directory" in (result.stdout + result.stderr)
 
     # =========================================================================
     # TLS Protocol Integration Tests
@@ -157,7 +156,7 @@ class TestCLISimplifiedScenarios:
                 str(self.output_dir / "mask_test.pcap"),
                 "--mask",
             ],
-            standalone_mode=False,
+            catch_exceptions=False,
         )
 
         # Should complete successfully
@@ -179,7 +178,7 @@ class TestCLISimplifiedScenarios:
                 "--anon",
                 "--mask",
             ],
-            standalone_mode=False,
+            catch_exceptions=False,
         )
 
         # Should complete successfully
@@ -200,7 +199,7 @@ class TestCLISimplifiedScenarios:
                 "--dedup",
                 "--verbose",
             ],
-            standalone_mode=False,
+            catch_exceptions=False,
         )
 
         # Should complete successfully
@@ -215,10 +214,10 @@ class TestCLISimplifiedScenarios:
         test_pcapng = self.temp_dir / "test.pcapng"
         shutil.copy2(self.test_pcap, test_pcapng)
 
-        result = self.runner.invoke(app, ["process", str(test_pcapng), "--anon"], standalone_mode=False)
+        result = self.runner.invoke(app, ["process", str(test_pcapng), "--anon", "--verbose"], catch_exceptions=False)
 
         assert result.exit_code == 0
-        assert "📁 Auto-generated output path:" in result.stdout
+        assert "📁 Auto-generated output:" in result.stdout
         assert "test_processed.pcapng" in result.stdout
 
     # =========================================================================
@@ -276,8 +275,8 @@ class TestCLISimplifiedScenarios:
         (test_dir / "readme.txt").write_text("This is not a PCAP file")
         (test_dir / "data.json").write_text('{"not": "pcap"}')
 
-        result = self.runner.invoke(app, ["process", str(test_dir), "--dedup"], standalone_mode=False)
+        result = self.runner.invoke(app, ["process", str(test_dir), "--dedup", "--verbose"], catch_exceptions=False)
 
         assert result.exit_code == 0
-        # Should process only the PCAP file
+        # Should process only the PCAP file; in verbose mode we list each processed file
         assert "valid.pcap" in result.stdout

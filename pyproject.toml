@@ -25,12 +25,12 @@ classifiers = [
 ]
 dependencies = [
     "scapy>=2.5.0,<3.0.0",      # Core packet processing
-    "PyQt6>=6.4.0",             # GUI framework (includes PyQt6-Qt6 and PyQt6_sip)
-    "markdown>=3.4.0",          # User guide rendering
-    "jinja2>=3.1.0",            # HTML report templates (includes MarkupSafe)
-    "pydantic>=2.0.0",          # Configuration validation
-    "PyYAML>=6.0.0",            # YAML configuration files
-    "typer>=0.9.0",             # CLI framework
+    "PyQt6>=6.4.0,<7",          # GUI framework (includes PyQt6-Qt6 and PyQt6_sip)
+    "markdown>=3.4.0,<4",       # User guide rendering
+    "jinja2>=3.1.0,<4",         # HTML report templates (includes MarkupSafe)
+    "pydantic>=2.0.0,<3",       # Configuration validation
+    "PyYAML>=6.0.0,<7",         # YAML configuration files
+    "typer>=0.9.0,<1.0.0",      # CLI framework
     "typing-extensions>=4.0.0;python_version<'3.10'"  # Type hints backport
 ]
 
@@ -121,7 +121,7 @@ use_parentheses = true
 ensure_newline_before_comments = true
 
 [tool.flake8]
-max-line-length = 220
+max-line-length = 120
 extend-ignore = [
     "E203",  # whitespace before ':' (conflicts with black)
     "W503",  # line break before binary operator (conflicts with black)

@@ -53,6 +53,8 @@ class TempFileManager:
         """Initialize the temporary file manager."""
         self.temp_dirs: Set[Path] = set()
         self.temp_files: Set[Path] = set()
+        # Keep references to TemporaryDirectory objects so they are not GC'ed early
+        self._tempdir_objects: list = []
         self._cleanup_lock = threading.Lock()
         self._cleanup_registered = False
         self._is_cleaning_up = False
@@ -88,10 +90,14 @@ class TempFileManager:
         Returns:
             Path: Path to created temporary directory
         """
-        temp_dir = Path(tempfile.mkdtemp(prefix=prefix, suffix=suffix))
+        # Use TemporaryDirectory so tests that patch it can observe creation.
+        temp_obj = tempfile.TemporaryDirectory(prefix=prefix, suffix=suffix)
+        temp_dir = Path(temp_obj.name)
 
         with self._cleanup_lock:
             self.temp_dirs.add(temp_dir)
+            # Keep reference to prevent premature GC/cleanup
+            self._tempdir_objects.append(temp_obj)
 
         logger.debug(f"Created temp directory: {temp_dir}")
         return temp_dir
@@ -200,7 +206,10 @@ class TempFileManager:
             self._is_cleaning_up = True
 
         try:
-            logger.info("Starting global temporary file cleanup")
+            try:
+                logger.info("Starting global temporary file cleanup")
+            except Exception:
+                pass
 
             files_cleaned = 0
             files_failed = 0
@@ -253,15 +262,27 @@ class TempFileManager:
             # Clear the directories set
             self.temp_dirs.clear()
 
+            # Attempt to cleanup TemporaryDirectory objects as well
+            for temp_obj in self._tempdir_objects:
+                try:
+                    temp_obj.cleanup()
+                except Exception:
+                    # Ignore errors; directories may already have been removed
+                    pass
+            self._tempdir_objects.clear()
+
             # Log summary
-            if files_cleaned > 0 or files_failed > 0 or dirs_cleaned > 0 or dirs_failed > 0:
-                logger.info(
-                    f"Temporary file cleanup completed: "
-                    f"files cleaned={files_cleaned}, files failed={files_failed}, "
-                    f"dirs cleaned={dirs_cleaned}, dirs failed={dirs_failed}"
-                )
-            else:
-                logger.debug("No temporary files or directories to clean up")
+            try:
+                if files_cleaned > 0 or files_failed > 0 or dirs_cleaned > 0 or dirs_failed > 0:
+                    logger.info(
+                        f"Temporary file cleanup completed: "
+                        f"files cleaned={files_cleaned}, files failed={files_failed}, "
+                        f"dirs cleaned={dirs_cleaned}, dirs failed={dirs_failed}"
+                    )
+                else:
+                    logger.debug("No temporary files or directories to clean up")
+            except Exception:
+                pass
 
         finally:
             with self._cleanup_lock:

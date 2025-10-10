@@ -7,13 +7,30 @@ Provides unified logging management functionality
 """
 
 import logging
+import os
 import sys
+from logging import Handler, StreamHandler
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 from ...common.constants import FileConstants
 from ...common.enums import LogLevel
+
+
+class NonClosingStreamHandler(logging.StreamHandler):
+    """A StreamHandler that never closes its underlying stream.
+
+    This avoids accidental closure of process-level stdio (sys.__stdout__/sys.__stderr__)
+    when logging.shutdown() is called by frameworks or at interpreter shutdown.
+    """
+
+    def close(self):  # type: ignore[override]
+        try:
+            self.flush()
+        finally:
+            # Do NOT close the underlying stream
+            logging.Handler.close(self)
 
 
 class PktMaskLogger:
@@ -39,6 +56,9 @@ class PktMaskLogger:
         """Set up root logger configuration"""
         root_logger = logging.getLogger("pktmask")
         root_logger.setLevel(logging.DEBUG)
+        # Prevent propagation to the global root logger to avoid duplicate logging and
+        # unintended interactions with pytest/click capturing
+        root_logger.propagate = False
 
         # Avoid duplicate handler addition
         if root_logger.handlers:
@@ -56,13 +76,27 @@ class PktMaskLogger:
             # If configuration retrieval fails, use default level
             pass
 
-        # Console handler
-        console_handler = logging.StreamHandler(sys.stdout)
+        # Console handler - always attach to real stdout to avoid pytest/click capture closing stdio
+        console_handler = NonClosingStreamHandler(sys.__stdout__)
         console_handler.setLevel(console_level)
         console_formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
+        # Ensure the global root logger has at least a non-closing console handler to
+        # prevent the stdlib lastResort handler (which targets sys.stderr) from being used.
+        # This avoids cases where frameworks call logging.shutdown() and close captured streams.
+        global_root = logging.getLogger()
+        if not global_root.handlers:
+            root_console = NonClosingStreamHandler(sys.__stdout__)
+            root_console.setLevel(logging.WARNING)
+            root_fmt = logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
+            root_console.setFormatter(root_fmt)
+            global_root.addHandler(root_console)
+
         console_handler.setFormatter(console_formatter)
         root_logger.addHandler(console_handler)
 
@@ -117,7 +151,7 @@ class PktMaskLogger:
             # Update levels for all existing handlers
             pktmask_logger = logging.getLogger("pktmask")
             for handler in pktmask_logger.handlers:
-                if isinstance(handler, logging.StreamHandler) and handler.stream == sys.stdout:
+                if isinstance(handler, logging.StreamHandler) and getattr(handler, "stream", None) == sys.__stdout__:
                     # This is the console handler
                     handler.setLevel(console_level)
 

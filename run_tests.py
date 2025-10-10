@@ -219,6 +219,11 @@ def main():
     if args.html and not args.full:
         pytest_args.extend(["--html=output/reports/test_report.html", "--self-contained-html"])
 
+    # Allow overriding pytest log level via environment variable
+    env_log_level = os.getenv("PYTEST_LOG_LEVEL")
+    if env_log_level:
+        pytest_args.extend(["-o", f"log_cli_level={env_log_level}"])
+
     if args.verbose:
         pytest_args.append("-v")
     else:

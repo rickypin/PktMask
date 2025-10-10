@@ -31,10 +31,11 @@ class ConsistentProcessor:
 
     @staticmethod
     def create_executor(
-        dedup: bool,
-        anon: bool,
-        mask: bool,
+        dedup: bool | None = None,
+        anon: bool | None = None,
+        mask: bool | None = None,
         mask_protocol: str = "auto",
+        **kwargs,
     ) -> PipelineExecutor:
         """Create executor with standardized configuration
 
@@ -52,8 +53,15 @@ class ConsistentProcessor:
         # Import here to avoid circular imports
         from .messages import StandardMessages
 
+        # Backward-compat: accept legacy keyword names if explicit args are None
+        if dedup is None and anon is None and mask is None:
+            # Legacy names: remove_duplicates/remove_dupes, anonymize_ips, mask_payloads
+            dedup = kwargs.get("remove_duplicates", kwargs.get("remove_dupes", kwargs.get("dedup", False)))
+            anon = kwargs.get("anonymize_ips", kwargs.get("anon", False))
+            mask = kwargs.get("mask_payloads", kwargs.get("mask", False))
+
         # Validate that at least one option is enabled
-        if not any([dedup, anon, mask]):
+        if not any([bool(dedup), bool(anon), bool(mask)]):
             raise ValueError(StandardMessages.NO_OPTIONS_SELECTED)
 
         # Build configuration using PipelineExecutor expected keys

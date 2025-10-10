@@ -18,58 +18,66 @@ if "PyQt6" not in sys.modules:
 
         importlib.import_module("PyQt6")  # noqa: F401
     except ModuleNotFoundError:
-        # 构造占位模块结构: PyQt6, PyQt6.QtCore, PyQt6.QtWidgets, PyQt6.QtGui
-        pyqt6_stub = types.ModuleType("PyQt6")
+        import os as _os
 
-        qtcore_stub = types.ModuleType("PyQt6.QtCore")
-        qtwidgets_stub = types.ModuleType("PyQt6.QtWidgets")
-        qtgui_stub = types.ModuleType("PyQt6.QtGui")
+        _test_mode = str(_os.getenv("PKTMASK_TEST_MODE", "")).lower() in ("1", "true", "yes")
+        _headless = str(_os.getenv("PKTMASK_HEADLESS", "")).lower() in ("1", "true", "yes")
+        if not (_test_mode or _headless):
+            # Outside of test/headless environments, do not inject stubs.
+            # Let ImportError surface if GUI code is imported without PyQt6 installed.
+            pass
+        else:
+            # 构造占位模块结构: PyQt6, PyQt6.QtCore, PyQt6.QtWidgets, PyQt6.QtGui
+            pyqt6_stub = types.ModuleType("PyQt6")
+            qtcore_stub = types.ModuleType("PyQt6.QtCore")
+            qtwidgets_stub = types.ModuleType("PyQt6.QtWidgets")
+            qtgui_stub = types.ModuleType("PyQt6.QtGui")
 
-        # ---- QtCore minimal stubs ----
-        class _QTime:  # noqa: D401
-            def __init__(self, *args, **kwargs):
-                pass
+            # ---- QtCore minimal stubs ----
+            class _QTime:  # noqa: D401
+                def __init__(self, *args, **kwargs):
+                    pass
 
-            def __repr__(self):
-                return "<stub QTime>"
+                def __repr__(self):
+                    return "<stub QTime>"
 
-        def _dummy(*_a, **_kw):  # placeholder for pyqtSignal/slots
-            return lambda *a, **kw: None
+            def _dummy(*_a, **_kw):  # placeholder for pyqtSignal/slots
+                return lambda *a, **kw: None
 
-        qtcore_stub.QTime = _QTime
-        qtcore_stub.pyqtSignal = _dummy
-        qtcore_stub.Qt = object  # generic placeholder
-        qtcore_stub.QThread = object
-        qtcore_stub.QTimer = object
-        qtcore_stub.QEvent = object
-        qtcore_stub.QObject = object
-        qtcore_stub.QPropertyAnimation = object
-        qtcore_stub.QEasingCurve = object
+            qtcore_stub.QTime = _QTime
+            qtcore_stub.pyqtSignal = _dummy
+            qtcore_stub.Qt = object  # generic placeholder
+            qtcore_stub.QThread = object
+            qtcore_stub.QTimer = object
+            qtcore_stub.QEvent = object
+            qtcore_stub.QObject = object
+            qtcore_stub.QPropertyAnimation = object
+            qtcore_stub.QEasingCurve = object
 
-        # ---- QtWidgets minimal stubs ----
-        qtwidgets_stub.QApplication = object
-        qtwidgets_stub.QFileDialog = object
-        qtwidgets_stub.QMessageBox = object
-        qtwidgets_stub.QAction = object
+            # ---- QtWidgets minimal stubs ----
+            qtwidgets_stub.QApplication = object
+            qtwidgets_stub.QFileDialog = object
+            qtwidgets_stub.QMessageBox = object
+            qtwidgets_stub.QAction = object
 
-        # ---- QtGui minimal stubs ----
-        qtgui_stub.QFont = object
-        qtgui_stub.QIcon = object
-        qtgui_stub.QTextCursor = object
-        qtgui_stub.QFontMetrics = object
-        qtgui_stub.QColor = object
+            # ---- QtGui minimal stubs ----
+            qtgui_stub.QFont = object
+            qtgui_stub.QIcon = object
+            qtgui_stub.QTextCursor = object
+            qtgui_stub.QFontMetrics = object
+            qtgui_stub.QColor = object
 
-        # 注册到sys.modules
-        sys.modules.update(
-            {
-                "PyQt6": pyqt6_stub,
-                "PyQt6.QtCore": qtcore_stub,
-                "PyQt6.QtWidgets": qtwidgets_stub,
-                "PyQt6.QtGui": qtgui_stub,
-            }
-        )
+            # 注册到sys.modules
+            sys.modules.update(
+                {
+                    "PyQt6": pyqt6_stub,
+                    "PyQt6.QtCore": qtcore_stub,
+                    "PyQt6.QtWidgets": qtwidgets_stub,
+                    "PyQt6.QtGui": qtgui_stub,
+                }
+            )
 
-        # 还需要让主包引用子模块
-        pyqt6_stub.QtCore = qtcore_stub
-        pyqt6_stub.QtWidgets = qtwidgets_stub
-        pyqt6_stub.QtGui = qtgui_stub
+            # 还需要让主包引用子模块
+            pyqt6_stub.QtCore = qtcore_stub
+            pyqt6_stub.QtWidgets = qtwidgets_stub
+            pyqt6_stub.QtGui = qtgui_stub

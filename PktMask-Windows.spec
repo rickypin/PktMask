@@ -8,12 +8,14 @@ import sys
 import os
 from pathlib import Path
 
+from scripts.pyinstaller_common import common_datas, common_hiddenimports
+
 # 获取项目根目录
 project_root = Path(__file__).parent
 src_path = project_root / 'src'
 
 # Windows特定的隐藏导入
-windows_hidden_imports = [
+windows_hidden_imports = common_hiddenimports + [
     # PyQt6 (Windows)
     'PyQt6.QtCore',
     'PyQt6.QtGui',
@@ -25,18 +27,8 @@ windows_hidden_imports = [
     'pktmask.__main__',
     'pktmask.gui',
     'pktmask.gui.main_window',
-    'pktmask.gui.managers',
 
-    # Third-party high-level imports
-    'markdown',
-    'pydantic',
-    'pydantic_core',
-    'yaml',
-    'typing_extensions',
-    'annotated_types',
-
-    # Scapy
-    'scapy',
+    # Scapy extras
     'scapy.all',
     'scapy.layers',
     'scapy.layers.inet',
@@ -51,12 +43,7 @@ a = Analysis(
     ['scripts/pktmask_launcher.py'],
     pathex=[str(src_path)],
     binaries=[],
-    datas=[
-        (str(Path.cwd() / 'config' / 'templates' / 'log_template.html'), 'resources'),
-        (str(Path.cwd() / 'config' / 'templates' / 'summary.md'), 'resources'),
-        (str(Path.cwd() / 'config' / 'templates' / 'config_template.yaml'), 'resources'),
-        (str(Path.cwd() / 'config' / 'templates' / 'tls_flow_analysis_template.html'), 'resources'),
-    ],
+    datas=common_datas,
     hiddenimports=windows_hidden_imports,
     hookspath=['hooks'] if os.path.exists('hooks') else [],
     hooksconfig={},

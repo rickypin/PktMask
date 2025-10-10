@@ -52,14 +52,14 @@ def process_command(
     try:
         ConsistentProcessor.validate_input_path(input_path)
     except (FileNotFoundError, ValueError) as e:
-        typer.echo(f"{StandardMessages.ERROR_ICON} {str(e)}", err=True)
+        typer.echo(f"{StandardMessages.ERROR_ICON} {str(e)}")
         raise typer.Exit(1)
 
     # Options validation
     try:
         ConsistentProcessor.validate_options(dedup, anon, mask)
     except ValueError as e:
-        typer.echo(f"{StandardMessages.ERROR_ICON} {str(e)}", err=True)
+        typer.echo(f"{StandardMessages.ERROR_ICON} {str(e)}")
         raise typer.Exit(1)
 
     # Protocol validation (when mask enabled)
@@ -68,7 +68,6 @@ def process_command(
         if mask_protocol not in allowed_protocols:
             typer.echo(
                 f"{StandardMessages.ERROR_ICON} Invalid --mask-protocol: {mask_protocol}. " f"Allowed: tls|http|auto",
-                err=True,
             )
             raise typer.Exit(1)
 
@@ -90,7 +89,7 @@ def process_command(
         else:
             _process_directory(input_path, output_path, dedup, anon, mask, mask_protocol, verbose)
     except Exception as e:
-        typer.echo(f"{StandardMessages.ERROR_ICON} {str(e)}", err=True)
+        typer.echo(f"{StandardMessages.ERROR_ICON} {str(e)}")
         raise typer.Exit(1)
 
 
@@ -122,7 +121,7 @@ def _process_single_file(
             raise typer.Exit(1)
 
     except Exception as e:
-        typer.echo(f"{StandardMessages.ERROR_ICON} Processing failed: {str(e)}", err=True)
+        typer.echo(f"{StandardMessages.ERROR_ICON} Processing failed: {str(e)}")
         raise typer.Exit(1)
 
 
@@ -236,7 +235,7 @@ def validate_command(
                     typer.echo(f"  ... and {len(pcap_files) - 10} more files")
 
     except (FileNotFoundError, ValueError) as e:
-        typer.echo(f"{StandardMessages.ERROR_ICON} Validation failed: {str(e)}", err=True)
+        typer.echo(f"{StandardMessages.ERROR_ICON} Validation failed: {str(e)}")
         raise typer.Exit(1)
 
 
@@ -263,7 +262,7 @@ def config_command(
         typer.echo(f"\n⚙️ {summary}")
 
     except ValueError as e:
-        typer.echo(f"{StandardMessages.ERROR_ICON} {str(e)}", err=True)
+        typer.echo(f"{StandardMessages.ERROR_ICON} {str(e)}")
         raise typer.Exit(1)
 
 
