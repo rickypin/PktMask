@@ -9,15 +9,13 @@ to ensure proper functionality and GUI compatibility preservation.
 """
 
 import os
-import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
-from PyQt6.QtCore import QThread, pyqtSignal
 
 from pktmask.core.events import PipelineEvents
-from pktmask.gui.core.feature_flags import GUIFeatureFlags, GUIFeatureFlagValidator
+from pktmask.gui.core.feature_flags import GUIFeatureFlags
 from pktmask.gui.core.gui_consistent_processor import (
     GUIConsistentProcessor,
     GUIServicePipelineThread,
@@ -31,38 +29,11 @@ class TestGUIFeatureFlags:
     def setup_method(self):
         """Clear environment variables before each test"""
         env_vars = [
-            "PKTMASK_USE_CONSISTENT_PROCESSOR",
             "PKTMASK_GUI_DEBUG_MODE",
-            "PKTMASK_FORCE_LEGACY_MODE",
-            "PKTMASK_FEATURE_CONFIG",
         ]
         for var in env_vars:
             if var in os.environ:
                 del os.environ[var]
-
-    @pytest.mark.skip(reason="Temporarily skipped - GUI feature flags behavior changed")
-    def test_default_values(self):
-        """Test default feature flag values"""
-        assert not GUIFeatureFlags.should_use_consistent_processor()
-        assert not GUIFeatureFlags.is_gui_debug_mode()
-        assert not GUIFeatureFlags.is_legacy_mode_forced()
-
-    def test_enable_consistent_processor(self):
-        """Test enabling consistent processor"""
-        os.environ["PKTMASK_USE_CONSISTENT_PROCESSOR"] = "true"
-        assert GUIFeatureFlags.should_use_consistent_processor()
-
-        os.environ["PKTMASK_USE_CONSISTENT_PROCESSOR"] = "false"
-        assert not GUIFeatureFlags.should_use_consistent_processor()
-
-    def test_force_legacy_mode_override(self):
-        """Test that force legacy mode overrides other settings"""
-        os.environ["PKTMASK_USE_CONSISTENT_PROCESSOR"] = "true"
-        os.environ["PKTMASK_FORCE_LEGACY_MODE"] = "true"
-
-        # Force legacy should override consistent processor
-        assert not GUIFeatureFlags.should_use_consistent_processor()
-        assert GUIFeatureFlags.is_legacy_mode_forced()
 
     def test_debug_mode(self):
         """Test GUI debug mode flag"""
@@ -74,90 +45,28 @@ class TestGUIFeatureFlags:
 
     def test_programmatic_control(self):
         """Test programmatic feature flag control"""
-        GUIFeatureFlags.enable_consistent_processor()
-        assert GUIFeatureFlags.should_use_consistent_processor()
-
-        GUIFeatureFlags.disable_consistent_processor()
-        assert not GUIFeatureFlags.should_use_consistent_processor()
-
-        GUIFeatureFlags.force_legacy_mode()
-        assert GUIFeatureFlags.is_legacy_mode_forced()
+        GUIFeatureFlags.enable_debug_mode()
+        assert GUIFeatureFlags.is_gui_debug_mode()
 
     def test_get_feature_config(self):
         """Test getting complete feature configuration"""
         config = GUIFeatureFlags.get_feature_config()
 
-        assert "use_consistent_processor" in config
         assert "gui_debug_mode" in config
-        assert "legacy_mode_forced" in config
         assert "config_source" in config
 
-        assert isinstance(config["use_consistent_processor"], bool)
         assert isinstance(config["gui_debug_mode"], bool)
-        assert isinstance(config["legacy_mode_forced"], bool)
 
-    @pytest.mark.skip(reason="Temporarily skipped - GUI status summary format changed")
     def test_status_summary(self):
         """Test status summary generation"""
-        # Test legacy mode
         summary = GUIFeatureFlags.get_status_summary()
-        assert "Legacy Mode" in summary
+        assert isinstance(summary, str)
+        assert len(summary) > 0
 
-        # Test consistent processor mode
-        GUIFeatureFlags.enable_consistent_processor()
+        # Test with debug mode
+        GUIFeatureFlags.enable_debug_mode()
         summary = GUIFeatureFlags.get_status_summary()
-        assert "Consistent Processor Mode" in summary
-
-        # Test forced legacy mode
-        GUIFeatureFlags.force_legacy_mode()
-        summary = GUIFeatureFlags.get_status_summary()
-        assert "Legacy Mode (Forced)" in summary
-
-
-class TestGUIFeatureFlagValidator:
-    """Test GUI feature flag validator"""
-
-    def setup_method(self):
-        """Clear environment variables before each test"""
-        env_vars = [
-            "PKTMASK_USE_CONSISTENT_PROCESSOR",
-            "PKTMASK_GUI_DEBUG_MODE",
-            "PKTMASK_FORCE_LEGACY_MODE",
-        ]
-        for var in env_vars:
-            if var in os.environ:
-                del os.environ[var]
-
-    def test_validate_environment_clean(self):
-        """Test validation with clean environment"""
-        results = GUIFeatureFlagValidator.validate_environment()
-
-        assert results["valid"] is True
-        assert len(results["warnings"]) == 0
-        assert len(results["errors"]) == 0
-        assert "config" in results
-
-    def test_validate_conflicting_settings(self):
-        """Test validation with conflicting settings"""
-        os.environ["PKTMASK_USE_CONSISTENT_PROCESSOR"] = "true"
-        os.environ["PKTMASK_FORCE_LEGACY_MODE"] = "true"
-
-        results = GUIFeatureFlagValidator.validate_environment()
-
-        # The validator should detect the conflict and issue a warning
-        assert len(results["warnings"]) > 0
-        warning_text = " ".join(results["warnings"])
-        assert "Legacy mode" in warning_text or "forced" in warning_text
-
-    def test_validate_debug_without_processor(self):
-        """Test validation with debug mode but no consistent processor"""
-        os.environ["PKTMASK_GUI_DEBUG_MODE"] = "true"
-        os.environ["PKTMASK_USE_CONSISTENT_PROCESSOR"] = "false"
-
-        results = GUIFeatureFlagValidator.validate_environment()
-
-        assert len(results["warnings"]) > 0
-        assert any("Debug mode is enabled" in warning for warning in results["warnings"])
+        assert "Debug Mode" in summary or "debug" in summary.lower()
 
 
 class TestGUIConsistentProcessor:
@@ -325,11 +234,11 @@ class TestGUIProtectionLayerIntegration:
 
     def test_feature_flags_with_gui_processor(self):
         """Test feature flags integration with GUI processor"""
-        # Enable consistent processor
-        GUIFeatureFlags.enable_consistent_processor()
+        # Enable debug mode
+        GUIFeatureFlags.enable_debug_mode()
 
         # Verify flag is set
-        assert GUIFeatureFlags.should_use_consistent_processor()
+        assert GUIFeatureFlags.is_gui_debug_mode()
 
         # Test that GUI processor can be created
         executor = GUIConsistentProcessor.create_executor_from_gui(

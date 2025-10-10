@@ -10,13 +10,12 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import QTimer
 
 if TYPE_CHECKING:
-    from ..main_window import MainWindow, ServicePipelineThread
+    from ..main_window import MainWindow
 
 from pktmask.core.events import PipelineEvents
 from pktmask.infrastructure.logging import get_logger
-from pktmask.services import ConfigurationError, build_pipeline_config, create_pipeline_executor
 
-# Import GUI protection layer for safe rollout
+# Import GUI protection layer
 from ..core.feature_flags import GUIFeatureFlags
 from ..core.gui_consistent_processor import GUIConsistentProcessor, GUIThreadingHelper
 from .statistics_manager import StatisticsManager
@@ -34,7 +33,7 @@ class PipelineManager:
         self.statistics = StatisticsManager()
 
         # Processing state
-        self.processing_thread: "ServicePipelineThread" = None
+        self.processing_thread = None
         self.user_stopped = False
 
         # Retain timer setup
@@ -126,26 +125,6 @@ class PipelineManager:
         self.main_window.processed_files_count = 0  # Reset file count
         self.main_window.user_stopped = False  # Reset stop flag
 
-        # Insert rollout hint as the very first log line
-        try:
-            from ..core.feature_flags import GUIFeatureFlags as _FF
-
-            if _FF.is_legacy_mode_forced():
-                self.main_window.update_log(
-                    "ℹ️ Legacy mode (TLS only). Set PKTMASK_USE_CONSISTENT_PROCESSOR=true to enable auto (TLS+HTTP)."
-                )
-            elif _FF.should_use_consistent_processor():
-                self.main_window.update_log(
-                    "ℹ️ Using unified core (protocol=auto: TLS+HTTP). Set PKTMASK_FORCE_LEGACY_MODE=true to rollback."
-                )
-            else:
-                self.main_window.update_log(
-                    "ℹ️ Legacy mode active. Set PKTMASK_USE_CONSISTENT_PROCESSOR=true for auto (TLS+HTTP)."
-                )
-        except Exception:
-            # Best-effort hint; ignore failures
-            pass
-
         # Disable controls through event coordinator
         if hasattr(self.main_window, "event_coordinator"):
             self.main_window.event_coordinator.request_ui_update(
@@ -170,11 +149,8 @@ class PipelineManager:
             ]:
                 cb.setEnabled(False)
 
-        # Check feature flag to determine which implementation to use
-        if GUIFeatureFlags.should_use_consistent_processor():
-            self._start_with_consistent_processor()
-        else:
-            self._start_with_legacy_implementation()
+        # Start processing with unified core
+        self._start_with_consistent_processor()
 
     def stop_pipeline_processing(self):
         """Stop the processing pipeline and clean up resources"""
@@ -306,49 +282,6 @@ class PipelineManager:
         self.processing_thread.start()
 
         self._logger.info(f"Processing thread started, output directory: {self.main_window.current_output_dir}")
-
-    def _start_with_legacy_implementation(self):
-        """Start processing using legacy service layer (feature flag disabled)
-
-        CRITICAL: This method preserves the exact original implementation
-        for instant rollback capability.
-        """
-        # Original implementation preserved exactly
-        config = build_pipeline_config(
-            anonymize_ips=self.main_window.anonymize_ips_cb.isChecked(),
-            remove_dupes=self.main_window.remove_dupes_cb.isChecked(),
-            mask_payloads=self.main_window.mask_payloads_cb.isChecked(),
-        )
-        if not config:
-            self._logger.warning("No processing steps selected")
-            return
-
-        try:
-            executor = create_pipeline_executor(config)
-        except ConfigurationError as e:
-            self._logger.error(f"Configuration error: {str(e)}")
-            self.main_window.update_log(f"Configuration error: {str(e)}")
-            return
-        self._logger.info(f"Built PipelineExecutor containing {len(config)} Stages")
-
-        # Start processing using legacy method
-        self.start_processing(executor)
-
-    def start_processing(self, executor):
-        """Start processing thread with the given executor (legacy implementation)"""
-        # Import ServicePipelineThread (avoid circular import)
-        from ..main_window import ServicePipelineThread
-
-        # Create processing thread
-        self.processing_thread = ServicePipelineThread(
-            executor, self.main_window.base_dir, self.main_window.current_output_dir
-        )
-
-        # Use common GUI thread setup
-        self._start_gui_thread_processing()
-
-        # Add legacy-specific log message
-        self.main_window.update_log("🚀 Processing started...")
 
     def handle_thread_progress(self, event_type: PipelineEvents, data: dict):
         """Handle thread progress events"""

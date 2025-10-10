@@ -11,7 +11,7 @@ import sys
 from typing import List, Optional
 
 import markdown
-from PyQt6.QtCore import QEvent, QPropertyAnimation, Qt, QThread, QTime, QTimer, pyqtSignal
+from PyQt6.QtCore import QEvent, QPropertyAnimation, Qt, QTime, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QDialog, QLabel, QMainWindow, QPushButton, QTextEdit, QVBoxLayout
 
 from pktmask.common.constants import UIConstants
@@ -40,48 +40,6 @@ class GuideDialog(QDialog):
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(self.accept)
         layout.addWidget(close_btn)
-
-
-class ServicePipelineThread(QThread):
-    """
-    Processing thread using service interface.
-    """
-
-    progress_signal = pyqtSignal(PipelineEvents, dict)
-
-    def __init__(self, executor: object, base_dir: str, output_dir: str):
-        super().__init__()
-        self._executor = executor
-        self._base_dir = base_dir
-        self._output_dir = output_dir
-        self.is_running = True
-
-    def run(self):
-        try:
-            from pktmask.services.pipeline_service import process_directory
-
-            process_directory(
-                self._executor,
-                self._base_dir,
-                self._output_dir,
-                progress_callback=self.progress_signal.emit,
-                is_running_check=lambda: self.is_running,
-            )
-        except Exception as e:
-            from pktmask.services.pipeline_service import PipelineServiceError
-
-            if isinstance(e, PipelineServiceError):
-                self.progress_signal.emit(PipelineEvents.ERROR, {"message": str(e)})
-            else:
-                self.progress_signal.emit(PipelineEvents.ERROR, {"message": f"Unexpected error: {str(e)}"})
-
-    def stop(self):
-        self.is_running = False
-        self.progress_signal.emit(PipelineEvents.LOG, {"message": "--- Pipeline Stopped by User ---"})
-        from pktmask.services.pipeline_service import stop_pipeline
-
-        stop_pipeline(self._executor)
-        self.progress_signal.emit(PipelineEvents.PIPELINE_END, {})
 
 
 class MainWindow(QMainWindow):
