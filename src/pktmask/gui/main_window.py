@@ -2235,7 +2235,7 @@ class MainWindow(QMainWindow):
             with open(resource_path("summary.md"), "r", encoding="utf-8") as f:
                 content = f.read()
 
-            dialog = QDialog(self.main_window)
+            dialog = QDialog(self)
             dialog.setWindowTitle("User Guide")
             dialog.setGeometry(200, 200, 700, 500)
 
@@ -2251,7 +2251,7 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             self._logger.error(f"Failed to load user guide: {e}")
-            QMessageBox.critical(self.main_window, "Error", f"Could not load User Guide: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Could not load User Guide: {str(e)}")
 
     def show_about_dialog(self):
         """Show about dialog"""
@@ -2288,7 +2288,7 @@ class MainWindow(QMainWindow):
             <p><small>Built with Python and PyQt6</small></p>
             """
 
-            dialog = QDialog(self.main_window)
+            dialog = QDialog(self)
             dialog.setWindowTitle("About PktMask")
             dialog.setFixedSize(450, 500)
 
@@ -2323,7 +2323,7 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             self._logger.error(f"Failed to show About dialog: {e}")
-            QMessageBox.critical(self.main_window, "Error", f"Could not show About dialog: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Could not show About dialog: {str(e)}")
 
     def show_processing_error(self, error_message: str):
         """Show processing error dialog"""
@@ -2352,7 +2352,7 @@ class MainWindow(QMainWindow):
                 return
 
             # Show modal dialog in normal GUI environment
-            error_dialog = QMessageBox(self.main_window)
+            error_dialog = QMessageBox(self)
             error_dialog.setIcon(QMessageBox.Icon.Critical)
             error_dialog.setWindowTitle("Processing Error")
             error_dialog.setText("An error occurred during processing:")
@@ -2397,7 +2397,7 @@ class MainWindow(QMainWindow):
     def show_processing_complete(self, summary: str):
         """Show processing complete dialog"""
         try:
-            success_dialog = QMessageBox(self.main_window)
+            success_dialog = QMessageBox(self)
             success_dialog.setIcon(QMessageBox.Icon.Information)
             success_dialog.setWindowTitle("Processing Complete")
             success_dialog.setText("Processing completed successfully!")
@@ -2420,7 +2420,7 @@ class MainWindow(QMainWindow):
     def show_error(self, title: str, message: str):
         """Show error dialog (simplified wrapper)"""
         try:
-            QMessageBox.critical(self.main_window, title, message)
+            QMessageBox.critical(self, title, message)
             self._logger.error(f"Error dialog displayed: {title} - {message}")
         except Exception as e:
             self._logger.error(f"Failed to show error dialog: {e}")
@@ -2428,7 +2428,7 @@ class MainWindow(QMainWindow):
     def show_warning(self, title: str, message: str):
         """Show warning dialog (simplified wrapper)"""
         try:
-            QMessageBox.warning(self.main_window, title, message)
+            QMessageBox.warning(self, title, message)
             self._logger.warning(f"Warning dialog displayed: {title} - {message}")
         except Exception as e:
             self._logger.error(f"Failed to show warning dialog: {e}")
@@ -2436,7 +2436,7 @@ class MainWindow(QMainWindow):
     def show_info(self, title: str, message: str):
         """Show info dialog (simplified wrapper)"""
         try:
-            QMessageBox.information(self.main_window, title, message)
+            QMessageBox.information(self, title, message)
             self._logger.info(f"Info dialog displayed: {title} - {message}")
         except Exception as e:
             self._logger.error(f"Failed to show info dialog: {e}")
@@ -2445,7 +2445,7 @@ class MainWindow(QMainWindow):
         """Show confirmation dialog (simplified wrapper)"""
         try:
             reply = QMessageBox.question(
-                self.main_window,
+                self,
                 title,
                 message,
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
@@ -2463,7 +2463,7 @@ class MainWindow(QMainWindow):
     def show_progress_dialog(self, title: str, message: str, maximum: int = 0) -> QProgressDialog:
         """Show progress dialog"""
         try:
-            progress = QProgressDialog(self.main_window, message, "Cancel", 0, maximum, self.main_window)
+            progress = QProgressDialog(message, "Cancel", 0, maximum, self)
             progress.setWindowTitle(title)
             progress.setWindowModality(Qt.WindowModality.WindowModal)
             progress.setMinimumDuration(1000)  # Show after 1 second
@@ -2481,7 +2481,7 @@ class MainWindow(QMainWindow):
 
     def choose_input_folder(self):
         """Select input directory (renamed from choose_folder)"""
-        dir_path = QFileDialog.getExistingDirectory(self.main_window, "Select Input Folder", self.last_opened_dir)
+        dir_path = QFileDialog.getExistingDirectory(self, "Select Input Folder", self.last_opened_dir)
         if dir_path:
             self.base_dir = dir_path
             self.last_opened_dir = dir_path  # Record currently selected directory
@@ -2504,7 +2504,7 @@ class MainWindow(QMainWindow):
 
     def choose_output_folder(self):
         """Select custom output directory"""
-        dir_path = QFileDialog.getExistingDirectory(self.main_window, "Select Output Folder", self.last_opened_dir)
+        dir_path = QFileDialog.getExistingDirectory(self, "Select Output Folder", self.last_opened_dir)
         if dir_path:
             self.output_dir = dir_path
             self.output_path_label.setText(os.path.basename(dir_path))
@@ -2550,7 +2550,7 @@ class MainWindow(QMainWindow):
     def open_output_directory(self):
         """Open output directory"""
         if not self.current_output_dir or not os.path.exists(self.current_output_dir):
-            QMessageBox.warning(self.main_window, "Warning", "Output directory not found.")
+            QMessageBox.warning(self, "Warning", "Output directory not found.")
             return
 
         try:
@@ -2560,10 +2560,10 @@ class MainWindow(QMainWindow):
                 self._logger.info(f"Opened output directory: {self.current_output_dir}")
             else:
                 self._logger.error("Failed to open output directory")
-                QMessageBox.critical(self.main_window, "Error", "Could not open output directory.")
+                QMessageBox.critical(self, "Error", "Could not open output directory.")
         except Exception as e:
             self._logger.error(f"Error occurred while opening output directory: {e}")
-            QMessageBox.critical(self.main_window, "Error", f"Error opening directory: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Error opening directory: {str(e)}")
 
     # ========================================================================
     # DIRECTORY VALIDATION AND INFO (from FileManager)
@@ -2772,7 +2772,7 @@ class MainWindow(QMainWindow):
 
             try:
                 QMessageBox.warning(
-                    self.main_window,
+                    self,
                     "Warning",
                     "Please choose an input folder to process.",
                 )
@@ -2800,7 +2800,7 @@ class MainWindow(QMainWindow):
             from PyQt6.QtWidgets import QMessageBox
 
             QMessageBox.critical(
-                self.main_window,
+                self,
                 "Error",
                 f"Failed to create output directory: {str(e)}",
             )
