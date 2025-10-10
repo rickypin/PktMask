@@ -156,7 +156,7 @@ class PipelineManager:
                 thread.wait()
 
         # Generate partial summary statistics when stopped
-        self.main_window.report_manager.generate_partial_summary_on_stop()
+        self.main_window.generate_partial_summary_on_stop()
 
         # Re-enable controls via Qt signal
         self.main_window.ui_update_requested.emit(
@@ -404,7 +404,7 @@ class PipelineManager:
         self.main_window.packets_processed_label.setText(str(final_packets_processed))
 
         # Delegate to ReportManager to generate report
-        self.main_window.report_manager.generate_processing_finished_report()
+        self.main_window.generate_processing_finished_report()
 
         import os
 
@@ -505,7 +505,7 @@ class PipelineManager:
             stats = self.get_processing_stats()
             partial_data = {**stats, "status": "stopped_by_user"}
 
-            self.main_window.report_manager.set_final_summary_report(partial_data)
+            self.main_window.set_final_summary_report(partial_data)
 
         except Exception as e:
             self._logger.error(f"Error occurred while generating partial summary: {e}")
@@ -521,7 +521,7 @@ class PipelineManager:
                 "output_directory": self.main_window.current_output_dir,
             }
 
-            self.main_window.report_manager.set_final_summary_report(final_data)
+            self.main_window.set_final_summary_report(final_data)
 
         except Exception as e:
             self._logger.error(f"Error occurred while generating final report: {e}")
