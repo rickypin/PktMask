@@ -467,7 +467,7 @@ class MainWindow(QMainWindow):
 
     def _display_dependency_status(self, messages):
         """Display dependency status in Log module"""
-        if hasattr(self.main_window, "log_text"):
+        if hasattr(self, "log_text"):
             # Build dependency status message
             status_text = "⚠️  Dependency Status Check:\n"
             status_text += "-" * 40 + "\n"
@@ -1424,11 +1424,11 @@ class MainWindow(QMainWindow):
 
             # Safe check for GUI components with fallback
             try:
-                if hasattr(self.main_window, "anonymize_ips_cb") and self.anonymize_ips_cb.isChecked():
+                if hasattr(self, "anonymize_ips_cb") and self.anonymize_ips_cb.isChecked():
                     expected_steps.add("Anonymize IPs")
-                if hasattr(self.main_window, "remove_dupes_cb") and self.remove_dupes_cb.isChecked():
+                if hasattr(self, "remove_dupes_cb") and self.remove_dupes_cb.isChecked():
                     expected_steps.add("Deduplication")
-                if hasattr(self.main_window, "mask_payloads_cb") and self.mask_payloads_cb.isChecked():
+                if hasattr(self, "mask_payloads_cb") and self.mask_payloads_cb.isChecked():
                     expected_steps.add("Mask Payloads")
             except AttributeError:
                 # Fallback: if GUI components are not available, infer from actual completed steps
@@ -1472,7 +1472,7 @@ class MainWindow(QMainWindow):
         else:
             # Safe access to processed_files_count with fallback
             files_count = getattr(
-                self.main_window,
+                self,
                 "processed_files_count",
                 len(self.file_processing_results),
             )
@@ -1546,7 +1546,7 @@ class MainWindow(QMainWindow):
             )
 
         # Fix: Get IP mapping information from file-level IP mapping cache
-        if hasattr(self.main_window, "_current_file_ips") and original_filename in self._current_file_ips:
+        if hasattr(self, "_current_file_ips") and original_filename in self._current_file_ips:
             file_ip_mappings = self._current_file_ips[original_filename]
 
         for step_name in step_order:
@@ -1957,9 +1957,9 @@ class MainWindow(QMainWindow):
         """私有方法：保存摘要报告到输出目录"""
         try:
             # 委托给FileManager或使用MainWindow的现有方法
-            if hasattr(self.main_window, "save_summary_report_to_output_dir"):
+            if hasattr(self, "save_summary_report_to_output_dir"):
                 self.save_summary_report_to_output_dir()
-            elif hasattr(self.main_window, "file_manager"):
+            elif hasattr(self, "file_manager"):
                 self.file_manager.save_summary_report_to_output_dir()
             else:
                 self._logger.warning("Cannot find method to save Summary Report")
@@ -2091,12 +2091,12 @@ class MainWindow(QMainWindow):
 
             if ip_mappings and isinstance(ip_mappings, dict):
                 # 保存文件级IP映射
-                if not hasattr(self.main_window, "_current_file_ips"):
+                if not hasattr(self, "_current_file_ips"):
                     self._current_file_ips = {}
                 self._current_file_ips[self.current_processing_file] = ip_mappings
 
                 # **关键修复**: 将当前文件的IP映射累积到全局映射中（不覆盖）
-                if not hasattr(self.main_window, "global_ip_mappings") or self.global_ip_mappings is None:
+                if not hasattr(self, "global_ip_mappings") or self.global_ip_mappings is None:
                     self.global_ip_mappings = {}
 
                 # 累积映射而不是覆盖
