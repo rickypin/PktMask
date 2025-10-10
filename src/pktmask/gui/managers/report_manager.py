@@ -52,7 +52,7 @@ class ReportManager:
 
         # Stop statistics manager timing
         if hasattr(self.main_window, "pipeline_manager") and hasattr(self.main_window.pipeline_manager, "statistics"):
-            self.main_window.pipeline_manager.statistics.stop_timing()
+            self.main_window.statistics.stop_timing()
 
         self.main_window.update_time_elapsed()
 
@@ -480,7 +480,7 @@ class ReportManager:
 
         # Stop statistics manager timing
         if hasattr(self.main_window, "pipeline_manager") and hasattr(self.main_window.pipeline_manager, "statistics"):
-            self.main_window.pipeline_manager.statistics.stop_timing()
+            self.main_window.statistics.stop_timing()
 
         self.main_window.update_time_elapsed()
 

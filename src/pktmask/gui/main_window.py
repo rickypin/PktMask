@@ -89,9 +89,13 @@ class MainWindow(QMainWindow):
         """Initialize all managers"""
         # Import manager classes
         from .managers import DialogManager, EventCoordinator, FileManager, PipelineManager, ReportManager, UIManager
+        from .managers.statistics_manager import StatisticsManager
 
         # 首先创建事件协调器
         self.event_coordinator = EventCoordinator(self)
+
+        # 创建统计管理器 (独立，不再嵌套在PipelineManager中)
+        self.statistics = StatisticsManager()
 
         # 创建管理器实例
         self.ui_manager = UIManager(self)
@@ -344,7 +348,7 @@ class MainWindow(QMainWindow):
         self.event_coordinator.reset_all_data()
 
         # Use StatisticsManager to uniformly reset all statistics
-        self.pipeline_manager.statistics.reset_all_statistics()
+        self.statistics.reset_all_statistics()
 
         # Reset Live Dashboard display
         self.files_processed_label.setText("0")
@@ -444,8 +448,8 @@ class MainWindow(QMainWindow):
         elif event_type == PipelineEvents.PACKETS_SCANNED:
             count = data.get("count", 0)
             if count > 0:
-                self.pipeline_manager.statistics.add_packet_count(count)
-                self.packets_processed_label.setText(str(self.pipeline_manager.statistics.packets_processed))
+                self.statistics.add_packet_count(count)
+                self.packets_processed_label.setText(str(self.statistics.packets_processed))
 
         elif event_type == PipelineEvents.LOG:
             self.update_log(data["message"])
@@ -468,11 +472,11 @@ class MainWindow(QMainWindow):
                 if current_file not in self._counted_files:
                     self._counted_files.add(current_file)
                     # Use StatisticsManager's add_packet_count method to properly accumulate
-                    self.pipeline_manager.statistics.add_packet_count(packets_processed)
+                    self.statistics.add_packet_count(packets_processed)
                     # Update UI display
-                    self.packets_processed_label.setText(str(self.pipeline_manager.statistics.packets_processed))
+                    self.packets_processed_label.setText(str(self.statistics.packets_processed))
                     self._logger.debug(
-                        f"Updated packet count: file={current_file}, packets={packets_processed}, total={self.pipeline_manager.statistics.packets_processed}"
+                        f"Updated packet count: file={current_file}, packets={packets_processed}, total={self.statistics.packets_processed}"
                     )
 
             # 检查是否有降级处理信息
@@ -678,102 +682,102 @@ class MainWindow(QMainWindow):
     @property
     def files_processed_count(self):
         """Number of processed files (compatibility accessor)"""
-        return self.pipeline_manager.statistics.files_processed
+        return self.statistics.files_processed
 
     @files_processed_count.setter
     def files_processed_count(self, value):
         """Processed files count setter (compatibility accessor)"""
-        self.pipeline_manager.statistics.update_file_count(value)
+        self.statistics.update_file_count(value)
 
     @property
     def packets_processed_count(self):
         """Number of processed packets (compatibility accessor)"""
-        return self.pipeline_manager.statistics.packets_processed
+        return self.statistics.packets_processed
 
     @packets_processed_count.setter
     def packets_processed_count(self, value):
         """Processed packets count setter (compatibility accessor)"""
-        self.pipeline_manager.statistics.update_packet_count(value)
+        self.statistics.update_packet_count(value)
 
     @property
     def file_processing_results(self):
         """File processing results (compatibility accessor)"""
-        return self.pipeline_manager.statistics.file_processing_results
+        return self.statistics.file_processing_results
 
     @file_processing_results.setter
     def file_processing_results(self, value):
         """File processing results setter (compatibility accessor)"""
-        self.pipeline_manager.statistics.file_processing_results = value
+        self.statistics.file_processing_results = value
 
     @property
     def global_ip_mappings(self):
         """Global IP mappings (compatibility accessor)"""
-        return self.pipeline_manager.statistics.global_ip_mappings
+        return self.statistics.global_ip_mappings
 
     @global_ip_mappings.setter
     def global_ip_mappings(self, value):
         """Global IP mappings setter (compatibility accessor)"""
-        self.pipeline_manager.statistics.global_ip_mappings = value
+        self.statistics.global_ip_mappings = value
 
     @property
     def all_ip_reports(self):
         """All IP reports (compatibility accessor)"""
-        return self.pipeline_manager.statistics.all_ip_reports
+        return self.statistics.all_ip_reports
 
     @all_ip_reports.setter
     def all_ip_reports(self, value):
         """All IP reports setter (compatibility accessor)"""
-        self.pipeline_manager.statistics.all_ip_reports = value
+        self.statistics.all_ip_reports = value
 
     @property
     def processed_files_count(self):
         """Processed files count (compatibility accessor)"""
-        return self.pipeline_manager.statistics.processed_files_count
+        return self.statistics.processed_files_count
 
     @processed_files_count.setter
     def processed_files_count(self, value):
         """Processed files count setter (compatibility accessor)"""
-        self.pipeline_manager.statistics.processed_files_count = value
+        self.statistics.processed_files_count = value
 
     @property
     def current_processing_file(self):
         """Current processing file (compatibility accessor)"""
-        return self.pipeline_manager.statistics.current_processing_file
+        return self.statistics.current_processing_file
 
     @current_processing_file.setter
     def current_processing_file(self, value):
         """Current processing file setter (compatibility accessor)"""
-        self.pipeline_manager.statistics.set_current_processing_file(value)
+        self.statistics.set_current_processing_file(value)
 
     @property
     def subdirs_files_counted(self):
         """Subdirectory files count (compatibility accessor)"""
-        return self.pipeline_manager.statistics.subdirs_files_counted
+        return self.statistics.subdirs_files_counted
 
     @subdirs_files_counted.setter
     def subdirs_files_counted(self, value):
         """Subdirectory files count setter (compatibility accessor)"""
-        self.pipeline_manager.statistics.subdirs_files_counted = value
+        self.statistics.subdirs_files_counted = value
 
     @property
     def subdirs_packets_counted(self):
         """Subdirectory packets count (compatibility accessor)"""
-        return self.pipeline_manager.statistics.subdirs_packets_counted
+        return self.statistics.subdirs_packets_counted
 
     @subdirs_packets_counted.setter
     def subdirs_packets_counted(self, value):
         """Subdirectory packets count setter (compatibility accessor)"""
-        self.pipeline_manager.statistics.subdirs_packets_counted = value
+        self.statistics.subdirs_packets_counted = value
 
     @property
     def printed_summary_headers(self):
         """Printed summary headers (compatibility accessor)"""
-        return self.pipeline_manager.statistics.printed_summary_headers
+        return self.statistics.printed_summary_headers
 
     @printed_summary_headers.setter
     def printed_summary_headers(self, value):
         """Printed summary headers setter (compatibility accessor)"""
-        self.pipeline_manager.statistics.printed_summary_headers = value
+        self.statistics.printed_summary_headers = value
 
     def _init_legacy_attributes(self):
         """Initialize legacy attributes (using StatisticsManager)"""

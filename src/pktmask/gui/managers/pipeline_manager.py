@@ -18,7 +18,6 @@ from pktmask.infrastructure.logging import get_logger
 # Import GUI protection layer
 from ..core.feature_flags import GUIFeatureFlags
 from ..core.gui_consistent_processor import GUIConsistentProcessor, GUIThreadingHelper
-from .statistics_manager import StatisticsManager
 
 
 class PipelineManager:
@@ -29,8 +28,8 @@ class PipelineManager:
         self.config = main_window.config
         self._logger = get_logger(__name__)
 
-        # Integrate statistics manager
-        self.statistics = StatisticsManager()
+        # Note: StatisticsManager is now managed directly by MainWindow
+        # Access via self.main_window.statistics
 
         # Processing state
         self.processing_thread = None
@@ -38,8 +37,6 @@ class PipelineManager:
 
         # Retain timer setup
         self._setup_timer()
-
-    # === Use statistics attribute directly, no additional accessors needed ===
 
     def _setup_timer(self):
         """Set up processing time tracking timer"""
