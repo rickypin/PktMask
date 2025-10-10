@@ -84,7 +84,7 @@ PktMask provides three essential functions to make your network data safe to sha
 - Network interface for packet capture (if capturing live traffic)
 
 **Dependencies:**
-- Python 3.8 or later (automatically installed with binary releases)
+- Python 3.10 or later (automatically bundled with binary releases)
 - Wireshark/tshark (recommended for advanced features)
 
 ## 📦 Installation
@@ -102,6 +102,8 @@ PktMask provides three essential functions to make your network data safe to sha
 3. Launch PktMask from Applications folder
 
 ### Option 2: Install from Source (Advanced Users)
+Note: Source installation is primarily for development and contributors. For end users, prefer the ready-to-use installers above. At runtime, the app expects repository-root resources; official installers prepared via PyInstaller bundle these resources.
+
 
 ```bash
 # Download and setup
@@ -112,7 +114,7 @@ cd pktmask
 pip install -e .
 
 # Run the application
-python -m pktmask
+python3 -m pktmask
 ```
 
 ### Verify Installation
@@ -133,13 +135,13 @@ After installation, you can quickly verify that all functions are working correc
 source .venv/bin/activate
 
 # Test basic mask functionality
-python -m pktmask mask tests/data/tls/ssl_3.pcap -o /tmp/test_basic.pcap --mode basic
+python3 -m pktmask mask tests/data/tls/ssl_3.pcap -o /tmp/test_basic.pcap --mode basic
 
 # Test enhanced mask with IP anonymization
-python -m pktmask mask tests/data/tls/ssl_3.pcap -o /tmp/test_enhanced.pcap --anonymize-ips --mode enhanced --verbose
+python3 -m pktmask mask tests/data/tls/ssl_3.pcap -o /tmp/test_enhanced.pcap --anonymize-ips --mode enhanced --verbose
 
 # Test full pipeline (dedup + anon + mask)
-python -m pktmask mask tests/data/tls/ssl_3.pcap -o /tmp/test_full.pcap --remove-dupes --anonymize-ips --mode enhanced --verbose
+python3 -m pktmask mask tests/data/tls/ssl_3.pcap -o /tmp/test_full.pcap --remove-dupes --anonymize-ips --mode enhanced --verbose
 ```
 
 Expected results:
@@ -155,7 +157,7 @@ Expected results:
 1. **Launch PktMask**
    - Windows: Click the PktMask icon on your desktop or Start menu
    - macOS: Open PktMask from Applications folder
-   - Linux: Run `python -m pktmask` in terminal
+   - Linux: Run `python3 -m pktmask` in terminal
 
 2. **Select Your Files**
    - Click "Select Directory" button

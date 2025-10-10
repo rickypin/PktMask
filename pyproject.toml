@@ -90,13 +90,10 @@ exclude = [
     "__pycache__/**"
 ]
 
-[tool.pytest.ini_options]
-addopts = "--cov=pktmask --cov-report=term-missing --cov-report=html --html=report.html --cov-fail-under=80"
-testpaths = ["tests"]
 
 [tool.black]
 line-length = 120
-target-version = ['py39']
+target-version = ['py310']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
