@@ -311,8 +311,9 @@ class UIManager:
         """Connect UI component signals to their handlers"""
         try:
             # Directory selection signals
-            self.main_window.dir_path_label.clicked.connect(self.main_window.file_manager.choose_folder)
-            self.main_window.output_path_label.clicked.connect(self.main_window.file_manager.handle_output_click)
+            # Note: file_manager is now an alias to dialogs manager for backward compatibility
+            self.main_window.dir_path_label.clicked.connect(self.main_window.dialogs.choose_input_folder)
+            self.main_window.output_path_label.clicked.connect(self.main_window.dialogs.handle_output_click)
 
             # Processing button signals
             self.main_window.start_proc_btn.clicked.connect(

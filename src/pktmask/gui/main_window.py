@@ -88,7 +88,7 @@ class MainWindow(QMainWindow):
     def _init_managers(self):
         """Initialize all managers"""
         # Import manager classes
-        from .managers import DialogManager, EventCoordinator, FileManager, PipelineManager, ReportManager, UIManager
+        from .managers import DialogsManager, EventCoordinator, PipelineManager, ReportManager, UIManager
         from .managers.statistics_manager import StatisticsManager
 
         # 首先创建事件协调器
@@ -99,10 +99,13 @@ class MainWindow(QMainWindow):
 
         # 创建管理器实例
         self.ui_manager = UIManager(self)
-        self.file_manager = FileManager(self)
+        self.dialogs = DialogsManager(self)  # New unified dialogs manager
         self.pipeline_manager = PipelineManager(self)
         self.report_manager = ReportManager(self)
-        self.dialog_manager = DialogManager(self)
+
+        # Backward compatibility: create aliases for old manager names
+        self.file_manager = self.dialogs  # FileManager functionality now in DialogsManager
+        self.dialog_manager = self.dialogs  # DialogManager functionality now in DialogsManager
 
         # Setup inter-manager event subscriptions
         self._setup_manager_subscriptions()
