@@ -122,29 +122,20 @@ class PipelineManager:
         self.main_window.processed_files_count = 0  # Reset file count
         self.main_window.user_stopped = False  # Reset stop flag
 
-        # Disable controls through event coordinator
-        if hasattr(self.main_window, "event_coordinator"):
-            self.main_window.event_coordinator.request_ui_update(
-                "enable_controls",
-                controls=[
+        # Disable controls via Qt signal
+        self.main_window.ui_update_requested.emit(
+            "enable_controls",
+            {
+                "controls": [
                     "dir_path_label",
                     "output_path_label",
                     "anonymize_ips_cb",
                     "remove_dupes_cb",
                     "mask_payloads_cb",
                 ],
-                enabled=False,
-            )
-        else:
-            # Fallback: direct operation
-            self.main_window.dir_path_label.setEnabled(False)
-            self.main_window.output_path_label.setEnabled(False)
-            for cb in [
-                self.main_window.anonymize_ips_cb,
-                self.main_window.remove_dupes_cb,
-                self.main_window.mask_payloads_cb,
-            ]:
-                cb.setEnabled(False)
+                "enabled": False,
+            },
+        )
 
         # Start processing with unified core
         self._start_with_consistent_processor()
@@ -167,11 +158,11 @@ class PipelineManager:
         # Generate partial summary statistics when stopped
         self.main_window.report_manager.generate_partial_summary_on_stop()
 
-        # Re-enable controls through event coordinator
-        if hasattr(self.main_window, "event_coordinator"):
-            self.main_window.event_coordinator.request_ui_update(
-                "enable_controls",
-                controls=[
+        # Re-enable controls via Qt signal
+        self.main_window.ui_update_requested.emit(
+            "enable_controls",
+            {
+                "controls": [
                     "dir_path_label",
                     "output_path_label",
                     "anonymize_ips_cb",
@@ -179,23 +170,10 @@ class PipelineManager:
                     "mask_payloads_cb",
                     "start_proc_btn",
                 ],
-                enabled=True,
-            )
-            self.main_window.event_coordinator.request_ui_update(
-                "update_button_text", button="start_proc_btn", text="Start"
-            )
-        else:
-            # Fallback: direct operation
-            self.main_window.dir_path_label.setEnabled(True)
-            self.main_window.output_path_label.setEnabled(True)
-            for cb in [
-                self.main_window.anonymize_ips_cb,
-                self.main_window.remove_dupes_cb,
-                self.main_window.mask_payloads_cb,
-            ]:
-                cb.setEnabled(True)
-            self.main_window.start_proc_btn.setEnabled(True)
-            self.main_window.start_proc_btn.setText("Start")
+                "enabled": True,
+            },
+        )
+        self.main_window.ui_update_requested.emit("update_button_text", {"button": "start_proc_btn", "text": "Start"})
 
     def _start_with_consistent_processor(self):
         """Start processing using new ConsistentProcessor (feature flag enabled)
@@ -512,10 +490,9 @@ class PipelineManager:
 
         self.user_stopped = False
 
-        # **Fix**: Notify UI update through event coordinator, but only reset display when starting new processing
+        # Notify UI update via Qt signal, but only reset display when starting new processing
         # This avoids accidentally resetting Live Dashboard display after processing completion
-        if hasattr(self.main_window, "event_coordinator"):
-            self.main_window.event_coordinator.notify_statistics_change(action="reset")
+        self.main_window.statistics_changed.emit({"action": "reset"})
 
         # Stop timer
         if self.main_window.timer.isActive():

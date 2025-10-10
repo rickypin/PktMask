@@ -45,8 +45,12 @@ class GuideDialog(QDialog):
 class MainWindow(QMainWindow):
     """Main window"""
 
-    # 定义信号
-    error_occurred = pyqtSignal(str)  # 错误发生信号，用于自动化测试
+    # Qt signals (replacing EventCoordinator)
+    error_occurred = pyqtSignal(str)  # Error signal for automated testing
+    progress_updated = pyqtSignal(int)  # Progress update signal
+    pipeline_event = pyqtSignal(str, dict)  # Pipeline event signal (event_type, data)
+    ui_update_requested = pyqtSignal(str, dict)  # UI update request signal (action, kwargs)
+    statistics_changed = pyqtSignal(dict)  # Statistics change signal
 
     def __init__(self):
         super().__init__()
@@ -98,10 +102,7 @@ class MainWindow(QMainWindow):
     def _init_managers(self):
         """Initialize all managers"""
         # Import manager classes
-        from .managers import DialogsManager, EventCoordinator, PipelineManager, ReportManager, UIManager
-
-        # 首先创建事件协调器
-        self.event_coordinator = EventCoordinator(self)
+        from .managers import DialogsManager, PipelineManager, ReportManager, UIManager
 
         # 创建管理器实例
         self.ui_manager = UIManager(self)
@@ -113,129 +114,58 @@ class MainWindow(QMainWindow):
         self.file_manager = self.dialogs  # FileManager functionality now in DialogsManager
         self.dialog_manager = self.dialogs  # DialogManager functionality now in DialogsManager
 
-        # Setup inter-manager event subscriptions
-        self._setup_manager_subscriptions()
+        # Connect Qt signals (replacing event subscriptions)
+        self._connect_signals()
 
         self._logger.debug("All managers initialization completed")
 
-    def _setup_manager_subscriptions(self):
-        """Set up subscription relationships between managers"""
-        # Subscribe to statistics updates
-        self.event_coordinator.subscribe("statistics_changed", self._handle_statistics_update)
-
-        # 订阅UI更新请求
-        self.event_coordinator.subscribe("ui_state_changed", self._handle_ui_update_request)
-
-        # 新增：订阅结构化数据事件
-        self.event_coordinator.subscribe("pipeline_event", self._handle_pipeline_event_data)
-        self.event_coordinator.subscribe("statistics_data", self._handle_statistics_data)
-
-        # 连接Qt信号
-        # statistics_updated 和 ui_update_requested 信号已移除，使用新的事件系统
-
-        # 新增：连接结构化数据信号（如果可用）
-        if hasattr(self.event_coordinator, "pipeline_event_data"):
-            self.event_coordinator.pipeline_event_data.connect(self._handle_pipeline_event_data)
-        if hasattr(self.event_coordinator, "statistics_data_updated"):
-            self.event_coordinator.statistics_data_updated.connect(self._handle_statistics_data)
+    def _connect_signals(self):
+        """Connect Qt signals (replacing EventCoordinator subscriptions)"""
+        # Connect internal signals to handlers
+        self.statistics_changed.connect(self._handle_statistics_update)
+        self.ui_update_requested.connect(self._handle_ui_update_request)
+        self.pipeline_event.connect(self._handle_pipeline_event_data)
 
     def _handle_statistics_update(self, data: dict):
-        """Handle statistics data updates"""
+        """Handle statistics data updates (Qt signal handler)"""
         action = data.get("action", "update")
         if action == "reset":
-            # **修复**: 检查是否正在处理中，只有在开始新处理时才重置Live Dashboard显示
-            # 避免在处理完成后重置显示导致统计数据丢失
+            # Check if processing is in progress, only reset Live Dashboard when starting new processing
+            # Avoid resetting display after processing completion which would lose statistics
             if hasattr(self, "pipeline_manager") and self.pipeline_manager.processing_thread is None:
-                # 只有在没有处理线程运行时才重置显示（即开始新处理时）
+                # Only reset display when no processing thread is running (i.e., starting new processing)
                 self.files_processed_label.setText("0")
                 self.packets_processed_label.setText("0")
                 self.time_elapsed_label.setText("00:00.00")
                 self.progress_bar.setValue(0)
-            # 如果正在处理或刚完成处理，保持当前显示不变
+            # If processing or just completed, keep current display unchanged
         else:
-            # 更新UI显示
-            stats = self.event_coordinator.get_statistics_data()
-            if stats:
-                self.files_processed_label.setText(str(stats.get("files_processed", 0)))
-                self.packets_processed_label.setText(str(stats.get("packets_processed", 0)))
-                self.time_elapsed_label.setText(stats.get("elapsed_time", "00:00.00"))
+            # Update UI display
+            if hasattr(self, "pipeline_manager"):
+                stats = self.pipeline_manager.get_processing_stats()
+                if stats:
+                    self.files_processed_label.setText(str(stats.get("files_processed", 0)))
+                    self.packets_processed_label.setText(str(stats.get("packets_processed", 0)))
+                    self.time_elapsed_label.setText(stats.get("processing_time", "00:00.00"))
 
-    def _handle_ui_update_request(self, action: str, data: dict = None):
-        """Handle UI update requests"""
-        if data is None:
-            data = {}
-
+    def _handle_ui_update_request(self, action: str, kwargs: dict):
+        """Handle UI update requests (Qt signal handler)"""
         if action == "enable_controls":
-            controls = data.get("controls", [])
-            enabled = data.get("enabled", True)
+            controls = kwargs.get("controls", [])
+            enabled = kwargs.get("enabled", True)
             for control_name in controls:
                 if hasattr(self, control_name):
                     getattr(self, control_name).setEnabled(enabled)
         elif action == "update_button_text":
-            button_name = data.get("button", "")
-            text = data.get("text", "")
+            button_name = kwargs.get("button", "")
+            text = kwargs.get("text", "")
             if hasattr(self, button_name):
                 getattr(self, button_name).setText(text)
 
-    def _handle_pipeline_event_data(self, event_data):
-        """Handle structured pipeline event data"""
-        try:
-            from pktmask.core.events import PipelineEvents
-            from pktmask.gui.models.pipeline_event_data import PipelineEventData
-        except ImportError:
-            self._logger.warning("Unable to import structured data model, skipping structured processing")
-            return
-
-        if isinstance(event_data, PipelineEventData):
-            self._logger.debug(f"Received structured event: {event_data.event_type} - {type(event_data.data).__name__}")
-
-            # 可以在这里添加基于新数据模型的增强处理逻辑
-            # 例如：更详细的日志、更精确的UI更新、数据验证等
-
-            if hasattr(event_data.data, "message") and event_data.data.message:
-                self._logger.info(f"Event message: {event_data.data.message}")
-
-            # 可以根据事件类型执行特定的增强处理
-            if event_data.event_type == PipelineEvents.FILE_START:
-                if hasattr(event_data.data, "size_bytes") and event_data.data.size_bytes:
-                    self._logger.info(f"Started processing file, size: {event_data.data.size_bytes} bytes")
-
-            elif event_data.event_type == PipelineEvents.STEP_SUMMARY:
-                if hasattr(event_data.data, "result"):
-                    self._logger.debug(f"Step result: {event_data.data.result}")
-        else:
-            self._logger.warning(f"Received unstructured event data: {type(event_data)}")
-
-    def _handle_statistics_data(self, stats_data):
-        """Handle structured statistics data"""
-        try:
-            from pktmask.gui.models.statistics_data import StatisticsData
-        except ImportError:
-            self._logger.warning("Unable to import statistics data model, skipping structured processing")
-            return
-
-        if isinstance(stats_data, StatisticsData):
-            self._logger.debug(
-                f"Received structured statistics data: {stats_data.metrics.files_processed} files, {stats_data.metrics.packets_processed} packets"
-            )
-
-            # 基于新数据模型的增强统计处理
-            # 可以实现更精确的性能监控、数据验证等
-
-            # 获取性能指标
-            completion_rate = stats_data.metrics.get_completion_rate()
-            processing_speed = stats_data.timing.get_processing_speed(stats_data.metrics.packets_processed)
-
-            if completion_rate > 0:
-                self._logger.info(f"Processing progress: {completion_rate:.1f}%")
-
-            if processing_speed > 0:
-                self._logger.info(f"Processing speed: {processing_speed:.1f} packets/sec")
-
-            # 可以在这里添加实时性能监控、异常检测等功能
-
-        else:
-            self._logger.warning(f"Received unstructured statistics data: {type(stats_data)}")
+    def _handle_pipeline_event_data(self, event_type: str, data: dict):
+        """Handle pipeline event data (Qt signal handler)"""
+        # Process pipeline events directly (simplified from EventCoordinator)
+        self._logger.debug(f"Received pipeline event: {event_type}")
 
     def _on_config_changed(self, new_config):
         """Configuration change callback"""
@@ -281,10 +211,6 @@ class MainWindow(QMainWindow):
         if processing_thread and processing_thread.isRunning():
             self.stop_pipeline_processing()
             processing_thread.wait(3000)  # Wait up to 3 seconds
-
-        # Close event coordinator
-        if hasattr(self, "event_coordinator"):
-            self.event_coordinator.shutdown()
 
         # Unregister configuration callbacks (simplified version temporarily removed)
 
@@ -353,10 +279,7 @@ class MainWindow(QMainWindow):
         self.log_text.clear()
         self.summary_text.clear()
 
-        # Use event coordinator to uniformly reset all data
-        self.event_coordinator.reset_all_data()
-
-        # Reset all statistics (moved from StatisticsManager)
+        # Reset all statistics
         self.files_processed = 0
         self.packets_processed = 0
         self.total_files_to_process = 0
@@ -411,11 +334,10 @@ class MainWindow(QMainWindow):
 
     def handle_thread_progress(self, event_type: PipelineEvents, data: dict):
         """Main slot function to dispatch UI update tasks based on event type"""
-        # Use EventCoordinator to publish structured event data
-        if hasattr(self, "event_coordinator"):
-            self.event_coordinator.emit_pipeline_event(event_type, data)
+        # Emit Qt signal directly (replacing EventCoordinator)
+        self.pipeline_event.emit(str(event_type), data)
 
-        # Maintain original UI update logic
+        # Process UI updates based on event type
         if event_type == PipelineEvents.PIPELINE_START:
             # Initialize progress bar to 0, maximum will be set when we know the actual file count
             self.progress_bar.setValue(0)
