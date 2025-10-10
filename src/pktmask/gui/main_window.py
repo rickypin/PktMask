@@ -18,12 +18,16 @@ from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
     QDialog,
+    QFileDialog,
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
     QMainWindow,
+    QMessageBox,
     QProgressBar,
+    QProgressDialog,
     QPushButton,
     QTextEdit,
     QVBoxLayout,
@@ -37,7 +41,12 @@ from pktmask.config.settings import get_app_config
 from pktmask.core.events import PipelineEvents
 from pktmask.infrastructure.logging import get_logger
 from pktmask.utils import current_time, current_timestamp, format_milliseconds_to_time
+from pktmask.utils.file_ops import open_directory_in_system
 from pktmask.utils.path import resource_path
+
+# Import GUI protection layer (from PipelineManager)
+from .core.feature_flags import GUIFeatureFlags
+from .core.gui_consistent_processor import GUIConsistentProcessor, GUIThreadingHelper
 
 # Import stylesheet generator (moved from UIManager)
 from .stylesheet import generate_stylesheet
@@ -126,22 +135,20 @@ class MainWindow(QMainWindow):
         self._logger.info("PktMask main window initialization completed")
 
     def _init_managers(self):
-        """Initialize all managers"""
-        # Import manager classes
-        from .managers import DialogsManager, PipelineManager
+        """Initialize processing state and timer (managers removed)"""
+        # All manager functionality has been moved to MainWindow methods
 
-        # 创建管理器实例
-        self.dialogs = DialogsManager(self)  # Unified dialogs and file manager
-        self.pipeline_manager = PipelineManager(self)
+        # Initialize processing state (from PipelineManager)
+        self.processing_thread = None
+        self.user_stopped = False
 
-        # Backward compatibility: create aliases for old manager names
-        self.file_manager = self.dialogs  # FileManager functionality now in DialogsManager
-        self.dialog_manager = self.dialogs  # DialogManager functionality now in DialogsManager
+        # Set up timer (from PipelineManager)
+        self._setup_timer()
 
-        # Connect internal Qt signals (must be done after managers are created)
+        # Connect internal Qt signals
         self._connect_signals()
 
-        self._logger.debug("All managers initialization completed")
+        self._logger.debug("Processing state and timer initialization completed")
 
     def _connect_signals(self):
         """Connect Qt signals (replacing EventCoordinator subscriptions)"""
@@ -420,12 +427,12 @@ class MainWindow(QMainWindow):
         """Connect UI component signals to their handlers"""
         try:
             # Directory selection signals
-            # Note: file_manager is now an alias to dialogs manager for backward compatibility
-            self.dir_path_label.clicked.connect(self.dialogs.choose_input_folder)
-            self.output_path_label.clicked.connect(self.dialogs.handle_output_click)
+            # Directory selection signals
+            self.dir_path_label.clicked.connect(self.choose_input_folder)
+            self.output_path_label.clicked.connect(self.handle_output_click)
 
             # Processing button signals
-            self.start_proc_btn.clicked.connect(self.pipeline_manager.toggle_pipeline_processing)
+            self.start_proc_btn.clicked.connect(self.toggle_pipeline_processing)
             self._logger.debug("Start button signal connected successfully")
 
         except Exception as e:
@@ -735,7 +742,7 @@ class MainWindow(QMainWindow):
         if action == "reset":
             # Check if processing is in progress, only reset Live Dashboard when starting new processing
             # Avoid resetting display after processing completion which would lose statistics
-            if hasattr(self, "pipeline_manager") and self.pipeline_manager.processing_thread is None:
+            if hasattr(self, "processing_thread") and self.processing_thread is None:
                 # Only reset display when no processing thread is running (i.e., starting new processing)
                 self.files_processed_label.setText("0")
                 self.packets_processed_label.setText("0")
@@ -744,8 +751,8 @@ class MainWindow(QMainWindow):
             # If processing or just completed, keep current display unchanged
         else:
             # Update UI display
-            if hasattr(self, "pipeline_manager"):
-                stats = self.pipeline_manager.get_processing_stats()
+            if hasattr(self, "get_processing_stats"):
+                stats = self.get_processing_stats()
                 if stats:
                     self.files_processed_label.setText(str(stats.get("files_processed", 0)))
                     self.packets_processed_label.setText(str(stats.get("packets_processed", 0)))
@@ -840,37 +847,9 @@ class MainWindow(QMainWindow):
         """Create menu bar (handled by UIManager)"""
         pass  # Already handled by UIManager in init_ui
 
-    def show_user_guide_dialog(self):
-        """Show user guide dialog"""
-        self.dialog_manager.show_user_guide_dialog()
-
     def show_initial_guides(self):
         """Show initial guides in log and report areas at startup (handled by UIManager)"""
         pass  # Already handled by UIManager in init_ui
-
-    def choose_folder(self):
-        """Choose directory"""
-        self.file_manager.choose_folder()
-
-    def handle_output_click(self):
-        """Handle output path button click"""
-        self.file_manager.handle_output_click()
-
-    def choose_output_folder(self):
-        """Choose custom output directory"""
-        self.file_manager.choose_output_folder()
-
-    def generate_default_output_path(self):
-        """Generate default output path preview"""
-        self.file_manager.generate_default_output_path()
-
-    def generate_actual_output_path(self) -> str:
-        """Generate actual output directory path"""
-        return self.file_manager.generate_actual_output_path()
-
-    def open_output_directory(self):
-        """Open output directory"""
-        self.file_manager.open_output_directory()
 
     def reset_state(self):
         """Reset all state and UI"""
@@ -918,18 +897,6 @@ class MainWindow(QMainWindow):
         self.start_proc_btn.setEnabled(False)  # Keep disabled until directory is selected
         self.start_proc_btn.setText("Start")
         self.show_initial_guides()
-
-    def toggle_pipeline_processing(self):
-        """Toggle processing start/stop based on current state"""
-        self.pipeline_manager.toggle_pipeline_processing()
-
-    def stop_pipeline_processing(self):
-        """Stop pipeline processing (delegated to PipelineManager)"""
-        self.pipeline_manager.stop_pipeline_processing()
-
-    def start_pipeline_processing(self):
-        """Start pipeline processing (delegated to PipelineManager)"""
-        self.pipeline_manager.start_pipeline_processing()
 
     def handle_thread_progress(self, event_type: PipelineEvents, data: dict):
         """Main slot function to dispatch UI update tasks based on event type"""
@@ -1042,13 +1009,9 @@ class MainWindow(QMainWindow):
         elif event_type == PipelineEvents.ERROR:
             self.processing_error(data["message"])
 
-    def processing_finished(self):
-        """Processing finished (delegated to PipelineManager)"""
-        self.pipeline_manager.processing_finished()
-
     def processing_error(self, error_message: str):
         """Handle processing error"""
-        self.dialog_manager.show_processing_error(error_message)
+        self.show_processing_error(error_message)
         self.processing_finished()
 
     def on_thread_finished(self):
@@ -1066,10 +1029,6 @@ class MainWindow(QMainWindow):
         super().resizeEvent(event)
         if self.base_dir:
             self.dir_path_label.setText(self.get_elided_text(self.dir_path_label, self.base_dir))
-
-    def show_about_dialog(self):
-        """Show about dialog"""
-        self.dialog_manager.show_about_dialog()
 
     def update_time_elapsed(self):
         if not self.start_time:
@@ -1959,8 +1918,6 @@ class MainWindow(QMainWindow):
             # 委托给FileManager或使用MainWindow的现有方法
             if hasattr(self, "save_summary_report_to_output_dir"):
                 self.save_summary_report_to_output_dir()
-            elif hasattr(self, "file_manager"):
-                self.file_manager.save_summary_report_to_output_dir()
             else:
                 self._logger.warning("Cannot find method to save Summary Report")
         except Exception as e:
@@ -2270,6 +2227,1005 @@ class MainWindow(QMainWindow):
         # 这个方法在目录级别处理完成时调用
         # 目前先返回通用的Enhanced报告
         return self._generate_enhanced_masking_report(separator_length, is_partial=False)
+
+    # === Dialog and file selection methods (moved from DialogsManager) ===
+    def show_user_guide_dialog(self):
+        """Show user guide dialog"""
+        try:
+            with open(resource_path("summary.md"), "r", encoding="utf-8") as f:
+                content = f.read()
+
+            dialog = QDialog(self.main_window)
+            dialog.setWindowTitle("User Guide")
+            dialog.setGeometry(200, 200, 700, 500)
+
+            layout = QVBoxLayout(dialog)
+            text_edit = QTextEdit()
+            text_edit.setReadOnly(True)
+            text_edit.setHtml(markdown.markdown(content))
+
+            layout.addWidget(text_edit)
+            dialog.exec()
+
+            self._logger.info("Show user guide dialog")
+
+        except Exception as e:
+            self._logger.error(f"Failed to load user guide: {e}")
+            QMessageBox.critical(self.main_window, "Error", f"Could not load User Guide: {str(e)}")
+
+    def show_about_dialog(self):
+        """Show about dialog"""
+        try:
+            about_text = """
+            <h2>PktMask</h2>
+            <p><b>Network Packet Processing Tool</b></p>
+            <p>Version: 1.0.0</p>
+
+            <p>PktMask is a powerful network packet processing tool designed for:</p>
+            <ul>
+                <li>🔄 <b>Remove Dupes</b> - Eliminate duplicate packets</li>
+                <li>🛡️ <b>Anonymize IPs</b> - Advanced hierarchical IP masking</li>
+                <li>✂️ <b>Smart Trimming</b> - Intelligent payload reduction</li>
+            </ul>
+
+            <p><b>Features:</b></p>
+            <ul>
+                <li>Preserves network topology and relationships</li>
+                <li>Maintains TLS handshake integrity</li>
+                <li>Optimized for security research and compliance</li>
+                <li>Safe data sharing capabilities</li>
+            </ul>
+
+            <p><b>Use Cases:</b></p>
+            <ul>
+                <li>Security research and analysis</li>
+                <li>Network troubleshooting</li>
+                <li>Compliance reporting</li>
+                <li>Data anonymization for sharing</li>
+            </ul>
+
+            <hr>
+            <p><small>Built with Python and PyQt6</small></p>
+            """
+
+            dialog = QDialog(self.main_window)
+            dialog.setWindowTitle("About PktMask")
+            dialog.setFixedSize(450, 500)
+
+            layout = QVBoxLayout(dialog)
+
+            # Main text
+            text_widget = QTextEdit()
+            text_widget.setReadOnly(True)
+            text_widget.setHtml(about_text)
+
+            # Set font
+            font = QFont()
+            font.setPointSize(11)
+            text_widget.setFont(font)
+
+            layout.addWidget(text_widget)
+
+            # Buttons
+            button_layout = QHBoxLayout()
+            button_layout.addStretch()
+
+            ok_button = QPushButton("OK")
+            ok_button.clicked.connect(dialog.accept)
+            ok_button.setMinimumSize(80, 30)
+            button_layout.addWidget(ok_button)
+
+            layout.addLayout(button_layout)
+
+            dialog.exec()
+
+            self._logger.info("About dialog displayed")
+
+        except Exception as e:
+            self._logger.error(f"Failed to show About dialog: {e}")
+            QMessageBox.critical(self.main_window, "Error", f"Could not show About dialog: {str(e)}")
+
+    def show_processing_error(self, error_message: str):
+        """Show processing error dialog"""
+        try:
+            # If error message is empty or just "Unknown error", use a more friendly message
+            if not error_message or error_message.strip() == "Unknown error":
+                error_message = (
+                    "An unexpected error occurred during processing. Please check the logs for more details."
+                )
+
+            # Check if in automated test environment
+            is_automated_test = (
+                os.environ.get("QT_QPA_PLATFORM") == "offscreen"  # Headless mode
+                or os.environ.get("PYTEST_CURRENT_TEST") is not None  # pytest environment
+                or os.environ.get("CI") == "true"  # CI environment
+                or hasattr(self.main_window, "_test_mode")  # Test mode flag
+            )
+
+            if is_automated_test:
+                # In automated test environment, only log error without showing blocking dialog
+                self._logger.error(f"Processing error (automated test mode): {error_message}")
+                # Update main window log for test verification
+                self.update_log(f"Error: {error_message}")
+                # Optional: send a non-blocking notification
+                self._send_non_blocking_error_notification(error_message)
+                return
+
+            # Show modal dialog in normal GUI environment
+            error_dialog = QMessageBox(self.main_window)
+            error_dialog.setIcon(QMessageBox.Icon.Critical)
+            error_dialog.setWindowTitle("Processing Error")
+            error_dialog.setText("An error occurred during processing:")
+            error_dialog.setInformativeText(error_message)
+
+            # Add detailed information button
+            error_dialog.setDetailedText(
+                f"Error details:\n"
+                f"Timestamp: {QTime.currentTime().toString()}\n"
+                f"Error: {error_message}\n\n"
+                f"Troubleshooting tips:\n"
+                f"1. Check if input files are valid pcap files\n"
+                f"2. Ensure you have write permissions to the output directory\n"
+                f"3. Check available disk space\n"
+                f"4. Review the log panel for more detailed error information"
+            )
+
+            error_dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
+            error_dialog.exec()
+
+            self._logger.error(f"Processing error dialog displayed: {error_message}")
+
+        except Exception as e:
+            self._logger.error(f"Failed to show processing error dialog: {e}")
+            # If dialog display fails, at least update the log
+            self.update_log(f"Error: {error_message}")
+
+    def _send_non_blocking_error_notification(self, error_message: str):
+        """Send non-blocking error notification (for automated testing)"""
+        try:
+            # Can send status bar message, log update or other non-blocking notifications
+            if hasattr(self.main_window, "statusBar"):
+                self.statusBar().showMessage(f"Error: {error_message}", 5000)
+
+            # Emit error signal for test listening
+            if hasattr(self.main_window, "error_occurred"):
+                self.error_occurred.emit(error_message)
+
+        except Exception as e:
+            self._logger.debug(f"Failed to send non-blocking notification: {e}")
+
+    def show_processing_complete(self, summary: str):
+        """Show processing complete dialog"""
+        try:
+            success_dialog = QMessageBox(self.main_window)
+            success_dialog.setIcon(QMessageBox.Icon.Information)
+            success_dialog.setWindowTitle("Processing Complete")
+            success_dialog.setText("Processing completed successfully!")
+
+            if summary:
+                success_dialog.setDetailedText(summary)
+
+            success_dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
+            success_dialog.exec()
+
+            self._logger.info("Showed processing complete dialog")
+
+        except Exception as e:
+            self._logger.error(f"Failed to show processing complete dialog: {e}")
+
+    # ========================================================================
+    # SIMPLE DIALOGS (from DialogManager - simplified)
+    # ========================================================================
+
+    def show_error(self, title: str, message: str):
+        """Show error dialog (simplified wrapper)"""
+        try:
+            QMessageBox.critical(self.main_window, title, message)
+            self._logger.error(f"Error dialog displayed: {title} - {message}")
+        except Exception as e:
+            self._logger.error(f"Failed to show error dialog: {e}")
+
+    def show_warning(self, title: str, message: str):
+        """Show warning dialog (simplified wrapper)"""
+        try:
+            QMessageBox.warning(self.main_window, title, message)
+            self._logger.warning(f"Warning dialog displayed: {title} - {message}")
+        except Exception as e:
+            self._logger.error(f"Failed to show warning dialog: {e}")
+
+    def show_info(self, title: str, message: str):
+        """Show info dialog (simplified wrapper)"""
+        try:
+            QMessageBox.information(self.main_window, title, message)
+            self._logger.info(f"Info dialog displayed: {title} - {message}")
+        except Exception as e:
+            self._logger.error(f"Failed to show info dialog: {e}")
+
+    def ask_question(self, title: str, message: str) -> bool:
+        """Show confirmation dialog (simplified wrapper)"""
+        try:
+            reply = QMessageBox.question(
+                self.main_window,
+                title,
+                message,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+
+            result = reply == QMessageBox.StandardButton.Yes
+            self._logger.info(f"Question dialog displayed: {title} - User choice: {'Yes' if result else 'No'}")
+            return result
+
+        except Exception as e:
+            self._logger.error(f"Failed to show question dialog: {e}")
+            return False
+
+    def show_progress_dialog(self, title: str, message: str, maximum: int = 0) -> QProgressDialog:
+        """Show progress dialog"""
+        try:
+            progress = QProgressDialog(self.main_window, message, "Cancel", 0, maximum, self.main_window)
+            progress.setWindowTitle(title)
+            progress.setWindowModality(Qt.WindowModality.WindowModal)
+            progress.setMinimumDuration(1000)  # Show after 1 second
+
+            self._logger.info(f"Created progress dialog: {title}")
+            return progress
+
+        except Exception as e:
+            self._logger.error(f"Failed to create progress dialog: {e}")
+            return None
+
+    # ========================================================================
+    # FILE/DIRECTORY SELECTION (from FileManager)
+    # ========================================================================
+
+    def choose_input_folder(self):
+        """Select input directory (renamed from choose_folder)"""
+        dir_path = QFileDialog.getExistingDirectory(self.main_window, "Select Input Folder", self.last_opened_dir)
+        if dir_path:
+            self.base_dir = dir_path
+            self.last_opened_dir = dir_path  # Record currently selected directory
+            self.dir_path_label.setText(os.path.basename(dir_path))
+
+            # Auto-generate default output path
+            self.generate_default_output_path()
+            self._update_start_button_state()  # Intelligently update button state
+
+            self._logger.info(f"Selected input directory: {dir_path}")
+
+    def handle_output_click(self):
+        """Handle output path button click - open directory if processing is complete, otherwise select custom output directory"""
+        if self.current_output_dir and os.path.exists(self.current_output_dir):
+            # If output directory exists, open it
+            self.open_output_directory()
+        else:
+            # Otherwise let user select custom output directory
+            self.choose_output_folder()
+
+    def choose_output_folder(self):
+        """Select custom output directory"""
+        dir_path = QFileDialog.getExistingDirectory(self.main_window, "Select Output Folder", self.last_opened_dir)
+        if dir_path:
+            self.output_dir = dir_path
+            self.output_path_label.setText(os.path.basename(dir_path))
+            self._logger.info(f"Selected custom output directory: {dir_path}")
+
+    def generate_default_output_path(self):
+        """Generate default output path preview"""
+        if not self.base_dir:
+            return
+
+        # Reset to default mode
+        self.output_dir = None
+        self.output_path_label.setText("Auto-create or click for custom")
+        self._logger.debug("Reset to default output path mode")
+
+    def generate_actual_output_path(self) -> str:
+        """Generate actual output directory path"""
+        timestamp = current_timestamp()
+
+        # Get input directory name
+        if self.base_dir:
+            input_dir_name = os.path.basename(self.base_dir)
+            # Generate new naming format: input_dir_name-Masked-timestamp
+            output_name = f"{input_dir_name}-Masked-{timestamp}"
+        else:
+            # If no input directory, use default format
+            output_name = f"PktMask-{timestamp}"
+
+        if self.output_dir:
+            # Custom output directory
+            actual_path = os.path.join(self.output_dir, output_name)
+        else:
+            # Default output directory
+            if self.config.ui.default_output_dir:
+                actual_path = os.path.join(self.config.ui.default_output_dir, output_name)
+            else:
+                # Use subdirectory of input directory
+                actual_path = os.path.join(self.base_dir, output_name)
+
+        self._logger.info(f"Generated actual output path: {actual_path}")
+        return actual_path
+
+    def open_output_directory(self):
+        """Open output directory"""
+        if not self.current_output_dir or not os.path.exists(self.current_output_dir):
+            QMessageBox.warning(self.main_window, "Warning", "Output directory not found.")
+            return
+
+        try:
+            success = open_directory_in_system(self.current_output_dir)
+            if success:
+                self.update_log(f"Opened output directory: {os.path.basename(self.current_output_dir)}")
+                self._logger.info(f"Opened output directory: {self.current_output_dir}")
+            else:
+                self._logger.error("Failed to open output directory")
+                QMessageBox.critical(self.main_window, "Error", "Could not open output directory.")
+        except Exception as e:
+            self._logger.error(f"Error occurred while opening output directory: {e}")
+            QMessageBox.critical(self.main_window, "Error", f"Error opening directory: {str(e)}")
+
+    # ========================================================================
+    # DIRECTORY VALIDATION AND INFO (from FileManager)
+    # ========================================================================
+
+    def validate_input_directory(self, directory: str) -> bool:
+        """Validate if input directory is valid"""
+        if not directory:
+            return False
+
+        if not os.path.exists(directory):
+            self._logger.warning(f"Input directory does not exist: {directory}")
+            return False
+
+        if not os.path.isdir(directory):
+            self._logger.warning(f"Input path is not a directory: {directory}")
+            return False
+
+        # Check if there are pcap files
+        pcap_extensions = [".pcap", ".pcapng", ".cap"]
+        for file in os.listdir(directory):
+            if any(file.lower().endswith(ext) for ext in pcap_extensions):
+                return True
+
+        self._logger.warning(f"No pcap files found in input directory: {directory}")
+        return False
+
+    def get_directory_info(self, directory: str) -> dict:
+        """Get directory information"""
+        info = {
+            "exists": False,
+            "is_directory": False,
+            "pcap_files": [],
+            "total_files": 0,
+            "total_size": 0,
+        }
+
+        if not directory or not os.path.exists(directory):
+            return info
+
+        info["exists"] = True
+        info["is_directory"] = os.path.isdir(directory)
+
+        if not info["is_directory"]:
+            return info
+
+        try:
+            pcap_extensions = [".pcap", ".pcapng", ".cap"]
+
+            for file in os.listdir(directory):
+                filepath = os.path.join(directory, file)
+                if os.path.isfile(filepath):
+                    info["total_files"] += 1
+                    info["total_size"] += os.path.getsize(filepath)
+
+                    if any(file.lower().endswith(ext) for ext in pcap_extensions):
+                        info["pcap_files"].append(file)
+
+        except Exception as e:
+            self._logger.error(f"Error occurred while getting directory information: {e}")
+
+        return info
+
+    # ========================================================================
+    # REPORT FILE OPERATIONS (from FileManager)
+    # ========================================================================
+
+    def save_summary_report_to_output_dir(self) -> bool:
+        """Save summary report to output directory"""
+        if not self.current_output_dir:
+            self._logger.warning("Output directory path is empty, cannot save summary report")
+            return False
+
+        try:
+            # Ensure output directory exists
+            if not os.path.exists(self.current_output_dir):
+                self._logger.info(f"Creating output directory: {self.current_output_dir}")
+                os.makedirs(self.current_output_dir, exist_ok=True)
+
+            filename = self.generate_summary_report_filename()
+            filepath = os.path.join(self.current_output_dir, filename)
+
+            # Get summary text
+            summary_text = self.summary_text.toPlainText()
+
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(summary_text)
+
+            self._logger.info(f"Summary report saved to: {filepath}")
+            self.update_log(f"Summary report saved: {filename}")
+            return True
+
+        except Exception as e:
+            self._logger.error(f"Failed to save summary report: {e}")
+            self.update_log(f"Error saving summary report: {str(e)}")
+            return False
+
+    def generate_summary_report_filename(self) -> str:
+        """Generate summary report filename"""
+        timestamp = current_timestamp()
+
+        # Generate processing options identifier
+        enabled_steps = []
+        if hasattr(self.main_window, "anonymize_ips_cb") and self.anonymize_ips_cb.isChecked():
+            enabled_steps.append("MaskIP")
+        if hasattr(self.main_window, "remove_dupes_cb") and self.remove_dupes_cb.isChecked():
+            enabled_steps.append("Dedup")
+        if hasattr(self.main_window, "mask_payloads_cb") and self.mask_payloads_cb.isChecked():
+            enabled_steps.append("Trim")
+
+        steps_suffix = "_".join(enabled_steps) if enabled_steps else "NoSteps"
+        filename = f"summary_report_{steps_suffix}_{timestamp}.txt"
+
+        return filename
+
+    def find_existing_summary_reports(self) -> list[str]:
+        """Find existing summary report files"""
+        if not self.current_output_dir or not os.path.exists(self.current_output_dir):
+            return []
+
+        try:
+            reports = []
+            for file in os.listdir(self.current_output_dir):
+                if file.startswith("summary_report_") and file.endswith(".txt"):
+                    filepath = os.path.join(self.current_output_dir, file)
+                    reports.append(filepath)
+
+            # Sort by modification time, newest first
+            reports.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+            return reports
+
+        except Exception as e:
+            self._logger.error(f"Error occurred while finding summary report files: {e}")
+            return []
+
+    def load_latest_summary_report(self) -> Optional[str]:
+        """Load latest summary report"""
+        reports = self.find_existing_summary_reports()
+        if not reports:
+            return None
+
+        try:
+            latest_report = reports[0]  # Latest report
+            with open(latest_report, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            self._logger.info(f"Loaded latest summary report: {latest_report}")
+            return content
+
+        except Exception as e:
+            self._logger.error(f"Failed to load summary report: {e}")
+            return None
+
+    # ========================================================================
+    # LEGACY COMPATIBILITY METHODS
+    # ========================================================================
+
+    # These methods maintain backward compatibility with old method names
+    def choose_folder(self):
+        """Legacy method - redirects to choose_input_folder"""
+        return self.choose_input_folder()
+
+    def show_error_dialog(self, title: str, message: str):
+        """Legacy method - redirects to show_error"""
+        return self.show_error(title, message)
+
+    def show_warning_dialog(self, title: str, message: str):
+        """Legacy method - redirects to show_warning"""
+        return self.show_warning(title, message)
+
+    def show_info_dialog(self, title: str, message: str):
+        """Legacy method - redirects to show_info"""
+        return self.show_info(title, message)
+
+    def show_question_dialog(self, title: str, message: str) -> bool:
+        """Legacy method - redirects to ask_question"""
+        return self.ask_question(title, message)
+
+    # === Pipeline processing methods (moved from PipelineManager) ===
+    def _setup_timer(self):
+        """Set up processing time tracking timer"""
+        self.time_elapsed = 0
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_time_elapsed)
+
+    def toggle_pipeline_processing(self):
+        """Toggle processing flow state"""
+        self._logger.debug("toggle_pipeline_processing called")
+
+        # Store thread reference to avoid race condition
+        thread = self.processing_thread
+        if thread and thread.isRunning():
+            self._logger.debug("Stopping pipeline processing")
+            self.stop_pipeline_processing()
+        else:
+            self._logger.debug("Starting pipeline processing")
+            self.start_pipeline_processing()
+
+    def start_pipeline_processing(self):
+        """Start processing flow"""
+        self._logger.debug("start_pipeline_processing called")
+
+        if not self.base_dir:
+            self._logger.warning("No input directory selected")
+            from PyQt6.QtWidgets import QMessageBox
+
+            try:
+                QMessageBox.warning(
+                    self.main_window,
+                    "Warning",
+                    "Please choose an input folder to process.",
+                )
+                self._logger.debug("Warning dialog shown successfully")
+            except Exception as e:
+                self._logger.error(f"Failed to show warning dialog: {e}")
+                # Fallback: update log text
+                if hasattr(self, "update_log"):
+                    self.update_log("⚠️ Please choose an input folder to process.")
+            return
+
+        # Generate actual output directory path
+        self.current_output_dir = self.generate_actual_output_path()
+
+        # Create output directory
+        try:
+            import os
+
+            os.makedirs(self.current_output_dir, exist_ok=True)
+            self.update_log(f"📁 Created output directory: {os.path.basename(self.current_output_dir)}")
+
+            # Update output path display
+            self.output_path_label.setText(os.path.basename(self.current_output_dir))
+        except Exception as e:
+            from PyQt6.QtWidgets import QMessageBox
+
+            QMessageBox.critical(
+                self.main_window,
+                "Error",
+                f"Failed to create output directory: {str(e)}",
+            )
+            return
+
+        # Reset UI and counters for new run
+        self.log_text.clear()
+        self.summary_text.clear()
+        self.all_ip_reports.clear()
+        self.files_processed_count = 0
+        self.packets_processed_count = 0
+
+        # Reset Live Dashboard display
+        self.files_processed_label.setText("0")
+        self.packets_processed_label.setText("0")
+        self.subdirs_files_counted.clear()
+        self.subdirs_packets_counted.clear()
+        self.printed_summary_headers.clear()
+        self.file_processing_results.clear()  # Clear file processing results
+        self.current_processing_file = None  # Reset current processing file
+        self.global_ip_mappings.clear()  # Clear global IP mappings
+        self.processed_files_count = 0  # Reset file count
+        self.user_stopped = False  # Reset stop flag
+
+        # Disable controls via Qt signal
+        self.ui_update_requested.emit(
+            "enable_controls",
+            {
+                "controls": [
+                    "dir_path_label",
+                    "output_path_label",
+                    "anonymize_ips_cb",
+                    "remove_dupes_cb",
+                    "mask_payloads_cb",
+                ],
+                "enabled": False,
+            },
+        )
+
+        # Start processing with unified core
+        self._start_with_consistent_processor()
+
+    def stop_pipeline_processing(self):
+        """Stop the processing pipeline and clean up resources"""
+        self.user_stopped = True  # Set stop flag
+        self.update_log("--- Stopping pipeline... ---")
+
+        # Store thread reference to avoid race condition
+        thread = self.processing_thread
+        if thread:
+            thread.stop()
+            # Wait for thread to safely end, maximum wait 3 seconds
+            if not thread.wait(3000):
+                self.log_text.append("Warning: Pipeline did not stop gracefully, forcing termination.")
+                thread.terminate()
+                thread.wait()
+
+        # Generate partial summary statistics when stopped
+        self.generate_partial_summary_on_stop()
+
+        # Re-enable controls via Qt signal
+        self.ui_update_requested.emit(
+            "enable_controls",
+            {
+                "controls": [
+                    "dir_path_label",
+                    "output_path_label",
+                    "anonymize_ips_cb",
+                    "remove_dupes_cb",
+                    "mask_payloads_cb",
+                    "start_proc_btn",
+                ],
+                "enabled": True,
+            },
+        )
+        self.ui_update_requested.emit("update_button_text", {"button": "start_proc_btn", "text": "Start"})
+
+    def _start_with_consistent_processor(self):
+        """Start processing using new ConsistentProcessor (feature flag enabled)
+
+        CRITICAL: This method preserves 100% GUI functionality while using
+        the new unified core processing logic.
+        """
+        # Log feature flag status for debugging
+        if GUIFeatureFlags.is_gui_debug_mode():
+            status = GUIFeatureFlags.get_status_summary()
+            self._logger.info(f"Feature flags: {status}")
+            self.update_log("🔧 Using new unified processing core")
+
+        # Get checkbox states using exact same logic as legacy implementation
+        remove_dupes_checked = self.remove_dupes_cb.isChecked()
+        anonymize_ips_checked = self.anonymize_ips_cb.isChecked()
+        mask_payloads_checked = self.mask_payloads_cb.isChecked()
+
+        # Validate options using GUI wrapper
+        try:
+            GUIConsistentProcessor.validate_gui_options(
+                remove_dupes_checked, anonymize_ips_checked, mask_payloads_checked
+            )
+        except ValueError as e:
+            self._logger.warning(f"No processing steps selected: {str(e)}")
+            self.update_log(f"⚠️ {str(e)}")
+            return
+
+        # Create threaded executor using GUI helper
+        try:
+            self.processing_thread = GUIThreadingHelper.create_threaded_executor(
+                remove_dupes_checked=remove_dupes_checked,
+                anonymize_ips_checked=anonymize_ips_checked,
+                mask_payloads_checked=mask_payloads_checked,
+                base_dir=self.base_dir,
+                output_dir=self.current_output_dir,
+            )
+        except Exception as e:
+            self._logger.error(f"Configuration error: {str(e)}")
+            self.update_log(f"❌ Configuration error: {str(e)}")
+            return
+
+        # Log configuration summary
+        config_summary = GUIConsistentProcessor.get_gui_configuration_summary(
+            remove_dupes_checked, anonymize_ips_checked, mask_payloads_checked
+        )
+        self._logger.info(f"Configuration: {config_summary}")
+
+        # Start processing using same UI flow as legacy
+        self._start_gui_thread_processing()
+
+    def _start_gui_thread_processing(self):
+        """Common GUI thread processing setup for both implementations
+
+        CRITICAL: This method preserves the exact UI state management,
+        signal connections, and timing behavior as the original implementation.
+        """
+        # Connect signals (same as original start_processing)
+        self.processing_thread.progress_signal.connect(self.handle_thread_progress)
+        self.processing_thread.finished.connect(self.on_thread_finished)
+
+        # Update UI state (same as original start_processing)
+        self.start_proc_btn.setText("Stop")
+        self.start_proc_btn.setEnabled(True)
+        self._update_start_button_style()
+
+        # Reset statistics before starting new processing
+        self.files_processed = 0
+        self.packets_processed = 0
+        self.total_files_to_process = 0
+        self.processing_time = 0
+        self.file_processing_results.clear()
+        self.step_results.clear()
+        self.global_ip_mappings.clear()
+        self.all_ip_reports.clear()
+        self.processed_files_count = 0
+        self.current_processing_file = None
+        self.subdirs_files_counted.clear()
+        self.subdirs_packets_counted.clear()
+        self.printed_summary_headers.clear()
+
+        # Also reset the main window's packet counting cache
+        if hasattr(self, "_counted_files"):
+            self._counted_files.clear()
+
+        # Start timing
+        from PyQt6.QtCore import QTime
+
+        self.start_time = QTime.currentTime()
+        self.time_elapsed = 0
+        self.timer.start(100)  # Update every 100ms
+
+        # Start thread (same as original)
+        self.processing_thread.start()
+
+        self._logger.info(f"Processing thread started, output directory: {self.current_output_dir}")
+
+    def handle_thread_progress(self, event_type: PipelineEvents, data: dict):
+        """Handle thread progress events"""
+        try:
+            # First let MainWindow handle events to update UI statistics and collect data
+            self.handle_thread_progress(event_type, data)
+
+            # Then PipelineManager handles its own logic
+            # Handle pipeline start events
+            if event_type in (
+                PipelineEvents.PIPELINE_START,
+                PipelineEvents.PIPELINE_STARTED,
+            ):
+                # Pipeline sends total directory count, but we need to track file count
+                data.get("total_subdirs", data.get("total_files", 0))
+                # Reset file counter
+                self.files_processed = 0
+
+            # Handle subdirectory start events
+            elif event_type == PipelineEvents.SUBDIR_START:
+                data.get("name", "Unknown directory")
+                file_count = data.get("file_count", 0)
+                self.total_files_to_process = file_count  # Set actual total file count
+
+            # Handle file completion events
+            elif event_type in (PipelineEvents.FILE_END, PipelineEvents.FILE_COMPLETED):
+                self.files_processed += 1
+                # Update Live Dashboard display
+                self.files_processed_label.setText(str(self.files_processed))
+                self._update_progress()
+
+            # Handle pipeline completion events
+            elif event_type in (
+                PipelineEvents.PIPELINE_END,
+                PipelineEvents.PIPELINE_COMPLETED,
+            ):
+                self.processing_finished()
+
+            # Handle step summary events
+            elif event_type == PipelineEvents.STEP_SUMMARY:
+                # Important: collect step result data for final report
+                self.collect_step_result(data)
+
+            # Handle error events
+            elif event_type == PipelineEvents.ERROR:
+                data.get("message", data.get("error", "Unknown error"))
+                # MainWindow has already handled this, no need to repeat
+
+        except Exception as e:
+            self._logger.error(f"Error occurred while processing progress event: {e}")
+            self.processing_error(f"Event processing error: {str(e)}")
+
+    def collect_step_result(self, data: dict):
+        """Collect step results"""
+        step_name = data.get("step_name", "")
+        filename = data.get("filename", data.get("path", ""))
+
+        # Collect all available result data
+        result_data = {}
+
+        # Extract useful statistics from data
+        for key, value in data.items():
+            if key not in ["step_name", "filename", "path", "type"]:
+                result_data[key] = value
+
+        # If there's an existing result field, merge it
+        if "result" in data:
+            if isinstance(data["result"], dict):
+                result_data.update(data["result"])
+            else:
+                result_data["result"] = data["result"]
+
+        # Collect step result (moved from StatisticsManager)
+        file_key = filename.split("/")[-1] if filename else "unknown"
+        if file_key not in self.step_results:
+            self.step_results[file_key] = {}
+        self.step_results[file_key][step_name] = result_data
+
+        # Note: Real-time statistics are handled by MainWindow
+
+    def get_processing_stats(self) -> dict:
+        """Get processing statistics"""
+        # Return processing summary (moved from StatisticsManager)
+        from PyQt6.QtCore import QTime
+
+        from pktmask.utils.time import format_milliseconds_to_time
+
+        elapsed_time = "00:00.00"
+        if self.start_time:
+            elapsed_msecs = self.start_time.msecsTo(QTime.currentTime())
+            elapsed_time = format_milliseconds_to_time(elapsed_msecs)
+
+        return {
+            "files_processed": self.files_processed,
+            "total_files": self.total_files_to_process,
+            "packets_processed": self.packets_processed,
+            "processing_time": elapsed_time,
+            "step_results": self.step_results.copy(),
+            "file_processing_results": self.file_processing_results.copy(),
+            "global_ip_mappings": self.global_ip_mappings.copy(),
+            "all_ip_reports": self.all_ip_reports.copy(),
+        }
+
+    def _update_progress(self):
+        """Update progress bar"""
+        if self.total_files_to_process > 0:
+            progress = int((self.files_processed / self.total_files_to_process) * 100)
+            # Ensure progress doesn't exceed 100%
+            progress = min(progress, 100)
+            self._animate_progress_to(progress)
+            self._logger.debug(f"Progress updated: {self.files_processed}/{self.total_files_to_process} = {progress}%")
+        else:
+            # If no files to process, keep progress at 0
+            self._animate_progress_to(0)
+
+    def processing_finished(self):
+        """Processing complete"""
+        # 首先清理线程状态，确保UI状态检查正确
+        # Note: Thread cleanup is also handled in on_thread_finished to ensure cleanup
+        if self.processing_thread:
+            self.processing_thread = None
+
+        # **Fix**: Before generating the report, ensure Live Dashboard displays final statistics
+        # Update Live Dashboard to show final statistics
+        final_files_processed = self.files_processed
+        final_packets_processed = self.packets_processed
+
+        # Ensure Live Dashboard displays the correct final data
+        self.files_processed_label.setText(str(final_files_processed))
+        self.packets_processed_label.setText(str(final_packets_processed))
+
+        # Delegate to ReportManager to generate report
+        self.generate_processing_finished_report()
+
+        import os
+
+        from pktmask.utils.file_ops import open_directory_in_system
+
+        # Update output path display
+        if self.current_output_dir:
+            self.output_path_label.setText(os.path.basename(self.current_output_dir))
+        self.update_log("Output directory ready. Click output path to view results.")
+
+        # If configuration is enabled, automatically open output directory
+        if self.config.ui.auto_open_output and self.current_output_dir:
+            try:
+                success = open_directory_in_system(self.current_output_dir)
+                if success:
+                    self.update_log(f"Auto-opened output directory: {os.path.basename(self.current_output_dir)}")
+                else:
+                    self._logger.warning("Failed to auto-open output directory")
+            except Exception as e:
+                self._logger.error(f"Error auto-opening output directory: {e}")
+
+        # Use QTimer.singleShot to ensure UI updates are executed in the next cycle of the event loop
+        from PyQt6.QtCore import QTimer
+
+        def update_ui_state():
+            """Delayed UI state update"""
+            # Directly set button state
+            self.start_proc_btn.setText("Start")
+            self.start_proc_btn.setEnabled(True)
+
+            # Enable other controls
+            self.dir_path_label.setEnabled(True)
+            self.output_path_label.setEnabled(True)
+            for cb in [
+                self.anonymize_ips_cb,
+                self.remove_dupes_cb,
+                self.mask_payloads_cb,
+            ]:
+                cb.setEnabled(True)
+
+            # Update button style
+            self._update_start_button_style()
+
+        def ensure_final_stats_display():
+            """Ensure final statistics are correctly displayed in Live Dashboard"""
+            # **Fix**: Again ensure Live Dashboard displays the correct final statistics
+            # Prevent any subsequent operations from accidentally resetting the display
+            self.files_processed_label.setText(str(final_files_processed))
+            self.packets_processed_label.setText(str(final_packets_processed))
+
+        # Delay 100ms to execute UI update
+        QTimer.singleShot(100, update_ui_state)
+
+        # **Fix**: Delay 200ms to again ensure statistics display is correct, preventing overwrite by other operations
+        QTimer.singleShot(200, ensure_final_stats_display)
+
+        self._logger.info("Processing flow completed")
+
+    def on_thread_finished(self):
+        """Thread completion handling"""
+        # Ensure thread cleanup happens regardless of how processing ended
+        if self.processing_thread:
+            self.processing_thread = None
+
+    def reset_processing_state(self):
+        """Reset processing state (only called when starting new processing)"""
+        # Reset all statistics
+        self.files_processed = 0
+        self.packets_processed = 0
+        self.total_files_to_process = 0
+        self.processing_time = 0
+        self.file_processing_results.clear()
+        self.step_results.clear()
+        self.global_ip_mappings.clear()
+        self.all_ip_reports.clear()
+        self.processed_files_count = 0
+        self.current_processing_file = None
+        self.subdirs_files_counted.clear()
+        self.subdirs_packets_counted.clear()
+        self.printed_summary_headers.clear()
+
+        self.user_stopped = False
+
+        # Notify UI update via Qt signal, but only reset display when starting new processing
+        # This avoids accidentally resetting Live Dashboard display after processing completion
+        self.statistics_changed.emit({"action": "reset"})
+
+        # Stop timer
+        if self.timer.isActive():
+            self.timer.stop()
+
+    def generate_partial_summary_on_stop(self):
+        """Generate partial summary when stopped"""
+        try:
+            # Get processing summary
+            stats = self.get_processing_stats()
+            partial_data = {**stats, "status": "stopped_by_user"}
+
+            self.set_final_summary_report(partial_data)
+
+        except Exception as e:
+            self._logger.error(f"Error occurred while generating partial summary: {e}")
+
+    def _generate_final_report(self):
+        """Generate final report"""
+        try:
+            # Get processing summary
+            stats = self.get_processing_stats()
+            final_data = {
+                **stats,
+                "status": "completed",
+                "output_directory": self.current_output_dir,
+            }
+
+            self.set_final_summary_report(final_data)
+
+        except Exception as e:
+            self._logger.error(f"Error occurred while generating final report: {e}")
+
+    # Old _build_pipeline_config method has been removed, use service layer's build_pipeline_config function
 
     # === Statistics attributes are now direct attributes (no longer using property accessors) ===
     # All statistics are initialized in __init__ and accessed directly
