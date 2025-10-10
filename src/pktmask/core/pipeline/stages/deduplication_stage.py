@@ -12,10 +12,10 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Optional, Set
 
+from pktmask.common.exceptions import PktMaskError, ProcessingError
 from pktmask.core.pipeline.base_stage import StageBase
 from pktmask.core.pipeline.models import StageStats
 from pktmask.infrastructure.logging import get_logger
-from pktmask.shared.exceptions import PktMaskError, ProcessingError
 
 
 class DeduplicationStage(StageBase):

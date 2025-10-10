@@ -5,8 +5,8 @@ from typing import Any, Dict
 
 from jinja2 import Template
 
+from pktmask.common.exceptions import FileError, create_error_from_exception
 from pktmask.infrastructure.logging import get_logger
-from pktmask.shared.exceptions import FileError, create_error_from_exception
 from pktmask.utils.path import resource_path
 from pktmask.utils.time import current_time
 

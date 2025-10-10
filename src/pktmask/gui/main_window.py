@@ -14,12 +14,12 @@ import markdown
 from PyQt6.QtCore import QEvent, QPropertyAnimation, Qt, QTime, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QDialog, QLabel, QMainWindow, QPushButton, QTextEdit, QVBoxLayout
 
+from pktmask.common.constants import UIConstants
 from pktmask.config.settings import get_app_config
 
 # Refactored imports
 from pktmask.core.events import PipelineEvents
 from pktmask.infrastructure.logging import get_logger
-from pktmask.shared.constants import UIConstants
 from pktmask.utils import current_time, current_timestamp, format_milliseconds_to_time
 
 # PROCESS_DISPLAY_NAMES moved to common.constants

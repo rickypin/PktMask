@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 from typing import Optional
 
-from ..shared.constants import SystemConstants
+from ..common.constants import SystemConstants
 
 
 def current_time(format_string: str = "%Y-%m-%d %H:%M:%S") -> str:
