@@ -8,6 +8,7 @@ Provides manager classes for various MainWindow responsibilities
 
 from .dialog_manager import DialogManager
 from .dialogs import DialogsManager
+from .display_manager import DisplayManager
 from .event_coordinator import EventCoordinator
 from .file_manager import FileManager
 from .pipeline_manager import PipelineManager
@@ -20,6 +21,7 @@ __all__ = [
     "PipelineManager",
     "ReportManager",
     "DialogManager",
-    "DialogsManager",  # New unified manager
+    "DialogsManager",  # New unified dialogs manager
+    "DisplayManager",  # New display manager
     "EventCoordinator",
 ]
