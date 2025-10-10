@@ -108,3 +108,54 @@ tests/e2e/tmp/
 # !tests/e2e/golden/**/*.pcap
 # !tests/e2e/golden_cli/**/*.json
 # !tests/e2e/golden_cli/**/*.pcap
+
+# ============================================================================
+# Additional Code Quality and Testing Files
+# ============================================================================
+
+# Code Quality Reports
+flake8_report.txt
+pylint_report.txt
+mypy_report.txt
+*.lint
+.ruff_cache/
+
+# Test Reports
+junit.xml
+tests/**/junit.xml
+.coverage
+.coverage.*
+coverage.xml
+
+# Temporary test directories (more specific)
+output/tmp*/
+output/test_*/
+output/*_test/
+output/*_validation*/
+
+# Application logs
+*.log
+logs/
+!tests/samples/**/*.log
+
+# Local configuration
+.env
+.env.local
+config.local.yaml
+config.local.json
+
+# Additional IDE files
+.fleet/
+.cursor/
+*.sublime-project
+*.sublime-workspace
+
+# macOS specific (additional)
+*.DS_Store
+.AppleDouble
+.LSOverride
+
+# Virtual environment alternatives
+env/
+ENV/
+venv.bak/
