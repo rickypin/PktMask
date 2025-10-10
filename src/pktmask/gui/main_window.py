@@ -11,8 +11,23 @@ import sys
 from typing import List, Optional
 
 import markdown
-from PyQt6.QtCore import QEvent, QPropertyAnimation, Qt, QTime, QTimer, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QDialog, QLabel, QMainWindow, QPushButton, QTextEdit, QVBoxLayout
+from PyQt6.QtCore import QEasingCurve, QEvent, QPropertyAnimation, Qt, QTime, QTimer, pyqtSignal
+from PyQt6.QtGui import QAction, QFont, QIcon
+from PyQt6.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QDialog,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QProgressBar,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
 
 from pktmask.common.constants import UIConstants
 from pktmask.config.settings import get_app_config
@@ -21,6 +36,10 @@ from pktmask.config.settings import get_app_config
 from pktmask.core.events import PipelineEvents
 from pktmask.infrastructure.logging import get_logger
 from pktmask.utils import current_time, current_timestamp, format_milliseconds_to_time
+from pktmask.utils.path import resource_path
+
+# Import stylesheet generator (moved from UIManager)
+from .stylesheet import generate_stylesheet
 
 # PROCESS_DISPLAY_NAMES moved to common.constants
 
@@ -91,21 +110,26 @@ class MainWindow(QMainWindow):
         self.subdirs_packets_counted = set()
         self.printed_summary_headers = set()
 
-        # 先初始化管理器
+        # 初始化管理器（不包括 UIManager）
         self._init_managers()
 
-        # 初始化UI
-        pass  # UI already initialized in __init__
+        # 初始化UI（moved from UIManager）
+        self._setup_window_properties()
+        self._create_menu_bar()
+        self._setup_main_layout()
+        self._connect_ui_signals()
+        self._apply_initial_styles()
+        self._check_and_display_dependencies()
+        self._show_initial_guides()
 
         self._logger.info("PktMask main window initialization completed")
 
     def _init_managers(self):
         """Initialize all managers"""
         # Import manager classes
-        from .managers import DialogsManager, PipelineManager, ReportManager, UIManager
+        from .managers import DialogsManager, PipelineManager, ReportManager
 
         # 创建管理器实例
-        self.ui_manager = UIManager(self)
         self.dialogs = DialogsManager(self)  # Unified dialogs and file manager
         self.pipeline_manager = PipelineManager(self)
         self.report_manager = ReportManager(self)
@@ -114,7 +138,7 @@ class MainWindow(QMainWindow):
         self.file_manager = self.dialogs  # FileManager functionality now in DialogsManager
         self.dialog_manager = self.dialogs  # DialogManager functionality now in DialogsManager
 
-        # Connect Qt signals (replacing event subscriptions)
+        # Connect internal Qt signals (must be done after managers are created)
         self._connect_signals()
 
         self._logger.debug("All managers initialization completed")
@@ -392,7 +416,7 @@ class MainWindow(QMainWindow):
         main_layout.setRowStretch(2, 0)  # Dashboard row
         main_layout.setRowStretch(3, 2)  # Log row
 
-    def _connect_signals(self):
+    def _connect_ui_signals(self):
         """Connect UI component signals to their handlers"""
         try:
             # Directory selection signals
@@ -1169,36 +1193,6 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.update_log(f"Error loading summary report: {str(e)}")
             return None
-
-    def _get_path_link_style(self) -> str:
-        """Generate path link style based on current theme (handled by UIManager)"""
-        return self._get_path_link_style()
-
-    def _update_path_link_styles(self):
-        """Update path link styles"""
-        self._update_path_link_styles()
-
-    def _animate_progress_to(self, target_value: int):
-        """Smooth animation to target progress value"""
-        if self.progress_animation.state() == QPropertyAnimation.State.Running:
-            self.progress_animation.stop()
-
-        current_value = self.progress_bar.value()
-        self.progress_animation.setStartValue(current_value)
-        self.progress_animation.setEndValue(target_value)
-        self.progress_animation.start()
-
-    def _update_start_button_state(self):
-        """Update Start button based on input directory and option states"""
-        self._update_start_button_state()
-
-    def _get_start_button_style(self) -> str:
-        """Generate Start button style based on current theme (handled by UIManager)"""
-        return self._get_start_button_style()
-
-    def _update_start_button_style(self):
-        """Update Start button style"""
-        self._update_start_button_style()
 
     # === Statistics attributes are now direct attributes (no longer using property accessors) ===
     # All statistics are initialized in __init__ and accessed directly
