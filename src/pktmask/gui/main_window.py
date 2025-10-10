@@ -914,6 +914,12 @@ class MainWindow(QMainWindow):
             self.progress_bar.setValue(0)
             self.update_log(f"Processing directory: {data.get('name', 'N/A')}")
 
+            # Set total files to process for progress calculation
+            file_count = data.get("file_count", 0)
+            if file_count > 0:
+                self.total_files_to_process = file_count
+                self._logger.debug(f"Total files to process: {file_count}")
+
         elif event_type == PipelineEvents.FILE_START:
             # 不在这里递增文件计数，应该在FILE_END时递增
             file_path = data["path"]
@@ -927,7 +933,13 @@ class MainWindow(QMainWindow):
         elif event_type == PipelineEvents.FILE_END:
             if self.current_processing_file:
                 # **修复**: 增加处理完成的文件计数
-                self.processed_files_count += 1
+                self.files_processed += 1
+
+                # Update Live Dashboard display
+                self.files_processed_label.setText(str(self.files_processed))
+
+                # Update progress bar
+                self._update_progress()
 
                 # 获取输出文件名信息
                 output_files = []
