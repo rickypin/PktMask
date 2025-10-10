@@ -59,7 +59,8 @@ class ProcessingSettings:
     chunk_size: int = 10
     max_retry_attempts: int = 3
     timeout_seconds: int = 300
-    max_workers: int = 4
+    # Note: max_workers removed - parallel processing not implemented
+    # All processing is done sequentially for simplicity and reliability
 
     # IP匿名化设置
     preserve_subnet_structure: bool = True
@@ -148,7 +149,7 @@ class TSharkEnhancedSettings:
     # 性能配置
     temp_dir: Optional[str] = None
     cleanup_temp_files: bool = True
-    enable_parallel_processing: bool = False
+    # Note: enable_parallel_processing removed - not implemented
     chunk_size: int = 1000
 
     # 调试配置
@@ -327,9 +328,6 @@ class AppConfig:
         if self.processing.chunk_size <= 0:
             errors.append("chunk_size必须大于0")
 
-        if self.processing.max_workers <= 0:
-            errors.append("max_workers必须大于0")
-
         if self.processing.timeout_seconds <= 0:
             errors.append("timeout_seconds必须大于0")
 
@@ -352,7 +350,6 @@ class AppConfig:
             "chunk_size": self.processing.chunk_size,
             "max_retry_attempts": self.processing.max_retry_attempts,
             "timeout_seconds": self.processing.timeout_seconds,
-            "max_workers": self.processing.max_workers,
             "preserve_subnet_structure": self.processing.preserve_subnet_structure,
             "preserve_tls_handshake": self.processing.preserve_tls_handshake,
             "dedup_algorithm": self.processing.dedup_algorithm,
@@ -402,7 +399,7 @@ class AppConfig:
             # 性能配置
             "temp_dir": enhanced.temp_dir,
             "cleanup_temp_files": enhanced.cleanup_temp_files,
-            "enable_parallel_processing": enhanced.enable_parallel_processing,
+            # Note: enable_parallel_processing removed - not implemented
             "chunk_size": enhanced.chunk_size,
             # 调试配置
             "enable_detailed_logging": enhanced.enable_detailed_logging,

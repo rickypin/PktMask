@@ -27,7 +27,8 @@ DEFAULT_PROCESSING_CONFIG = {
     "chunk_size": 10,
     "max_retry_attempts": 3,
     "timeout_seconds": 300,
-    "max_workers": 4,
+    # Note: Parallel processing is not currently implemented
+    # Processing is done sequentially for simplicity and reliability
     "preserve_subnet_structure": True,
     "preserve_original_segments": True,
     "ip_mapping_consistency": True,
@@ -71,8 +72,6 @@ VALIDATION_CONSTRAINTS = {
     "max_chunk_size": 1000,
     "min_timeout": 30,
     "max_timeout": 3600,
-    "min_workers": 1,
-    "max_workers": 16,
     "min_font_size": 8,
     "max_font_size": 24,
     "valid_themes": ["auto", "light", "dark"],
@@ -106,7 +105,7 @@ PROCESSOR_DEFAULTS = {
 # Performance default configuration
 PERFORMANCE_DEFAULTS = {
     "chunk_processing": True,
-    "parallel_processing": True,
+    # Note: Parallel processing is not implemented - all processing is sequential
     "memory_optimization": True,
     "progress_reporting_interval": 100,
     "statistics_collection": True,

@@ -70,7 +70,15 @@ tmp/
 # Keep other output directories but ignore specific temporary subdirectories
 # output/ - commented out to allow selective ignoring
 
+# Virtual Environments
+# Common virtual environment directory names
+venv/
 .venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
 
 # Maintenance and Cleanup Files
 # Backup files created during cleanup operations
@@ -154,8 +162,3 @@ config.local.json
 *.DS_Store
 .AppleDouble
 .LSOverride
-
-# Virtual environment alternatives
-env/
-ENV/
-venv.bak/

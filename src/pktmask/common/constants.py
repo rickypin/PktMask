@@ -94,7 +94,7 @@ class ProcessingConstants:
     DEFAULT_CHUNK_SIZE = 10
     MAX_RETRY_ATTEMPTS = 3
     DEFAULT_TIMEOUT_SECONDS = 300
-    DEFAULT_MAX_WORKERS = 4
+    # Note: Parallel processing not implemented - removed DEFAULT_MAX_WORKERS
 
     # File processing
     SUPPORTED_EXTENSIONS = (".pcap", ".pcapng")

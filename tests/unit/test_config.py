@@ -50,8 +50,8 @@ class TestAppConfig:
 
         # 处理配置属性
         assert hasattr(config.processing, "chunk_size")
-        assert hasattr(config.processing, "max_workers")
         assert hasattr(config.processing, "timeout_seconds")
+        # Note: max_workers removed - parallel processing not implemented
 
         # 日志配置属性
         assert hasattr(config.logging, "log_level")
@@ -129,9 +129,9 @@ class TestProcessingSettings:
 
         # 检查默认值
         assert processing.chunk_size == 10
-        assert processing.max_workers == 4
         assert processing.timeout_seconds == 300
         assert processing.preserve_subnet_structure is True
+        # Note: max_workers removed - parallel processing not implemented
         assert processing.dedup_algorithm == "sha256"
 
     def test_processing_modifications(self):
@@ -140,12 +140,11 @@ class TestProcessingSettings:
 
         # 修改处理参数
         processing.chunk_size = 20
-        processing.max_workers = 8
         processing.dedup_algorithm = "md5"
 
         assert processing.chunk_size == 20
-        assert processing.max_workers == 8
         assert processing.dedup_algorithm == "md5"
+        # Note: max_workers removed - parallel processing not implemented
 
 
 class TestLoggingSettings:
@@ -221,7 +220,7 @@ class TestConfigurationIntegration:
         processing_config = config.get_processing_config()
         assert isinstance(processing_config, dict)
         assert "chunk_size" in processing_config
-        assert "max_workers" in processing_config
+        # Note: max_workers removed - parallel processing not implemented
 
         # 获取UI配置
         ui_config = config.get_ui_config()
@@ -265,7 +264,7 @@ class TestConfigurationEdgeCases:
         assert config.processing.chunk_size == 20
         # 其他值应该是默认值
         assert config.ui.window_height == 800  # 默认值
-        assert config.processing.max_workers == 4  # 默认值
+        # Note: max_workers removed - parallel processing not implemented
 
     def test_config_update_directories(self):
         """测试目录更新功能"""
@@ -293,9 +292,9 @@ class TestConfigurationDefaults:
 
         # 处理默认值检查
         assert config.processing.chunk_size > 0
-        assert config.processing.max_workers > 0
         assert config.processing.timeout_seconds > 0
         assert config.processing.dedup_algorithm in ["md5", "sha1", "sha256"]
+        # Note: max_workers removed - parallel processing not implemented
 
         # 日志默认值检查
         assert config.logging.log_level in ["DEBUG", "INFO", "WARNING", "ERROR"]
