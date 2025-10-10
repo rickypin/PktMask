@@ -725,7 +725,7 @@ class MainWindow(QMainWindow):
         )
 
         # 检查是否正在处理中 - Store thread reference to avoid race condition
-        processing_thread = getattr(self.pipeline_manager, "processing_thread", None)
+        processing_thread = getattr(self, "processing_thread", None)
         is_processing = processing_thread is not None and processing_thread.isRunning()
 
         # 只有当有输入目录且至少选择一个操作时才启用按钮，或者正在处理中时保持启用
@@ -817,7 +817,7 @@ class MainWindow(QMainWindow):
         self.save_user_preferences()
 
         # Stop processing thread
-        processing_thread = getattr(self.pipeline_manager, "processing_thread", None)
+        processing_thread = getattr(self, "processing_thread", None)
         if processing_thread and processing_thread.isRunning():
             self.stop_pipeline_processing()
             processing_thread.wait(3000)  # Wait up to 3 seconds
