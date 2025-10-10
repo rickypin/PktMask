@@ -1,19 +1,30 @@
 #!/usr/bin/env python3
 """
-Test Anonymize IPs Fix
+Test Anonymize IPs Fix - DEPRECATED
 
-This script tests the fix for missing Anonymize IPs entries in individual file reports.
+This script is deprecated as ReportManager has been merged into MainWindow.
+The functionality tested here is now part of MainWindow.collect_step_result().
+
+Migration completed: 2025-10-10 (Phase 4)
+All report generation functionality is now in MainWindow.
+
+This file is kept for historical reference only.
 """
 
-import os
 import sys
-from pathlib import Path
 
-# Add project root to path
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
-
-from pktmask.gui.managers.report_manager import ReportManager
+print("=" * 80)
+print("DEPRECATED: This test script is no longer valid")
+print("=" * 80)
+print()
+print("ReportManager has been merged into MainWindow (Phase 4).")
+print("All report generation functionality is now in MainWindow.collect_step_result().")
+print()
+print("Please use the E2E tests instead:")
+print("  pytest tests/e2e/ -v")
+print()
+print("=" * 80)
+sys.exit(0)
 
 
 def test_collect_step_result_fix():

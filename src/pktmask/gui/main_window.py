@@ -44,11 +44,11 @@ from pktmask.utils import current_time, current_timestamp, format_milliseconds_t
 from pktmask.utils.file_ops import open_directory_in_system
 from pktmask.utils.path import resource_path
 
-# Import GUI protection layer (from PipelineManager)
+# Import GUI protection layer
 from .core.feature_flags import GUIFeatureFlags
 from .core.gui_consistent_processor import GUIConsistentProcessor, GUIThreadingHelper
 
-# Import stylesheet generator (moved from UIManager)
+# Import stylesheet generator
 from .stylesheet import generate_stylesheet
 
 # PROCESS_DISPLAY_NAMES moved to common.constants
@@ -85,7 +85,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self._logger = get_logger("main_window")
 
-        # Initialize configuration manager
+        # Initialize configuration
         self.config = get_app_config()
 
         # 注册配置变更回调 (简化版本暂时移除复杂的回调机制)
@@ -105,7 +105,7 @@ class MainWindow(QMainWindow):
         self.start_time: Optional[QTime] = None
         self.user_stopped = False  # 用户停止标志
 
-        # Statistics attributes (moved from StatisticsManager)
+        # Statistics attributes
         self.files_processed = 0
         self.packets_processed = 0
         self.total_files_to_process = 0
@@ -120,10 +120,10 @@ class MainWindow(QMainWindow):
         self.subdirs_packets_counted = set()
         self.printed_summary_headers = set()
 
-        # 初始化管理器（不包括 UIManager）
-        self._init_managers()
+        # Initialize processing state and signals
+        self._init_processing_state()
 
-        # 初始化UI（moved from UIManager）
+        # Initialize UI
         self._setup_window_properties()
         self._create_menu_bar()
         self._setup_main_layout()
@@ -134,15 +134,13 @@ class MainWindow(QMainWindow):
 
         self._logger.info("PktMask main window initialization completed")
 
-    def _init_managers(self):
-        """Initialize processing state and timer (managers removed)"""
-        # All manager functionality has been moved to MainWindow methods
-
-        # Initialize processing state (from PipelineManager)
+    def _init_processing_state(self):
+        """Initialize processing state and timer"""
+        # Initialize processing state
         self.processing_thread = None
         self.user_stopped = False
 
-        # Set up timer (from PipelineManager)
+        # Set up timer
         self._setup_timer()
 
         # Connect internal Qt signals
@@ -157,7 +155,7 @@ class MainWindow(QMainWindow):
         self.ui_update_requested.connect(self._handle_ui_update_request)
         self.pipeline_event.connect(self._handle_pipeline_event_data)
 
-    # === UI Initialization Methods (moved from UIManager) ===
+    # === UI Initialization Methods ===
 
     def _setup_window_properties(self):
         """Set window properties"""
@@ -441,7 +439,7 @@ class MainWindow(QMainWindow):
 
             traceback.print_exc()
 
-        # checkbox state change signals - correctly call UIManager methods
+        # checkbox state change signals
         self.anonymize_ips_cb.stateChanged.connect(self._update_start_button_state)
         self.remove_dupes_cb.stateChanged.connect(self._update_start_button_state)
         self.mask_payloads_cb.stateChanged.connect(self._update_start_button_state)
@@ -827,7 +825,7 @@ class MainWindow(QMainWindow):
         event.accept()
 
     def init_ui(self):
-        """Initialize interface (delegated to UIManager)"""
+        """Initialize interface"""
         pass  # UI already initialized in __init__
 
     def _get_current_theme(self) -> str:
@@ -844,12 +842,12 @@ class MainWindow(QMainWindow):
         super().changeEvent(event)
 
     def create_menu_bar(self):
-        """Create menu bar (handled by UIManager)"""
-        pass  # Already handled by UIManager in init_ui
+        """Create menu bar"""
+        pass  # Already handled in _create_menu_bar
 
     def show_initial_guides(self):
-        """Show initial guides in log and report areas at startup (handled by UIManager)"""
-        pass  # Already handled by UIManager in init_ui
+        """Show initial guides in log and report areas at startup"""
+        pass  # Already handled in _show_initial_guides
 
     def reset_state(self):
         """Reset all state and UI"""
@@ -1016,7 +1014,7 @@ class MainWindow(QMainWindow):
 
         elif event_type == PipelineEvents.PIPELINE_END:
             self._animate_progress_to(100)  # 动画到100%
-            # 注意：处理完成的逻辑由 PipelineManager 负责处理
+            # Processing completion is handled by on_thread_finished
 
         elif event_type == PipelineEvents.ERROR:
             self.processing_error(data["message"])
@@ -1158,7 +1156,7 @@ class MainWindow(QMainWindow):
         self.progress_animation.setEndValue(target_value)
         self.progress_animation.start()
 
-    # === Report generation methods (moved from ReportManager) ===
+    # === Report generation methods ===
     def update_log(self, message: str):
         """Update log display"""
         try:
@@ -1932,9 +1930,9 @@ class MainWindow(QMainWindow):
             return False
 
     def _save_summary_report_to_output(self):
-        """私有方法：保存摘要报告到输出目录"""
+        """Private method: Save summary report to output directory"""
         try:
-            # 委托给FileManager或使用MainWindow的现有方法
+            # Use existing method to save summary report
             if hasattr(self, "save_summary_report_to_output_dir"):
                 self.save_summary_report_to_output_dir()
             else:
@@ -2010,11 +2008,11 @@ class MainWindow(QMainWindow):
                     self.set_final_summary_report(report_data)
             return
 
-        # 标准化步骤名称 - 修复Pipeline和ReportManager之间的映射不匹配
+        # Standardize step names for display
         step_display_names = {
-            "anonymize_ips": "Anonymize IPs",  # Standard naming
+            "anonymize_ips": "Anonymize IPs",
             "remove_dupes": "Deduplication",
-            "mask_payloads": "Mask Payloads",  # Standard naming
+            "mask_payloads": "Mask Payloads",
         }
 
         step_name = step_display_names.get(step_type, step_type)
@@ -2247,7 +2245,7 @@ class MainWindow(QMainWindow):
         # 目前先返回通用的Enhanced报告
         return self._generate_enhanced_masking_report(separator_length, is_partial=False)
 
-    # === Dialog and file selection methods (moved from DialogsManager) ===
+    # === Dialog and file selection methods ===
     def show_user_guide_dialog(self):
         """Show user guide dialog"""
         try:
@@ -2433,7 +2431,7 @@ class MainWindow(QMainWindow):
             self._logger.error(f"Failed to show processing complete dialog: {e}")
 
     # ========================================================================
-    # SIMPLE DIALOGS (from DialogManager - simplified)
+    # SIMPLE DIALOGS
     # ========================================================================
 
     def show_error(self, title: str, message: str):
@@ -2495,7 +2493,7 @@ class MainWindow(QMainWindow):
             return None
 
     # ========================================================================
-    # FILE/DIRECTORY SELECTION (from FileManager)
+    # FILE/DIRECTORY SELECTION
     # ========================================================================
 
     def choose_input_folder(self):
@@ -2585,7 +2583,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Error", f"Error opening directory: {str(e)}")
 
     # ========================================================================
-    # DIRECTORY VALIDATION AND INFO (from FileManager)
+    # DIRECTORY VALIDATION AND INFO
     # ========================================================================
 
     def validate_input_directory(self, directory: str) -> bool:
@@ -2647,7 +2645,7 @@ class MainWindow(QMainWindow):
         return info
 
     # ========================================================================
-    # REPORT FILE OPERATIONS (from FileManager)
+    # REPORT FILE OPERATIONS
     # ========================================================================
 
     def choose_folder(self):
@@ -2670,7 +2668,7 @@ class MainWindow(QMainWindow):
         """Legacy method - redirects to ask_question"""
         return self.ask_question(title, message)
 
-    # === Pipeline processing methods (moved from PipelineManager) ===
+    # === Pipeline processing methods ===
     def _setup_timer(self):
         """Set up processing time tracking timer"""
         self.time_elapsed = 0
@@ -2906,7 +2904,6 @@ class MainWindow(QMainWindow):
 
     def get_processing_stats(self) -> dict:
         """Get processing statistics"""
-        # Return processing summary (moved from StatisticsManager)
         from PyQt6.QtCore import QTime
 
         from pktmask.utils.time import format_milliseconds_to_time
@@ -2955,7 +2952,7 @@ class MainWindow(QMainWindow):
         self.files_processed_label.setText(str(final_files_processed))
         self.packets_processed_label.setText(str(final_packets_processed))
 
-        # Delegate to ReportManager to generate report
+        # Generate processing finished report
         self.generate_processing_finished_report()
 
         import os
