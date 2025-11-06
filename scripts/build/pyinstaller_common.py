@@ -5,7 +5,6 @@
 common_datas = [
     ("config/templates/log_template.html", "resources"),
     ("config/templates/summary.md", "resources"),
-    ("config/templates/config_template.yaml", "resources"),
     ("config/templates/tls_flow_analysis_template.html", "resources"),
 ]
 
