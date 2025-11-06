@@ -2,7 +2,13 @@
 PktMask - IP Address Replacement Tool
 """
 
-__version__ = "0.1.0"
+import importlib.metadata
+
+try:
+    __version__ = importlib.metadata.version("pktmask")
+except importlib.metadata.PackageNotFoundError:
+    # 开发环境中包未安装时的后备版本
+    __version__ = "0.8.3-dev"
 
 # ---------------------------------------------------------------------------
 # Optional runtime stub for PyQt6 (used by limited unit-tests).
