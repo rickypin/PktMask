@@ -310,6 +310,7 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
 
     def __init__(self):
         self._ip_map: Dict[str, str] = {}
+        self.logger = get_logger(__name__)
         # Direct IP processing statistics (no adapter layer needed)
         self._ip_stats = {
             "total_packets_scanned": 0,
@@ -319,27 +320,51 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         }
 
     def _extract_ips_from_packet(self, packet) -> List[Tuple[str, str, str]]:
-        """Extract IP addresses directly from packet using scapy
+        """Extract ALL IP addresses from packet (including multi-layer encapsulation)
+
+        Supports multi-layer encapsulation scenarios such as VXLAN, where both outer
+        (tunnel endpoint) and inner (actual host) IP addresses are extracted.
 
         Args:
             packet: Scapy packet object
 
         Returns:
-            List of (src_ip, dst_ip, ip_version) tuples
+            List of (src_ip, dst_ip, ip_version) tuples for all IP layers
         """
         ips = []
 
-        # Process IPv4 layers
-        if packet.haslayer(IP):
-            ip_layer = packet.getlayer(IP)
-            ips.append((ip_layer.src, ip_layer.dst, "ipv4"))
-            self._ip_stats["ipv4_packets"] += 1
+        # Process all IPv4 layers (supports multi-layer encapsulation like VXLAN)
+        # Note: Scapy's getlayer() index starts from 1, not 0
+        idx = 1
+        while idx <= 10:  # Limit max layers to prevent infinite loop
+            try:
+                ip_layer = packet.getlayer(IP, idx)
+                if ip_layer is None:
+                    break
+                ips.append((ip_layer.src, ip_layer.dst, "ipv4"))
+                # Only count packets once (for the first/outer layer)
+                if idx == 1:
+                    self._ip_stats["ipv4_packets"] += 1
+                idx += 1
+            except Exception as e:
+                self.logger.debug(f"Failed to get IPv4 layer {idx}: {e}")
+                break
 
-        # Process IPv6 layers
-        if packet.haslayer(IPv6):
-            ip_layer = packet.getlayer(IPv6)
-            ips.append((ip_layer.src, ip_layer.dst, "ipv6"))
-            self._ip_stats["ipv6_packets"] += 1
+        # Process all IPv6 layers
+        idx = 1
+        while idx <= 10:  # Limit max layers to prevent infinite loop
+            try:
+                ip_layer = packet.getlayer(IPv6, idx)
+                if ip_layer is None:
+                    break
+                ips.append((ip_layer.src, ip_layer.dst, "ipv6"))
+                # Only count packets once (for the first/outer layer)
+                if idx == 1:
+                    self._ip_stats["ipv6_packets"] += 1
+                idx += 1
+            except Exception as e:
+                self.logger.debug(f"Failed to get IPv6 layer {idx}: {e}")
+                break
 
         # Track multi-IP packets (both IPv4 and IPv6)
         if packet.haslayer(IP) and packet.haslayer(IPv6):
@@ -637,29 +662,53 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
         self.create_mapping(filenames, subdir_path, error_log)
 
     def anonymize_packet(self, pkt) -> Tuple[object, bool]:
-        """Anonymize single packet based on built mapping. 【Enhanced】Support multi-layer encapsulated IP anonymization."""
+        """Anonymize ALL IP layers in packet (including multi-layer encapsulation)
+
+        【Enhanced】Support multi-layer encapsulated IP anonymization.
+        For VXLAN packets, both outer (tunnel endpoint) and inner (actual host) IPs are anonymized.
+        """
         is_anonymized = False
 
-        # Direct IP anonymization using scapy
-        # Process IPv4
-        if pkt.haslayer(IP):
-            layer = pkt.getlayer(IP)
-            if layer.src in self._ip_map:
-                layer.src = self._ip_map[layer.src]
-                is_anonymized = True
-            if layer.dst in self._ip_map:
-                layer.dst = self._ip_map[layer.dst]
-                is_anonymized = True
+        # Process all IPv4 layers (supports multi-layer encapsulation like VXLAN)
+        # Note: Scapy's getlayer() index starts from 1, not 0
+        idx = 1
+        while idx <= 10:  # Limit max layers to prevent infinite loop
+            try:
+                layer = pkt.getlayer(IP, idx)
+                if layer is None:
+                    break
 
-        # Process IPv6
-        if pkt.haslayer(IPv6):
-            layer = pkt.getlayer(IPv6)
-            if layer.src in self._ip_map:
-                layer.src = self._ip_map[layer.src]
-                is_anonymized = True
-            if layer.dst in self._ip_map:
-                layer.dst = self._ip_map[layer.dst]
-                is_anonymized = True
+                if layer.src in self._ip_map:
+                    layer.src = self._ip_map[layer.src]
+                    is_anonymized = True
+                if layer.dst in self._ip_map:
+                    layer.dst = self._ip_map[layer.dst]
+                    is_anonymized = True
+
+                idx += 1
+            except Exception as e:
+                self.logger.debug(f"Failed to anonymize IPv4 layer {idx}: {e}")
+                break
+
+        # Process all IPv6 layers
+        idx = 1
+        while idx <= 10:  # Limit max layers to prevent infinite loop
+            try:
+                layer = pkt.getlayer(IPv6, idx)
+                if layer is None:
+                    break
+
+                if layer.src in self._ip_map:
+                    layer.src = self._ip_map[layer.src]
+                    is_anonymized = True
+                if layer.dst in self._ip_map:
+                    layer.dst = self._ip_map[layer.dst]
+                    is_anonymized = True
+
+                idx += 1
+            except Exception as e:
+                self.logger.debug(f"Failed to anonymize IPv6 layer {idx}: {e}")
+                break
 
         # Delete checksums to force recalculation (applies to all modified IP layers)
         if is_anonymized:
