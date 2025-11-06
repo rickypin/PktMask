@@ -8,8 +8,8 @@ import sys
 import os
 from pathlib import Path
 
-# 获取项目根目录
-project_root = Path(__file__).parent
+# 获取项目根目录 (使用 os.getcwd() 因为 __file__ 在 spec 文件中不可用)
+project_root = Path(os.getcwd())
 src_path = project_root / 'src'
 
 # 将项目根目录添加到 Python 路径，以便导入 scripts 模块
