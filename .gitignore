@@ -11,9 +11,9 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
+/build/
 develop-eggs/
-dist/
+/dist/
 downloads/
 eggs/
 .eggs/
@@ -61,11 +61,11 @@ output/reports/coverage/
 reports/coverage/
 
 # Temporary analysis and validation outputs (can be regenerated)
-output/
-output/tmp/
-output/maskstage_validation/
-output/monitoring/
-tmp/
+/output/
+/output/tmp/
+/output/maskstage_validation/
+/output/monitoring/
+/tmp/
 
 # Keep other output directories but ignore specific temporary subdirectories
 # output/ - commented out to allow selective ignoring
