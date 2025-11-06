@@ -8,11 +8,14 @@ import sys
 import os
 from pathlib import Path
 
-from scripts.build.pyinstaller_common import common_datas, common_hiddenimports
-
 # 获取项目根目录
 project_root = Path(__file__).parent
 src_path = project_root / 'src'
+
+# 将项目根目录添加到 Python 路径，以便导入 scripts 模块
+sys.path.insert(0, str(project_root))
+
+from scripts.build.pyinstaller_common import common_datas, common_hiddenimports
 
 # Windows特定的隐藏导入
 windows_hidden_imports = common_hiddenimports + [

@@ -1,5 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import sys
+from pathlib import Path
+
+# 将项目根目录添加到 Python 路径，以便导入 scripts 模块
+project_root = Path(__file__).parent
+sys.path.insert(0, str(project_root))
 
 from scripts.build.pyinstaller_common import common_datas, common_hiddenimports
 
