@@ -64,14 +64,24 @@ def ip_sort_key(ip_str: str) -> tuple:
         return (ProcessingConstants.UNKNOWN_IP_SORT_WEIGHT,)
 
 
-def _safe_hash(input_str: str) -> int:
+def _safe_hash(input_str: str, salt: str = "") -> int:
     """
     Safe hash function ensuring determinism and uniform distribution
+
+    Args:
+        input_str: Input string to hash
+        salt: Random salt to prevent reversibility (security enhancement)
+
+    Returns:
+        Integer hash value
     """
     import hashlib
 
+    # Security: Add salt to prevent IP mapping reversibility
+    salted_input = f"{salt}_{input_str}" if salt else input_str
+
     # Use SHA256 to ensure better distribution and determinism
-    hash_obj = hashlib.sha256(input_str.encode("utf-8"))
+    hash_obj = hashlib.sha256(salted_input.encode("utf-8"))
     return int(
         hash_obj.hexdigest()[: ProcessingConstants.HASH_DIGEST_LENGTH],
         ProcessingConstants.HEX_BASE,
@@ -85,6 +95,7 @@ def _generate_unique_segment(
     min_val: int = ProcessingConstants.IPV4_MIN_SEGMENT,
     max_val: int = ProcessingConstants.IPV4_MAX_SEGMENT,
     max_attempts: int = 100,
+    salt: str = "",
 ) -> str:
     """
     Generate unique IP segment value, avoiding conflicts
@@ -96,6 +107,7 @@ def _generate_unique_segment(
         min_val: Minimum value
         max_val: Maximum value
         max_attempts: Maximum number of attempts
+        salt: Random salt for security (prevents reversibility)
     """
     if not original_seg.isdigit():
         raise ValueError(f"Invalid segment: {original_seg}")
@@ -104,8 +116,8 @@ def _generate_unique_segment(
     if orig_int < min_val or orig_int > max_val:
         raise ValueError(f"Segment out of range: {original_seg}")
 
-    # Generate deterministic random number generator based on seed
-    seed_value = _safe_hash(f"{seed_base}_{original_seg}")
+    # Generate deterministic random number generator based on seed + salt
+    seed_value = _safe_hash(f"{seed_base}_{original_seg}", salt)
     local_random = random.Random(seed_value)
 
     # Calculate candidate range
@@ -158,9 +170,14 @@ def _generate_unique_segment(
         return original_seg
 
 
-def _generate_new_ipv4_address_hierarchical(original_ip: str, freq1, freq2, freq3, maps, used_segments) -> str:
+def _generate_new_ipv4_address_hierarchical(
+    original_ip: str, freq1, freq2, freq3, maps, used_segments, salt: str = ""
+) -> str:
     """
     Frequency-based hierarchical IPv4 address generation, ensuring consistency for high-frequency subnets
+
+    Args:
+        salt: Random salt for security (prevents reversibility)
     """
     ipv4_first_map, ipv4_second_map, ipv4_third_map = maps
     used_a, used_ab, used_abc = used_segments
@@ -175,10 +192,10 @@ def _generate_new_ipv4_address_hierarchical(original_ip: str, freq1, freq2, freq
     # A segment processing - maintain consistent mapping for high-frequency A segments
     if freq1.get(A, 0) >= 2:
         if A not in ipv4_first_map:
-            ipv4_first_map[A] = _generate_unique_segment(A, f"first_{A}", used_a, 1, 255)
+            ipv4_first_map[A] = _generate_unique_segment(A, f"first_{A}", used_a, 1, 255, salt=salt)
         newA = ipv4_first_map[A]
     else:
-        newA = _generate_unique_segment(A, f"first_single_{A}", used_a, 1, 255)
+        newA = _generate_unique_segment(A, f"first_single_{A}", used_a, 1, 255, salt=salt)
 
     # A.B segment processing - key fix: maintain consistent mapping for high-frequency A.B segments
     key2 = ".".join(parts[:2])  # Original A.B segment, e.g. "140.216"
@@ -187,7 +204,7 @@ def _generate_new_ipv4_address_hierarchical(original_ip: str, freq1, freq2, freq
         # High-frequency A.B segment: must maintain consistent mapping
         if key2 not in ipv4_second_map:
             # Assign a new B segment value for this high-frequency A.B segment
-            ipv4_second_map[key2] = _generate_unique_segment(B, f"second_freq_{key2}", used_ab, 0, 255)
+            ipv4_second_map[key2] = _generate_unique_segment(B, f"second_freq_{key2}", used_ab, 0, 255, salt=salt)
         newB = ipv4_second_map[key2]
 
         # Build new A.B segment combination and record
@@ -196,7 +213,7 @@ def _generate_new_ipv4_address_hierarchical(original_ip: str, freq1, freq2, freq
     else:
         # Low-frequency A.B segment: generate unique mapping for each independent A.B segment
         if key2 not in ipv4_second_map:
-            ipv4_second_map[key2] = _generate_unique_segment(B, f"second_single_{key2}", used_ab, 0, 255)
+            ipv4_second_map[key2] = _generate_unique_segment(B, f"second_single_{key2}", used_ab, 0, 255, salt=salt)
         newB = ipv4_second_map[key2]
 
         # Build new A.B segment combination and record
@@ -209,7 +226,7 @@ def _generate_new_ipv4_address_hierarchical(original_ip: str, freq1, freq2, freq
     if freq3.get(key3, 0) >= 2:
         # High-frequency A.B.C segment: must maintain consistent mapping
         if key3 not in ipv4_third_map:
-            ipv4_third_map[key3] = _generate_unique_segment(C, f"third_freq_{key3}", used_abc, 0, 255)
+            ipv4_third_map[key3] = _generate_unique_segment(C, f"third_freq_{key3}", used_abc, 0, 255, salt=salt)
         newC = ipv4_third_map[key3]
 
         # Build new A.B.C segment combination and record
@@ -218,7 +235,7 @@ def _generate_new_ipv4_address_hierarchical(original_ip: str, freq1, freq2, freq
     else:
         # Low-frequency A.B.C segment: generate unique mapping for each independent A.B.C segment
         if key3 not in ipv4_third_map:
-            ipv4_third_map[key3] = _generate_unique_segment(C, f"third_single_{key3}", used_abc, 0, 255)
+            ipv4_third_map[key3] = _generate_unique_segment(C, f"third_single_{key3}", used_abc, 0, 255, salt=salt)
         newC = ipv4_third_map[key3]
 
         # Build new A.B.C segment combination and record
@@ -228,9 +245,12 @@ def _generate_new_ipv4_address_hierarchical(original_ip: str, freq1, freq2, freq
     return f"{newA}.{newB}.{newC}.{D}"
 
 
-def _generate_new_ipv6_address_hierarchical(original_ip: str, freqs, maps) -> str:
+def _generate_new_ipv6_address_hierarchical(original_ip: str, freqs, maps, salt: str = "") -> str:
     """
     Frequency-based hierarchical IPv6 address generation
+
+    Args:
+        salt: Random salt for security (prevents reversibility)
     """
     try:
         ip_obj = ipaddress.IPv6Address(original_ip)
@@ -245,23 +265,27 @@ def _generate_new_ipv6_address_hierarchical(original_ip: str, freqs, maps) -> st
         key = ":".join(parts[: i + 1])
         if freqs[i].get(key, 0) >= 2:
             if key not in maps[i]:
-                maps[i][key] = _generate_unique_ipv6_segment(parts[i], f"ipv6_{i}_{key}")
+                maps[i][key] = _generate_unique_ipv6_segment(parts[i], f"ipv6_{i}_{key}", salt)
             new_seg = maps[i][key]
         else:
-            new_seg = _generate_unique_ipv6_segment(parts[i], f"ipv6_single_{i}_{key}")
+            new_seg = _generate_unique_ipv6_segment(parts[i], f"ipv6_single_{i}_{key}", salt)
         new_parts.append(new_seg)
 
     new_parts.append(parts[7])
     return ":".join(new_parts)
 
 
-def _generate_unique_ipv6_segment(original_seg: str, seed_base: str) -> str:
-    """生成IPv6段的确定性随机化值"""
+def _generate_unique_ipv6_segment(original_seg: str, seed_base: str, salt: str = "") -> str:
+    """生成IPv6段的确定性随机化值
+
+    Args:
+        salt: Random salt for security (prevents reversibility)
+    """
     n = len(original_seg)
     orig_int = int(original_seg, 16)
 
-    # 使用确定性种子
-    seed_value = _safe_hash(f"{seed_base}_{original_seg}")
+    # 使用确定性种子 + salt
+    seed_value = _safe_hash(f"{seed_base}_{original_seg}", salt)
     local_random = random.Random(seed_value)
 
     lower = 16 ** (n - 1) if n > 1 else 0
@@ -306,11 +330,32 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
     """
     Hierarchical IP anonymization strategy based on network segment frequency.
     This strategy pre-scans files to preserve subnet structure.
+
+    Security Enhancement:
+    - Uses random salt for each run to prevent IP mapping reversibility
+    - Salt can be saved/loaded for batch processing consistency
     """
 
-    def __init__(self):
+    def __init__(self, salt: str = None):
+        """Initialize strategy with optional salt for deterministic mapping.
+
+        Args:
+            salt: Optional salt string. If None, generates a random salt for security.
+                  Provide the same salt to maintain consistency across multiple runs.
+        """
         self._ip_map: Dict[str, str] = {}
         self.logger = get_logger(__name__)
+
+        # Security: Generate random salt if not provided
+        if salt is None:
+            import secrets
+
+            self._salt = secrets.token_hex(16)  # 32-char random hex string
+            self.logger.info(f"Generated random salt for IP anonymization: {self._salt[:8]}...")
+        else:
+            self._salt = salt
+            self.logger.info(f"Using provided salt for IP anonymization: {salt[:8]}...")
+
         # Direct IP processing statistics (no adapter layer needed)
         self._ip_stats = {
             "total_packets_scanned": 0,
@@ -561,9 +606,10 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                         freqs_ipv4[2],
                         maps_ipv4,
                         used_segments,
+                        salt=self._salt,  # Pass salt for security
                     )
                 else:
-                    mapping[ip] = _generate_new_ipv6_address_hierarchical(ip, freqs_ipv6, maps_ipv6)
+                    mapping[ip] = _generate_new_ipv6_address_hierarchical(ip, freqs_ipv6, maps_ipv6, salt=self._salt)
             except Exception as e:
                 error_log.append(f"Pre-calculate mapping error for IP {ip}: {str(e)}")
 
@@ -726,3 +772,67 @@ class HierarchicalAnonymizationStrategy(AnonymizationStrategy):
                     break
 
         return pkt, is_anonymized
+
+    def save_mapping(self, output_path: str) -> None:
+        """Save IP mapping and salt to a JSON file for consistency or audit purposes.
+
+        Args:
+            output_path: Path to save the mapping file (will append .mapping.json)
+
+        Security Note:
+            The mapping file contains the relationship between original and anonymized IPs.
+            Store it securely and delete it after use if not needed for batch processing.
+        """
+        import json
+        from datetime import datetime
+        from pathlib import Path
+
+        mapping_file = Path(output_path).with_suffix(".mapping.json")
+
+        mapping_data = {
+            "salt": self._salt,
+            "mappings": self._ip_map,
+            "timestamp": datetime.now().isoformat(),
+            "total_ips": len(self._ip_map),
+            "security_warning": "This file contains sensitive IP mapping information. Store securely and delete after use.",
+        }
+
+        with open(mapping_file, "w") as f:
+            json.dump(mapping_data, f, indent=2)
+
+        self.logger.info(f"IP mapping saved to {mapping_file} (salt: {self._salt[:8]}...)")
+        self.logger.warning(f"Security: Mapping file contains sensitive data. Delete {mapping_file} after use.")
+
+    def load_mapping(self, mapping_file: str) -> None:
+        """Load IP mapping and salt from a JSON file for consistent batch processing.
+
+        Args:
+            mapping_file: Path to the mapping file
+
+        Use Case:
+            When processing multiple related pcap files, load the same mapping to ensure
+            consistent IP anonymization across all files.
+        """
+        import json
+        from pathlib import Path
+
+        mapping_path = Path(mapping_file)
+        if not mapping_path.exists():
+            raise FileNotFoundError(f"Mapping file not found: {mapping_file}")
+
+        with open(mapping_path, "r") as f:
+            mapping_data = json.load(f)
+
+        self._salt = mapping_data["salt"]
+        self._ip_map = mapping_data["mappings"]
+
+        self.logger.info(f"IP mapping loaded from {mapping_file}")
+        self.logger.info(f"Loaded {len(self._ip_map)} IP mappings with salt: {self._salt[:8]}...")
+
+    def get_salt(self) -> str:
+        """Get the current salt value.
+
+        Returns:
+            The salt string used for this anonymization session
+        """
+        return self._salt
