@@ -8,7 +8,7 @@ import sys
 import os
 from pathlib import Path
 
-from scripts.pyinstaller_common import common_datas, common_hiddenimports
+from scripts.build.pyinstaller_common import common_datas, common_hiddenimports
 
 # 获取项目根目录
 project_root = Path(__file__).parent

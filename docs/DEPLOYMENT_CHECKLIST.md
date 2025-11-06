@@ -31,7 +31,7 @@ This checklist ensures proper deployment and verification of PktMask GUI and CLI
   - [ ] `docs/DEPLOYMENT_CHECKLIST.md` - 本检查清单
 
 - [ ] **脚本文件**
-  - [ ] `scripts/test_unified_functionality.py` - 功能测试脚本
+  - [ ] `scripts/test/test_unified_functionality.py` - 功能测试脚本
 
 ### 2. 依赖检查
 
@@ -236,7 +236,7 @@ This checklist ensures proper deployment and verification of PktMask GUI and CLI
 
 - [ ] **功能测试**
   ```bash
-  python scripts/test_unified_functionality.py
+  python scripts/test/test_unified_functionality.py
   ```
 
 ### 2. 测试覆盖率

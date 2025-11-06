@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 
-from scripts.pyinstaller_common import common_datas, common_hiddenimports
+from scripts.build.pyinstaller_common import common_datas, common_hiddenimports
 
 a = Analysis(
     ['scripts/pktmask_launcher.py'],
