@@ -1,18 +1,18 @@
-name: PktMask 自动化测试
+name: PktMask 自动化测试 (已禁用)
 
-# 触发条件
+# 触发条件 - 已禁用所有自动触发
 on:
-  # 推送到主分支时运行
-  push:
-    branches: [ main, develop ]
-  # PR到主分支时运行
-  pull_request:
-    branches: [ main, develop ]
-  # 手动触发
+  # 推送到主分支时运行 - 已禁用
+  # push:
+  #   branches: [ main, develop ]
+  # PR到主分支时运行 - 已禁用
+  # pull_request:
+  #   branches: [ main, develop ]
+  # 手动触发 - 保留此选项以便需要时手动运行
   workflow_dispatch:
-  # 定时运行 (每天凌晨2点)
-  schedule:
-    - cron: '0 2 * * *'
+  # 定时运行 (每天凌晨2点) - 已禁用
+  # schedule:
+  #   - cron: '0 2 * * *'
 
 # 环境变量
 env:
