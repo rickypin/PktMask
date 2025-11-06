@@ -876,10 +876,12 @@ class MainWindow(QMainWindow):
 
     def reset_state(self):
         """Reset all state and UI"""
+        self.input_path = None
+        self.input_type = "none"
         self.base_dir = None
         self.output_dir = None  # Reset output directory
         self.current_output_dir = None  # Reset current output directory
-        self.dir_path_label.setText("Click and pick your pcap directory")
+        self.dir_path_label.setText("Click and pick your input")
         self.output_path_label.setText("Auto-create or click for custom")  # Reset output path display
         self.log_text.clear()
         self.summary_text.clear()
@@ -2525,7 +2527,29 @@ class MainWindow(QMainWindow):
         """Handle input mode change"""
         mode = self.input_mode_combo.itemData(index)
         self._logger.debug(f"Input mode changed to: {mode}")
+
+        # Check if there's a type mismatch with current selection
+        if self.input_path and self.input_type != "none":
+            # If switching from file to directory or vice versa, clear the selection
+            if mode != self.input_type:
+                self._logger.info(f"Input type changed from {self.input_type} to {mode}, clearing current selection")
+                self._clear_input_selection()
+
         self._update_input_button_tooltip()
+        # Clear focus from ComboBox after selection
+        self.input_mode_combo.clearFocus()
+
+    def _clear_input_selection(self):
+        """Clear current input selection"""
+        self.input_path = None
+        self.input_type = "none"
+        self.base_dir = None
+        self.output_dir = None
+        self.current_output_dir = None
+        self.dir_path_label.setText("Click and pick your input")
+        self.output_path_label.setText("Auto-create or click for custom")
+        self._update_start_button_state()
+        self._logger.debug("Input selection cleared")
 
     def _update_input_button_tooltip(self):
         """Update input button tooltip based on current mode"""
