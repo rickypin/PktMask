@@ -12,6 +12,7 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false  # 允许一个平台失败时其他平台继续构建
       matrix:
         os: [windows-latest, macos-latest]
         python-version: ['3.11']
@@ -37,14 +38,14 @@ jobs:
     - name: Build Windows Installer
       if: matrix.os == 'windows-latest'
       run: |
-        pip install pyinstaller
-        pyinstaller PktMask.spec
-        ls dist
+        pip install pyinstaller pyinstaller-hooks-contrib
+        pyinstaller PktMask-Windows.spec
+        dir dist
 
     - name: Build macOS App
       if: matrix.os == 'macos-latest'
       run: |
-        pip install pyinstaller
+        pip install pyinstaller pyinstaller-hooks-contrib
         pyinstaller PktMask.spec
         ls dist
 
