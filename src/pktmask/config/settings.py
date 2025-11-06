@@ -38,6 +38,7 @@ class UISettings:
     remember_last_dir: bool = True
     last_input_dir: Optional[str] = None
     last_output_dir: Optional[str] = None
+    last_input_mode: str = "file"  # "file" | "directory" - remember last input mode
     auto_open_output: bool = False
 
     # 输出目录设置
