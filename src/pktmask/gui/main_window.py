@@ -254,6 +254,7 @@ class MainWindow(QMainWindow):
         self.input_mode_combo.setMaximumWidth(120)
         self.input_mode_combo.setMaximumHeight(UIConstants.BUTTON_MAX_HEIGHT)
         self.input_mode_combo.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.input_mode_combo.setFocusPolicy(Qt.FocusPolicy.ClickFocus)  # 点击后失去焦点
 
         # 设置为上次使用的模式
         if self.last_input_mode == "directory":
@@ -267,18 +268,10 @@ class MainWindow(QMainWindow):
         self.dir_path_label.setMaximumHeight(UIConstants.BUTTON_MAX_HEIGHT)
         self.dir_path_label.setCursor(Qt.CursorShape.PointingHandCursor)
 
-        # 显示标签 - 显示选中的文件/目录信息
-        self.input_display_label = QLabel("No input selected")
-        self.input_display_label.setStyleSheet("color: gray; font-style: italic;")
-        self.input_display_label.setMaximumHeight(UIConstants.INPUT_LABEL_HEIGHT)
-
         input_path_layout.addWidget(input_label)
         input_path_layout.addWidget(self.input_mode_combo)
         input_path_layout.addWidget(self.dir_path_label, 1)
         input_layout.addLayout(input_path_layout)
-
-        # 添加显示标签到第二行
-        input_layout.addWidget(self.input_display_label)
 
         # 右侧：Output Directory - 单行布局
         output_layout = QVBoxLayout()
@@ -2567,11 +2560,7 @@ class MainWindow(QMainWindow):
             self.base_dir = file_path  # Backward compatibility
             self.last_opened_dir = os.path.dirname(file_path)
 
-            # Update display
-            file_size = os.path.getsize(file_path)
-            size_str = self._format_file_size(file_size)
-            self.input_display_label.setText(f"{os.path.basename(file_path)} ({size_str})")
-            self.input_display_label.setStyleSheet("color: black; font-style: normal;")
+            # Update display - only show filename in dir_path_label
             self.dir_path_label.setText(os.path.basename(file_path))
 
             # Generate default output path
@@ -2590,14 +2579,7 @@ class MainWindow(QMainWindow):
             self.base_dir = dir_path  # Backward compatibility
             self.last_opened_dir = dir_path
 
-            # Count PCAP files and calculate size
-            pcap_count = self._count_pcap_files(dir_path)
-            total_size = self._get_directory_size(dir_path)
-            size_str = self._format_file_size(total_size)
-
-            # Update display
-            self.input_display_label.setText(f"{os.path.basename(dir_path)}/ ({pcap_count} files, {size_str})")
-            self.input_display_label.setStyleSheet("color: black; font-style: normal;")
+            # Update display - only show directory name in dir_path_label
             self.dir_path_label.setText(os.path.basename(dir_path))
 
             # Generate default output path
@@ -2619,40 +2601,6 @@ class MainWindow(QMainWindow):
             self._logger.debug(f"Saved input mode: {mode}")
         except Exception as e:
             self._logger.error(f"Failed to save input mode: {e}")
-
-    def _count_pcap_files(self, directory: str) -> int:
-        """Count PCAP files in directory"""
-        pcap_extensions = [".pcap", ".pcapng", ".cap"]
-        count = 0
-        try:
-            for file in os.listdir(directory):
-                if any(file.lower().endswith(ext) for ext in pcap_extensions):
-                    count += 1
-        except Exception as e:
-            self._logger.error(f"Error counting PCAP files: {e}")
-        return count
-
-    def _get_directory_size(self, directory: str) -> int:
-        """Get total size of PCAP files in directory"""
-        pcap_extensions = [".pcap", ".pcapng", ".cap"]
-        total_size = 0
-        try:
-            for file in os.listdir(directory):
-                if any(file.lower().endswith(ext) for ext in pcap_extensions):
-                    file_path = os.path.join(directory, file)
-                    if os.path.isfile(file_path):
-                        total_size += os.path.getsize(file_path)
-        except Exception as e:
-            self._logger.error(f"Error calculating directory size: {e}")
-        return total_size
-
-    def _format_file_size(self, size_bytes: int) -> str:
-        """Format file size in human-readable format"""
-        for unit in ["B", "KB", "MB", "GB"]:
-            if size_bytes < 1024.0:
-                return f"{size_bytes:.1f} {unit}"
-            size_bytes /= 1024.0
-        return f"{size_bytes:.1f} TB"
 
     def handle_output_click(self):
         """Handle output path button click - open directory if processing is complete, otherwise select custom output directory"""
